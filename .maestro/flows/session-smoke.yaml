@@ -119,6 +119,8 @@ appId: com.splitbeat.twohandrhythm
       id: practice.nextPattern
     timeout: 15000
 - assertVisible:
+    id: practice.nextPattern.countdown
+- assertVisible:
     id: practice.gracePreview
 - assertVisible:
     id: practice.tap.left

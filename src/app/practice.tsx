@@ -72,6 +72,18 @@ export default function PracticeScreen() {
           </View>
         </View>
 
+        {!snapshot.scoreMeasure ? (
+          <View style={{ height: compact ? 36 : 40, justifyContent: 'center', alignItems: 'center', overflow: 'visible' }}>
+            <NextPatternPreview
+              step={snapshot.nextStep}
+              beatsUntilChange={snapshot.beatsUntilChange}
+              graceNotesEnabled={settings.graceNotesEnabled}
+              compact={compact}
+              timeSignature={settings.timeSignature}
+            />
+          </View>
+        ) : null}
+
         <View style={{ height: compact ? 40 : 60, justifyContent: 'center' }}>
           <MetronomeIndicator
             beatInBar={snapshot.beatInBar}
@@ -115,15 +127,6 @@ export default function PracticeScreen() {
                 </Text>
               </View>
             </View>
-
-            <NextPatternPreview
-              step={snapshot.nextStep}
-              beatsUntilChange={snapshot.beatsUntilChange}
-              secondsUntilChange={snapshot.secondsUntilChange}
-              graceNotesEnabled={settings.graceNotesEnabled}
-              compact={compact}
-              timeSignature={settings.timeSignature}
-            />
           </>
         )}
 
