@@ -23,6 +23,7 @@ export const TIME_SIGNATURES = [
 
 export type TimeSignature = (typeof TIME_SIGNATURES)[number];
 export type Hand = 'left' | 'right';
+export type RhythmicFeel = 'straight' | 'swing';
 export type DurationOption = 30 | 60 | 120 | 'endless';
 export type ChangeIntervalBeats = 1 | 2 | 4 | 8;
 
@@ -40,6 +41,8 @@ export interface ExerciseSettings {
   durationSeconds: DurationOption;
   changeIntervalBeats: ChangeIntervalBeats;
   enabledSubdivisions: Subdivision[];
+  feel: RhythmicFeel;
+  graceNotesEnabled: boolean;
   soundEnabled: boolean;
   hapticsEnabled: boolean;
 }
@@ -70,6 +73,8 @@ export interface CombinationStats {
 export interface SessionResults {
   bpm: number;
   timeSignature: TimeSignature;
+  feel: RhythmicFeel;
+  graceNotesEnabled: boolean;
   left: HandStats;
   right: HandStats;
   stable: AccuracyStats;

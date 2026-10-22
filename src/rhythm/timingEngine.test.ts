@@ -6,6 +6,7 @@ import { generateExerciseSteps } from '@/rhythm/exerciseGenerator';
 import {
   beatDurationMs,
   expectedEventTimeMs,
+  subdivisionOffsetMs,
   subdivisionIntervalMs,
   timeSignatureMetrics,
 } from '@/rhythm/subdivisions';
@@ -19,6 +20,8 @@ const settings: ExerciseSettings = {
   durationSeconds: 30,
   changeIntervalBeats: 4,
   enabledSubdivisions: ['quarter', 'eighth'],
+  feel: 'straight',
+  graceNotesEnabled: false,
   soundEnabled: false,
   hapticsEnabled: false,
 };
@@ -31,6 +34,18 @@ test('subdivision intervals follow the selected BPM', () => {
   assert.equal(subdivisionIntervalMs(60, 'sixtyFourth'), 62.5);
   assert.equal(subdivisionIntervalMs(60, 'sixteenth'), 250);
   assert.ok(Math.abs(subdivisionIntervalMs(60, 'triplet') - 333.3333333333) < 0.000001);
+});
+
+test('swing stretches binary offbeats while triplets remain even', () => {
+  assert.equal(subdivisionOffsetMs(1_000, 'eighth', 0, 'swing'), 0);
+  assert.equal(subdivisionOffsetMs(1_000, 'eighth', 1, 'straight'), 500);
+  assert.ok(Math.abs(subdivisionOffsetMs(1_000, 'eighth', 1, 'swing') - 666.6666667) < 0.001);
+  const swungSixteenths = [0, 1, 2, 3].map((index) =>
+    subdivisionOffsetMs(1_000, 'sixteenth', index, 'swing'),
+  );
+  const expectedSwingOffsets = [0, 1_000 / 3, 2_000 / 3, 5_000 / 6];
+  assert.ok(swungSixteenths.every((offset, index) => Math.abs(offset - expectedSwingOffsets[index]) < 0.001));
+  assert.ok(Math.abs(subdivisionOffsetMs(1_000, 'triplet', 1, 'swing') - 1_000 / 3) < 0.001);
 });
 
 test('time signatures describe the right pulse, bar length, and quarter-note duration', () => {
@@ -86,6 +101,62 @@ test('the timing engine generates all 64th-note events from beat timestamps', ()
   const snapshot = engine.advance(start + 1_040);
   assert.equal(snapshot.leftStats.totalExpected, 16);
   assert.equal(snapshot.rightStats.totalExpected, 16);
+});
+
+test('the timing engine matches a swung offbeat at its warped timestamp', () => {
+  const start = 30_000;
+  const engine = new RhythmTimingEngine({
+    settings: {
+      ...settings,
+      feel: 'swing',
+      changeIntervalBeats: 2,
+    },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+  const swungOffbeat = start + 2_000 + (2_000 / 3);
+
+  engine.tap('right', swungOffbeat);
+  const snapshot = engine.advance(swungOffbeat + 101);
+
+  assert.equal(snapshot.rightStats.totalHit, 1);
+  assert.equal(snapshot.rightStats.averageSignedErrorMs, 0);
+});
+
+test('grace pickups are generated before a switch and count as transition hits once', () => {
+  const start = 40_000;
+  const engine = new RhythmTimingEngine({
+    settings: {
+      ...settings,
+      enabledSubdivisions: ['quarter'],
+      changeIntervalBeats: 2,
+      graceNotesEnabled: true,
+    },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+  const graceTime = start + 1_750;
+
+  engine.tap('left', graceTime);
+  engine.tap('left', graceTime);
+  const results = engine.getResults(graceTime + 101);
+
+  assert.equal(results.left.totalHit, 1);
+  assert.equal(results.transition.totalHit, 1);
+  assert.equal(results.graceNotesEnabled, true);
+});
+
+test('grace pickups stay disabled by default and do not appear before the first pattern', () => {
+  const start = 45_000;
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, enabledSubdivisions: ['quarter'], changeIntervalBeats: 2 },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  engine.advance(start + 1_100);
+  assert.equal(engine.advance(start + 1_851).leftStats.totalExpected, 2);
+  assert.equal(engine.advance(start + 1_851).leftStats.totalHit, 0);
 });
 
 test('compound meter counts dotted-quarter beats while notes follow quarter-note spacing', () => {

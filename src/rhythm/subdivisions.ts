@@ -1,4 +1,4 @@
-import type { Subdivision, TimeSignature } from '@/types/rhythm';
+import type { RhythmicFeel, Subdivision, TimeSignature } from '@/types/rhythm';
 
 export const SUBDIVISION_LABELS: Record<Subdivision, string> = {
   quarter: 'Quarter (Crotchet)',
@@ -74,6 +74,25 @@ export function subdivisionIntervalMs(
   timeSignature: TimeSignature = '4/4',
 ): number {
   return timeSignatureMetrics(bpm, timeSignature).quarterNoteDurationMs / SUBDIVISION_COUNTS[subdivision];
+}
+
+export function subdivisionOffsetMs(
+  quarterNoteDurationMs: number,
+  subdivision: Subdivision,
+  subdivisionIndex: number,
+  feel: RhythmicFeel = 'straight',
+): number {
+  const divisions = SUBDIVISION_COUNTS[subdivision];
+  const position = subdivisionIndex / divisions;
+  if (feel !== 'swing' || divisions === 1 || divisions === 3) {
+    return position * quarterNoteDurationMs;
+  }
+
+  const swungPosition =
+    position <= 0.5
+      ? position * (4 / 3)
+      : 2 / 3 + (position - 0.5) * (2 / 3);
+  return swungPosition * quarterNoteDurationMs;
 }
 
 export function expectedEventTimeMs(

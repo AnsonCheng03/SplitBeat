@@ -1,6 +1,7 @@
 import { createExerciseStepGenerator } from '@/rhythm/exerciseGenerator';
 import {
   SUBDIVISION_COUNTS,
+  subdivisionOffsetMs,
   timeSignatureMetrics,
 } from '@/rhythm/subdivisions';
 import { accuracyPercent, emptyHandStats, finalizeHandStats } from '@/rhythm/scoring';
@@ -21,6 +22,7 @@ interface ExpectedEvent {
   expectedTimeMs: number;
   step: ExerciseStep;
   beatIndex: number;
+  isGraceNote: boolean;
   settled: boolean;
 }
 
@@ -163,6 +165,8 @@ export class RhythmTimingEngine {
     return {
       bpm: this.settings.bpm,
       timeSignature: this.settings.timeSignature,
+      feel: this.settings.feel,
+      graceNotesEnabled: this.settings.graceNotesEnabled,
       left: this.readHandStats('left'),
       right: this.readHandStats('right'),
       stable: toAccuracyStats(this.stable),
@@ -183,15 +187,31 @@ export class RhythmTimingEngine {
       const step = this.getStep(this.nextStepToGenerate);
       const stepStartTime =
         this.sessionStartTime + step.startBeat * this.beatMs;
-      if (stepStartTime > limitedTime || (this.endTime !== null && stepStartTime >= this.endTime)) break;
+      const previousStep = this.nextStepToGenerate > 0
+        ? this.getStep(this.nextStepToGenerate - 1)
+        : null;
+      const graceLeads = previousStep && this.settings.graceNotesEnabled
+        ? {
+            left: this.graceLeadMs(previousStep, step, 'left'),
+            right: this.graceLeadMs(previousStep, step, 'right'),
+          }
+        : null;
+      const earliestEventTime = graceLeads
+        ? stepStartTime - Math.max(graceLeads.left, graceLeads.right)
+        : stepStartTime;
+      if (earliestEventTime > limitedTime || (this.endTime !== null && stepStartTime >= this.endTime)) break;
       const stepEndTime = stepStartTime + step.durationBeats * this.beatMs;
 
       for (const hand of ['left', 'right'] as const) {
         const subdivision = hand === 'left' ? step.leftSubdivision : step.rightSubdivision;
         const divisions = SUBDIVISION_COUNTS[subdivision];
-        const intervalMs = this.quarterNoteMs / divisions;
         for (let subdivisionIndex = 0; ; subdivisionIndex += 1) {
-          const expectedTimeMs = stepStartTime + subdivisionIndex * intervalMs;
+          const quarterIndex = Math.floor(subdivisionIndex / divisions);
+          const noteIndex = subdivisionIndex % divisions;
+          const expectedTimeMs =
+            stepStartTime +
+            quarterIndex * this.quarterNoteMs +
+            subdivisionOffsetMs(this.quarterNoteMs, subdivision, noteIndex, this.settings.feel);
           if (expectedTimeMs >= stepEndTime) break;
           if (this.endTime !== null && expectedTimeMs >= this.endTime) continue;
           this.events[hand].push({
@@ -199,12 +219,67 @@ export class RhythmTimingEngine {
             expectedTimeMs,
             step,
             beatIndex: Math.floor((expectedTimeMs - this.sessionStartTime) / this.beatMs + 1e-9),
+            isGraceNote: false,
             settled: false,
           });
+        }
+
+        const graceLead = graceLeads?.[hand];
+        if (graceLead && step.startBeat > 0) {
+          const expectedTimeMs = stepStartTime - graceLead;
+          if (this.endTime === null || expectedTimeMs < this.endTime) {
+            this.events[hand].push({
+              id: `${hand}:${step.id}:grace`,
+              expectedTimeMs,
+              step,
+              beatIndex: step.startBeat,
+              isGraceNote: true,
+              settled: false,
+            });
+          }
         }
       }
       this.nextStepToGenerate += 1;
     }
+  }
+
+  private graceLeadMs(previousStep: ExerciseStep, upcomingStep: ExerciseStep, hand: Hand): number {
+    const previousSubdivision = hand === 'left'
+      ? previousStep.leftSubdivision
+      : previousStep.rightSubdivision;
+    const upcomingSubdivision = hand === 'left'
+      ? upcomingStep.leftSubdivision
+      : upcomingStep.rightSubdivision;
+    const previousDivisions = SUBDIVISION_COUNTS[previousSubdivision];
+    const upcomingDivisions = SUBDIVISION_COUNTS[upcomingSubdivision];
+    const previousDurationMs = previousStep.durationBeats * this.beatMs;
+    let previousLastEventOffsetMs = 0;
+    for (
+      let quarterIndex = 0;
+      quarterIndex * this.quarterNoteMs < previousDurationMs;
+      quarterIndex += 1
+    ) {
+      for (let noteIndex = 0; noteIndex < previousDivisions; noteIndex += 1) {
+        const eventOffsetMs =
+          quarterIndex * this.quarterNoteMs +
+          subdivisionOffsetMs(
+            this.quarterNoteMs,
+            previousSubdivision,
+            noteIndex,
+            this.settings.feel,
+          );
+        if (eventOffsetMs < previousDurationMs) {
+          previousLastEventOffsetMs = eventOffsetMs;
+        }
+      }
+    }
+    const gapAfterPreviousNoteMs = previousDurationMs - previousLastEventOffsetMs;
+    const upcomingIntervalMs = this.quarterNoteMs / upcomingDivisions;
+    return Math.min(
+      this.quarterNoteMs / 4,
+      gapAfterPreviousNoteMs / 2,
+      upcomingIntervalMs / 2,
+    );
   }
 
   private settleDueEvents(now: number): void {
@@ -265,7 +340,8 @@ export class RhythmTimingEngine {
     if (grade) combinationHand.totalHit += 1;
 
     const isTransition =
-      event.step.startBeat > 0 && event.beatIndex < event.step.startBeat + 2;
+      event.isGraceNote ||
+      (event.step.startBeat > 0 && event.beatIndex < event.step.startBeat + 2);
     const transitionStats = isTransition ? this.transition : this.stable;
     transitionStats.totalExpected += 1;
     if (grade) transitionStats.totalHit += 1;
@@ -334,6 +410,8 @@ export class RhythmTimingEngine {
     return {
       bpm: this.settings.bpm,
       timeSignature: this.settings.timeSignature,
+      feel: this.settings.feel,
+      graceNotesEnabled: this.settings.graceNotesEnabled,
       left: this.readHandStats('left'),
       right: this.readHandStats('right'),
       stable: toAccuracyStats(this.stable),

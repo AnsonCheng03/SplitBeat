@@ -8,6 +8,7 @@ interface NextPatternPreviewProps {
   step: ExerciseStep | null;
   beatsUntilChange: number;
   secondsUntilChange: number | null;
+  graceNotesEnabled?: boolean;
   compact?: boolean;
 }
 
@@ -39,6 +40,7 @@ export function NextPatternPreview({
   step,
   beatsUntilChange,
   secondsUntilChange,
+  graceNotesEnabled = false,
   compact = false,
 }: NextPatternPreviewProps) {
   if (!step || secondsUntilChange === null) return null;
@@ -50,10 +52,11 @@ export function NextPatternPreview({
       testID="practice.nextPattern"
       accessibilityLabel={
         `Next pattern in ${displayedSeconds} seconds: left ` +
-        `${SUBDIVISION_LABELS[step.leftSubdivision]}, right ${SUBDIVISION_LABELS[step.rightSubdivision]}`
+        `${SUBDIVISION_LABELS[step.leftSubdivision]}, right ${SUBDIVISION_LABELS[step.rightSubdivision]}` +
+        (graceNotesEnabled ? ', with a grace note pickup before the change' : '')
       }
       style={{
-        minHeight: compact ? 50 : 58,
+        minHeight: graceNotesEnabled ? (compact ? 59 : 66) : (compact ? 50 : 58),
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: colors.surface,
@@ -72,6 +75,11 @@ export function NextPatternPreview({
         <Text style={{ color: colors.accent, fontSize: compact ? 17 : 20, fontWeight: '900', fontVariant: ['tabular-nums'], marginTop: 1 }}>
           {displayedSeconds}s
         </Text>
+        {graceNotesEnabled ? (
+          <Text testID="practice.gracePreview" style={{ color: colors.accent, fontSize: compact ? 7 : 8, fontWeight: '900', letterSpacing: 0.5 }}>
+            GRACE PICKUP
+          </Text>
+        ) : null}
       </View>
       <View style={{ width: 1, height: compact ? 32 : 38, backgroundColor: colors.line, marginHorizontal: compact ? 4 : 8 }} />
       <HandPreview hand="left" subdivision={step.leftSubdivision} compact={compact} />

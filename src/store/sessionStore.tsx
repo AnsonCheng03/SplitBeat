@@ -30,6 +30,8 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   durationSeconds: 60,
   changeIntervalBeats: 4,
   enabledSubdivisions: ['quarter', 'eighth', 'triplet', 'sixteenth'],
+  feel: 'straight',
+  graceNotesEnabled: false,
   soundEnabled: true,
   hapticsEnabled: false,
 };
@@ -78,6 +80,11 @@ function restoreSettings(raw: string | null): ExerciseSettings {
       durationSeconds,
       changeIntervalBeats,
       enabledSubdivisions: validSubdivisions as Subdivision[],
+      feel: parsed.feel === 'swing' ? 'swing' : 'straight',
+      graceNotesEnabled:
+        typeof parsed.graceNotesEnabled === 'boolean'
+          ? parsed.graceNotesEnabled
+          : DEFAULT_SETTINGS.graceNotesEnabled,
       soundEnabled: typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : true,
       hapticsEnabled: typeof parsed.hapticsEnabled === 'boolean' ? parsed.hapticsEnabled : false,
     };

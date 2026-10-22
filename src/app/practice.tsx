@@ -50,6 +50,9 @@ export default function PracticeScreen() {
             <Text testID="practice.timeSignature" style={{ color: colors.muted, fontSize: compact ? 10 : 11, fontWeight: '700' }}>
               {snapshot.timeSignature}
             </Text>
+            <Text testID="practice.feel" style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '700' }}>
+              {settings.feel === 'swing' ? 'SWING' : 'STRAIGHT'}
+            </Text>
           </View>
           <View style={{ alignItems: 'flex-end', minWidth: 54 }}>
             <Text style={{ color: colors.muted, fontSize: compact ? 10 : 11, fontWeight: '700' }}>{timeLabel}</Text>
@@ -89,6 +92,7 @@ export default function PracticeScreen() {
           step={snapshot.nextStep}
           beatsUntilChange={snapshot.beatsUntilChange}
           secondsUntilChange={snapshot.secondsUntilChange}
+          graceNotesEnabled={settings.graceNotesEnabled}
           compact={compact}
         />
 

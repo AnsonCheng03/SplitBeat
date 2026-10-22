@@ -26,10 +26,12 @@ function ChoiceRow<T extends string | number>({
   options,
   value,
   onChange,
+  testIDPrefix,
 }: {
   options: { label: string; value: T }[];
   value: T;
   onChange: (value: T) => void;
+  testIDPrefix?: string;
 }) {
   return (
     <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -38,6 +40,9 @@ function ChoiceRow<T extends string | number>({
         return (
           <Pressable
             key={String(option.value)}
+            testID={testIDPrefix ? `${testIDPrefix}.${String(option.value)}` : undefined}
+            accessibilityRole="radio"
+            accessibilityState={{ selected }}
             onPress={() => onChange(option.value)}
             style={{
               flex: 1,
@@ -213,6 +218,20 @@ export default function SetupScreen() {
           onChange={(changeIntervalBeats) => updateSettings({ changeIntervalBeats })}
         />
 
+        <Text style={sectionLabel}>RHYTHMIC FEEL</Text>
+        <ChoiceRow
+          testIDPrefix="setup.feel"
+          options={[
+            { label: 'Straight', value: 'straight' as const },
+            { label: 'Swing', value: 'swing' as const },
+          ]}
+          value={settings.feel}
+          onChange={(feel) => updateSettings({ feel })}
+        />
+        <Text style={{ color: colors.dim, fontSize: 12, marginTop: 8 }}>
+          Swing stretches binary offbeats to a 2:1 feel. Triplets keep their even spacing.
+        </Text>
+
         <Text style={sectionLabel}>ALLOWED SUBDIVISIONS</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 9 }}>
           {SUBDIVISIONS.map((subdivision) => {
@@ -249,11 +268,15 @@ export default function SetupScreen() {
 
         <View style={{ marginTop: 21, borderTopWidth: 1, borderTopColor: colors.line }}>
           {[
+            { label: 'Grace note pickups', value: settings.graceNotesEnabled, patch: { graceNotesEnabled: !settings.graceNotesEnabled } },
             { label: 'Metronome sound', value: settings.soundEnabled, patch: { soundEnabled: !settings.soundEnabled } },
             { label: 'Tap haptics', value: settings.hapticsEnabled, patch: { hapticsEnabled: !settings.hapticsEnabled } },
           ].map((toggle) => (
             <Pressable
               key={toggle.label}
+              testID={toggle.label === 'Grace note pickups' ? 'setup.toggle.graceNotes' : undefined}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: toggle.value }}
               onPress={() => updateSettings(toggle.patch)}
               style={{ minHeight: 52, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.line }}
             >
@@ -274,6 +297,9 @@ export default function SetupScreen() {
             </Pressable>
           ))}
         </View>
+        <Text style={{ color: colors.dim, fontSize: 12, marginTop: 8 }}>
+          When enabled, one extra pickup is expected by each hand just before every pattern change.
+        </Text>
 
         <Pressable
           testID="setup.start"

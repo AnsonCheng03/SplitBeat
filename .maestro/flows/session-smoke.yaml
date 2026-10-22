@@ -26,7 +26,13 @@ appId: com.splitbeat.twohandrhythm
     id: setup.timeSignature.6-8
 - scrollUntilVisible:
     element:
-      id: setup.start
+      id: setup.feel.swing
+    direction: DOWN
+- tapOn:
+    id: setup.feel.swing
+- scrollUntilVisible:
+    element:
+      id: setup.subdivision.thirtySecond
     direction: DOWN
 - assertVisible:
     id: setup.subdivision.thirtySecond
@@ -36,6 +42,16 @@ appId: com.splitbeat.twohandrhythm
     id: setup.subdivision.thirtySecond
 - tapOn:
     id: setup.subdivision.sixtyFourth
+- scrollUntilVisible:
+    element:
+      id: setup.toggle.graceNotes
+    direction: DOWN
+- tapOn:
+    id: setup.toggle.graceNotes
+- scrollUntilVisible:
+    element:
+      id: setup.start
+    direction: DOWN
 - tapOn:
     id: setup.start
 - extendedWaitUntil:
@@ -45,10 +61,13 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: practice.timeSignature
 - assertVisible: 6/8
+- assertVisible: SWING
 - extendedWaitUntil:
     visible:
       id: practice.nextPattern
     timeout: 15000
+- assertVisible:
+    id: practice.gracePreview
 - assertVisible:
     id: practice.tap.left
 - assertVisible:

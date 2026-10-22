@@ -147,6 +147,10 @@ export default function ResultsScreen() {
       Math.min(accuracyPercent(a.left), accuracyPercent(a.right)) -
       Math.min(accuracyPercent(b.left), accuracyPercent(b.right)),
   );
+  const sessionOptions = [
+    results.feel === 'swing' ? 'SWING' : 'STRAIGHT',
+    results.graceNotesEnabled ? 'GRACE PICKUPS' : null,
+  ].filter(Boolean).join(' · ');
 
   return (
     <SafeAreaView testID="results.screen" style={{ flex: 1, backgroundColor: colors.background }}>
@@ -156,7 +160,7 @@ export default function ResultsScreen() {
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
           <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.8 }}>SESSION COMPLETE</Text>
-          <Text style={{ color: colors.muted, fontSize: 12 }}>{results.bpm} BPM · {results.timeSignature}</Text>
+          <Text style={{ color: colors.muted, fontSize: 12 }}>{results.bpm} BPM · {results.timeSignature} · {sessionOptions}</Text>
         </View>
         <Text style={{ color: colors.text, fontSize: 32, fontWeight: '900', letterSpacing: -0.8 }}>Your timing.</Text>
 
