@@ -28,6 +28,7 @@ An iOS build can also be offered on Apple silicon Macs as an iPhone/iPad app. Th
 
 - `src/app/` contains the setup, practice, and results routes.
 - `src/rhythm/` contains subdivision math, non-repeating pair generation, tap matching, and scoring.
+- `src/rhythm/noteNotation.ts` builds repeated subdivision symbols and mixed-duration bar notation with beat-aware beams and flags.
 - `src/rhythm/musicXmlParser.ts` converts partwise MusicXML to rhythm-only score tracks for imported-score practice.
 - `src/rhythm/timingCalibration.ts` normalizes per-hand timing calibration and the selectable scoring window.
 - src/audio/ synthesizes selectable metronome and hand click tones, then schedules metronome clicks on the native audio clock.
@@ -56,7 +57,7 @@ HOMR supports PDF and image inputs and writes a `.musicxml` file beside the sour
 
 The importer maps staff 1 to the right hand and staff 2 to the left hand in a grand staff. If the score has separate one-staff parts, it uses the first part for the right hand and the second for the left. It converts note attacks and durations, treats rests as silence, merges tied notes, and treats chords as one tap. Grace notes are skipped with a warning because MusicXML does not give them a fixed duration. The extracted rhythm is previewed before practice; the score then repeats for the saved session length. A score tempo, when present, sets the practice tempo.
 
-The internal `ImportedRhythmScore` JSON stores each measure's start and duration in quarter-note units plus separate left/right note events. Practice timestamps are calculated from the monotonic session start and the score's quarter-note positions, then matched by the same per-hand scoring windows as generated exercises. The current importer accepts partwise MusicXML and the time signatures already supported by Split Beat; it rejects scores with tempo or time-signature changes. It does not import PDF/image files directly, compressed `.mxl` packages, or preserve pitch and engraving; check each bar's rhythm preview against the source before training. The pasted score is currently kept for the active session only.
+The internal `ImportedRhythmScore` JSON stores each measure's start and duration in quarter-note units plus separate left/right note events. Its rhythm preview places notes at their score onsets, varies beam depth with note duration, and groups beams at the meter's pulse. Practice timestamps are calculated from the monotonic session start and the score's quarter-note positions, then matched by the same per-hand scoring windows as generated exercises. The current importer accepts partwise MusicXML and the time signatures already supported by Split Beat; it rejects scores with tempo or time-signature changes. It does not import PDF/image files directly or compressed `.mxl` packages, and its simplified preview does not preserve pitch or original engraving; check each bar against the source before training. The pasted score is currently kept for the active session only.
 
 ## External keyboard play
 

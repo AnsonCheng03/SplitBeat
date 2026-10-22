@@ -18,7 +18,7 @@ appId: com.splitbeat.twohandrhythm
     id: scoreImport.screen
 - tapOn:
     id: scoreImport.xmlInput
-- inputText: '<score-partwise><work><work-title>E2E Score</work-title></work><part-list><score-part id="P"><part-name>Piano</part-name></score-part></part-list><part id="P"><measure number="1"><attributes><divisions>1</divisions><staves>2</staves><time><beats>2</beats><beat-type>4</beat-type></time></attributes><note><pitch><step>C</step><octave>4</octave></pitch><duration>1</duration><staff>1</staff></note><backup><duration>1</duration></backup><note><pitch><step>C</step><octave>3</octave></pitch><duration>1</duration><staff>2</staff></note></measure></part></score-partwise>'
+- inputText: '<score-partwise><work><work-title>E2E Mixed Score</work-title></work><part-list><score-part id="P"><part-name>Piano</part-name></score-part></part-list><part id="P"><measure number="1"><attributes><divisions>8</divisions><staves>2</staves><time><beats>2</beats><beat-type>4</beat-type></time></attributes><note><pitch><step>C</step><octave>4</octave></pitch><duration>1</duration><staff>1</staff></note><note><pitch><step>D</step><octave>4</octave></pitch><duration>1</duration><staff>1</staff></note><note><pitch><step>E</step><octave>4</octave></pitch><duration>2</duration><staff>1</staff></note><note><pitch><step>F</step><octave>4</octave></pitch><duration>4</duration><staff>1</staff></note><note><pitch><step>G</step><octave>4</octave></pitch><duration>8</duration><staff>1</staff></note><backup><duration>16</duration></backup><note><pitch><step>C</step><octave>3</octave></pitch><duration>1</duration><staff>2</staff></note><note><pitch><step>D</step><octave>3</octave></pitch><duration>1</duration><staff>2</staff></note><note><pitch><step>E</step><octave>3</octave></pitch><duration>2</duration><staff>2</staff></note><note><pitch><step>F</step><octave>3</octave></pitch><duration>4</duration><staff>2</staff></note><note><pitch><step>G</step><octave>3</octave></pitch><duration>8</duration><staff>2</staff></note></measure></part></score-partwise>'
 - hideKeyboard
 - scrollUntilVisible:
     element:
@@ -28,7 +28,8 @@ appId: com.splitbeat.twohandrhythm
     id: scoreImport.parse
 - assertVisible:
     id: scoreImport.summary
-- assertVisible: E2E Score
+- assertVisible: E2E Mixed Score
+- assertVisible: 5 left-hand notes · 5 right-hand notes
 - tapOn:
     id: scoreImport.duration.30
 - scrollUntilVisible:
@@ -43,6 +44,10 @@ appId: com.splitbeat.twohandrhythm
     timeout: 15000
 - assertVisible:
     id: practice.scoreMeasure
+- assertVisible:
+    id: practice.scoreMeasure.leftNotation
+- assertVisible:
+    id: practice.scoreMeasure.rightNotation
 - assertVisible: BAR 1 / 1
 - tapOn:
     id: practice.tap.left
@@ -55,4 +60,4 @@ appId: com.splitbeat.twohandrhythm
       id: results.screen
     timeout: 15000
 - assertVisible: SCORE SESSION COMPLETE
-- assertVisible: 80 BPM · 2/4 · E2E Score
+- assertVisible: 80 BPM · 2/4 · E2E Mixed Score

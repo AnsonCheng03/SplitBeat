@@ -10,7 +10,7 @@ import { NextPatternPreview } from '@/components/NextPatternPreview';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
 import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
 import { TapZone } from '@/components/TapZone';
-import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
+import { pulseQuarterNotes, SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import { useRhythmSession } from '@/store/sessionStore';
 import type { Hand } from '@/types/rhythm';
 import { colors } from '@/theme';
@@ -94,6 +94,7 @@ export default function PracticeScreen() {
               number={snapshot.scoreMeasureNumber ?? 1}
               count={snapshot.scoreMeasureCount ?? 1}
               compact={compact}
+              beamGroupQuarterNotes={pulseQuarterNotes(settings.timeSignature)}
             />
           </View>
         ) : (

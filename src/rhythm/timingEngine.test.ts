@@ -6,6 +6,7 @@ import { generateExerciseSteps } from '@/rhythm/exerciseGenerator';
 import {
   beatDurationMs,
   expectedEventTimeMs,
+  pulseQuarterNotes,
   subdivisionOffsetMs,
   subdivisionIntervalMs,
   timeSignatureMetrics,
@@ -56,6 +57,9 @@ test('swing stretches binary offbeats while triplets remain even', () => {
 });
 
 test('time signatures describe the right pulse, bar length, and quarter-note duration', () => {
+  assert.equal(pulseQuarterNotes('6/8'), 1.5);
+  assert.equal(pulseQuarterNotes('3/8'), 0.5);
+  assert.equal(pulseQuarterNotes('2/2'), 2);
   assert.deepEqual(timeSignatureMetrics(60, '4/4'), {
     numerator: 4,
     denominator: 4,

@@ -52,6 +52,10 @@ export function beatDurationMs(bpm: number): number {
   return 60_000 / bpm;
 }
 
+export function pulseQuarterNotes(timeSignature: TimeSignature): number {
+  return TIME_SIGNATURE_DEFINITIONS[timeSignature].pulseQuarterNotes;
+}
+
 export function timeSignatureMetrics(
   bpm: number,
   timeSignature: TimeSignature = '4/4',

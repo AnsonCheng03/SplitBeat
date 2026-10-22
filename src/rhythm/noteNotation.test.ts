@@ -2,7 +2,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createNoteNotationPlan } from '@/rhythm/noteNotation';
+import { createBarNoteNotationPlan, createNoteNotationPlan } from '@/rhythm/noteNotation';
 
 test('note builder creates joined noteheads and stems at each supported subdivision', () => {
   const cases = [
@@ -20,13 +20,72 @@ test('note builder creates joined noteheads and stems at each supported subdivis
     const slotWidth = plan.width / expectedCount;
 
     for (const [index, note] of plan.notes.entries()) {
-      assert.equal(note.left, index * slotWidth, `${subdivision} note spacing`);
+      assert.equal(note.left, index * slotWidth + (slotWidth - note.headWidth) / 2, `${subdivision} note spacing`);
       assert.ok(note.headWidth > note.headHeight, `${subdivision} notehead should be oval`);
       assert.ok(note.stemTop < note.headTop, `${subdivision} stem should extend above the notehead`);
-      assert.ok(note.stemLeft < note.headLeft + note.headWidth, `${subdivision} stem should join the notehead`);
-      assert.ok(note.stemLeft + note.stemWidth > note.headLeft, `${subdivision} stem should overlap the notehead`);
+      assert.ok(note.stemLeft < note.headWidth, `${subdivision} stem should join the notehead`);
+      assert.ok(note.stemLeft + note.stemWidth > 0, `${subdivision} stem should overlap the notehead`);
     }
   }
+});
+
+test('bar note builder beams adjacent notes according to each note duration', () => {
+  const plan = createBarNoteNotationPlan(
+    [
+      { startQuarter: 0, durationQuarter: 0.125 },
+      { startQuarter: 0.125, durationQuarter: 0.125 },
+      { startQuarter: 0.25, durationQuarter: 0.25 },
+      { startQuarter: 0.5, durationQuarter: 0.5 },
+    ],
+    { durationQuarter: 1, width: 400, beamGroupQuarterNotes: 1 },
+  );
+
+  assert.equal(plan.notes.length, 4);
+  assert.deepEqual(
+    [0, 1, 2].map((level) => plan.beams.filter((beam) => beam.kind === 'beam' && beam.level === level).length),
+    [1, 1, 1],
+  );
+  assert.equal(plan.beams.filter((beam) => beam.kind === 'flag').length, 0);
+  assert.ok(plan.notes[0]!.left < plan.notes[1]!.left);
+
+  const triplet = createBarNoteNotationPlan(
+    Array.from({ length: 3 }, (_, index) => ({ startQuarter: index / 3, durationQuarter: 1 / 3 })),
+    { durationQuarter: 1, width: 240, beamGroupQuarterNotes: 1 },
+  );
+  assert.equal(triplet.beams.filter((beam) => beam.kind === 'beam').length, 1);
+});
+
+test('bar note builder flags isolated short notes and splits beams at beat groups', () => {
+  const isolated = createBarNoteNotationPlan(
+    [
+      { startQuarter: 0, durationQuarter: 0.5 },
+      { startQuarter: 0.5, durationQuarter: 1 },
+      { startQuarter: 1.5, durationQuarter: 0.25 },
+    ],
+    { durationQuarter: 2, width: 300, beamGroupQuarterNotes: 1 },
+  );
+  assert.equal(isolated.beams.filter((beam) => beam.kind === 'flag').length, 3);
+
+  const compoundBeatGroups = createBarNoteNotationPlan(
+    Array.from({ length: 6 }, (_, index) => ({ startQuarter: index / 2, durationQuarter: 0.5 })),
+    { durationQuarter: 3, width: 360, beamGroupQuarterNotes: 1.5 },
+  );
+  assert.equal(compoundBeatGroups.beams.filter((beam) => beam.kind === 'beam' && beam.level === 0).length, 2);
+});
+
+test('bar note builder rejects invalid measure and note timing', () => {
+  assert.throws(
+    () => createBarNoteNotationPlan([], { durationQuarter: 0, width: 200 }),
+    /positive duration/,
+  );
+  assert.throws(
+    () => createBarNoteNotationPlan([{ startQuarter: 1, durationQuarter: 0.5 }], { durationQuarter: 1, width: 200 }),
+    /start inside the bar/,
+  );
+  assert.throws(
+    () => createBarNoteNotationPlan([{ startQuarter: 0, durationQuarter: 0, beamCount: 1 }], { durationQuarter: 1, width: 200 }),
+    /positive duration/,
+  );
 });
 
 test('note builder groups beams into the expected number of levels', () => {

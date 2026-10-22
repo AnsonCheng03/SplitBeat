@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
+import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import { parseMusicXmlRhythm } from '@/rhythm/musicXmlParser';
 import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
@@ -116,7 +117,13 @@ export default function ImportScoreScreen() {
                 <Text style={{ color: colors.text, fontSize: 26 }}>‹</Text>
               </Pressable>
               <View style={{ flex: 1 }}>
-                <ScoreRhythmMeasure measure={score.measures[previewMeasureIndex]} number={previewMeasureIndex + 1} count={score.measures.length} compact />
+                <ScoreRhythmMeasure
+                  measure={score.measures[previewMeasureIndex]}
+                  number={previewMeasureIndex + 1}
+                  count={score.measures.length}
+                  compact
+                  beamGroupQuarterNotes={pulseQuarterNotes(score.timeSignature)}
+                />
               </View>
               <Pressable
                 testID="scoreImport.nextMeasure"
