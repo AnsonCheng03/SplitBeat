@@ -5,7 +5,10 @@
     "version": "1.0.0",
     "icon": "./assets/icon.png",
     "backgroundColor": "#0B0F14",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "scheme": "twohandrhythm",
     "orientation": "landscape",
     "userInterfaceStyle": "dark",
@@ -51,7 +54,15 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "monochromeImage": "./assets/monochrome-icon.png",
         "backgroundColor": "#0B0F14"
+      },
+      "permissions": []
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "32941fab-0d30-4c4d-a3f6-80040afd3132"
       }
-    }
+    },
+    "owner": "anson12666"
   }
 }

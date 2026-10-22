@@ -17,6 +17,17 @@ Once the development client is installed, start Metro with npm start. Expo Go do
 
 An iOS build can also be offered on Apple silicon Macs as an iPhone/iPad app. This project does not add a macOS or Mac Catalyst target; Mac App Store availability is controlled in App Store Connect.
 
+## iOS release and TestFlight
+
+EAS profiles follow the same staging, E2E, and production layout used by TechQ. Production builds use remote build-number management and are submitted with the production profile:
+
+~~~sh
+eas build --platform ios --profile production
+eas submit --platform ios --profile production --latest
+~~~
+
+The iOS config sets `usesNonExemptEncryption` to `false`; the generated `Info.plist` contains `ITSAppUsesNonExemptEncryption=false` and does not include a microphone purpose string. The app synthesizes sound and does not use the microphone.
+
 ## App branding
 
 - `assets/icon.png` is the full-color 1024 px app icon for iOS and Android.
