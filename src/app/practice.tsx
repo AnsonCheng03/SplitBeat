@@ -7,20 +7,24 @@ import { Countdown } from '@/components/Countdown';
 import { HardwareKeyboardInput } from '@/components/HardwareKeyboardInput';
 import { MetronomeIndicator } from '@/components/MetronomeIndicator';
 import { NextPatternPreview } from '@/components/NextPatternPreview';
+import { PianoRhythmStaff } from '@/components/PianoRhythmStaff';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
 import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
 import { TapZone } from '@/components/TapZone';
 import { pulseQuarterNotes, SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import { useRhythmSession } from '@/store/sessionStore';
-import type { Hand } from '@/types/rhythm';
+import type { Hand, TapFeedback } from '@/types/rhythm';
 import { colors } from '@/theme';
 
 export default function PracticeScreen() {
   const { height } = useWindowDimensions();
   const compact = height < 520;
   const router = useRouter();
-  const { snapshot, settings, registerTap, stopExercise, results } = useRhythmSession();
-  const [keyboardTapTokens, setKeyboardTapTokens] = useState<Record<Hand, number>>({ left: 0, right: 0 });
+  const { snapshot, settings, updateSettings, audioStatus, registerTap, stopExercise, results } = useRhythmSession();
+  const [keyboardTapTokens, setKeyboardTapTokens] = useState<Record<Hand, { token: number; feedback: TapFeedback | null }>>({
+    left: { token: 0, feedback: null },
+    right: { token: 0, feedback: null },
+  });
 
   useEffect(() => {
     if (!snapshot) router.replace('/setup');
@@ -34,8 +38,11 @@ export default function PracticeScreen() {
 
   const handleKeyboardTap = useCallback(
     (hand: Hand, timestamp: number) => {
-      setKeyboardTapTokens((current) => ({ ...current, [hand]: current[hand] + 1 }));
-      registerTap(hand, timestamp);
+      const feedback = registerTap(hand, timestamp);
+      setKeyboardTapTokens((current) => ({
+        ...current,
+        [hand]: { token: current[hand].token + 1, feedback },
+      }));
     },
     [registerTap],
   );
@@ -49,7 +56,7 @@ export default function PracticeScreen() {
     <SafeAreaView testID="practice.screen" style={{ flex: 1, backgroundColor: colors.background }}>
       <HardwareKeyboardInput onTap={handleKeyboardTap} />
       <View style={{ flex: 1, paddingHorizontal: compact ? 12 : 18, paddingTop: compact ? 2 : 8, paddingBottom: compact ? 3 : 9, maxWidth: 950, width: '100%', alignSelf: 'center' }}>
-        <View style={{ minHeight: compact ? 32 : 45, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View style={{ minHeight: compact ? 38 : 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <Pressable testID="practice.end" onPress={stop} hitSlop={12}>
             <Text style={{ color: colors.muted, fontSize: compact ? 11 : 12, fontWeight: '800', letterSpacing: 1 }}>
               ‹  END
@@ -66,9 +73,23 @@ export default function PracticeScreen() {
             <Text testID="practice.feel" style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '700' }}>
               {settings.feel === 'swing' ? 'SWING' : 'STRAIGHT'}
             </Text>
+            <Text testID="practice.mode" style={{ color: colors.dim, fontSize: compact ? 7 : 8, fontWeight: '800', letterSpacing: 0.6 }}>
+              {settings.trainingMode === 'single-hand' ? `${settings.singleHand.toUpperCase()} HAND ONLY` : 'TWO HANDS'}
+            </Text>
           </View>
-          <View style={{ alignItems: 'flex-end', minWidth: 54 }}>
-            <Text style={{ color: colors.muted, fontSize: compact ? 10 : 11, fontWeight: '700' }}>{timeLabel}</Text>
+          <View style={{ alignItems: 'flex-end', minWidth: 75 }}>
+            <Pressable
+              testID="practice.soundToggle"
+              accessibilityRole="button"
+              accessibilityLabel={settings.soundEnabled ? 'Sound on. Tap to mute.' : 'Sound off. Tap to enable.'}
+              onPress={() => updateSettings({ soundEnabled: !settings.soundEnabled })}
+              hitSlop={8}
+            >
+              <Text testID="practice.soundStatus" style={{ color: settings.soundEnabled ? colors.left : colors.dim, fontSize: compact ? 8 : 9, fontWeight: '900', letterSpacing: 0.6 }}>
+                {settings.soundEnabled ? 'SOUND ON' : audioStatus === 'ready' ? 'SOUND OFF' : 'AUDIO OFF'}
+              </Text>
+            </Pressable>
+            <Text style={{ color: colors.muted, fontSize: compact ? 10 : 11, fontWeight: '700', marginTop: 2 }}>{timeLabel}</Text>
           </View>
         </View>
 
@@ -78,6 +99,7 @@ export default function PracticeScreen() {
               step={snapshot.nextStep}
               beatsUntilChange={snapshot.beatsUntilChange}
               graceNotesEnabled={settings.graceNotesEnabled}
+              restBeforeChange={snapshot.isRest}
               compact={compact}
               timeSignature={settings.timeSignature}
             />
@@ -89,6 +111,7 @@ export default function PracticeScreen() {
             beatInBar={snapshot.beatInBar}
             beatsPerBar={snapshot.beatsPerBar}
             isRunning={snapshot.phase === 'running'}
+            isRest={snapshot.isRest}
             compact={compact}
           />
         </View>
@@ -109,21 +132,33 @@ export default function PracticeScreen() {
               beamGroupQuarterNotes={pulseQuarterNotes(settings.timeSignature)}
             />
           </View>
+        ) : settings.practiceDisplay === 'piano-staff' ? (
+          <View style={{ flex: compact ? 0.8 : 0.95, minHeight: compact ? 88 : 122, maxHeight: compact ? 116 : 160, justifyContent: 'center', marginTop: compact ? 1 : 5, marginBottom: compact ? 2 : 7 }}>
+            <PianoRhythmStaff
+              steps={snapshot.barSteps}
+              barStartBeat={snapshot.barStartBeat}
+              timeSignature={settings.timeSignature}
+              feel={settings.feel}
+              restBetweenChanges={settings.restBetweenChanges}
+              activeHand={settings.trainingMode === 'single-hand' ? settings.singleHand : undefined}
+              compact={compact}
+            />
+          </View>
         ) : (
           <>
             <View style={{ flex: compact ? 0.8 : 0.95, minHeight: compact ? 78 : 130, maxHeight: compact ? 112 : 190, flexDirection: 'row', alignItems: 'center', marginTop: compact ? 1 : 5, marginBottom: compact ? 2 : 7 }}>
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', borderRightWidth: 1, borderRightColor: colors.line }}>
-                <Text style={{ color: colors.left, fontSize: compact ? 10 : 11, fontWeight: '800', letterSpacing: 1.6 }}>LEFT HAND</Text>
-                <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} compact={compact} timeSignature={settings.timeSignature} />
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', borderRightWidth: 1, borderRightColor: colors.line, opacity: settings.trainingMode === 'single-hand' && settings.singleHand !== 'left' ? 0.38 : 1 }}>
+                <Text style={{ color: colors.left, fontSize: compact ? 10 : 11, fontWeight: '800', letterSpacing: 1.6 }}>{settings.trainingMode === 'single-hand' && settings.singleHand !== 'left' ? 'LEFT · REST' : 'LEFT HAND'}</Text>
+                {settings.trainingMode === 'single-hand' && settings.singleHand !== 'left' ? <View style={{ height: compact ? 56 : 68 }} /> : <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} compact={compact} timeSignature={settings.timeSignature} />}
                 <Text numberOfLines={2} style={{ color: colors.text, fontSize: compact ? 12 : 14, fontWeight: '700', textAlign: 'center', paddingHorizontal: 6 }}>
-                  {SUBDIVISION_LABELS[step.leftSubdivision]}
+                  {settings.trainingMode === 'single-hand' && settings.singleHand !== 'left' ? 'Not playing' : SUBDIVISION_LABELS[step.leftSubdivision]}
                 </Text>
               </View>
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: colors.right, fontSize: compact ? 10 : 11, fontWeight: '800', letterSpacing: 1.6 }}>RIGHT HAND</Text>
-                <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} compact={compact} timeSignature={settings.timeSignature} />
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', opacity: settings.trainingMode === 'single-hand' && settings.singleHand !== 'right' ? 0.38 : 1 }}>
+                <Text style={{ color: colors.right, fontSize: compact ? 10 : 11, fontWeight: '800', letterSpacing: 1.6 }}>{settings.trainingMode === 'single-hand' && settings.singleHand !== 'right' ? 'RIGHT · REST' : 'RIGHT HAND'}</Text>
+                {settings.trainingMode === 'single-hand' && settings.singleHand !== 'right' ? <View style={{ height: compact ? 56 : 68 }} /> : <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} compact={compact} timeSignature={settings.timeSignature} />}
                 <Text numberOfLines={2} style={{ color: colors.text, fontSize: compact ? 12 : 14, fontWeight: '700', textAlign: 'center', paddingHorizontal: 6 }}>
-                  {SUBDIVISION_LABELS[step.rightSubdivision]}
+                  {settings.trainingMode === 'single-hand' && settings.singleHand !== 'right' ? 'Not playing' : SUBDIVISION_LABELS[step.rightSubdivision]}
                 </Text>
               </View>
             </View>
@@ -134,7 +169,13 @@ export default function PracticeScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: compact ? 3 : 5 }}>
             <Text style={{ color: colors.muted, fontSize: compact ? 10 : 11 }}>ACCURACY</Text>
           </View>
-          <AccuracyDisplay left={snapshot.leftAccuracy} right={snapshot.rightAccuracy} compact={compact} />
+          <AccuracyDisplay
+            left={snapshot.leftAccuracy}
+            right={snapshot.rightAccuracy}
+            trainingMode={settings.trainingMode}
+            singleHand={settings.singleHand}
+            compact={compact}
+          />
         </View>
 
         <View style={{ flex: 1.25, minHeight: compact ? 100 : 180, flexDirection: 'row', marginTop: compact ? 3 : 8 }}>
@@ -142,14 +183,20 @@ export default function PracticeScreen() {
             hand="left"
             onTap={registerTap}
             hapticsEnabled={settings.hapticsEnabled}
-            keyboardTapToken={keyboardTapTokens.left}
+            keyboardTapToken={keyboardTapTokens.left.token}
+            keyboardTapFeedback={keyboardTapTokens.left.feedback}
+            enabled={settings.trainingMode !== 'single-hand' || settings.singleHand === 'left'}
+            resting={snapshot.isRest}
             compact={compact}
           />
           <TapZone
             hand="right"
             onTap={registerTap}
             hapticsEnabled={settings.hapticsEnabled}
-            keyboardTapToken={keyboardTapTokens.right}
+            keyboardTapToken={keyboardTapTokens.right.token}
+            keyboardTapFeedback={keyboardTapTokens.right.feedback}
+            enabled={settings.trainingMode !== 'single-hand' || settings.singleHand === 'right'}
+            resting={snapshot.isRest}
             compact={compact}
           />
         </View>

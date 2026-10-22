@@ -22,9 +22,13 @@ const settings: ExerciseSettings = {
   timeSignature: '4/4',
   durationSeconds: 30,
   changeIntervalBeats: 4,
+  restBetweenChanges: false,
   enabledSubdivisions: ['quarter', 'eighth'],
   feel: 'straight',
   graceNotesEnabled: false,
+  trainingMode: 'two-hand',
+  singleHand: 'left',
+  practiceDisplay: 'split',
   soundEnabled: false,
   metronomeSound: 'wood',
   leftHandSound: 'soft',
@@ -118,6 +122,60 @@ test('the timing engine generates all 64th-note events from beat timestamps', ()
   const snapshot = engine.advance(start + 1_040);
   assert.equal(snapshot.leftStats.totalExpected, 16);
   assert.equal(snapshot.rightStats.totalExpected, 16);
+});
+
+test('single-hand mode scores only the selected hand and ignores the other side', () => {
+  const start = 35_000;
+  const engine = new RhythmTimingEngine({
+    settings: {
+      ...settings,
+      trainingMode: 'single-hand',
+      singleHand: 'right',
+      changeIntervalBeats: 2,
+      enabledSubdivisions: ['quarter', 'eighth'],
+    },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  assert.equal(engine.tap('left', start), 'ignored');
+  assert.equal(engine.tap('right', start), 'hit');
+  const results = engine.getResults(start + 150);
+  assert.equal(results.right.totalExpected, 1);
+  assert.equal(results.right.totalHit, 1);
+  assert.equal(results.left.totalExpected, 0);
+  assert.equal(results.trainingMode, 'single-hand');
+  assert.equal(results.singleHand, 'right');
+});
+
+test('rest before a change silences the last beat while the metronome beat stays aligned', () => {
+  const start = 36_000;
+  const engine = new RhythmTimingEngine({
+    settings: {
+      ...settings,
+      changeIntervalBeats: 2,
+      restBetweenChanges: true,
+      enabledSubdivisions: ['quarter'],
+    },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  const duringRest = engine.advance(start + 1_000);
+  assert.equal(duringRest.isRest, true);
+  assert.equal(duringRest.leftStats.totalExpected, 1);
+  assert.equal(engine.tap('left', start + 1_000), 'miss');
+
+  const onChange = engine.advance(start + 2_000);
+  assert.equal(onChange.isRest, false);
+  assert.equal(onChange.currentStep.startBeat, 2);
+});
+
+test('out-of-window taps return miss feedback without consuming an event', () => {
+  const start = 37_000;
+  const engine = new RhythmTimingEngine({ settings, sessionStartTime: start, random: () => 0 });
+  assert.equal(engine.tap('left', start + 250), 'miss');
+  assert.equal(engine.tap('left', start + 1_000), 'hit');
 });
 
 test('tuplets use equal note spacing across the selected time-signature beat', () => {

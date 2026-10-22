@@ -9,6 +9,7 @@ interface NextPatternPreviewProps {
   step: ExerciseStep | null;
   beatsUntilChange: number;
   graceNotesEnabled?: boolean;
+  restBeforeChange?: boolean;
   compact?: boolean;
   timeSignature: TimeSignature;
 }
@@ -42,6 +43,7 @@ export function NextPatternPreview({
   step,
   beatsUntilChange,
   graceNotesEnabled = false,
+  restBeforeChange = false,
   compact = false,
   timeSignature,
 }: NextPatternPreviewProps) {
@@ -72,7 +74,7 @@ export function NextPatternPreview({
       accessibilityLabel={
         `Next pattern in ${beatsUntilChange} ${beatsUntilChange === 1 ? 'beat' : 'beats'}: left ` +
         `${SUBDIVISION_LABELS[step.leftSubdivision]}, right ${SUBDIVISION_LABELS[step.rightSubdivision]}` +
-        (graceNotesEnabled ? ', with a grace note pickup before the change' : '')
+        (restBeforeChange ? ', with a rest before the change' : graceNotesEnabled ? ', with a grace note pickup before the change' : '')
       }
       style={{
         opacity: slideProgress,
@@ -100,7 +102,11 @@ export function NextPatternPreview({
           <Text testID="practice.nextPattern.countdown" style={{ color: colors.accent, fontSize: compact ? 9 : 10, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
             {beatsUntilChange} {beatsUntilChange === 1 ? 'BEAT' : 'BEATS'}
           </Text>
-          {graceNotesEnabled ? (
+            {restBeforeChange ? (
+            <Text testID="practice.restPreview" style={{ position: 'absolute', left: compact ? 48 : 56, top: 1, color: colors.accent, fontSize: compact ? 6 : 7, fontWeight: '900', letterSpacing: 0.3 }}>
+              REST
+            </Text>
+          ) : graceNotesEnabled ? (
             <Text testID="practice.gracePreview" style={{ position: 'absolute', left: compact ? 48 : 56, top: 1, color: colors.accent, fontSize: compact ? 6 : 7, fontWeight: '900', letterSpacing: 0.3 }}>
               GRACE
             </Text>

@@ -18,10 +18,27 @@ appId: com.splitbeat.twohandrhythm
     visible:
       text: AUDIO READY
     timeout: 15000
+- assertVisible:
+    id: home.start
+- tapOn:
+    id: home.mode.singleHand
+- tapOn:
+    id: home.hand.right
 - tapOn:
     id: home.setup
 - assertVisible:
     id: setup.screen
+- scrollUntilVisible:
+    element: { id: setup.card.rhythm }
+    direction: DOWN
+- swipe:
+    start: 90%, 70%
+    end: 90%, 45%
+    duration: 350
+- tapOn:
+    id: setup.card.rhythm
+- assertVisible:
+    id: settings.rhythm.screen
 - scrollUntilVisible:
     element:
       id: setup.timeSignature.6-8
@@ -50,9 +67,39 @@ appId: com.splitbeat.twohandrhythm
     id: setup.subdivision.sixtyFourth
 - tapOn:
     id: setup.subdivision.sixtyFourth
+- scrollUntilVisible:
+    element: { id: setup.toggle.graceNotes }
+    direction: DOWN
+- tapOn:
+    id: setup.toggle.graceNotes
+- scrollUntilVisible:
+    element: { id: setup.toggle.restBetweenChanges }
+    direction: DOWN
+- tapOn:
+    id: setup.toggle.restBetweenChanges
+- scrollUntilVisible:
+    element: { id: settings.rhythm.back }
+    direction: UP
+    visibilityPercentage: 90
+- tapOn:
+    id: settings.rhythm.back
+- scrollUntilVisible:
+    element: { id: setup.card.timing }
+    direction: DOWN
 - swipe:
-    start: 90%, 90%
-    end: 90%, 20%
+    start: 90%, 70%
+    end: 90%, 45%
+    duration: 350
+- tapOn:
+    id: setup.card.timing
+- assertVisible:
+    id: settings.timing.screen
+- scrollUntilVisible:
+    element: { id: setup.calibration.reset }
+    direction: DOWN
+- swipe:
+    start: 90%, 80%
+    end: 90%, 35%
     duration: 500
 - assertVisible:
     id: setup.calibration.reset
@@ -70,10 +117,23 @@ appId: com.splitbeat.twohandrhythm
 - tapOn:
     id: calibration.close
 - waitForAnimationToEnd
+- scrollUntilVisible:
+    element: { id: settings.timing.back }
+    direction: UP
+    visibilityPercentage: 90
+- tapOn:
+    id: settings.timing.back
+- scrollUntilVisible:
+    element: { id: setup.card.audio }
+    direction: DOWN
 - swipe:
-    start: 90%, 90%
-    end: 90%, 20%
-    duration: 500
+    start: 90%, 70%
+    end: 90%, 45%
+    duration: 350
+- tapOn:
+    id: setup.card.audio
+- assertVisible:
+    id: settings.audio.screen
 - assertVisible:
     id: setup.sound.metronome.bell
 - tapOn:
@@ -91,25 +151,48 @@ appId: com.splitbeat.twohandrhythm
 - tapOn:
     id: setup.sound.right.soft
 - scrollUntilVisible:
-    element:
-      id: setup.toggle.graceNotes
-    direction: DOWN
+    element: { id: settings.audio.back }
+    direction: UP
+    visibilityPercentage: 90
 - tapOn:
-    id: setup.toggle.graceNotes
+    id: settings.audio.back
 - scrollUntilVisible:
-    element:
-      id: setup.start
+    element: { id: setup.card.display }
     direction: DOWN
-- extendedWaitUntil:
-    visible:
-      text: AUDIO READY
-    timeout: 15000
+- swipe:
+    start: 90%, 70%
+    end: 90%, 45%
+    duration: 350
+- tapOn:
+    id: setup.card.display
+- assertVisible:
+    id: settings.display.screen
+- tapOn:
+    id: setup.display.piano-staff
+- tapOn:
+    id: settings.display.back
+- assertVisible:
+    id: setup.start
 - tapOn:
     id: setup.start
 - extendedWaitUntil:
     visible:
       id: practice.screen
     timeout: 15000
+- assertVisible:
+    id: practice.grandStaff
+- assertVisible:
+    id: practice.grandStaff.treble
+- assertVisible:
+    id: practice.grandStaff.bass
+- assertVisible: RIGHT HAND ONLY
+- assertVisible: Sound on. Tap to mute.
+- tapOn:
+    id: practice.soundToggle
+- assertVisible: Sound off. Tap to enable.
+- tapOn:
+    id: practice.soundToggle
+- assertVisible: Sound on. Tap to mute.
 - assertVisible:
     id: practice.timeSignature
 - assertVisible: 6/8
@@ -120,8 +203,10 @@ appId: com.splitbeat.twohandrhythm
     timeout: 15000
 - assertVisible:
     id: practice.nextPattern.countdown
-- assertVisible:
-    id: practice.gracePreview
+- extendedWaitUntil:
+    visible:
+      id: practice.restBeat
+    timeout: 10000
 - assertVisible:
     id: practice.tap.left
 - assertVisible:
@@ -130,8 +215,6 @@ appId: com.splitbeat.twohandrhythm
     id: practice.keyboard.leftKeys
 - assertVisible:
     id: practice.keyboard.rightKeys
-- tapOn:
-    id: practice.tap.left
 - tapOn:
     id: practice.tap.right
 - tapOn:

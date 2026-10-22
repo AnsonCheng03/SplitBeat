@@ -26,6 +26,7 @@ import type {
   SessionSnapshot,
   SoundPreset,
   Subdivision,
+  TapFeedback,
 } from '@/types/rhythm';
 
 const SETTINGS_KEY = 'two-hand-rhythm-trainer.settings.v1';
@@ -39,9 +40,13 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   timeSignature: '4/4',
   durationSeconds: 60,
   changeIntervalBeats: 4,
+  restBetweenChanges: false,
   enabledSubdivisions: ['quarter', 'eighth', 'triplet', 'sixteenth'],
   feel: 'straight',
   graceNotesEnabled: false,
+  trainingMode: 'two-hand',
+  singleHand: 'left',
+  practiceDisplay: 'split',
   soundEnabled: true,
   metronomeSound: 'wood',
   leftHandSound: 'soft',
@@ -60,7 +65,7 @@ interface SessionContextValue {
   startExercise: () => Promise<void>;
   startScoreExercise: (score: ImportedRhythmScore) => Promise<void>;
   stopExercise: () => void;
-  registerTap: (hand: Hand, timestamp: number) => void;
+  registerTap: (hand: Hand, timestamp: number) => TapFeedback | null;
   snapshot: SessionSnapshot | null;
   results: SessionResults | null;
 }
@@ -100,12 +105,16 @@ function restoreSettings(raw: string | null): ExerciseSettings {
       timeSignature,
       durationSeconds,
       changeIntervalBeats,
+      restBetweenChanges: parsed.restBetweenChanges === true,
       enabledSubdivisions: validSubdivisions as Subdivision[],
       feel: parsed.feel === 'swing' ? 'swing' : 'straight',
       graceNotesEnabled:
         typeof parsed.graceNotesEnabled === 'boolean'
           ? parsed.graceNotesEnabled
           : DEFAULT_SETTINGS.graceNotesEnabled,
+      trainingMode: parsed.trainingMode === 'single-hand' ? 'single-hand' : 'two-hand',
+      singleHand: parsed.singleHand === 'right' ? 'right' : 'left',
+      practiceDisplay: parsed.practiceDisplay === 'piano-staff' ? 'piano-staff' : 'split',
       soundEnabled: typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : true,
       metronomeSound: restoreSound(parsed.metronomeSound, DEFAULT_SETTINGS.metronomeSound),
       leftHandSound: restoreSound(parsed.leftHandSound, DEFAULT_SETTINGS.leftHandSound),
@@ -313,12 +322,13 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     [startSession],
   );
 
-  const registerTap = useCallback((hand: Hand, timestamp: number) => {
+  const registerTap = useCallback((hand: Hand, timestamp: number): TapFeedback | null => {
     const engine = engineRef.current;
-    if (!engine) return;
-    engine.tap(hand, timestamp);
-    audioRef.current?.playHandClick(hand);
+    if (!engine) return null;
+    const feedback = engine.tap(hand, timestamp);
+    if (feedback !== 'ignored') audioRef.current?.playHandClick(hand);
     setSnapshot(engine.advance(monotonicNow()));
+    return feedback;
   }, []);
 
   const stopExercise = useCallback(() => {

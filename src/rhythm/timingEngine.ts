@@ -19,6 +19,7 @@ import type {
   SessionResults,
   SessionSnapshot,
   Subdivision,
+  TapFeedback,
 } from '@/types/rhythm';
 
 interface ExpectedEvent {
@@ -114,6 +115,8 @@ export class RhythmTimingEngine {
   private readonly transition = createMutableAccuracyStats();
   private nextStepToGenerate = 0;
   private nextScoreEventToGenerate = 0;
+  private cachedNotationBarStartBeat = -1;
+  private cachedNotationBarSteps: ExerciseStep[] = [];
   private finished = false;
 
   constructor(options: TimingEngineOptions) {
@@ -171,14 +174,18 @@ export class RhythmTimingEngine {
     return this.createSnapshot(now);
   }
 
-  tap(hand: Hand, actualTapTime: number): void {
-    if (this.finished) return;
+  tap(hand: Hand, actualTapTime: number): TapFeedback {
+    if (this.finished) return 'ignored';
+    if (this.settings.trainingMode === 'single-hand' && hand !== this.settings.singleHand) {
+      return 'ignored';
+    }
 
     const tapOffsetMs =
       hand === 'left' ? this.settings.leftTapOffsetMs : this.settings.rightTapOffsetMs;
     const calibratedTapTime = actualTapTime - tapOffsetMs;
     this.generateThrough(calibratedTapTime + this.timingWindows.goodMs);
     this.settleDueEvents(actualTapTime);
+    if (this.isRestAt(calibratedTapTime)) return 'miss';
 
     const candidates = this.events[hand].filter(
       (event) =>
@@ -194,12 +201,13 @@ export class RhythmTimingEngine {
       calibratedTapTime,
       this.timingWindows,
     );
-    if (!match) return;
+    if (!match) return 'miss';
 
     const matchedEvent = candidates.find((event) => event.id === match.eventId);
-    if (!matchedEvent) return;
+    if (!matchedEvent) return 'miss';
     matchedEvent.settled = true;
     this.recordEvent(hand, matchedEvent, match.grade, match.timingErrorMs);
+    return 'hit';
   }
 
   getResults(now: number): SessionResults {
@@ -211,7 +219,10 @@ export class RhythmTimingEngine {
       bpm: this.settings.bpm,
       timeSignature: this.settings.timeSignature,
       feel: this.settings.feel,
-      graceNotesEnabled: this.settings.graceNotesEnabled,
+      graceNotesEnabled: this.settings.graceNotesEnabled && !this.settings.restBetweenChanges,
+      restBetweenChanges: this.settings.restBetweenChanges,
+      trainingMode: this.settings.trainingMode,
+      singleHand: this.settings.singleHand,
       left: this.readHandStats('left'),
       right: this.readHandStats('right'),
       stable: toAccuracyStats(this.stable),
@@ -243,6 +254,7 @@ export class RhythmTimingEngine {
         ? this.getStep(this.nextStepToGenerate - 1)
         : null;
       const graceLeads = previousStep && this.settings.graceNotesEnabled
+        && !this.settings.restBetweenChanges
         ? {
             left: this.graceLeadMs(previousStep, step, 'left'),
             right: this.graceLeadMs(previousStep, step, 'right'),
@@ -253,13 +265,18 @@ export class RhythmTimingEngine {
         : stepStartTime;
       if (earliestEventTime > limitedTime || (this.endTime !== null && stepStartTime >= this.endTime)) break;
       const stepEndTime = stepStartTime + step.durationBeats * this.beatMs;
+      const hasFollowingStep = this.endTime === null || stepEndTime < this.endTime;
+      const restBeatOffset =
+        this.settings.restBetweenChanges && hasFollowingStep ? step.durationBeats - 1 : -1;
 
       for (const hand of ['left', 'right'] as const) {
+        if (this.settings.trainingMode === 'single-hand' && hand !== this.settings.singleHand) continue;
         const subdivision = hand === 'left' ? step.leftSubdivision : step.rightSubdivision;
         if (isTupletSubdivision(subdivision)) {
           const notesPerBeat = tupletCount(subdivision);
           let tupletEventIndex = 0;
           for (let beatOffset = 0; beatOffset < step.durationBeats; beatOffset += 1) {
+            if (beatOffset === restBeatOffset) continue;
             for (let noteIndex = 0; noteIndex < notesPerBeat; noteIndex += 1) {
               const expectedTimeMs =
                 stepStartTime + beatOffset * this.beatMs + (noteIndex * this.beatMs) / notesPerBeat;
@@ -290,6 +307,8 @@ export class RhythmTimingEngine {
             subdivisionOffsetMs(this.quarterNoteMs, subdivision, noteIndex, this.settings.feel);
           if (expectedTimeMs >= stepEndTime) break;
           if (this.endTime !== null && expectedTimeMs >= this.endTime) continue;
+          const beatOffset = Math.floor((expectedTimeMs - stepStartTime) / this.beatMs + 1e-9);
+          if (beatOffset === restBeatOffset) continue;
           this.events[hand].push({
             id: `${hand}:${step.id}:${subdivisionIndex}`,
             expectedTimeMs,
@@ -333,6 +352,7 @@ export class RhythmTimingEngine {
       const expectedTimeMs = this.sessionStartTime + scoreQuarter * this.quarterNoteMs;
       if (expectedTimeMs > limitedTime) break;
       this.nextScoreEventToGenerate += 1;
+      if (this.settings.trainingMode === 'single-hand' && scoreEvent.hand !== this.settings.singleHand) continue;
       if (this.endTime !== null && expectedTimeMs >= this.endTime) continue;
 
       const measureIndex = score.measures.findIndex(
@@ -499,6 +519,9 @@ export class RhythmTimingEngine {
     const beatIndex = Math.max(0, Math.floor(elapsed / this.beatMs));
     const stepIndex = Math.floor(beatIndex / this.settings.changeIntervalBeats);
     const currentStep = this.getStep(stepIndex);
+    const barStartBeat = Math.floor(beatIndex / this.beatsPerBar) * this.beatsPerBar;
+    const barEndBeat = barStartBeat + this.beatsPerBar;
+    const barSteps = this.getNotationBarSteps(barStartBeat, barEndBeat);
     const countdownStartTime = this.sessionStartTime - COUNT_IN_BEATS * this.beatMs;
     const countInBeat = Math.floor(Math.max(0, now - countdownStartTime) / this.beatMs);
     const countdownValue = Math.max(1, COUNT_IN_BEATS - countInBeat);
@@ -520,7 +543,10 @@ export class RhythmTimingEngine {
       beatsPerBar: this.beatsPerBar,
       beatIndex,
       beatInBar: beatIndex % this.beatsPerBar,
+      isRest: !this.importedScore && this.isRestAt(now),
       currentStep,
+      barStartBeat,
+      barSteps,
       nextStep,
       beatsUntilChange:
         this.settings.changeIntervalBeats - (beatIndex % this.settings.changeIntervalBeats),
@@ -562,12 +588,47 @@ export class RhythmTimingEngine {
     );
   }
 
+  private isRestAt(timestamp: number): boolean {
+    if (this.importedScore || !this.settings.restBetweenChanges) return false;
+    const elapsedBeats = (timestamp - this.sessionStartTime) / this.beatMs;
+    if (elapsedBeats < 0) return false;
+
+    const beatIndex = Math.floor(elapsedBeats + 1e-9);
+    const stepIndex = Math.floor(beatIndex / this.settings.changeIntervalBeats);
+    const beatInStep = beatIndex - stepIndex * this.settings.changeIntervalBeats;
+    if (beatInStep !== this.settings.changeIntervalBeats - 1) return false;
+
+    const nextStepTime =
+      this.sessionStartTime +
+      (stepIndex + 1) * this.settings.changeIntervalBeats * this.beatMs;
+    return this.endTime === null || nextStepTime < this.endTime;
+  }
+
+  private getNotationBarSteps(barStartBeat: number, barEndBeat: number): ExerciseStep[] {
+    if (this.cachedNotationBarStartBeat === barStartBeat) return this.cachedNotationBarSteps;
+    const firstStepIndex = Math.floor(barStartBeat / this.settings.changeIntervalBeats);
+    const lastStepIndex = Math.floor(barEndBeat / this.settings.changeIntervalBeats);
+    this.cachedNotationBarStartBeat = barStartBeat;
+    this.cachedNotationBarSteps = Array.from(
+      { length: lastStepIndex - firstStepIndex + 1 },
+      (_, offset) => this.getStep(firstStepIndex + offset),
+    ).filter((step) => {
+      const startsBeforeExerciseEnd =
+        this.endTime === null || this.sessionStartTime + step.startBeat * this.beatMs < this.endTime;
+      return startsBeforeExerciseEnd && step.startBeat <= barEndBeat;
+    });
+    return this.cachedNotationBarSteps;
+  }
+
   private getResultsWithoutAdvance(now: number): SessionResults {
     return {
       bpm: this.settings.bpm,
       timeSignature: this.settings.timeSignature,
       feel: this.settings.feel,
-      graceNotesEnabled: this.settings.graceNotesEnabled,
+      graceNotesEnabled: this.settings.graceNotesEnabled && !this.settings.restBetweenChanges,
+      restBetweenChanges: this.settings.restBetweenChanges,
+      trainingMode: this.settings.trainingMode,
+      singleHand: this.settings.singleHand,
       left: this.readHandStats('left'),
       right: this.readHandStats('right'),
       stable: toAccuracyStats(this.stable),

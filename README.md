@@ -26,24 +26,26 @@ An iOS build can also be offered on Apple silicon Macs as an iPhone/iPad app. Th
 
 ## Architecture
 
-- `src/app/` contains the setup, practice, and results routes.
+- `src/app/` contains the mode-select home, session setup, separate rhythm/audio/timing/display settings pages, practice, score import, and results routes.
 - `src/rhythm/` contains subdivision math, non-repeating pair generation, tap matching, and scoring.
-- `src/rhythm/noteNotation.ts` builds repeated subdivision symbols and mixed-duration bar notation with beat-aware beams and flags.
+- `src/rhythm/noteNotation.ts` builds repeated subdivision symbols and mixed-duration bar notation with beat-aware beams and flags; `patternNotation.ts` lays changing patterns across a stable piano grand staff.
 - `src/rhythm/musicXmlParser.ts` converts partwise MusicXML to rhythm-only score tracks for imported-score practice.
 - `src/rhythm/timingCalibration.ts` normalizes per-hand timing calibration and the selectable scoring window.
 - src/audio/ synthesizes selectable metronome and hand click tones, then schedules metronome clicks on the native audio clock.
-- src/store/ owns session state, prepares the audio context and offline click sounds at app startup, and persists exercise settings locally. The home and setup screens show when audio is ready; the setup play ring spins during preparation and turns solid when ready.
-- src/components/ contains reusable symbols, beat indicators, and large touch zones.
+- src/store/ owns session state, prepares the audio context and offline click sounds at app startup, and persists exercise settings locally. The home and setup screens show when audio is ready; the play ring spins during preparation and turns solid when ready.
+- `src/components/` contains reusable symbols, settings controls, beat indicators, the piano staff display, start buttons, and large touch zones.
 - `expo-build-properties` enables the iOS scene lifecycle required by iOS 27 and builds Expo modules from source so Worklets links against this app's React Native libraries.
 - The metronome synthesizes output and never records audio. A version-pinned postinstall patch disables the audio library's unused iOS microphone permission methods; the app does not request microphone access.
 
 ## Rhythms
 
-Quarter, eighth/quaver, sixteenth/semiquaver, 32nd/demisemiquaver, and 64th/hemidemisemiquaver values are evenly spaced on a quarter-note grid. Tuplets are grouped across one metronome beat, whose length follows the time signature: duplets (2) through nonuplets (9), including triplets, are supported. For example, a duplet in 6/8 divides its dotted-quarter pulse into two equal notes; a triplet in 2/2 divides its half-note pulse into three. Tuplet symbols show their group number, and imported MusicXML tuplet marks are carried into the bar preview. The default enables quarter, eighth, triplet, and sixteenth; faster values and other tuplets can be enabled in setup.
+Quarter, eighth/quaver, sixteenth/semiquaver, 32nd/demisemiquaver, and 64th/hemidemisemiquaver values are evenly spaced on a quarter-note grid. Tuplets are grouped across one metronome beat, whose length follows the time signature: duplets (2) through nonuplets (9), including triplets, are supported. For example, a duplet in 6/8 divides its dotted-quarter pulse into two equal notes; a triplet in 2/2 divides its half-note pulse into three. Tuplet symbols show their group number, and imported MusicXML tuplet marks are carried into the bar preview. The default enables quarter, eighth, triplet, and sixteenth; faster values and other tuplets can be enabled in Rhythm & meter settings.
 
-Choose 2/4, 3/4, 4/4, 5/4, 7/4, 2/2, 3/8, 6/8, 9/8, or 12/8 in setup. BPM follows the meter's written beat: denominator-note beats in simple meters, dotted-quarter pulses in 6/8, 9/8, and 12/8. For example, 6/8 at 60 BPM has two metronome pulses per bar, while quarter-note events are spaced about 667 ms apart. Pattern changes and the count-in use those same metronome pulses.
+Choose 2/4, 3/4, 4/4, 5/4, 7/4, 2/2, 3/8, 6/8, 9/8, or 12/8 in Rhythm & meter settings. BPM follows the meter's written beat: denominator-note beats in simple meters, dotted-quarter pulses in 6/8, 9/8, and 12/8. For example, 6/8 at 60 BPM has two metronome pulses per bar, while quarter-note events are spaced about 667 ms apart. Pattern changes and the count-in use those same metronome pulses.
 
-Choose Straight or Swing feel. Swing moves binary offbeats toward a 2:1 long-short ratio within each quarter note; quarter notes and all tuplets keep their regular timing. Sixteenth, 32nd, and 64th notes use the same long-short eighth-note grid. Optionally enable Grace note pickups: the engine adds one extra expected tap for each hand just before every pattern change. The pickup sits between the previous pattern's last event and the new pattern's first event, and is scored with the upcoming pair and its transition accuracy. Both settings are saved with the other local preferences.
+Choose Straight or Swing feel in Rhythm & meter settings. Swing moves binary offbeats toward a 2:1 long-short ratio within each quarter note; quarter notes and all tuplets keep their regular timing. Sixteenth, 32nd, and 64th notes use the same long-short eighth-note grid. Optionally enable Grace note pickups: the engine adds one extra expected tap for each hand just before every pattern change. Or enable Rest before each change: both hands stay silent for the last beat before the next pattern while the metronome continues. The rest takes precedence over grace pickups. These settings are saved with the other local preferences.
+
+The home screen offers Two hands and One hand modes. One-hand practice lets the player choose left or right; only that hand contributes to results, and the other side stays visibly inactive. Practice display settings switch between the fixed left/right lanes and a piano grand staff (right hand on treble, left hand on bass). The generated staff stays fixed in place and includes each pattern change and any transition rest in its current bar.
 
 ## Training from a score
 
@@ -65,14 +67,23 @@ During practice, an external QWERTY keyboard can tap either hand. The practice z
 
 ## End-to-end checks
 
-Build and install a release app on a simulator or device, then run the Maestro smoke flow:
+Choose Two hands or One hand on the home screen, then use the large Start practice control to begin. The Settings page keeps tempo and duration close by and opens Rhythm & meter, Sounds & feedback, Timing calibration, or Practice display on separate detail pages. The mode picker follows AstroDX's compact dark-menu direction while keeping Split Beat's controls and notation distinct.
+
+Build and install a release app on a simulator or device, then run the Maestro smoke flow. It exercises the multi-page settings, starts practice, checks both tap zones, ends the exercise, and verifies the results screen:
 
 ~~~sh
 npm run e2e:ios
 npm run e2e:maestro -- --device DEVICE_ID
 ~~~
 
-For Android, use `npm run e2e:android`, then run `npm run e2e:maestro -- --device DEVICE_ID`. The flow opens setup, starts practice, checks both tap zones, ends the exercise, and verifies the results screen. Maestro must be installed and the target device must be available.
+For Android, use `npm run e2e:android`, then run `npm run e2e:maestro -- --device DEVICE_ID`. Maestro must be installed and the target device must be available.
+
+The home mode selection and start action have a separate flow:
+
+~~~sh
+npm run e2e:ios
+npm run e2e:direct-start -- --device DEVICE_ID
+~~~
 
 The MusicXML import flow has a separate Maestro test:
 
@@ -83,11 +94,11 @@ npm run e2e:score-import -- --device DEVICE_ID
 
 ## Timing and scoring
 
-The engine captures a monotonic performance.now() timestamp at touch start. Expected event times are calculated from the exercise start time, selected meter, pattern boundary, and quarter-note subdivision interval; timer callbacks and animations never increment the rhythm clock. The metronome click is synthesized and scheduled against react-native-audio-api's native AudioContext.currentTime with a five-second lookahead, so ordinary React renders and JavaScript scheduling do not set the click time. Its bar accent and the visual beat indicator follow the selected meter. Setup offers Wood, Beep, Bell, and Soft sounds independently for the metronome, left-hand taps, and right-hand taps. These tones are synthesized locally and work offline; the Sound effects switch mutes them all. Tap feedback is played immediately after capturing the touch timestamp and does not change event matching.
+The engine captures a monotonic performance.now() timestamp at touch start. Expected event times are calculated from the exercise start time, selected meter, pattern boundary, and quarter-note subdivision interval; timer callbacks and animations never increment the rhythm clock. The metronome click is synthesized and scheduled against react-native-audio-api's native AudioContext.currentTime with a five-second lookahead, so ordinary React renders and JavaScript scheduling do not set the click time. Its bar accent and the visual beat indicator follow the selected meter. Setup offers Wood, Beep, Bell, and Soft sounds independently for the metronome, left-hand taps, and right-hand taps. These tones are synthesized locally and work offline; the Sound effects switch mutes them all. The practice header reports the current sound state and lets the player mute or re-enable clicks mid-session. Tap sound feedback is played immediately after capturing the touch timestamp and does not change event matching. A tap outside its timing window flashes that hand's zone red briefly.
 
-Setup can measure a separate signed tap offset for each hand from eight on-time taps against the native metronome click. Positive offsets shift that hand's measured tap earlier during scoring; negative offsets shift it later. The sliders allow manual adjustment from -200 to +200 ms. The acceptable hit range can be tuned from ±50 to ±200 ms; Perfect and Great thresholds remain 30% and 60% of that range. Reset Timing Defaults restores both offsets to 0 ms and the hit range to ±100 ms. Calibration and range settings are stored locally.
+Timing calibration can measure a separate signed tap offset for each hand from eight on-time taps against the native metronome click. Positive offsets shift that hand's measured tap earlier during scoring; negative offsets shift it later. The sliders allow manual adjustment from -200 to +200 ms. The acceptable hit range can be tuned from ±50 to ±200 ms; Perfect and Great thresholds remain 30% and 60% of that range. Reset Timing Defaults restores both offsets to 0 ms and the hit range to ±100 ms. Calibration and range settings are stored locally.
 
-During practice, the next left/right pattern is previewed with its remaining beats and seconds. The preview is generated by the same exercise sequence as the active pattern, and becomes current on the next scheduled beat boundary.
+During practice, a compact preview slides in at the top for the last beat before a pattern change. It shows the next pattern and beat countdown without a large seconds panel. When a change rest is enabled, the same preview marks the rest beat, and the next pattern becomes current on the scheduled beat boundary. The preview and piano staff use the same exercise sequence as the timing engine.
 
 Each hand has its own expected-event queue. A tap claims the nearest unmatched event within the selected timing range after applying that hand's calibration offset. Event times are calculated from the session origin and the selected meter, subdivision, and feel; timer callbacks and animations never increment the rhythm clock. Perfect and Great use 30% and 60% of the selected range. An unclaimed event becomes a miss after the adjusted window closes; a duplicate or out-of-window tap cannot consume an already matched event. Transition accuracy covers the first two metronome pulses after each generated pair change, including enabled grace pickups.
 

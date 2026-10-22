@@ -38,6 +38,9 @@ export const TIME_SIGNATURES = [
 
 export type TimeSignature = (typeof TIME_SIGNATURES)[number];
 export type Hand = 'left' | 'right';
+export type TrainingMode = 'two-hand' | 'single-hand';
+export type PracticeDisplay = 'split' | 'piano-staff';
+export type TapFeedback = 'hit' | 'miss' | 'ignored';
 export type SoundPreset = 'wood' | 'beep' | 'bell' | 'soft';
 export type RhythmicFeel = 'straight' | 'swing';
 export type DurationOption = 30 | 60 | 120 | 'endless';
@@ -56,9 +59,13 @@ export interface ExerciseSettings {
   timeSignature: TimeSignature;
   durationSeconds: DurationOption;
   changeIntervalBeats: ChangeIntervalBeats;
+  restBetweenChanges: boolean;
   enabledSubdivisions: Subdivision[];
   feel: RhythmicFeel;
   graceNotesEnabled: boolean;
+  trainingMode: TrainingMode;
+  singleHand: Hand;
+  practiceDisplay: PracticeDisplay;
   soundEnabled: boolean;
   metronomeSound: SoundPreset;
   leftHandSound: SoundPreset;
@@ -97,6 +104,9 @@ export interface SessionResults {
   timeSignature: TimeSignature;
   feel: RhythmicFeel;
   graceNotesEnabled: boolean;
+  restBetweenChanges: boolean;
+  trainingMode: TrainingMode;
+  singleHand: Hand;
   left: HandStats;
   right: HandStats;
   stable: AccuracyStats;
@@ -114,7 +124,10 @@ export interface SessionSnapshot {
   beatsPerBar: number;
   beatIndex: number;
   beatInBar: number;
+  isRest: boolean;
   currentStep: ExerciseStep;
+  barStartBeat: number;
+  barSteps: ExerciseStep[];
   nextStep: ExerciseStep | null;
   beatsUntilChange: number;
   secondsUntilChange: number | null;

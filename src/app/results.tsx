@@ -25,18 +25,26 @@ function timingNote(stats: HandStats): string {
 
 function weakestCombination(results: SessionResults) {
   const available = results.combinations.filter(
-    (combination) => combination.left.totalExpected + combination.right.totalExpected >= 4,
+    (combination) => (results.trainingMode === 'single-hand'
+      ? combination[results.singleHand].totalExpected
+      : combination.left.totalExpected + combination.right.totalExpected) >= 4,
   );
   return available
     .map((combination) => {
       const leftAccuracy = accuracyPercent(combination.left);
       const rightAccuracy = accuracyPercent(combination.right);
-      const weakHand = leftAccuracy <= rightAccuracy ? 'left' : 'right';
+      const weakHand = results.trainingMode === 'single-hand'
+        ? results.singleHand
+        : leftAccuracy <= rightAccuracy ? 'left' : 'right';
       return {
         ...combination,
         weakHand,
-        accuracy: Math.min(leftAccuracy, rightAccuracy),
-        sampleSize: combination.left.totalExpected + combination.right.totalExpected,
+        accuracy: results.trainingMode === 'single-hand'
+          ? accuracyPercent(combination[results.singleHand])
+          : Math.min(leftAccuracy, rightAccuracy),
+        sampleSize: results.trainingMode === 'single-hand'
+          ? combination[results.singleHand].totalExpected
+          : combination.left.totalExpected + combination.right.totalExpected,
       };
     })
     .sort((a, b) => a.accuracy - b.accuracy || b.sampleSize - a.sampleSize)[0];
@@ -44,6 +52,15 @@ function weakestCombination(results: SessionResults) {
 
 function buildFeedback(results: SessionResults, weak?: ReturnType<typeof weakestCombination>) {
   if (results.source === 'score') {
+    if (results.trainingMode === 'single-hand') {
+      const stats = results[results.singleHand];
+      return [
+        results.scoreTitle ? `You trained from “${results.scoreTitle}”.` : 'You trained from an imported score.',
+        Math.abs(stats.averageSignedErrorMs) > 15
+          ? `Your ${results.singleHand} hand tends to ${stats.averageSignedErrorMs > 0 ? 'play late' : 'rush'}.`
+          : 'Your selected hand stayed steady through the score.',
+      ];
+    }
     const weakerHand = accuracyPercent(results.left) <= accuracyPercent(results.right) ? 'left' : 'right';
     const weakerAccuracy = Math.min(accuracyPercent(results.left), accuracyPercent(results.right));
     return [
@@ -54,18 +71,17 @@ function buildFeedback(results: SessionResults, weak?: ReturnType<typeof weakest
     ];
   }
   const messages: string[] = [];
-  if (results.right.averageSignedErrorMs < -15) messages.push('Your right hand tends to rush.');
-  if (results.left.averageSignedErrorMs > 15) messages.push('Your left hand tends to play late.');
-  if (results.left.averageSignedErrorMs < -15) messages.push('Your left hand tends to rush.');
-  if (results.right.averageSignedErrorMs > 15) messages.push('Your right hand tends to play late.');
+  const trainedHands = results.trainingMode === 'single-hand' ? [results.singleHand] : ['left', 'right'] as const;
+  for (const hand of trainedHands) {
+    const average = results[hand].averageSignedErrorMs;
+    if (average < -15) messages.push(`Your ${hand} hand tends to rush.`);
+    if (average > 15) messages.push(`Your ${hand} hand tends to play late.`);
+  }
 
   if (weak && weak.accuracy < 85) {
     const handName = weak.weakHand === 'left' ? 'Left' : 'Right';
-    const otherHandName = weak.weakHand === 'left' ? 'right' : 'left';
     const affectedSubdivision =
       weak.weakHand === 'left' ? weak.leftSubdivision : weak.rightSubdivision;
-    const otherSubdivision =
-      weak.weakHand === 'left' ? weak.rightSubdivision : weak.leftSubdivision;
     const affectedPattern: Record<Subdivision, string> = {
       quarter: 'quarter-note pulse',
       eighth: 'eighth-note subdivisions',
@@ -81,35 +97,32 @@ function buildFeedback(results: SessionResults, weak?: ReturnType<typeof weakest
       thirtySecond: '32nd-note subdivisions',
       sixtyFourth: '64th-note subdivisions',
     };
-    const playedPattern: Record<Subdivision, string> = {
-      quarter: 'quarter notes',
-      eighth: 'eighth notes',
-      duplet: 'duplets',
-      triplet: 'triplets',
-      quadruplet: 'quadruplets',
-      quintuplet: 'quintuplets',
-      sextuplet: 'sextuplets',
-      septuplet: 'septuplets',
-      octuplet: 'octuplets',
-      nonuplet: 'nonuplets',
-      sixteenth: 'sixteenth notes',
-      thirtySecond: '32nd notes',
-      sixtyFourth: '64th notes',
-    };
-    const verb = affectedSubdivision === 'quarter' ? 'is' : 'are';
-    messages.push(
-      'Your ' +
-        handName.toLowerCase() +
-        '-hand ' +
-        affectedPattern[affectedSubdivision] +
-        ' ' +
-        verb +
-        ' less steady when your ' +
-        otherHandName +
-        ' hand plays ' +
-        playedPattern[otherSubdivision] +
-        '.',
-    );
+    if (results.trainingMode === 'single-hand') {
+      messages.push(`Your ${handName.toLowerCase()} hand's ${affectedPattern[affectedSubdivision]} need extra practice.`);
+    } else {
+      const otherHandName = weak.weakHand === 'left' ? 'right' : 'left';
+      const otherSubdivision = weak.weakHand === 'left' ? weak.rightSubdivision : weak.leftSubdivision;
+      const playedPattern: Record<Subdivision, string> = {
+        quarter: 'quarter notes',
+        eighth: 'eighth notes',
+        duplet: 'duplets',
+        triplet: 'triplets',
+        quadruplet: 'quadruplets',
+        quintuplet: 'quintuplets',
+        sextuplet: 'sextuplets',
+        septuplet: 'septuplets',
+        octuplet: 'octuplets',
+        nonuplet: 'nonuplets',
+        sixteenth: 'sixteenth notes',
+        thirtySecond: '32nd notes',
+        sixtyFourth: '64th notes',
+      };
+      const verb = affectedSubdivision === 'quarter' ? 'is' : 'are';
+      messages.push(
+        'Your ' + handName.toLowerCase() + '-hand ' + affectedPattern[affectedSubdivision] + ' ' + verb +
+        ' less steady when your ' + otherHandName + ' hand plays ' + playedPattern[otherSubdivision] + '.',
+      );
+    }
   }
 
   const stableAccuracy = accuracyPercent(results.stable);
@@ -166,14 +179,17 @@ export default function ResultsScreen() {
   const overall = allExpected === 0 ? 0 : (allHits / allExpected) * 100;
   const weakest = weakestCombination(results);
   const feedback = buildFeedback(results, weakest);
+  const displayedHands = results.trainingMode === 'single-hand' ? [results.singleHand] : ['left', 'right'] as const;
   const combinations = [...results.combinations].sort(
     (a, b) =>
-      Math.min(accuracyPercent(a.left), accuracyPercent(a.right)) -
-      Math.min(accuracyPercent(b.left), accuracyPercent(b.right)),
+      (results.trainingMode === 'single-hand' ? accuracyPercent(a[results.singleHand]) : Math.min(accuracyPercent(a.left), accuracyPercent(a.right))) -
+      (results.trainingMode === 'single-hand' ? accuracyPercent(b[results.singleHand]) : Math.min(accuracyPercent(b.left), accuracyPercent(b.right))),
   );
   const sessionOptions = [
     results.feel === 'swing' ? 'SWING' : 'STRAIGHT',
     results.graceNotesEnabled ? 'GRACE PICKUPS' : null,
+    results.restBetweenChanges ? 'REST BEFORE CHANGES' : null,
+    results.trainingMode === 'single-hand' ? `${results.singleHand.toUpperCase()} HAND` : 'TWO HANDS',
   ].filter(Boolean).join(' · ');
 
   return (
@@ -199,8 +215,15 @@ export default function ResultsScreen() {
         </View>
 
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 11 }}>
-          <ScorePanel label="LEFT HAND" value={percent(accuracyPercent(results.left))} detail={timingText(results.left)} accent={colors.left} />
-          <ScorePanel label="RIGHT HAND" value={percent(accuracyPercent(results.right))} detail={timingText(results.right)} accent={colors.right} />
+          {displayedHands.map((hand) => (
+            <ScorePanel
+              key={hand}
+              label={`${hand.toUpperCase()} HAND${results.trainingMode === 'single-hand' ? ' · FOCUSED' : ''}`}
+              value={percent(accuracyPercent(results[hand]))}
+              detail={timingText(results[hand])}
+              accent={hand === 'left' ? colors.left : colors.right}
+            />
+          ))}
         </View>
         {results.source === 'score' ? null : (
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
@@ -210,7 +233,7 @@ export default function ResultsScreen() {
         )}
 
         <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', marginTop: 25, marginBottom: 10 }}>HAND TIMING</Text>
-        {(['left', 'right'] as const).map((hand) => {
+        {displayedHands.map((hand) => {
           const stats = results[hand];
           return (
             <View key={hand} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: colors.line }}>
@@ -229,9 +252,11 @@ export default function ResultsScreen() {
 
         {weakest && results.source !== 'score' ? (
           <View style={{ backgroundColor: colors.surface, borderColor: colors.line, borderWidth: 1, borderRadius: 18, padding: 17, marginTop: 22 }}>
-            <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>MOST DIFFICULT PAIR</Text>
+            <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>{results.trainingMode === 'single-hand' ? 'MOST DIFFICULT PATTERN' : 'MOST DIFFICULT PAIR'}</Text>
             <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', marginTop: 13 }}>
-              Left: {SUBDIVISION_LABELS[weakest.leftSubdivision]}   ·   Right: {SUBDIVISION_LABELS[weakest.rightSubdivision]}
+              {results.trainingMode === 'single-hand'
+                ? `${results.singleHand.toUpperCase()}: ${SUBDIVISION_LABELS[weakest[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision']]}`
+                : `Left: ${SUBDIVISION_LABELS[weakest.leftSubdivision]}   ·   Right: ${SUBDIVISION_LABELS[weakest.rightSubdivision]}`}
             </Text>
             <Text style={{ color: colors.accent, fontSize: 30, fontWeight: '900', marginTop: 5 }}>
               {weakest.weakHand.toUpperCase()} {percent(weakest.accuracy)}
@@ -241,18 +266,28 @@ export default function ResultsScreen() {
 
         {combinations.length > 0 && results.source !== 'score' ? (
           <View style={{ marginTop: 22 }}>
-            <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', marginBottom: 5 }}>PAIR BREAKDOWN</Text>
+            <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', marginBottom: 5 }}>{results.trainingMode === 'single-hand' ? 'PATTERN BREAKDOWN' : 'PAIR BREAKDOWN'}</Text>
             {combinations.map((combination) => (
               <View key={combination.leftSubdivision + ':' + combination.rightSubdivision} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line }}>
                 <Text style={{ color: colors.muted, flex: 1, fontSize: 12 }}>
-                  {weakLabel(combination.leftSubdivision)} / {weakLabel(combination.rightSubdivision)}
+                  {results.trainingMode === 'single-hand'
+                    ? `${results.singleHand.toUpperCase()} · ${weakLabel(combination[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision'])}`
+                    : `${weakLabel(combination.leftSubdivision)} / ${weakLabel(combination.rightSubdivision)}`}
                 </Text>
-                <Text style={{ color: colors.left, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>
-                  {percent(accuracyPercent(combination.left))}
-                </Text>
-                <Text style={{ color: colors.right, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>
-                  {percent(accuracyPercent(combination.right))}
-                </Text>
+                {results.trainingMode === 'single-hand' ? (
+                  <Text style={{ color: results.singleHand === 'left' ? colors.left : colors.right, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>
+                    {percent(accuracyPercent(combination[results.singleHand]))}
+                  </Text>
+                ) : (
+                  <>
+                    <Text style={{ color: colors.left, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>
+                      {percent(accuracyPercent(combination.left))}
+                    </Text>
+                    <Text style={{ color: colors.right, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>
+                      {percent(accuracyPercent(combination.right))}
+                    </Text>
+                  </>
+                )}
               </View>
             ))}
           </View>
