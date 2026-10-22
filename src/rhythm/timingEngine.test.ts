@@ -13,6 +13,7 @@ import {
 import { matchTap } from '@/rhythm/tapMatcher';
 import { getExerciseStartTime, RhythmTimingEngine } from '@/rhythm/timingEngine';
 import type { ExerciseSettings } from '@/types/rhythm';
+import type { ImportedRhythmScore } from '@/types/importedScore';
 
 const settings: ExerciseSettings = {
   bpm: 60,
@@ -389,4 +390,59 @@ test('the first two beats after a pair change are scored as transition events', 
 test('count-in places the first exercise beat after three full beats and lead-in', () => {
   assert.equal(getExerciseStartTime(100, 120, 300), 100 + 300 + 1_500);
   assert.equal(getExerciseStartTime(100, 60, 300, '6/8'), 100 + 300 + 3_000);
+});
+
+test('score events use MusicXML quarter-note positions, loop, and score independently per hand', () => {
+  const start = 50_000;
+  const importedScore: ImportedRhythmScore = {
+    formatVersion: 1,
+    title: 'Etude',
+    timeSignature: '4/4',
+    bpm: 60,
+    totalQuarterNotes: 4,
+    warnings: [],
+    measures: [
+      {
+        index: 0,
+        startQuarter: 0,
+        durationQuarter: 4,
+        leftEvents: [
+          { startQuarter: 0, durationQuarter: 1 },
+          { startQuarter: 2, durationQuarter: 1 },
+        ],
+        rightEvents: [
+          { startQuarter: 0, durationQuarter: 0.5 },
+          { startQuarter: 0.5, durationQuarter: 0.5 },
+          { startQuarter: 1, durationQuarter: 0.5 },
+          { startQuarter: 1.5, durationQuarter: 0.5 },
+          { startQuarter: 2, durationQuarter: 0.5 },
+          { startQuarter: 2.5, durationQuarter: 0.5 },
+          { startQuarter: 3, durationQuarter: 0.5 },
+          { startQuarter: 3.5, durationQuarter: 0.5 },
+        ],
+      },
+    ],
+  };
+  const engine = new RhythmTimingEngine({ settings, sessionStartTime: start, importedScore });
+
+  const preview = engine.advance(start + 100);
+  assert.equal(preview.scoreTitle, 'Etude');
+  assert.equal(preview.scoreMeasureNumber, 1);
+  assert.equal(preview.scoreMeasure?.rightEvents.length, 8);
+
+  engine.tap('left', start);
+  engine.tap('right', start);
+  engine.tap('right', start + 500);
+  engine.tap('left', start + 4_000);
+  const results = engine.getResults(start + 4_100);
+
+  assert.equal(results.source, 'score');
+  assert.equal(results.scoreTitle, 'Etude');
+  assert.equal(results.left.totalExpected, 3);
+  assert.equal(results.left.totalHit, 2);
+  assert.equal(results.right.totalExpected, 9);
+  assert.equal(results.right.totalHit, 2);
+  assert.equal(results.stable.totalHit, 4);
+  assert.equal(results.transition.totalExpected, 0);
+  assert.deepEqual(results.combinations, []);
 });

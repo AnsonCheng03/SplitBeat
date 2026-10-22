@@ -44,6 +44,26 @@ export default function HomeScreen() {
             </Text>
           </Pressable>
         </Link>
+        <Link href="/import-score" asChild>
+          <Pressable
+            testID="home.importScore"
+            style={({ pressed }) => ({
+              marginTop: 10,
+              backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
+              borderWidth: 1,
+              borderColor: colors.line,
+              minHeight: 48,
+              borderRadius: 15,
+              alignItems: 'center',
+              justifyContent: 'center',
+              maxWidth: 420,
+            })}
+          >
+            <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, letterSpacing: 0.5 }}>
+              TRAIN FROM A SCORE
+            </Text>
+          </Pressable>
+        </Link>
         <Text style={{ color: colors.dim, marginTop: 18, fontSize: 12 }}>
           No songs. No distractions. Just your timing.
         </Text>

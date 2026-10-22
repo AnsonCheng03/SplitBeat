@@ -28,6 +28,7 @@ An iOS build can also be offered on Apple silicon Macs as an iPhone/iPad app. Th
 
 - `src/app/` contains the setup, practice, and results routes.
 - `src/rhythm/` contains subdivision math, non-repeating pair generation, tap matching, and scoring.
+- `src/rhythm/musicXmlParser.ts` converts partwise MusicXML to rhythm-only score tracks for imported-score practice.
 - `src/rhythm/timingCalibration.ts` normalizes per-hand timing calibration and the selectable scoring window.
 - src/audio/ synthesizes selectable metronome and hand click tones, then schedules metronome clicks on the native audio clock.
 - src/store/ owns session state and persists exercise settings locally.
@@ -43,6 +44,20 @@ Choose 2/4, 3/4, 4/4, 5/4, 7/4, 2/2, 3/8, 6/8, 9/8, or 12/8 in setup. BPM follow
 
 Choose Straight or Swing feel. Swing moves binary offbeats toward a 2:1 long-short ratio within each quarter note; quarter notes and triplets keep their regular timing. Sixteenth, 32nd, and 64th notes use the same long-short eighth-note grid. Optionally enable Grace note pickups: the engine adds one extra expected tap for each hand just before every pattern change. The pickup sits between the previous pattern's last event and the new pattern's first event, and is scored with the upcoming pair and its transition accuracy. Both settings are saved with the other local preferences.
 
+## Training from a score
+
+Split Beat accepts rhythm extracted from a partwise MusicXML score. To convert a PDF or image locally, install [HOMR](https://github.com/liebharc/homr) and run its CPU command:
+
+~~~sh
+uvx --from 'homr[cpu]' homr /path/to/score.pdf
+~~~
+
+HOMR supports PDF and image inputs and writes a `.musicxml` file beside the source. Its first run may download the recognition model. HOMR is a separate AGPL-3.0 project and is not bundled into Split Beat. Open its MusicXML output in a text editor, copy the contents, choose **Train from a score** in Split Beat, and paste the XML. Conversion and training happen locally; Split Beat does not upload score content.
+
+The importer maps staff 1 to the right hand and staff 2 to the left hand in a grand staff. If the score has separate one-staff parts, it uses the first part for the right hand and the second for the left. It converts note attacks and durations, treats rests as silence, merges tied notes, and treats chords as one tap. Grace notes are skipped with a warning because MusicXML does not give them a fixed duration. The extracted rhythm is previewed before practice; the score then repeats for the saved session length. A score tempo, when present, sets the practice tempo.
+
+The internal `ImportedRhythmScore` JSON stores each measure's start and duration in quarter-note units plus separate left/right note events. Practice timestamps are calculated from the monotonic session start and the score's quarter-note positions, then matched by the same per-hand scoring windows as generated exercises. The current importer accepts partwise MusicXML and the time signatures already supported by Split Beat; it rejects scores with tempo or time-signature changes. It does not import PDF/image files directly, compressed `.mxl` packages, or preserve pitch and engraving; check each bar's rhythm preview against the source before training. The pasted score is currently kept for the active session only.
+
 ## External keyboard play
 
 During practice, an external QWERTY keyboard can tap either hand. The practice zones always show the mapping: keys on the left side (`Q W E R T`, `A S D F G`, `Z X C V B`, and `1–5`) play the left hand; keys on the right side (`Y U I O P`, `H J K L`, `N M`, and `6–0`) play the right. iOS/iPadOS receives key presses through a focused hidden text field with the software keyboard suppressed; Android forwards native key-down timestamps into the rhythm clock and filters OS key repeats. The app does not request keyboard or microphone permissions.
@@ -57,6 +72,13 @@ npm run e2e:maestro -- --device DEVICE_ID
 ~~~
 
 For Android, use `npm run e2e:android`, then run `npm run e2e:maestro -- --device DEVICE_ID`. The flow opens setup, starts practice, checks both tap zones, ends the exercise, and verifies the results screen. Maestro must be installed and the target device must be available.
+
+The MusicXML import flow has a separate Maestro test:
+
+~~~sh
+npm run e2e:ios
+npm run e2e:score-import -- --device DEVICE_ID
+~~~
 
 ## Timing and scoring
 

@@ -13,7 +13,8 @@
     "lint": "eslint .",
     "e2e:ios": "expo run:ios --configuration Release",
     "e2e:android": "expo run:android --variant release",
-    "e2e:maestro": "node scripts/e2e/run-maestro.mjs"
+    "e2e:maestro": "node scripts/e2e/run-maestro.mjs",
+    "e2e:score-import": "E2E_MAESTRO_FLOW=score-import.yaml node scripts/e2e/run-maestro.mjs"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -34,7 +35,8 @@
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
-    "react-native-worklets": "0.10.1"
+    "react-native-worklets": "0.10.1",
+    "sax": "^1.6.1"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

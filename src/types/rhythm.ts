@@ -1,3 +1,5 @@
+import type { ScoreRhythmMeasure } from '@/types/importedScore';
+
 export const SUBDIVISIONS = [
   'quarter',
   'eighth',
@@ -88,6 +90,8 @@ export interface SessionResults {
   transition: AccuracyStats;
   combinations: CombinationStats[];
   durationSeconds: number;
+  source?: 'score';
+  scoreTitle?: string;
 }
 
 export interface SessionSnapshot {
@@ -108,4 +112,8 @@ export interface SessionSnapshot {
   rightStats: HandStats;
   countdown: number | 'START' | null;
   results?: SessionResults;
+  scoreMeasure?: ScoreRhythmMeasure;
+  scoreMeasureNumber?: number;
+  scoreMeasureCount?: number;
+  scoreTitle?: string;
 }

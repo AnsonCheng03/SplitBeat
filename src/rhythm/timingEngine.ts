@@ -7,6 +7,7 @@ import {
 import { accuracyPercent, emptyHandStats, finalizeHandStats } from '@/rhythm/scoring';
 import { matchTap, timingWindowsForGoodWindow } from '@/rhythm/tapMatcher';
 import type { TimingWindows } from '@/rhythm/tapMatcher';
+import type { ImportedRhythmScore } from '@/types/importedScore';
 import type {
   AccuracyStats,
   ExerciseSettings,
@@ -24,7 +25,13 @@ interface ExpectedEvent {
   step: ExerciseStep;
   beatIndex: number;
   isGraceNote: boolean;
+  isScoreEvent: boolean;
   settled: boolean;
+}
+
+interface TimedScoreEvent {
+  hand: Hand;
+  startQuarter: number;
 }
 
 interface MutableHandStats {
@@ -53,6 +60,7 @@ interface MutableCombinationStats {
 interface TimingEngineOptions {
   settings: ExerciseSettings;
   sessionStartTime: number;
+  importedScore?: ImportedRhythmScore;
   random?: () => number;
 }
 
@@ -87,6 +95,8 @@ export class RhythmTimingEngine {
   readonly sessionStartTime: number;
 
   private readonly settings: ExerciseSettings;
+  private readonly importedScore?: ImportedRhythmScore;
+  private readonly timedScoreEvents: TimedScoreEvent[];
   private readonly timingWindows: TimingWindows;
   private readonly settleWindowMsByHand: Record<Hand, number>;
   private readonly sessionSettleWindowMs: number;
@@ -101,10 +111,26 @@ export class RhythmTimingEngine {
   private readonly stable = createMutableAccuracyStats();
   private readonly transition = createMutableAccuracyStats();
   private nextStepToGenerate = 0;
+  private nextScoreEventToGenerate = 0;
   private finished = false;
 
   constructor(options: TimingEngineOptions) {
     this.settings = options.settings;
+    this.importedScore = options.importedScore;
+    this.timedScoreEvents = options.importedScore
+      ? options.importedScore.measures
+          .flatMap((measure) => [
+            ...measure.leftEvents.map((event) => ({
+              hand: 'left' as const,
+              startQuarter: measure.startQuarter + event.startQuarter,
+            })),
+            ...measure.rightEvents.map((event) => ({
+              hand: 'right' as const,
+              startQuarter: measure.startQuarter + event.startQuarter,
+            })),
+          ])
+          .sort((firstEvent, secondEvent) => firstEvent.startQuarter - secondEvent.startQuarter)
+      : [];
     this.timingWindows = timingWindowsForGoodWindow(options.settings.goodWindowMs);
     this.settleWindowMsByHand = {
       left: this.timingWindows.goodMs + Math.max(0, options.settings.leftTapOffsetMs),
@@ -195,11 +221,18 @@ export class RhythmTimingEngine {
         right: toAccuracyStats(combination.right),
       })),
       durationSeconds: Math.max(0, (now - this.sessionStartTime) / 1_000),
+      ...(this.importedScore
+        ? { source: 'score' as const, scoreTitle: this.importedScore.title }
+        : {}),
     };
   }
 
   private generateThrough(time: number): void {
     const limitedTime = this.endTime === null ? time : Math.min(time, this.endTime);
+    if (this.importedScore) {
+      this.generateScoreEventsThrough(limitedTime);
+      return;
+    }
     while (true) {
       const step = this.getStep(this.nextStepToGenerate);
       const stepStartTime =
@@ -237,6 +270,7 @@ export class RhythmTimingEngine {
             step,
             beatIndex: Math.floor((expectedTimeMs - this.sessionStartTime) / this.beatMs + 1e-9),
             isGraceNote: false,
+            isScoreEvent: false,
             settled: false,
           });
         }
@@ -251,12 +285,54 @@ export class RhythmTimingEngine {
               step,
               beatIndex: step.startBeat,
               isGraceNote: true,
+              isScoreEvent: false,
               settled: false,
             });
           }
         }
       }
       this.nextStepToGenerate += 1;
+    }
+  }
+
+  private generateScoreEventsThrough(limitedTime: number): void {
+    const score = this.importedScore;
+    if (!score || score.totalQuarterNotes <= 0 || this.timedScoreEvents.length === 0) return;
+
+    while (true) {
+      const scoreEventIndex = this.nextScoreEventToGenerate % this.timedScoreEvents.length;
+      const repeatIndex = Math.floor(this.nextScoreEventToGenerate / this.timedScoreEvents.length);
+      const scoreEvent = this.timedScoreEvents[scoreEventIndex];
+      const scoreQuarter = repeatIndex * score.totalQuarterNotes + scoreEvent.startQuarter;
+      const expectedTimeMs = this.sessionStartTime + scoreQuarter * this.quarterNoteMs;
+      if (expectedTimeMs > limitedTime) break;
+      this.nextScoreEventToGenerate += 1;
+      if (this.endTime !== null && expectedTimeMs >= this.endTime) continue;
+
+      const measureIndex = score.measures.findIndex(
+        (measure) =>
+          scoreEvent.startQuarter >= measure.startQuarter &&
+          scoreEvent.startQuarter < measure.startQuarter + measure.durationQuarter,
+      );
+      const measure = score.measures[Math.max(0, measureIndex)];
+      const step: ExerciseStep = {
+        id: `score-measure-${measureIndex}`,
+        leftSubdivision: 'quarter',
+        rightSubdivision: 'quarter',
+        startBeat: Math.floor((measure?.startQuarter ?? 0) * this.quarterNoteMs / this.beatMs),
+        durationBeats: measure
+          ? Math.max(1, Math.round((measure.durationQuarter * this.quarterNoteMs) / this.beatMs))
+          : this.beatsPerBar,
+      };
+      this.events[scoreEvent.hand].push({
+        id: `score:${scoreEvent.hand}:${this.nextScoreEventToGenerate}`,
+        expectedTimeMs,
+        step,
+        beatIndex: Math.floor((expectedTimeMs - this.sessionStartTime) / this.beatMs + 1e-9),
+        isGraceNote: false,
+        isScoreEvent: true,
+        settled: false,
+      });
     }
   }
 
@@ -342,6 +418,12 @@ export class RhythmTimingEngine {
       stats.miss += 1;
     }
 
+    if (event.isScoreEvent) {
+      this.stable.totalExpected += 1;
+      if (grade) this.stable.totalHit += 1;
+      return;
+    }
+
     const key = `${event.step.leftSubdivision}:${event.step.rightSubdivision}`;
     let combination = this.combinations.get(key);
     if (!combination) {
@@ -390,6 +472,7 @@ export class RhythmTimingEngine {
     const overallLeft = this.readHandStats('left');
     const overallRight = this.readHandStats('right');
     const phase = this.finished ? 'finished' : now < this.sessionStartTime ? 'countdown' : 'running';
+    const scoreMeasure = this.currentScoreMeasure(now);
     const remaining = this.endTime === null ? null : Math.max(0, (this.endTime - now) / 1_000);
     const nextStepTime =
       this.sessionStartTime + (currentStep.startBeat + currentStep.durationBeats) * this.beatMs;
@@ -421,7 +504,29 @@ export class RhythmTimingEngine {
             ? 'START'
             : null,
       results: this.finished ? this.getResultsWithoutAdvance(now) : undefined,
+      ...(scoreMeasure
+        ? {
+            scoreMeasure,
+            scoreMeasureNumber: scoreMeasure.index + 1,
+            scoreMeasureCount: this.importedScore?.measures.length,
+            scoreTitle: this.importedScore?.title,
+          }
+        : {}),
     };
+  }
+
+  private currentScoreMeasure(now: number) {
+    const score = this.importedScore;
+    if (!score || score.totalQuarterNotes <= 0 || score.measures.length === 0) return undefined;
+    const elapsedQuarterNotes = Math.max(0, (now - this.sessionStartTime) / this.quarterNoteMs);
+    const scoreQuarter = elapsedQuarterNotes % score.totalQuarterNotes;
+    return (
+      score.measures.find(
+        (measure) =>
+          scoreQuarter >= measure.startQuarter &&
+          scoreQuarter < measure.startQuarter + measure.durationQuarter,
+      ) ?? score.measures[0]
+    );
   }
 
   private getResultsWithoutAdvance(now: number): SessionResults {
@@ -441,6 +546,9 @@ export class RhythmTimingEngine {
         right: toAccuracyStats(combination.right),
       })),
       durationSeconds: Math.max(0, (now - this.sessionStartTime) / 1_000),
+      ...(this.importedScore
+        ? { source: 'score' as const, scoreTitle: this.importedScore.title }
+        : {}),
     };
   }
 }

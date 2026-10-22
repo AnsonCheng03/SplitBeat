@@ -8,6 +8,7 @@ import { HardwareKeyboardInput } from '@/components/HardwareKeyboardInput';
 import { MetronomeIndicator } from '@/components/MetronomeIndicator';
 import { NextPatternPreview } from '@/components/NextPatternPreview';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
+import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
 import { TapZone } from '@/components/TapZone';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import { useRhythmSession } from '@/store/sessionStore';
@@ -83,30 +84,46 @@ export default function PracticeScreen() {
           <Countdown value={snapshot.countdown} compact={compact} />
         </View>
 
-        <View style={{ flex: compact ? 0.8 : 0.95, minHeight: compact ? 78 : 130, maxHeight: compact ? 112 : 190, flexDirection: 'row', alignItems: 'center', marginTop: compact ? 1 : 5, marginBottom: compact ? 2 : 7 }}>
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', borderRightWidth: 1, borderRightColor: colors.line }}>
-            <Text style={{ color: colors.left, fontSize: compact ? 10 : 11, fontWeight: '800', letterSpacing: 1.6 }}>LEFT HAND</Text>
-            <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} compact={compact} />
-            <Text numberOfLines={2} style={{ color: colors.text, fontSize: compact ? 12 : 14, fontWeight: '700', textAlign: 'center', paddingHorizontal: 6 }}>
-              {SUBDIVISION_LABELS[step.leftSubdivision]}
+        {snapshot.scoreMeasure ? (
+          <View style={{ flex: compact ? 0.8 : 0.95, minHeight: compact ? 88 : 122, maxHeight: compact ? 116 : 160, justifyContent: 'center', marginTop: compact ? 1 : 5, marginBottom: compact ? 2 : 7 }}>
+            <Text numberOfLines={1} style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '700', textAlign: 'center' }}>
+              {snapshot.scoreTitle}
             </Text>
+            <ScoreRhythmMeasure
+              measure={snapshot.scoreMeasure}
+              number={snapshot.scoreMeasureNumber ?? 1}
+              count={snapshot.scoreMeasureCount ?? 1}
+              compact={compact}
+            />
           </View>
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: colors.right, fontSize: compact ? 10 : 11, fontWeight: '800', letterSpacing: 1.6 }}>RIGHT HAND</Text>
-            <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} compact={compact} />
-            <Text numberOfLines={2} style={{ color: colors.text, fontSize: compact ? 12 : 14, fontWeight: '700', textAlign: 'center', paddingHorizontal: 6 }}>
-              {SUBDIVISION_LABELS[step.rightSubdivision]}
-            </Text>
-          </View>
-        </View>
+        ) : (
+          <>
+            <View style={{ flex: compact ? 0.8 : 0.95, minHeight: compact ? 78 : 130, maxHeight: compact ? 112 : 190, flexDirection: 'row', alignItems: 'center', marginTop: compact ? 1 : 5, marginBottom: compact ? 2 : 7 }}>
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', borderRightWidth: 1, borderRightColor: colors.line }}>
+                <Text style={{ color: colors.left, fontSize: compact ? 10 : 11, fontWeight: '800', letterSpacing: 1.6 }}>LEFT HAND</Text>
+                <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} compact={compact} />
+                <Text numberOfLines={2} style={{ color: colors.text, fontSize: compact ? 12 : 14, fontWeight: '700', textAlign: 'center', paddingHorizontal: 6 }}>
+                  {SUBDIVISION_LABELS[step.leftSubdivision]}
+                </Text>
+              </View>
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: colors.right, fontSize: compact ? 10 : 11, fontWeight: '800', letterSpacing: 1.6 }}>RIGHT HAND</Text>
+                <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} compact={compact} />
+                <Text numberOfLines={2} style={{ color: colors.text, fontSize: compact ? 12 : 14, fontWeight: '700', textAlign: 'center', paddingHorizontal: 6 }}>
+                  {SUBDIVISION_LABELS[step.rightSubdivision]}
+                </Text>
+              </View>
+            </View>
 
-        <NextPatternPreview
-          step={snapshot.nextStep}
-          beatsUntilChange={snapshot.beatsUntilChange}
-          secondsUntilChange={snapshot.secondsUntilChange}
-          graceNotesEnabled={settings.graceNotesEnabled}
-          compact={compact}
-        />
+            <NextPatternPreview
+              step={snapshot.nextStep}
+              beatsUntilChange={snapshot.beatsUntilChange}
+              secondsUntilChange={snapshot.secondsUntilChange}
+              graceNotesEnabled={settings.graceNotesEnabled}
+              compact={compact}
+            />
+          </>
+        )}
 
         <View style={{ minHeight: compact ? 34 : 48, justifyContent: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: compact ? 3 : 5 }}>

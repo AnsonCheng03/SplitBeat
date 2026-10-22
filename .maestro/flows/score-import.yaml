@@ -1,0 +1,58 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: LANDSCAPE_LEFT
+- launchApp:
+    clearState: true
+- tapOn:
+    point: "60%, 58%"
+- tapOn:
+    point: "60%, 58%"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: home.importScore
+    timeout: 15000
+- tapOn:
+    id: home.importScore
+- assertVisible:
+    id: scoreImport.screen
+- tapOn:
+    id: scoreImport.xmlInput
+- inputText: '<score-partwise><work><work-title>E2E Score</work-title></work><part-list><score-part id="P"><part-name>Piano</part-name></score-part></part-list><part id="P"><measure number="1"><attributes><divisions>1</divisions><staves>2</staves><time><beats>2</beats><beat-type>4</beat-type></time></attributes><note><pitch><step>C</step><octave>4</octave></pitch><duration>1</duration><staff>1</staff></note><backup><duration>1</duration></backup><note><pitch><step>C</step><octave>3</octave></pitch><duration>1</duration><staff>2</staff></note></measure></part></score-partwise>'
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: scoreImport.parse
+    direction: DOWN
+- tapOn:
+    id: scoreImport.parse
+- assertVisible:
+    id: scoreImport.summary
+- assertVisible: E2E Score
+- tapOn:
+    id: scoreImport.duration.30
+- scrollUntilVisible:
+    element:
+      id: scoreImport.start
+    direction: DOWN
+- tapOn:
+    id: scoreImport.start
+- extendedWaitUntil:
+    visible:
+      id: practice.screen
+    timeout: 15000
+- assertVisible:
+    id: practice.scoreMeasure
+- assertVisible: BAR 1 / 1
+- tapOn:
+    id: practice.tap.left
+- tapOn:
+    id: practice.tap.right
+- tapOn:
+    id: practice.end
+- extendedWaitUntil:
+    visible:
+      id: results.screen
+    timeout: 15000
+- assertVisible: SCORE SESSION COMPLETE
+- assertVisible: 80 BPM · 2/4 · E2E Score

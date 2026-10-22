@@ -43,6 +43,16 @@ function weakestCombination(results: SessionResults) {
 }
 
 function buildFeedback(results: SessionResults, weak?: ReturnType<typeof weakestCombination>) {
+  if (results.source === 'score') {
+    const weakerHand = accuracyPercent(results.left) <= accuracyPercent(results.right) ? 'left' : 'right';
+    const weakerAccuracy = Math.min(accuracyPercent(results.left), accuracyPercent(results.right));
+    return [
+      results.scoreTitle ? `You trained from “${results.scoreTitle}”.` : 'You trained from an imported score.',
+      weakerAccuracy < 80
+        ? `Give the ${weakerHand} hand a few focused passes, then bring both hands back together.`
+        : 'Your score rhythm stayed steady. Try a faster tempo or a narrower timing window next time.',
+    ];
+  }
   const messages: string[] = [];
   if (results.right.averageSignedErrorMs < -15) messages.push('Your right hand tends to rush.');
   if (results.left.averageSignedErrorMs > 15) messages.push('Your left hand tends to play late.');
@@ -159,13 +169,15 @@ export default function ResultsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-          <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.8 }}>SESSION COMPLETE</Text>
-          <Text style={{ color: colors.muted, fontSize: 12 }}>{results.bpm} BPM · {results.timeSignature} · {sessionOptions}</Text>
+          <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.8 }}>{results.source === 'score' ? 'SCORE SESSION COMPLETE' : 'SESSION COMPLETE'}</Text>
+          <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 12, maxWidth: '68%', textAlign: 'right' }}>
+            {results.bpm} BPM · {results.timeSignature} · {results.source === 'score' ? results.scoreTitle : sessionOptions}
+          </Text>
         </View>
         <Text style={{ color: colors.text, fontSize: 32, fontWeight: '900', letterSpacing: -0.8 }}>Your timing.</Text>
 
         <View style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 20, padding: 20, marginTop: 17 }}>
-          <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>OVERALL ACCURACY</Text>
+          <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>{results.source === 'score' ? 'SCORE ACCURACY' : 'OVERALL ACCURACY'}</Text>
           <Text style={{ color: colors.text, fontSize: 58, lineHeight: 66, fontWeight: '900', marginTop: 4 }}>{percent(overall)}</Text>
           <View style={{ height: 4, borderRadius: 3, backgroundColor: colors.line, marginTop: 11, overflow: 'hidden' }}>
             <View style={{ width: (String(overall) + '%') as DimensionValue, height: 4, backgroundColor: colors.accent, borderRadius: 3 }} />
@@ -176,10 +188,12 @@ export default function ResultsScreen() {
           <ScorePanel label="LEFT HAND" value={percent(accuracyPercent(results.left))} detail={timingText(results.left)} accent={colors.left} />
           <ScorePanel label="RIGHT HAND" value={percent(accuracyPercent(results.right))} detail={timingText(results.right)} accent={colors.right} />
         </View>
-        <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-          <ScorePanel label="STEADY RHYTHM" value={results.stable.totalExpected ? percent(accuracyPercent(results.stable)) : '—'} detail="Outside switch window" />
-          <ScorePanel label="DURING SWITCHES" value={results.transition.totalExpected ? percent(accuracyPercent(results.transition)) : '—'} detail="First 2 beats after change" />
-        </View>
+        {results.source === 'score' ? null : (
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+            <ScorePanel label="STEADY RHYTHM" value={results.stable.totalExpected ? percent(accuracyPercent(results.stable)) : '—'} detail="Outside switch window" />
+            <ScorePanel label="DURING SWITCHES" value={results.transition.totalExpected ? percent(accuracyPercent(results.transition)) : '—'} detail="First 2 beats after change" />
+          </View>
+        )}
 
         <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', marginTop: 25, marginBottom: 10 }}>HAND TIMING</Text>
         {(['left', 'right'] as const).map((hand) => {
@@ -199,7 +213,7 @@ export default function ResultsScreen() {
           );
         })}
 
-        {weakest ? (
+        {weakest && results.source !== 'score' ? (
           <View style={{ backgroundColor: colors.surface, borderColor: colors.line, borderWidth: 1, borderRadius: 18, padding: 17, marginTop: 22 }}>
             <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>MOST DIFFICULT PAIR</Text>
             <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', marginTop: 13 }}>
@@ -211,7 +225,7 @@ export default function ResultsScreen() {
           </View>
         ) : null}
 
-        {combinations.length > 0 ? (
+        {combinations.length > 0 && results.source !== 'score' ? (
           <View style={{ marginTop: 22 }}>
             <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', marginBottom: 5 }}>PAIR BREAKDOWN</Text>
             {combinations.map((combination) => (

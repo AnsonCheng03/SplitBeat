@@ -18,6 +18,7 @@ import {
 } from '@/rhythm/timingCalibration';
 import { timeSignatureMetrics } from '@/rhythm/subdivisions';
 import { SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
+import type { ImportedRhythmScore } from '@/types/importedScore';
 import type {
   ExerciseSettings,
   Hand,
@@ -53,6 +54,7 @@ interface SessionContextValue {
   settings: ExerciseSettings;
   updateSettings: (patch: Partial<ExerciseSettings>) => void;
   startExercise: () => Promise<void>;
+  startScoreExercise: (score: ImportedRhythmScore) => Promise<void>;
   stopExercise: () => void;
   registerTap: (hand: Hand, timestamp: number) => void;
   snapshot: SessionSnapshot | null;
@@ -178,35 +180,44 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     uiTimerRef.current = undefined;
   }, []);
 
-  const startExercise = useCallback(async () => {
+  const startSession = useCallback(async (score?: ImportedRhythmScore) => {
     stopTimers();
     if (audioRef.current) await audioRef.current.stop();
+
+    const sessionSettings = score
+      ? {
+          ...settings,
+          bpm: score.bpm ?? settings.bpm,
+          timeSignature: score.timeSignature,
+        }
+      : settings;
+    if (score) setSettings(sessionSettings);
 
     const audio = new MetronomeAudio();
     audioRef.current = audio;
     await audio.resume();
 
-    const metrics = timeSignatureMetrics(settings.bpm, settings.timeSignature);
+    const metrics = timeSignatureMetrics(sessionSettings.bpm, sessionSettings.timeSignature);
     const beatMs = metrics.beatDurationMs;
     const performanceNow = monotonicNow();
     const audioNow = audio.currentTime;
     const sessionStartTime = performanceNow + AUDIO_LEAD_IN_MS + COUNT_IN_BEATS * beatMs;
     const sessionStartAudioTime =
       audioNow + AUDIO_LEAD_IN_MS / 1_000 + (COUNT_IN_BEATS * beatMs) / 1_000;
-    const engine = new RhythmTimingEngine({ settings, sessionStartTime });
+    const engine = new RhythmTimingEngine({ settings: sessionSettings, sessionStartTime, importedScore: score });
     engineRef.current = engine;
     setResults(null);
     setSnapshot(engine.advance(performanceNow));
     audio.start({
       sessionStartAudioTime,
-      bpm: settings.bpm,
+      bpm: sessionSettings.bpm,
       beatsPerBar: metrics.beatsPerBar,
-      durationSeconds: settings.durationSeconds === 'endless' ? null : settings.durationSeconds,
-      soundEnabled: settings.soundEnabled,
+      durationSeconds: sessionSettings.durationSeconds === 'endless' ? null : sessionSettings.durationSeconds,
+      soundEnabled: sessionSettings.soundEnabled,
       sounds: {
-        metronome: settings.metronomeSound,
-        leftHand: settings.leftHandSound,
-        rightHand: settings.rightHandSound,
+        metronome: sessionSettings.metronomeSound,
+        leftHand: sessionSettings.leftHandSound,
+        rightHand: sessionSettings.rightHandSound,
       },
     });
 
@@ -227,6 +238,12 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     };
     uiTimerRef.current = setTimeout(updateFromClock, 30);
   }, [settings, stopTimers]);
+
+  const startExercise = useCallback(() => startSession(), [startSession]);
+  const startScoreExercise = useCallback(
+    (score: ImportedRhythmScore) => startSession(score),
+    [startSession],
+  );
 
   const registerTap = useCallback((hand: Hand, timestamp: number) => {
     const engine = engineRef.current;
@@ -259,8 +276,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   );
 
   const value = useMemo(
-    () => ({ settings, updateSettings, startExercise, stopExercise, registerTap, snapshot, results }),
-    [settings, updateSettings, startExercise, stopExercise, registerTap, snapshot, results],
+    () => ({ settings, updateSettings, startExercise, startScoreExercise, stopExercise, registerTap, snapshot, results }),
+    [settings, updateSettings, startExercise, startScoreExercise, stopExercise, registerTap, snapshot, results],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
