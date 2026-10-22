@@ -1,0 +1,45 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: LANDSCAPE_LEFT
+- launchApp:
+    clearState: true
+- runFlow:
+    when:
+      visible:
+        text: Open
+    commands:
+      - tapOn: Open
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
+- tapOn:
+    id: home.setup
+- assertVisible:
+    id: setup.screen
+- scrollUntilVisible:
+    element:
+      id: setup.start
+    direction: DOWN
+- tapOn:
+    id: setup.start
+- extendedWaitUntil:
+    visible:
+      id: practice.screen
+    timeout: 15000
+- assertVisible:
+    id: practice.tap.left
+- assertVisible:
+    id: practice.tap.right
+- tapOn:
+    id: practice.tap.left
+- tapOn:
+    id: practice.tap.right
+- tapOn:
+    id: practice.end
+- extendedWaitUntil:
+    visible:
+      id: results.screen
+    timeout: 15000
+- assertVisible: SESSION COMPLETE

@@ -37,6 +37,7 @@ export function TapZone({ hand, onTap, hapticsEnabled, compact = false }: TapZon
 
   return (
     <View
+      testID={`practice.tap.${hand}`}
       accessibilityRole="button"
       accessibilityLabel={`${hand} hand tap zone`}
       onTouchStart={handleTouch}

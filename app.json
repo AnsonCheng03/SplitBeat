@@ -3,8 +3,9 @@
     "name": "Two-Hand Rhythm Trainer",
     "slug": "two-hand-rhythm-trainer",
     "version": "1.0.0",
+    "platforms": ["ios", "android"],
     "scheme": "twohandrhythm",
-    "orientation": "default",
+    "orientation": "landscape",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "plugins": [
@@ -32,6 +33,10 @@
     },
     "ios": {
       "supportsTablet": true,
+      "requireFullScreen": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "bundleIdentifier": "com.splitbeat.twohandrhythm"
     },
     "android": {

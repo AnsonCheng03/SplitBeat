@@ -33,10 +33,10 @@ export default function PracticeScreen() {
   const timeLabel = snapshot.secondsRemaining === null ? 'ENDLESS' : Math.ceil(snapshot.secondsRemaining) + 's';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView testID="practice.screen" style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={{ flex: 1, paddingHorizontal: compact ? 12 : 18, paddingTop: compact ? 2 : 8, paddingBottom: compact ? 3 : 9, maxWidth: 950, width: '100%', alignSelf: 'center' }}>
         <View style={{ minHeight: compact ? 32 : 45, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Pressable onPress={stop} hitSlop={12}>
+          <Pressable testID="practice.end" onPress={stop} hitSlop={12}>
             <Text style={{ color: colors.muted, fontSize: compact ? 11 : 12, fontWeight: '800', letterSpacing: 1 }}>
               ‹  END
             </Text>

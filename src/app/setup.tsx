@@ -97,7 +97,7 @@ export default function SetupScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView testID="setup.screen" style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: 22,
@@ -241,6 +241,7 @@ export default function SetupScreen() {
         </View>
 
         <Pressable
+          testID="setup.start"
           onPress={start}
           disabled={starting}
           style={({ pressed }) => ({

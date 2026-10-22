@@ -124,7 +124,7 @@ export default function ResultsScreen() {
 
   if (!results) {
     return (
-      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+      <SafeAreaView testID="results.screen" style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
         <Text style={{ color: colors.muted }}>No session results yet.</Text>
         <Pressable onPress={() => router.replace('/setup')} style={{ padding: 16 }}>
           <Text style={{ color: colors.left, fontWeight: '800' }}>SET UP A SESSION</Text>
@@ -145,7 +145,7 @@ export default function ResultsScreen() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView testID="results.screen" style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 32, maxWidth: 720, width: '100%', alignSelf: 'center' }}
         showsVerticalScrollIndicator={false}

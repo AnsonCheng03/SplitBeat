@@ -5,7 +5,7 @@ import { colors } from '@/theme';
 
 export default function HomeScreen() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView testID="home.screen" style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={{ flex: 1, paddingHorizontal: 28, justifyContent: 'center' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 30 }}>
           <View style={{ width: 10, height: 10, borderRadius: 10, backgroundColor: colors.left }} />
@@ -28,6 +28,7 @@ export default function HomeScreen() {
         </View>
         <Link href="/setup" asChild>
           <Pressable
+            testID="home.setup"
             style={({ pressed }) => ({
               marginTop: 52,
               backgroundColor: pressed ? '#D2C4FF' : colors.text,
