@@ -156,7 +156,7 @@ export default function ResultsScreen() {
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
           <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.8 }}>SESSION COMPLETE</Text>
-          <Text style={{ color: colors.muted, fontSize: 12 }}>{results.bpm} BPM</Text>
+          <Text style={{ color: colors.muted, fontSize: 12 }}>{results.bpm} BPM · {results.timeSignature}</Text>
         </View>
         <Text style={{ color: colors.text, fontSize: 32, fontWeight: '900', letterSpacing: -0.8 }}>Your timing.</Text>
 

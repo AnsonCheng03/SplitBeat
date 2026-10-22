@@ -6,8 +6,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
-import { SUBDIVISIONS } from '@/types/rhythm';
-import type { DurationOption, ExerciseSettings, Subdivision } from '@/types/rhythm';
+import { SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
+import type { DurationOption, ExerciseSettings, Subdivision, TimeSignature } from '@/types/rhythm';
 
 const durations: { label: string; value: DurationOption }[] = [
   { label: '30 sec', value: 30 },
@@ -165,6 +165,40 @@ export default function SetupScreen() {
             <Text style={{ color: colors.dim, fontSize: 11 }}>200</Text>
           </View>
         </View>
+
+        <Text style={sectionLabel}>TIME SIGNATURE</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {TIME_SIGNATURES.map((timeSignature: TimeSignature) => {
+            const selected = settings.timeSignature === timeSignature;
+            return (
+              <Pressable
+                key={timeSignature}
+                testID={'setup.timeSignature.' + timeSignature.replace('/', '-')}
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
+                accessibilityLabel={timeSignature + ' time'}
+                onPress={() => updateSettings({ timeSignature })}
+                style={{
+                  width: '18.5%',
+                  minHeight: 42,
+                  borderRadius: 12,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: selected ? colors.text : colors.surface,
+                  borderWidth: 1,
+                  borderColor: selected ? colors.text : colors.line,
+                }}
+              >
+                <Text style={{ color: selected ? colors.background : colors.muted, fontSize: 13, fontWeight: '800' }}>
+                  {timeSignature}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Text style={{ color: colors.dim, fontSize: 12, marginTop: 8 }}>
+          BPM follows the written beat. In 6/8, 9/8, and 12/8 it counts dotted-quarter pulses.
+        </Text>
 
         <Text style={sectionLabel}>SESSION LENGTH</Text>
         <ChoiceRow

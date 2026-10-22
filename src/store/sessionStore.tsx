@@ -10,8 +10,8 @@ import React, {
 } from 'react';
 import { MetronomeAudio } from '@/audio/metronome';
 import { RhythmTimingEngine } from '@/rhythm/timingEngine';
-import { beatDurationMs } from '@/rhythm/subdivisions';
-import { SUBDIVISIONS } from '@/types/rhythm';
+import { timeSignatureMetrics } from '@/rhythm/subdivisions';
+import { SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
 import type {
   ExerciseSettings,
   Hand,
@@ -26,6 +26,7 @@ const AUDIO_LEAD_IN_MS = 300;
 
 export const DEFAULT_SETTINGS: ExerciseSettings = {
   bpm: 80,
+  timeSignature: '4/4',
   durationSeconds: 60,
   changeIntervalBeats: 4,
   enabledSubdivisions: ['quarter', 'eighth', 'triplet', 'sixteenth'],
@@ -62,12 +63,18 @@ function restoreSettings(raw: string | null): ExerciseSettings {
     const changeIntervalBeats = [1, 2, 4, 8].includes(parsed.changeIntervalBeats ?? -1)
       ? (parsed.changeIntervalBeats as ExerciseSettings['changeIntervalBeats'])
       : DEFAULT_SETTINGS.changeIntervalBeats;
+    const timeSignature = TIME_SIGNATURES.includes(
+      parsed.timeSignature as (typeof TIME_SIGNATURES)[number],
+    )
+      ? (parsed.timeSignature as ExerciseSettings['timeSignature'])
+      : DEFAULT_SETTINGS.timeSignature;
 
     return {
       bpm:
         typeof parsed.bpm === 'number'
           ? Math.max(40, Math.min(200, Math.round(parsed.bpm)))
           : DEFAULT_SETTINGS.bpm,
+      timeSignature,
       durationSeconds,
       changeIntervalBeats,
       enabledSubdivisions: validSubdivisions as Subdivision[],
@@ -134,7 +141,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     audioRef.current = audio;
     await audio.resume();
 
-    const beatMs = beatDurationMs(settings.bpm);
+    const metrics = timeSignatureMetrics(settings.bpm, settings.timeSignature);
+    const beatMs = metrics.beatDurationMs;
     const performanceNow = monotonicNow();
     const audioNow = audio.currentTime;
     const sessionStartTime = performanceNow + AUDIO_LEAD_IN_MS + COUNT_IN_BEATS * beatMs;
@@ -147,6 +155,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     audio.start({
       sessionStartAudioTime,
       bpm: settings.bpm,
+      beatsPerBar: metrics.beatsPerBar,
       durationSeconds: settings.durationSeconds === 'endless' ? null : settings.durationSeconds,
       soundEnabled: settings.soundEnabled,
     });

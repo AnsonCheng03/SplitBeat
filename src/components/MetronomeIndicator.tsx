@@ -3,19 +3,21 @@ import { colors } from '@/theme';
 
 interface MetronomeIndicatorProps {
   beatInBar: number;
+  beatsPerBar: number;
   isRunning: boolean;
   compact?: boolean;
 }
 
 export function MetronomeIndicator({
   beatInBar,
+  beatsPerBar,
   isRunning,
   compact = false,
 }: MetronomeIndicatorProps) {
   return (
     <View style={{ alignItems: 'center', gap: compact ? 6 : 9 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: compact ? 10 : 13 }}>
-        {[0, 1, 2, 3].map((beat) => {
+        {Array.from({ length: beatsPerBar }, (_, beat) => {
           const active = isRunning && beat === beatInBar;
           return (
             <View

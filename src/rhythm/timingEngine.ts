@@ -1,8 +1,7 @@
 import { createExerciseStepGenerator } from '@/rhythm/exerciseGenerator';
 import {
-  beatDurationMs,
-  expectedEventTimeMs,
   SUBDIVISION_COUNTS,
+  timeSignatureMetrics,
 } from '@/rhythm/subdivisions';
 import { accuracyPercent, emptyHandStats, finalizeHandStats } from '@/rhythm/scoring';
 import { matchTap, TIMING_WINDOWS } from '@/rhythm/tapMatcher';
@@ -80,6 +79,8 @@ function toAccuracyStats(stats: MutableAccuracyStats): AccuracyStats {
 
 export class RhythmTimingEngine {
   readonly beatMs: number;
+  readonly quarterNoteMs: number;
+  readonly beatsPerBar: number;
   readonly sessionStartTime: number;
 
   private readonly settings: ExerciseSettings;
@@ -93,13 +94,16 @@ export class RhythmTimingEngine {
   private readonly combinations = new Map<string, MutableCombinationStats>();
   private readonly stable = createMutableAccuracyStats();
   private readonly transition = createMutableAccuracyStats();
-  private nextBeatToGenerate = 0;
+  private nextStepToGenerate = 0;
   private finished = false;
 
   constructor(options: TimingEngineOptions) {
     this.settings = options.settings;
     this.sessionStartTime = options.sessionStartTime;
-    this.beatMs = beatDurationMs(options.settings.bpm);
+    const metrics = timeSignatureMetrics(options.settings.bpm, options.settings.timeSignature);
+    this.beatMs = metrics.beatDurationMs;
+    this.quarterNoteMs = metrics.quarterNoteDurationMs;
+    this.beatsPerBar = metrics.beatsPerBar;
     this.endTime =
       options.settings.durationSeconds === 'endless'
         ? null
@@ -158,6 +162,7 @@ export class RhythmTimingEngine {
 
     return {
       bpm: this.settings.bpm,
+      timeSignature: this.settings.timeSignature,
       left: this.readHandStats('left'),
       right: this.readHandStats('right'),
       stable: toAccuracyStats(this.stable),
@@ -175,39 +180,30 @@ export class RhythmTimingEngine {
   private generateThrough(time: number): void {
     const limitedTime = this.endTime === null ? time : Math.min(time, this.endTime);
     while (true) {
-      const beatTime = expectedEventTimeMs(this.sessionStartTime, this.settings.bpm, this.nextBeatToGenerate);
-      if (beatTime > limitedTime || (this.endTime !== null && beatTime >= this.endTime)) break;
-
-      const stepIndex = Math.floor(
-        this.nextBeatToGenerate / this.settings.changeIntervalBeats,
-      );
-      const step = this.getStep(stepIndex);
-      const divisions: Record<Hand, number> = {
-        left: SUBDIVISION_COUNTS[step.leftSubdivision],
-        right: SUBDIVISION_COUNTS[step.rightSubdivision],
-      };
+      const step = this.getStep(this.nextStepToGenerate);
+      const stepStartTime =
+        this.sessionStartTime + step.startBeat * this.beatMs;
+      if (stepStartTime > limitedTime || (this.endTime !== null && stepStartTime >= this.endTime)) break;
+      const stepEndTime = stepStartTime + step.durationBeats * this.beatMs;
 
       for (const hand of ['left', 'right'] as const) {
         const subdivision = hand === 'left' ? step.leftSubdivision : step.rightSubdivision;
-        for (let subdivisionIndex = 0; subdivisionIndex < divisions[hand]; subdivisionIndex += 1) {
-          const expectedTimeMs = expectedEventTimeMs(
-            this.sessionStartTime,
-            this.settings.bpm,
-            this.nextBeatToGenerate,
-            subdivisionIndex,
-            subdivision,
-          );
+        const divisions = SUBDIVISION_COUNTS[subdivision];
+        const intervalMs = this.quarterNoteMs / divisions;
+        for (let subdivisionIndex = 0; ; subdivisionIndex += 1) {
+          const expectedTimeMs = stepStartTime + subdivisionIndex * intervalMs;
+          if (expectedTimeMs >= stepEndTime) break;
           if (this.endTime !== null && expectedTimeMs >= this.endTime) continue;
           this.events[hand].push({
-            id: `${hand}:${this.nextBeatToGenerate}:${subdivisionIndex}`,
+            id: `${hand}:${step.id}:${subdivisionIndex}`,
             expectedTimeMs,
             step,
-            beatIndex: this.nextBeatToGenerate,
+            beatIndex: Math.floor((expectedTimeMs - this.sessionStartTime) / this.beatMs + 1e-9),
             settled: false,
           });
         }
       }
-      this.nextBeatToGenerate += 1;
+      this.nextStepToGenerate += 1;
     }
   }
 
@@ -301,11 +297,8 @@ export class RhythmTimingEngine {
     const overallRight = this.readHandStats('right');
     const phase = this.finished ? 'finished' : now < this.sessionStartTime ? 'countdown' : 'running';
     const remaining = this.endTime === null ? null : Math.max(0, (this.endTime - now) / 1_000);
-    const nextStepTime = expectedEventTimeMs(
-      this.sessionStartTime,
-      this.settings.bpm,
-      currentStep.startBeat + currentStep.durationBeats,
-    );
+    const nextStepTime =
+      this.sessionStartTime + (currentStep.startBeat + currentStep.durationBeats) * this.beatMs;
     const hasNextStep =
       phase === 'running' && (this.endTime === null || nextStepTime < this.endTime);
     const nextStep = hasNextStep ? this.getStep(stepIndex + 1) : null;
@@ -313,8 +306,10 @@ export class RhythmTimingEngine {
     return {
       phase,
       bpm: this.settings.bpm,
+      timeSignature: this.settings.timeSignature,
+      beatsPerBar: this.beatsPerBar,
       beatIndex,
-      beatInBar: beatIndex % 4,
+      beatInBar: beatIndex % this.beatsPerBar,
       currentStep,
       nextStep,
       beatsUntilChange:
@@ -338,6 +333,7 @@ export class RhythmTimingEngine {
   private getResultsWithoutAdvance(now: number): SessionResults {
     return {
       bpm: this.settings.bpm,
+      timeSignature: this.settings.timeSignature,
       left: this.readHandStats('left'),
       right: this.readHandStats('right'),
       stable: toAccuracyStats(this.stable),
@@ -357,6 +353,11 @@ export function getExerciseStartTime(
   monotonicNow: number,
   bpm: number,
   leadInMs = 300,
+  timeSignature: ExerciseSettings['timeSignature'] = '4/4',
 ): number {
-  return monotonicNow + leadInMs + COUNT_IN_BEATS * beatDurationMs(bpm);
+  return (
+    monotonicNow +
+    leadInMs +
+    COUNT_IN_BEATS * timeSignatureMetrics(bpm, timeSignature).beatDurationMs
+  );
 }

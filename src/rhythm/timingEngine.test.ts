@@ -3,13 +3,19 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { generateExerciseSteps } from '@/rhythm/exerciseGenerator';
-import { beatDurationMs, expectedEventTimeMs, subdivisionIntervalMs } from '@/rhythm/subdivisions';
+import {
+  beatDurationMs,
+  expectedEventTimeMs,
+  subdivisionIntervalMs,
+  timeSignatureMetrics,
+} from '@/rhythm/subdivisions';
 import { matchTap } from '@/rhythm/tapMatcher';
 import { getExerciseStartTime, RhythmTimingEngine } from '@/rhythm/timingEngine';
 import type { ExerciseSettings } from '@/types/rhythm';
 
 const settings: ExerciseSettings = {
   bpm: 60,
+  timeSignature: '4/4',
   durationSeconds: 30,
   changeIntervalBeats: 4,
   enabledSubdivisions: ['quarter', 'eighth'],
@@ -25,6 +31,38 @@ test('subdivision intervals follow the selected BPM', () => {
   assert.equal(subdivisionIntervalMs(60, 'sixtyFourth'), 62.5);
   assert.equal(subdivisionIntervalMs(60, 'sixteenth'), 250);
   assert.ok(Math.abs(subdivisionIntervalMs(60, 'triplet') - 333.3333333333) < 0.000001);
+});
+
+test('time signatures describe the right pulse, bar length, and quarter-note duration', () => {
+  assert.deepEqual(timeSignatureMetrics(60, '4/4'), {
+    numerator: 4,
+    denominator: 4,
+    beatsPerBar: 4,
+    compound: false,
+    beatDurationMs: 1_000,
+    quarterNoteDurationMs: 1_000,
+  });
+  assert.deepEqual(timeSignatureMetrics(60, '6/8'), {
+    numerator: 6,
+    denominator: 8,
+    beatsPerBar: 2,
+    compound: true,
+    beatDurationMs: 1_000,
+    quarterNoteDurationMs: 1_000 / 1.5,
+  });
+  assert.equal(timeSignatureMetrics(60, '9/8').beatsPerBar, 3);
+  assert.equal(timeSignatureMetrics(60, '12/8').beatsPerBar, 4);
+  assert.equal(timeSignatureMetrics(60, '3/8').quarterNoteDurationMs, 2_000);
+  assert.equal(timeSignatureMetrics(60, '2/2').quarterNoteDurationMs, 500);
+});
+
+test('compound meter note subdivisions use quarter-note durations inside dotted-quarter pulses', () => {
+  assert.ok(Math.abs(subdivisionIntervalMs(60, 'eighth', '6/8') - 1_000 / 3) < 0.000001);
+  assert.equal(expectedEventTimeMs(5_000, 60, 1, 0, 'eighth', '6/8'), 6_000);
+  assert.ok(
+    Math.abs(expectedEventTimeMs(5_000, 60, 1, 1, 'eighth', '6/8') - (6_000 + 1_000 / 3)) <
+      0.000001,
+  );
 });
 
 test('expected timestamps stay anchored to the session start across bars', () => {
@@ -48,6 +86,59 @@ test('the timing engine generates all 64th-note events from beat timestamps', ()
   const snapshot = engine.advance(start + 1_040);
   assert.equal(snapshot.leftStats.totalExpected, 16);
   assert.equal(snapshot.rightStats.totalExpected, 16);
+});
+
+test('compound meter counts dotted-quarter beats while notes follow quarter-note spacing', () => {
+  const start = 20_000;
+  const engine = new RhythmTimingEngine({
+    settings: {
+      ...settings,
+      timeSignature: '6/8',
+      enabledSubdivisions: ['quarter'],
+      changeIntervalBeats: 2,
+    },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  const firstPulse = engine.advance(start + 800);
+  assert.equal(firstPulse.leftStats.totalExpected, 2);
+  assert.equal(firstPulse.beatsPerBar, 2);
+  assert.equal(firstPulse.beatInBar, 0);
+  assert.equal(firstPulse.nextStep?.startBeat, 2);
+  assert.equal(firstPulse.secondsUntilChange, 1.2);
+
+  const secondPulse = engine.advance(start + 1_000);
+  assert.equal(secondPulse.beatIndex, 1);
+  assert.equal(secondPulse.beatInBar, 1);
+
+  const preview = engine.advance(start + 1_500);
+  assert.equal(preview.currentStep.startBeat, 0);
+  assert.equal(preview.secondsUntilChange, 0.5);
+
+  const nextBar = engine.advance(start + 2_000);
+  assert.equal(nextBar.beatIndex, 2);
+  assert.equal(nextBar.beatInBar, 0);
+  assert.equal(nextBar.currentStep.startBeat, 2);
+});
+
+test('simple eighth-note meters keep quarter-note events two pulses apart', () => {
+  const start = 25_000;
+  const engine = new RhythmTimingEngine({
+    settings: {
+      ...settings,
+      timeSignature: '3/8',
+      enabledSubdivisions: ['quarter'],
+    },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  const firstNote = engine.advance(start + 1_100);
+  assert.equal(firstNote.leftStats.totalExpected, 1);
+  assert.equal(firstNote.beatsPerBar, 3);
+  const secondNote = engine.advance(start + 2_101);
+  assert.equal(secondNote.leftStats.totalExpected, 2);
 });
 
 test('long-run timestamps use the origin formula instead of accumulating timer delays', () => {
@@ -164,4 +255,5 @@ test('the first two beats after a pair change are scored as transition events', 
 
 test('count-in places the first exercise beat after three full beats and lead-in', () => {
   assert.equal(getExerciseStartTime(100, 120, 300), 100 + 300 + 1_500);
+  assert.equal(getExerciseStartTime(100, 60, 300, '6/8'), 100 + 300 + 3_000);
 });

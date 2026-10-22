@@ -47,6 +47,9 @@ export default function PracticeScreen() {
               {snapshot.bpm}
               <Text style={{ color: colors.muted, fontSize: compact ? 11 : 12, fontWeight: '700' }}> BPM</Text>
             </Text>
+            <Text testID="practice.timeSignature" style={{ color: colors.muted, fontSize: compact ? 10 : 11, fontWeight: '700' }}>
+              {snapshot.timeSignature}
+            </Text>
           </View>
           <View style={{ alignItems: 'flex-end', minWidth: 54 }}>
             <Text style={{ color: colors.muted, fontSize: compact ? 10 : 11, fontWeight: '700' }}>{timeLabel}</Text>
@@ -54,7 +57,12 @@ export default function PracticeScreen() {
         </View>
 
         <View style={{ height: compact ? 40 : 60, justifyContent: 'center' }}>
-          <MetronomeIndicator beatInBar={snapshot.beatInBar} isRunning={snapshot.phase === 'running'} compact={compact} />
+          <MetronomeIndicator
+            beatInBar={snapshot.beatInBar}
+            beatsPerBar={snapshot.beatsPerBar}
+            isRunning={snapshot.phase === 'running'}
+            compact={compact}
+          />
         </View>
         <View style={{ minHeight: compact ? 24 : 36, justifyContent: 'center' }}>
           <Countdown value={snapshot.countdown} compact={compact} />

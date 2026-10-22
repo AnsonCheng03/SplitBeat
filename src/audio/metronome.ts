@@ -3,6 +3,7 @@ import { AudioContext } from 'react-native-audio-api';
 interface MetronomeStartOptions {
   sessionStartAudioTime: number;
   bpm: number;
+  beatsPerBar: number;
   durationSeconds: number | null;
   soundEnabled: boolean;
 }
@@ -59,7 +60,8 @@ export class MetronomeAudio {
       const beatTime = options.sessionStartAudioTime + this.nextBeatIndex * beatDurationSeconds;
       if (beatTime > horizon || beatTime >= endTime) break;
       if (beatTime >= this.context.currentTime - 0.01) {
-        this.scheduleClick(beatTime, this.nextBeatIndex % 4 === 0);
+        const beatInBar = ((this.nextBeatIndex % options.beatsPerBar) + options.beatsPerBar) % options.beatsPerBar;
+        this.scheduleClick(beatTime, beatInBar === 0);
       }
       this.nextBeatIndex += 1;
     }

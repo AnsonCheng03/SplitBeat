@@ -20,6 +20,12 @@ appId: com.splitbeat.twohandrhythm
     id: setup.screen
 - scrollUntilVisible:
     element:
+      id: setup.timeSignature.6-8
+    direction: DOWN
+- tapOn:
+    id: setup.timeSignature.6-8
+- scrollUntilVisible:
+    element:
       id: setup.start
     direction: DOWN
 - assertVisible:
@@ -36,6 +42,9 @@ appId: com.splitbeat.twohandrhythm
     visible:
       id: practice.screen
     timeout: 15000
+- assertVisible:
+    id: practice.timeSignature
+- assertVisible: 6/8
 - extendedWaitUntil:
     visible:
       id: practice.nextPattern

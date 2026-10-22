@@ -8,6 +8,20 @@ export const SUBDIVISIONS = [
 ] as const;
 
 export type Subdivision = (typeof SUBDIVISIONS)[number];
+export const TIME_SIGNATURES = [
+  '2/4',
+  '3/4',
+  '4/4',
+  '5/4',
+  '7/4',
+  '2/2',
+  '3/8',
+  '6/8',
+  '9/8',
+  '12/8',
+] as const;
+
+export type TimeSignature = (typeof TIME_SIGNATURES)[number];
 export type Hand = 'left' | 'right';
 export type DurationOption = 30 | 60 | 120 | 'endless';
 export type ChangeIntervalBeats = 1 | 2 | 4 | 8;
@@ -22,6 +36,7 @@ export interface ExerciseStep {
 
 export interface ExerciseSettings {
   bpm: number;
+  timeSignature: TimeSignature;
   durationSeconds: DurationOption;
   changeIntervalBeats: ChangeIntervalBeats;
   enabledSubdivisions: Subdivision[];
@@ -54,6 +69,7 @@ export interface CombinationStats {
 
 export interface SessionResults {
   bpm: number;
+  timeSignature: TimeSignature;
   left: HandStats;
   right: HandStats;
   stable: AccuracyStats;
@@ -65,6 +81,8 @@ export interface SessionResults {
 export interface SessionSnapshot {
   phase: 'countdown' | 'running' | 'finished';
   bpm: number;
+  timeSignature: TimeSignature;
+  beatsPerBar: number;
   beatIndex: number;
   beatInBar: number;
   currentStep: ExerciseStep;
