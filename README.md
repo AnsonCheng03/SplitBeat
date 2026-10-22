@@ -25,6 +25,7 @@ An iOS build can also be offered on Apple silicon Macs as an iPhone/iPad app. Th
 - src/store/ owns session state and persists exercise settings locally.
 - src/components/ contains reusable symbols, beat indicators, and large touch zones.
 - `expo-build-properties` enables the iOS scene lifecycle required by iOS 27 and builds Expo modules from source so Worklets links against this app's React Native libraries.
+- The metronome synthesizes output and never records audio. A version-pinned postinstall patch disables the audio library's unused iOS microphone permission methods; the app does not request microphone access.
 
 ## Rhythms
 
