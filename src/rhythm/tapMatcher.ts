@@ -1,8 +1,22 @@
-export const TIMING_WINDOWS = {
+export interface TimingWindows {
+  perfectMs: number;
+  greatMs: number;
+  goodMs: number;
+}
+
+export const TIMING_WINDOWS: TimingWindows = {
   perfectMs: 30,
   greatMs: 60,
   goodMs: 100,
-} as const;
+};
+
+export function timingWindowsForGoodWindow(goodMs: number): TimingWindows {
+  return {
+    perfectMs: goodMs * 0.3,
+    greatMs: goodMs * 0.6,
+    goodMs,
+  };
+}
 
 export type TapGrade = 'perfect' | 'great' | 'good';
 
@@ -18,17 +32,21 @@ export interface TapMatch {
   grade: TapGrade;
 }
 
-export function gradeTimingError(timingErrorMs: number): TapGrade | null {
+export function gradeTimingError(
+  timingErrorMs: number,
+  windows: TimingWindows = TIMING_WINDOWS,
+): TapGrade | null {
   const absoluteError = Math.abs(timingErrorMs);
-  if (absoluteError <= TIMING_WINDOWS.perfectMs) return 'perfect';
-  if (absoluteError <= TIMING_WINDOWS.greatMs) return 'great';
-  if (absoluteError <= TIMING_WINDOWS.goodMs) return 'good';
+  if (absoluteError <= windows.perfectMs) return 'perfect';
+  if (absoluteError <= windows.greatMs) return 'great';
+  if (absoluteError <= windows.goodMs) return 'good';
   return null;
 }
 
 export function matchTap(
   events: readonly MatchableEvent[],
   actualTapTimeMs: number,
+  windows: TimingWindows = TIMING_WINDOWS,
 ): TapMatch | null {
   let nearest: MatchableEvent | undefined;
   let nearestError = Number.POSITIVE_INFINITY;
@@ -43,6 +61,6 @@ export function matchTap(
   }
 
   if (!nearest) return null;
-  const grade = gradeTimingError(nearestError);
+  const grade = gradeTimingError(nearestError, windows);
   return grade ? { eventId: nearest.id, timingErrorMs: nearestError, grade } : null;
 }

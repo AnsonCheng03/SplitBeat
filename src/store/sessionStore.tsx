@@ -11,6 +11,11 @@ import React, {
 import { MetronomeAudio } from '@/audio/metronome';
 import { SOUND_OPTIONS } from '@/audio/soundPresets';
 import { RhythmTimingEngine } from '@/rhythm/timingEngine';
+import {
+  DEFAULT_GOOD_WINDOW_MS,
+  normalizeGoodWindowMs,
+  normalizeTapOffsetMs,
+} from '@/rhythm/timingCalibration';
 import { timeSignatureMetrics } from '@/rhythm/subdivisions';
 import { SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
 import type {
@@ -38,6 +43,9 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   metronomeSound: 'wood',
   leftHandSound: 'soft',
   rightHandSound: 'beep',
+  leftTapOffsetMs: 0,
+  rightTapOffsetMs: 0,
+  goodWindowMs: DEFAULT_GOOD_WINDOW_MS,
   hapticsEnabled: false,
 };
 
@@ -96,6 +104,18 @@ function restoreSettings(raw: string | null): ExerciseSettings {
       metronomeSound: restoreSound(parsed.metronomeSound, DEFAULT_SETTINGS.metronomeSound),
       leftHandSound: restoreSound(parsed.leftHandSound, DEFAULT_SETTINGS.leftHandSound),
       rightHandSound: restoreSound(parsed.rightHandSound, DEFAULT_SETTINGS.rightHandSound),
+      leftTapOffsetMs:
+        typeof parsed.leftTapOffsetMs === 'number'
+          ? normalizeTapOffsetMs(parsed.leftTapOffsetMs)
+          : DEFAULT_SETTINGS.leftTapOffsetMs,
+      rightTapOffsetMs:
+        typeof parsed.rightTapOffsetMs === 'number'
+          ? normalizeTapOffsetMs(parsed.rightTapOffsetMs)
+          : DEFAULT_SETTINGS.rightTapOffsetMs,
+      goodWindowMs:
+        typeof parsed.goodWindowMs === 'number'
+          ? normalizeGoodWindowMs(parsed.goodWindowMs)
+          : DEFAULT_SETTINGS.goodWindowMs,
       hapticsEnabled: typeof parsed.hapticsEnabled === 'boolean' ? parsed.hapticsEnabled : false,
     };
   } catch {

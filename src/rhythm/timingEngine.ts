@@ -5,7 +5,8 @@ import {
   timeSignatureMetrics,
 } from '@/rhythm/subdivisions';
 import { accuracyPercent, emptyHandStats, finalizeHandStats } from '@/rhythm/scoring';
-import { matchTap, TIMING_WINDOWS } from '@/rhythm/tapMatcher';
+import { matchTap, timingWindowsForGoodWindow } from '@/rhythm/tapMatcher';
+import type { TimingWindows } from '@/rhythm/tapMatcher';
 import type {
   AccuracyStats,
   ExerciseSettings,
@@ -86,6 +87,9 @@ export class RhythmTimingEngine {
   readonly sessionStartTime: number;
 
   private readonly settings: ExerciseSettings;
+  private readonly timingWindows: TimingWindows;
+  private readonly settleWindowMsByHand: Record<Hand, number>;
+  private readonly sessionSettleWindowMs: number;
   private readonly endTime: number | null;
   private readonly getStep: (stepIndex: number) => ExerciseStep;
   private readonly events: Record<Hand, ExpectedEvent[]> = { left: [], right: [] };
@@ -101,6 +105,15 @@ export class RhythmTimingEngine {
 
   constructor(options: TimingEngineOptions) {
     this.settings = options.settings;
+    this.timingWindows = timingWindowsForGoodWindow(options.settings.goodWindowMs);
+    this.settleWindowMsByHand = {
+      left: this.timingWindows.goodMs + Math.max(0, options.settings.leftTapOffsetMs),
+      right: this.timingWindows.goodMs + Math.max(0, options.settings.rightTapOffsetMs),
+    };
+    this.sessionSettleWindowMs = Math.max(
+      this.settleWindowMsByHand.left,
+      this.settleWindowMsByHand.right,
+    );
     this.sessionStartTime = options.sessionStartTime;
     const metrics = timeSignatureMetrics(options.settings.bpm, options.settings.timeSignature);
     this.beatMs = metrics.beatDurationMs;
@@ -119,9 +132,9 @@ export class RhythmTimingEngine {
 
   advance(now: number): SessionSnapshot {
     if (!this.finished) {
-      this.generateThrough(now + TIMING_WINDOWS.goodMs);
+      this.generateThrough(now + this.timingWindows.goodMs);
       this.settleDueEvents(now);
-      if (this.endTime !== null && now >= this.endTime + TIMING_WINDOWS.goodMs) {
+      if (this.endTime !== null && now >= this.endTime + this.sessionSettleWindowMs) {
         this.finishPendingEvents();
         this.finished = true;
       }
@@ -133,13 +146,16 @@ export class RhythmTimingEngine {
   tap(hand: Hand, actualTapTime: number): void {
     if (this.finished) return;
 
-    this.generateThrough(actualTapTime + TIMING_WINDOWS.goodMs);
+    const tapOffsetMs =
+      hand === 'left' ? this.settings.leftTapOffsetMs : this.settings.rightTapOffsetMs;
+    const calibratedTapTime = actualTapTime - tapOffsetMs;
+    this.generateThrough(calibratedTapTime + this.timingWindows.goodMs);
     this.settleDueEvents(actualTapTime);
 
     const candidates = this.events[hand].filter(
       (event) =>
         !event.settled &&
-        Math.abs(actualTapTime - event.expectedTimeMs) <= TIMING_WINDOWS.goodMs,
+        Math.abs(calibratedTapTime - event.expectedTimeMs) <= this.timingWindows.goodMs,
     );
     const match = matchTap(
       candidates.map((event) => ({
@@ -147,7 +163,8 @@ export class RhythmTimingEngine {
         expectedTimeMs: event.expectedTimeMs,
         matched: false,
       })),
-      actualTapTime,
+      calibratedTapTime,
+      this.timingWindows,
     );
     if (!match) return;
 
@@ -284,13 +301,14 @@ export class RhythmTimingEngine {
 
   private settleDueEvents(now: number): void {
     for (const hand of ['left', 'right'] as const) {
+      const settleWindowMs = this.settleWindowMsByHand[hand];
       for (const event of this.events[hand]) {
-        if (event.settled || event.expectedTimeMs + TIMING_WINDOWS.goodMs >= now) continue;
+        if (event.settled || event.expectedTimeMs + settleWindowMs >= now) continue;
         event.settled = true;
         this.recordEvent(hand, event, null, null);
       }
       this.events[hand] = this.events[hand].filter(
-        (event) => !event.settled || event.expectedTimeMs + TIMING_WINDOWS.goodMs >= now,
+        (event) => !event.settled || event.expectedTimeMs + settleWindowMs >= now,
       );
     }
   }

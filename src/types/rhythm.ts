@@ -48,6 +48,9 @@ export interface ExerciseSettings {
   metronomeSound: SoundPreset;
   leftHandSound: SoundPreset;
   rightHandSound: SoundPreset;
+  leftTapOffsetMs: number;
+  rightTapOffsetMs: number;
+  goodWindowMs: number;
   hapticsEnabled: boolean;
 }
 

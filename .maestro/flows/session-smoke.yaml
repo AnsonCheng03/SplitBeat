@@ -44,6 +44,22 @@ appId: com.splitbeat.twohandrhythm
     id: setup.subdivision.sixtyFourth
 - scrollUntilVisible:
     element:
+      id: setup.calibration.reset
+    direction: DOWN
+- tapOn:
+    id: setup.calibration.reset
+- scrollUntilVisible:
+    element:
+      id: setup.calibration.open
+    direction: UP
+- tapOn:
+    id: setup.calibration.open
+- assertVisible:
+    id: calibration.start
+- tapOn:
+    id: calibration.close
+- scrollUntilVisible:
+    element:
       id: setup.sound.metronome.bell
     direction: DOWN
 - tapOn:

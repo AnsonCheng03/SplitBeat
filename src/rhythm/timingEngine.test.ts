@@ -26,6 +26,9 @@ const settings: ExerciseSettings = {
   metronomeSound: 'wood',
   leftHandSound: 'soft',
   rightHandSound: 'beep',
+  leftTapOffsetMs: 0,
+  rightTapOffsetMs: 0,
+  goodWindowMs: 100,
   hapticsEnabled: false,
 };
 
@@ -303,6 +306,62 @@ test('left and right taps match independently at the same timestamp', () => {
   assert.equal(right?.eventId, 'right-1');
   assert.equal(left?.timingErrorMs, 1);
   assert.equal(right?.timingErrorMs, -1);
+});
+
+test('per-hand calibration offsets correct early and late tap timing independently', () => {
+  const start = 12_000;
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, leftTapOffsetMs: 35, rightTapOffsetMs: -20 },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+  engine.tap('left', start + 35);
+  engine.tap('right', start - 20);
+
+  const snapshot = engine.advance(start + 1);
+  assert.equal(snapshot.leftStats.perfect, 1);
+  assert.equal(snapshot.rightStats.perfect, 1);
+  assert.equal(snapshot.leftStats.averageSignedErrorMs, 0);
+  assert.equal(snapshot.rightStats.averageSignedErrorMs, 0);
+});
+
+test('late tap calibration keeps each hand eligible through its adjusted hit window', () => {
+  const start = 13_000;
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, leftTapOffsetMs: 80 },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+  engine.advance(start + 150);
+  engine.tap('left', start + 150);
+
+  const snapshot = engine.advance(start + 181);
+  assert.equal(snapshot.leftStats.good, 1);
+  assert.equal(snapshot.leftStats.averageSignedErrorMs, 70);
+});
+
+test('the selected timing range controls which taps count as hits', () => {
+  const start = 14_000;
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, goodWindowMs: 200 },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+  engine.tap('left', start + 150);
+
+  const snapshot = engine.advance(start + 201);
+  assert.equal(snapshot.leftStats.good, 1);
+  assert.equal(snapshot.leftStats.averageSignedErrorMs, 150);
+
+  const strictEngine = new RhythmTimingEngine({
+    settings: { ...settings, goodWindowMs: 50 },
+    sessionStartTime: start + 500,
+    random: () => 0,
+  });
+  strictEngine.tap('left', start + 575);
+  const strictSnapshot = strictEngine.advance(start + 651);
+  assert.equal(strictSnapshot.leftStats.totalHit, 0);
+  assert.equal(strictSnapshot.leftStats.miss, 1);
 });
 
 test('session engine scores simultaneous hands and counts later missed notes', () => {

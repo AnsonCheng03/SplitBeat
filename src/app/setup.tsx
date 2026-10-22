@@ -4,7 +4,13 @@ import { useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SOUND_OPTIONS } from '@/audio/soundPresets';
+import { TimingCalibration } from '@/components/TimingCalibration';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
+import {
+  DEFAULT_GOOD_WINDOW_MS,
+  MAX_GOOD_WINDOW_MS,
+  MIN_GOOD_WINDOW_MS,
+} from '@/rhythm/timingCalibration';
 import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
 import { SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
@@ -64,6 +70,10 @@ function ChoiceRow<T extends string | number>({
       })}
     </View>
   );
+}
+
+function signedMilliseconds(value: number): string {
+  return `${value > 0 ? '+' : ''}${value} ms`;
 }
 
 export default function SetupScreen() {
@@ -266,6 +276,73 @@ export default function SetupScreen() {
         <Text style={{ color: colors.dim, fontSize: 12, marginTop: 8 }}>
           Keep at least two enabled. Both hands may share a pattern. 32nd and 64th notes are fastest at lower tempos.
         </Text>
+
+        <Text style={sectionLabel}>TIMING CALIBRATION</Text>
+        <Text style={{ color: colors.dim, fontSize: 12, marginBottom: 3 }}>
+          Measure each hand&apos;s tap timing, then fine-tune it here. Positive offsets shift a tap earlier when scoring. Turn on Sound effects to calibrate.
+        </Text>
+        <TimingCalibration
+          bpm={settings.bpm}
+          timeSignature={settings.timeSignature}
+          metronomeSound={settings.metronomeSound}
+          leftHandSound={settings.leftHandSound}
+          rightHandSound={settings.rightHandSound}
+          soundEnabled={settings.soundEnabled}
+          onCalibrate={(offsets) => updateSettings(offsets)}
+        />
+        <Text style={sectionLabel}>LEFT TAP OFFSET · {signedMilliseconds(settings.leftTapOffsetMs)}</Text>
+        <Slider
+          testID="setup.calibration.leftOffset"
+          minimumValue={-200}
+          maximumValue={200}
+          step={5}
+          value={settings.leftTapOffsetMs}
+          onValueChange={(leftTapOffsetMs) => updateSettings({ leftTapOffsetMs })}
+          minimumTrackTintColor={colors.left}
+          maximumTrackTintColor={colors.line}
+          thumbTintColor={colors.text}
+        />
+        <Text style={sectionLabel}>RIGHT TAP OFFSET · {signedMilliseconds(settings.rightTapOffsetMs)}</Text>
+        <Slider
+          testID="setup.calibration.rightOffset"
+          minimumValue={-200}
+          maximumValue={200}
+          step={5}
+          value={settings.rightTapOffsetMs}
+          onValueChange={(rightTapOffsetMs) => updateSettings({ rightTapOffsetMs })}
+          minimumTrackTintColor={colors.right}
+          maximumTrackTintColor={colors.line}
+          thumbTintColor={colors.text}
+        />
+
+        <Text style={sectionLabel}>ACCEPTABLE TIMING RANGE · ±{settings.goodWindowMs} MS</Text>
+        <Slider
+          testID="setup.calibration.goodWindow"
+          minimumValue={MIN_GOOD_WINDOW_MS}
+          maximumValue={MAX_GOOD_WINDOW_MS}
+          step={5}
+          value={settings.goodWindowMs}
+          onValueChange={(goodWindowMs) => updateSettings({ goodWindowMs })}
+          minimumTrackTintColor={colors.accent}
+          maximumTrackTintColor={colors.line}
+          thumbTintColor={colors.text}
+        />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: -5 }}>
+          <Text style={{ color: colors.dim, fontSize: 11 }}>STRICT · {MIN_GOOD_WINDOW_MS} ms</Text>
+          <Text style={{ color: colors.dim, fontSize: 11 }}>WIDE · {MAX_GOOD_WINDOW_MS} ms</Text>
+        </View>
+        <Pressable
+          testID="setup.calibration.reset"
+          accessibilityRole="button"
+          onPress={() => updateSettings({
+            leftTapOffsetMs: 0,
+            rightTapOffsetMs: 0,
+            goodWindowMs: DEFAULT_GOOD_WINDOW_MS,
+          })}
+          style={{ minHeight: 44, alignSelf: 'flex-start', justifyContent: 'center', marginTop: 5, paddingHorizontal: 12 }}
+        >
+          <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '800' }}>RESET TIMING DEFAULTS</Text>
+        </Pressable>
 
         <Text style={sectionLabel}>METRONOME SOUND</Text>
         <ChoiceRow
