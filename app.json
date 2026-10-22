@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Two-Hand Rhythm Trainer",
+    "slug": "two-hand-rhythm-trainer",
+    "version": "1.0.0",
+    "scheme": "twohandrhythm",
+    "orientation": "default",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "enableSceneSupport": true,
+            "usePrecompiledModules": false
+          }
+        }
+      ],
+      [
+        "react-native-audio-api",
+        {
+          "iosBackgroundMode": false,
+          "androidPermissions": [],
+          "androidForegroundService": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.splitbeat.twohandrhythm"
+    },
+    "android": {
+      "package": "com.splitbeat.twohandrhythm"
+    }
+  }
+}
