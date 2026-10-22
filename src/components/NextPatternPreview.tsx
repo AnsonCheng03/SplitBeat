@@ -2,7 +2,7 @@ import { Text, View } from 'react-native';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import { colors } from '@/theme';
-import type { ExerciseStep, Hand, Subdivision } from '@/types/rhythm';
+import type { ExerciseStep, Hand, Subdivision, TimeSignature } from '@/types/rhythm';
 
 interface NextPatternPreviewProps {
   step: ExerciseStep | null;
@@ -10,20 +10,22 @@ interface NextPatternPreviewProps {
   secondsUntilChange: number | null;
   graceNotesEnabled?: boolean;
   compact?: boolean;
+  timeSignature: TimeSignature;
 }
 
 interface HandPreviewProps {
   hand: Hand;
   subdivision: Subdivision;
+  timeSignature: TimeSignature;
   compact?: boolean;
 }
 
-function HandPreview({ hand, subdivision, compact = false }: HandPreviewProps) {
+function HandPreview({ hand, subdivision, timeSignature, compact = false }: HandPreviewProps) {
   const color = hand === 'left' ? colors.left : colors.right;
 
   return (
     <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: compact ? 3 : 7 }}>
-      <RhythmSymbol subdivision={subdivision} color={color} mini />
+      <RhythmSymbol subdivision={subdivision} color={color} mini timeSignature={timeSignature} />
       <View style={{ flexShrink: 1 }}>
         <Text style={{ color, fontSize: compact ? 8 : 9, fontWeight: '800', letterSpacing: 1 }}>
           {hand.toUpperCase()}
@@ -42,6 +44,7 @@ export function NextPatternPreview({
   secondsUntilChange,
   graceNotesEnabled = false,
   compact = false,
+  timeSignature,
 }: NextPatternPreviewProps) {
   if (!step || secondsUntilChange === null) return null;
 
@@ -82,9 +85,9 @@ export function NextPatternPreview({
         ) : null}
       </View>
       <View style={{ width: 1, height: compact ? 32 : 38, backgroundColor: colors.line, marginHorizontal: compact ? 4 : 8 }} />
-      <HandPreview hand="left" subdivision={step.leftSubdivision} compact={compact} />
+      <HandPreview hand="left" subdivision={step.leftSubdivision} timeSignature={timeSignature} compact={compact} />
       <View style={{ width: 1, height: compact ? 32 : 38, backgroundColor: colors.line, marginHorizontal: compact ? 3 : 6 }} />
-      <HandPreview hand="right" subdivision={step.rightSubdivision} compact={compact} />
+      <HandPreview hand="right" subdivision={step.rightSubdivision} timeSignature={timeSignature} compact={compact} />
     </View>
   );
 }

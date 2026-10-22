@@ -70,22 +70,25 @@ export function NoteNotation({
           />
         </View>
       ))}
-      {plan.tripletLabel ? (
+      {plan.tupletLabels.map((label, index) => (
         <Text
+          key={label.key}
+          testID={testID ? `${testID}.tuplet.${index}` : undefined}
           style={{
             position: 'absolute',
-            top: plan.tripletLabel.top,
-            width: '100%',
+            left: label.left,
+            top: label.top,
+            width: label.width,
             textAlign: 'center',
             color,
-            fontSize: plan.tripletLabel.fontSize,
+            fontSize: label.fontSize,
             fontWeight: '800',
-            lineHeight: plan.tripletLabel.fontSize + 2,
+            lineHeight: label.fontSize + 2,
           }}
         >
-          3
+          {label.text}
         </Text>
-      ) : null}
+      ))}
     </View>
   );
 }

@@ -276,7 +276,7 @@ export default function SetupScreen() {
           })}
         </View>
         <Text style={{ color: colors.dim, fontSize: 12, marginTop: 8 }}>
-          Keep at least two enabled. Both hands may share a pattern. 32nd and 64th notes are fastest at lower tempos.
+          Keep at least two enabled. Tuplets divide one metronome beat evenly; the beat length follows your time signature. Both hands may share a pattern.
         </Text>
 
         <Text style={sectionLabel}>TIMING CALIBRATION</Text>

@@ -45,6 +45,23 @@ test('converts both staves, rests, compound meter, and metronome tempo', () => {
   );
 });
 
+test('preserves MusicXML tuplet counts for the score rhythm preview', () => {
+  const triplets = Array.from(
+    { length: 3 },
+    () => `<note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification><staff>1</staff></note>`,
+  ).join('');
+  const xml = scoreWithTwoStaves(
+    `<measure>${attributes('4/4', 12)}${triplets}<backup><duration>12</duration></backup>${note(48, 2, 'C')}</measure>`,
+  );
+
+  const score = parseMusicXmlRhythm(xml);
+  assert.deepEqual(
+    score.measures[0]!.rightEvents.map((event) => event.tupletNumber),
+    [3, 3, 3],
+  );
+  assert.equal(score.measures[0]!.leftEvents[0]!.tupletNumber, undefined);
+});
+
 test('normalizes marked note values to the app pulse in compound and half-note meters', () => {
   const compound = scoreWithTwoStaves(
     `<measure>${attributes('6/8')}<direction><direction-type><metronome><beat-unit>quarter</beat-unit><beat-unit-dot/><per-minute>60</per-minute></metronome></direction-type></direction>${note(4, 1, 'C')}<backup><duration>4</duration></backup>${note(4, 2, 'C')}</measure>`,

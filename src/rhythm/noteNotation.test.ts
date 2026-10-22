@@ -8,7 +8,14 @@ test('note builder creates joined noteheads and stems at each supported subdivis
   const cases = [
     ['quarter', 1],
     ['eighth', 2],
+    ['duplet', 2],
     ['triplet', 3],
+    ['quadruplet', 4],
+    ['quintuplet', 5],
+    ['sextuplet', 6],
+    ['septuplet', 7],
+    ['octuplet', 8],
+    ['nonuplet', 9],
     ['sixteenth', 4],
     ['thirtySecond', 8],
     ['sixtyFourth', 16],
@@ -49,10 +56,37 @@ test('bar note builder beams adjacent notes according to each note duration', ()
   assert.ok(plan.notes[0]!.left < plan.notes[1]!.left);
 
   const triplet = createBarNoteNotationPlan(
-    Array.from({ length: 3 }, (_, index) => ({ startQuarter: index / 3, durationQuarter: 1 / 3 })),
+    Array.from({ length: 3 }, (_, index) => ({
+      startQuarter: index / 3,
+      durationQuarter: 1 / 3,
+      tupletNumber: 3,
+    })),
     { durationQuarter: 1, width: 240, beamGroupQuarterNotes: 1 },
   );
   assert.equal(triplet.beams.filter((beam) => beam.kind === 'beam').length, 1);
+  assert.equal(triplet.tupletLabels[0]?.text, '3');
+});
+
+test('bar note builder labels imported duplet, sextuplet, and mixed tuplet groups', () => {
+  const plan = createBarNoteNotationPlan(
+    [
+      ...Array.from({ length: 2 }, (_, index) => ({
+        startQuarter: index * 0.75,
+        durationQuarter: 0.75,
+        tupletNumber: 2,
+      })),
+      ...Array.from({ length: 6 }, (_, index) => ({
+        startQuarter: 1.5 + index / 6,
+        durationQuarter: 1 / 6,
+        tupletNumber: 6,
+      })),
+    ],
+    { durationQuarter: 2.5, width: 400, beamGroupQuarterNotes: 1.5 },
+  );
+
+  assert.deepEqual(plan.tupletLabels.map((label) => label.text), ['2', '6']);
+  assert.ok(plan.tupletLabels.every((label) => label.width > 0));
+  assert.ok(plan.height > 44, 'tuplet labels get room above the beams');
 });
 
 test('bar note builder flags isolated short notes and splits beams at beat groups', () => {
@@ -110,12 +144,16 @@ test('note builder groups beams into the expected number of levels', () => {
 
 test('triplets include a visible group label and all display sizes keep their note geometry', () => {
   const fullTriplet = createNoteNotationPlan('triplet');
-  assert.equal(fullTriplet.tripletLabel?.fontSize, 14);
+  assert.equal(fullTriplet.tupletLabels[0]?.text, '3');
+  assert.equal(fullTriplet.tupletLabels[0]?.fontSize, 14);
 
-  assert.equal(createNoteNotationPlan('triplet', 'compact').tripletLabel?.fontSize, 12);
-  assert.equal(createNoteNotationPlan('triplet', 'mini').tripletLabel?.fontSize, 8);
+  assert.equal(createNoteNotationPlan('triplet', 'compact').tupletLabels[0]?.fontSize, 12);
+  assert.equal(createNoteNotationPlan('triplet', 'mini').tupletLabels[0]?.fontSize, 8);
 
-  for (const subdivision of ['quarter', 'eighth', 'triplet', 'sixteenth', 'thirtySecond', 'sixtyFourth'] as const) {
+  for (const subdivision of [
+    'quarter', 'eighth', 'duplet', 'triplet', 'quadruplet', 'quintuplet', 'sextuplet',
+    'septuplet', 'octuplet', 'nonuplet', 'sixteenth', 'thirtySecond', 'sixtyFourth',
+  ] as const) {
     const full = createNoteNotationPlan(subdivision, 'full');
     const compact = createNoteNotationPlan(subdivision, 'compact');
     const mini = createNoteNotationPlan(subdivision, 'mini');
@@ -124,4 +162,14 @@ test('triplets include a visible group label and all display sizes keep their no
     assert.ok(compact.height < full.height, subdivision);
     assert.ok(mini.height < compact.height, subdivision);
   }
+});
+
+test('tuplet note groups span the selected meter pulse', () => {
+  const dupletInCompound = createNoteNotationPlan('duplet', 'full', '6/8');
+  const tripletInHalfTime = createNoteNotationPlan('triplet', 'full', '2/2');
+
+  assert.equal(dupletInCompound.notes.length, 2);
+  assert.equal(tripletInHalfTime.notes.length, 3);
+  assert.ok(dupletInCompound.notes[1]!.left - dupletInCompound.notes[0]!.left > 20);
+  assert.ok(tripletInHalfTime.notes[2]!.left - tripletInHalfTime.notes[0]!.left > 30);
 });

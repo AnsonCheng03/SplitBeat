@@ -1,9 +1,17 @@
-import type { RhythmicFeel, Subdivision, TimeSignature } from '@/types/rhythm';
+import { TUPLET_SUBDIVISIONS } from '@/types/rhythm';
+import type { RhythmicFeel, Subdivision, TimeSignature, TupletSubdivision } from '@/types/rhythm';
 
 export const SUBDIVISION_LABELS: Record<Subdivision, string> = {
   quarter: 'Quarter (Crotchet)',
   eighth: 'Quaver (Eighth)',
-  triplet: 'Triplet',
+  duplet: 'Duplet (2)',
+  triplet: 'Triplet (3)',
+  quadruplet: 'Quadruplet (4)',
+  quintuplet: 'Quintuplet (5)',
+  sextuplet: 'Sextuplet (6)',
+  septuplet: 'Septuplet (7)',
+  octuplet: 'Octuplet (8)',
+  nonuplet: 'Nonuplet (9)',
   sixteenth: 'Semiquaver (16th)',
   thirtySecond: 'Demisemiquaver (32nd)',
   sixtyFourth: 'Hemidemisemiquaver (64th)',
@@ -12,10 +20,28 @@ export const SUBDIVISION_LABELS: Record<Subdivision, string> = {
 export const SUBDIVISION_COUNTS: Record<Subdivision, number> = {
   quarter: 1,
   eighth: 2,
+  duplet: 2,
   triplet: 3,
+  quadruplet: 4,
+  quintuplet: 5,
+  sextuplet: 6,
+  septuplet: 7,
+  octuplet: 8,
+  nonuplet: 9,
   sixteenth: 4,
   thirtySecond: 8,
   sixtyFourth: 16,
+};
+
+export const TUPLET_COUNTS: Record<TupletSubdivision, number> = {
+  duplet: 2,
+  triplet: 3,
+  quadruplet: 4,
+  quintuplet: 5,
+  sextuplet: 6,
+  septuplet: 7,
+  octuplet: 8,
+  nonuplet: 9,
 };
 
 interface TimeSignatureDefinition {
@@ -52,6 +78,14 @@ export function beatDurationMs(bpm: number): number {
   return 60_000 / bpm;
 }
 
+export function isTupletSubdivision(subdivision: Subdivision): subdivision is TupletSubdivision {
+  return TUPLET_SUBDIVISIONS.includes(subdivision as TupletSubdivision);
+}
+
+export function tupletCount(subdivision: TupletSubdivision): number {
+  return TUPLET_COUNTS[subdivision];
+}
+
 export function pulseQuarterNotes(timeSignature: TimeSignature): number {
   return TIME_SIGNATURE_DEFINITIONS[timeSignature].pulseQuarterNotes;
 }
@@ -77,7 +111,19 @@ export function subdivisionIntervalMs(
   subdivision: Subdivision,
   timeSignature: TimeSignature = '4/4',
 ): number {
-  return timeSignatureMetrics(bpm, timeSignature).quarterNoteDurationMs / SUBDIVISION_COUNTS[subdivision];
+  const metrics = timeSignatureMetrics(bpm, timeSignature);
+  return isTupletSubdivision(subdivision)
+    ? metrics.beatDurationMs / tupletCount(subdivision)
+    : metrics.quarterNoteDurationMs / SUBDIVISION_COUNTS[subdivision];
+}
+
+export function subdivisionIntervalQuarterNotes(
+  subdivision: Subdivision,
+  timeSignature: TimeSignature = '4/4',
+): number {
+  return isTupletSubdivision(subdivision)
+    ? pulseQuarterNotes(timeSignature) / tupletCount(subdivision)
+    : 1 / SUBDIVISION_COUNTS[subdivision];
 }
 
 export function subdivisionOffsetMs(
@@ -107,6 +153,14 @@ export function expectedEventTimeMs(
   subdivision: Subdivision = 'quarter',
   timeSignature: TimeSignature = '4/4',
 ): number {
+  if (isTupletSubdivision(subdivision)) {
+    const metrics = timeSignatureMetrics(bpm, timeSignature);
+    return (
+      sessionStartTime +
+      beatIndex * metrics.beatDurationMs +
+      subdivisionIndex * metrics.beatDurationMs / tupletCount(subdivision)
+    );
+  }
   const metrics = timeSignatureMetrics(bpm, timeSignature);
   const divisions = SUBDIVISION_COUNTS[subdivision];
   return (

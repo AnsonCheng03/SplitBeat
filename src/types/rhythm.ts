@@ -1,12 +1,25 @@
 import type { ScoreRhythmMeasure } from '@/types/importedScore';
 
+export const TUPLET_SUBDIVISIONS = [
+  'duplet',
+  'triplet',
+  'quadruplet',
+  'quintuplet',
+  'sextuplet',
+  'septuplet',
+  'octuplet',
+  'nonuplet',
+] as const;
+
+export type TupletSubdivision = (typeof TUPLET_SUBDIVISIONS)[number];
+
 export const SUBDIVISIONS = [
   'quarter',
   'eighth',
-  'triplet',
   'sixteenth',
   'thirtySecond',
   'sixtyFourth',
+  ...TUPLET_SUBDIVISIONS,
 ] as const;
 
 export type Subdivision = (typeof SUBDIVISIONS)[number];

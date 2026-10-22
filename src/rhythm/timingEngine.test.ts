@@ -6,6 +6,7 @@ import { generateExerciseSteps } from '@/rhythm/exerciseGenerator';
 import {
   beatDurationMs,
   expectedEventTimeMs,
+  subdivisionIntervalQuarterNotes,
   pulseQuarterNotes,
   subdivisionOffsetMs,
   subdivisionIntervalMs,
@@ -42,6 +43,11 @@ test('subdivision intervals follow the selected BPM', () => {
   assert.equal(subdivisionIntervalMs(60, 'sixtyFourth'), 62.5);
   assert.equal(subdivisionIntervalMs(60, 'sixteenth'), 250);
   assert.ok(Math.abs(subdivisionIntervalMs(60, 'triplet') - 333.3333333333) < 0.000001);
+  assert.equal(subdivisionIntervalMs(60, 'duplet', '6/8'), 500);
+  assert.ok(Math.abs(subdivisionIntervalMs(60, 'triplet', '2/2') - 1_000 / 3) < 0.000001);
+  assert.ok(Math.abs(subdivisionIntervalMs(60, 'sextuplet', '4/4') - 1_000 / 6) < 0.000001);
+  assert.equal(subdivisionIntervalQuarterNotes('duplet', '6/8'), 0.75);
+  assert.equal(expectedEventTimeMs(5_000, 60, 1, 1, 'duplet', '6/8'), 6_500);
 });
 
 test('swing stretches binary offbeats while triplets remain even', () => {
@@ -112,6 +118,26 @@ test('the timing engine generates all 64th-note events from beat timestamps', ()
   const snapshot = engine.advance(start + 1_040);
   assert.equal(snapshot.leftStats.totalExpected, 16);
   assert.equal(snapshot.rightStats.totalExpected, 16);
+});
+
+test('tuplets use equal note spacing across the selected time-signature beat', () => {
+  const start = 26_000;
+  const engine = new RhythmTimingEngine({
+    settings: {
+      ...settings,
+      timeSignature: '6/8',
+      enabledSubdivisions: ['duplet'],
+      changeIntervalBeats: 2,
+    },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  engine.tap('left', start + 500);
+  const results = engine.getResults(start + 700);
+  assert.equal(results.left.totalExpected, 2);
+  assert.equal(results.left.totalHit, 1);
+  assert.equal(results.left.averageSignedErrorMs, 0);
 });
 
 test('the timing engine matches a swung offbeat at its warped timestamp', () => {

@@ -1,5 +1,10 @@
-import { SUBDIVISION_COUNTS } from '@/rhythm/subdivisions';
-import type { Subdivision } from '@/types/rhythm';
+import {
+  isTupletSubdivision,
+  pulseQuarterNotes,
+  SUBDIVISION_COUNTS,
+  tupletCount,
+} from '@/rhythm/subdivisions';
+import type { Subdivision, TimeSignature } from '@/types/rhythm';
 
 export type NoteNotationSize = 'full' | 'compact' | 'mini';
 
@@ -10,6 +15,8 @@ export interface NoteNotationEvent {
   durationQuarter: number;
   /** Override beam count when the written value is not a binary note value. */
   beamCount?: number;
+  /** Number to print above a tuplet group containing this event. */
+  tupletNumber?: number;
 }
 
 export interface NoteGlyphShape {
@@ -42,7 +49,7 @@ export interface NoteNotationPlan {
   height: number;
   notes: NoteGlyphShape[];
   beams: NoteBeamShape[];
-  tripletLabel: { top: number; fontSize: number } | null;
+  tupletLabels: { key: string; text: string; left: number; width: number; top: number; fontSize: number }[];
   staffLineY: number | null;
 }
 
@@ -69,7 +76,7 @@ interface NoteNotationMetrics {
   flagWidth: number;
   beamGroupQuarterNotes: number;
   maxBeamNotesByLevel?: number[];
-  tripletLabel: NoteNotationPlan['tripletLabel'];
+  tupletLabelFontSize: number;
   staffLineY: number | null;
 };
 
@@ -86,7 +93,7 @@ const MINI_SLOT_WIDTHS: Record<number, number> = { 1: 15, 2: 15, 3: 12, 4: 11, 8
 
 function beamGroupSize(count: number, beamIndex: number): number {
   if (beamIndex === 0 || count === 4 || count === 2) return count;
-  return Math.max(2, count / 2 ** beamIndex);
+  return Math.max(2, Math.ceil(count / 2 ** beamIndex));
 }
 
 function inferredBeamCount(durationQuarter: number): number {
@@ -106,7 +113,9 @@ function inferredBeamCount(durationQuarter: number): number {
 }
 
 function slotWidthFor(count: number, size: NoteNotationSize): number {
-  if (size === 'mini') return MINI_SLOT_WIDTHS[count];
+  if (size === 'mini') {
+    return MINI_SLOT_WIDTHS[count] ?? (count >= 8 ? 8 : count >= 4 ? 11 : 15);
+  }
   if (count >= 16) return size === 'compact' ? 8 : 10;
   if (count >= 8) return size === 'compact' ? 11 : 13;
   return size === 'compact' ? 19 : 24;
@@ -114,7 +123,7 @@ function slotWidthFor(count: number, size: NoteNotationSize): number {
 
 function beamCountForSubdivision(subdivision: Subdivision): number {
   const count = SUBDIVISION_COUNTS[subdivision];
-  return subdivision === 'triplet' ? 1 : Math.log2(count);
+  return Math.log2(count);
 }
 
 function groupIndexAt(startQuarter: number, groupDuration: number): number {
@@ -175,6 +184,9 @@ function buildNotationPlan(
       }
       if (event.beamCount !== undefined && (!Number.isInteger(event.beamCount) || event.beamCount < 0 || event.beamCount > 4)) {
         throw new RangeError(`Note ${sourceIndex + 1} must use between zero and four beams.`);
+      }
+      if (event.tupletNumber !== undefined && (!Number.isInteger(event.tupletNumber) || event.tupletNumber < 2 || event.tupletNumber > 16)) {
+        throw new RangeError(`Note ${sourceIndex + 1} must use a tuplet group size between two and sixteen.`);
       }
 
       return { ...event, sourceIndex, beamCount: event.beamCount ?? inferredBeamCount(event.durationQuarter), anchorX: 0, beamGroupIndex: 0 };
@@ -261,12 +273,52 @@ function buildNotationPlan(
     };
   });
 
+  const tupletLabels: NoteNotationPlan['tupletLabels'] = [];
+  let tupletGroupIndex = 0;
+  while (tupletGroupIndex < notes.length) {
+    const firstNote = notes[tupletGroupIndex];
+    const tupletNumber = firstNote?.tupletNumber;
+    if (!firstNote || tupletNumber === undefined) {
+      tupletGroupIndex += 1;
+      continue;
+    }
+
+    const group: PositionedNote[] = [firstNote];
+    let nextIndex = tupletGroupIndex + 1;
+    while (nextIndex < notes.length && group.length < tupletNumber) {
+      const previous = group.at(-1);
+      const next = notes[nextIndex];
+      if (
+        !previous ||
+        !next ||
+        next.tupletNumber !== tupletNumber ||
+        next.beamGroupIndex !== firstNote.beamGroupIndex ||
+        !isContiguous(previous, next)
+      ) break;
+      group.push(next);
+      nextIndex += 1;
+    }
+
+    const lastNote = group.at(-1) ?? firstNote;
+    const left = firstNote.anchorX - headWidth / 2;
+    const right = lastNote.anchorX + headWidth / 2;
+    tupletLabels.push({
+      key: `tuplet-${tupletGroupIndex}-${tupletNumber}`,
+      text: String(tupletNumber),
+      left,
+      width: Math.max(headWidth, right - left),
+      top: 0,
+      fontSize: metrics.tupletLabelFontSize,
+    });
+    tupletGroupIndex += group.length;
+  }
+
   return {
     width: metrics.width,
     height: metrics.height,
     notes: glyphs,
     beams,
-    tripletLabel: metrics.tripletLabel,
+    tupletLabels,
     staffLineY: metrics.staffLineY,
   };
 }
@@ -307,7 +359,9 @@ export function createBarNoteNotationPlan(
   const sizeMaximum = size === 'mini' ? 6.4 : size === 'compact' ? 10.5 : 16;
   const headWidth = Math.max(size === 'mini' ? 3.5 : 5, Math.min(sizeMaximum, noteSpacing * 0.62));
   const headHeight = headWidth * 0.66;
-  const height = size === 'mini' ? 28 : size === 'compact' ? 32 : 44;
+  const containsTuplets = events.some((event) => event.tupletNumber !== undefined);
+  const tupletPadding = containsTuplets ? (size === 'mini' ? 10 : size === 'compact' ? 12 : 14) : 0;
+  const height = (size === 'mini' ? 28 : size === 'compact' ? 32 : 44) + tupletPadding;
   const beamHeight = size === 'mini' ? 1.6 : size === 'compact' ? 1.8 : 2.6;
   const beamGap = beamHeight + (size === 'mini' ? 1 : size === 'compact' ? 1.2 : 1.8);
   const beamTop = size === 'mini' ? 3 : size === 'compact' ? 4 : 5;
@@ -328,12 +382,12 @@ export function createBarNoteNotationPlan(
     headWidth,
     headHeight,
     stemWidth: size === 'mini' ? 1.2 : size === 'compact' ? 1.4 : 1.8,
-    beamTop,
+    beamTop: beamTop + tupletPadding,
     beamHeight,
     beamGap,
     flagWidth: Math.max(size === 'mini' ? 5 : 7, headWidth * 0.9),
     beamGroupQuarterNotes,
-    tripletLabel: null,
+    tupletLabelFontSize: size === 'mini' ? 8 : size === 'compact' ? 10 : 12,
     staffLineY: height - 5,
   });
 }
@@ -342,8 +396,11 @@ export function createBarNoteNotationPlan(
 export function createNoteNotationPlan(
   subdivision: Subdivision,
   size: NoteNotationSize = 'full',
+  timeSignature: TimeSignature = '4/4',
 ): NoteNotationPlan {
-  const count = SUBDIVISION_COUNTS[subdivision];
+  const isTuplet = isTupletSubdivision(subdivision);
+  const count = isTuplet ? tupletCount(subdivision) : SUBDIVISION_COUNTS[subdivision];
+  const noteDurationQuarter = isTuplet ? pulseQuarterNotes(timeSignature) / count : 1 / count;
   const compact = size === 'compact';
   const mini = size === 'mini';
   const slotWidth = slotWidthFor(count, size);
@@ -361,11 +418,12 @@ export function createNoteNotationPlan(
       : count >= 4
         ? compact ? 7.3 : 9
         : compact ? 8 : 10.5;
-  const beamCount = beamCountForSubdivision(subdivision);
+  const beamCount = isTuplet ? inferredBeamCount(noteDurationQuarter) : beamCountForSubdivision(subdivision);
   const events = Array.from({ length: count }, (_, index) => ({
-    startQuarter: index / count,
-    durationQuarter: 1 / count,
+    startQuarter: index * noteDurationQuarter,
+    durationQuarter: noteDurationQuarter,
     beamCount,
+    ...(isTuplet ? { tupletNumber: count } : {}),
   }));
 
   return buildNotationPlan(events, {
@@ -375,13 +433,13 @@ export function createNoteNotationPlan(
     headWidth,
     headHeight,
     stemWidth: count >= 8 ? mini ? 1 : 1.5 : mini ? 1.2 : 2,
-    beamTop: subdivision === 'triplet' ? mini ? 10 : compact ? 15 : 17 : mini ? 3 : compact ? 4 : 5,
+    beamTop: isTuplet ? mini ? 10 : compact ? 15 : 17 : mini ? 3 : compact ? 4 : 5,
     beamHeight: mini ? 1.6 : count >= 8 ? compact ? 2 : 2.5 : compact ? 4 : 5,
     beamGap: (mini ? 1.6 : count >= 8 ? compact ? 2 : 2.5 : compact ? 4 : 5) + (mini ? 1 : compact ? 2 : 3),
     flagWidth: Math.max(slotWidth * 0.7, headWidth),
-    beamGroupQuarterNotes: 1,
+    beamGroupQuarterNotes: isTuplet ? pulseQuarterNotes(timeSignature) : 1,
     maxBeamNotesByLevel: Array.from({ length: beamCount }, (_, beamIndex) => beamGroupSize(count, beamIndex)),
-    tripletLabel: subdivision === 'triplet' ? { top: 0, fontSize: mini ? 8 : compact ? 12 : 14 } : null,
+    tupletLabelFontSize: mini ? 8 : compact ? 12 : 14,
     staffLineY: null,
   });
 }

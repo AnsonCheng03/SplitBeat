@@ -1,8 +1,10 @@
 import { createExerciseStepGenerator } from '@/rhythm/exerciseGenerator';
 import {
+  isTupletSubdivision,
   SUBDIVISION_COUNTS,
   subdivisionOffsetMs,
   timeSignatureMetrics,
+  tupletCount,
 } from '@/rhythm/subdivisions';
 import { accuracyPercent, emptyHandStats, finalizeHandStats } from '@/rhythm/scoring';
 import { matchTap, timingWindowsForGoodWindow } from '@/rhythm/tapMatcher';
@@ -254,6 +256,30 @@ export class RhythmTimingEngine {
 
       for (const hand of ['left', 'right'] as const) {
         const subdivision = hand === 'left' ? step.leftSubdivision : step.rightSubdivision;
+        if (isTupletSubdivision(subdivision)) {
+          const notesPerBeat = tupletCount(subdivision);
+          let tupletEventIndex = 0;
+          for (let beatOffset = 0; beatOffset < step.durationBeats; beatOffset += 1) {
+            for (let noteIndex = 0; noteIndex < notesPerBeat; noteIndex += 1) {
+              const expectedTimeMs =
+                stepStartTime + beatOffset * this.beatMs + (noteIndex * this.beatMs) / notesPerBeat;
+              if (expectedTimeMs >= stepEndTime) continue;
+              if (this.endTime !== null && expectedTimeMs >= this.endTime) continue;
+              this.events[hand].push({
+                id: `${hand}:${step.id}:${tupletEventIndex}`,
+                expectedTimeMs,
+                step,
+                beatIndex: Math.floor((expectedTimeMs - this.sessionStartTime) / this.beatMs + 1e-9),
+                isGraceNote: false,
+                isScoreEvent: false,
+                settled: false,
+              });
+              tupletEventIndex += 1;
+            }
+          }
+          continue;
+        }
+
         const divisions = SUBDIVISION_COUNTS[subdivision];
         for (let subdivisionIndex = 0; ; subdivisionIndex += 1) {
           const quarterIndex = Math.floor(subdivisionIndex / divisions);
@@ -347,27 +373,34 @@ export class RhythmTimingEngine {
     const upcomingDivisions = SUBDIVISION_COUNTS[upcomingSubdivision];
     const previousDurationMs = previousStep.durationBeats * this.beatMs;
     let previousLastEventOffsetMs = 0;
-    for (
-      let quarterIndex = 0;
-      quarterIndex * this.quarterNoteMs < previousDurationMs;
-      quarterIndex += 1
-    ) {
-      for (let noteIndex = 0; noteIndex < previousDivisions; noteIndex += 1) {
-        const eventOffsetMs =
-          quarterIndex * this.quarterNoteMs +
-          subdivisionOffsetMs(
-            this.quarterNoteMs,
-            previousSubdivision,
-            noteIndex,
-            this.settings.feel,
-          );
-        if (eventOffsetMs < previousDurationMs) {
-          previousLastEventOffsetMs = eventOffsetMs;
+    if (isTupletSubdivision(previousSubdivision)) {
+      const previousIntervalMs = this.beatMs / tupletCount(previousSubdivision);
+      previousLastEventOffsetMs = previousDurationMs - previousIntervalMs;
+    } else {
+      for (
+        let quarterIndex = 0;
+        quarterIndex * this.quarterNoteMs < previousDurationMs;
+        quarterIndex += 1
+      ) {
+        for (let noteIndex = 0; noteIndex < previousDivisions; noteIndex += 1) {
+          const eventOffsetMs =
+            quarterIndex * this.quarterNoteMs +
+            subdivisionOffsetMs(
+              this.quarterNoteMs,
+              previousSubdivision,
+              noteIndex,
+              this.settings.feel,
+            );
+          if (eventOffsetMs < previousDurationMs) {
+            previousLastEventOffsetMs = eventOffsetMs;
+          }
         }
       }
     }
     const gapAfterPreviousNoteMs = previousDurationMs - previousLastEventOffsetMs;
-    const upcomingIntervalMs = this.quarterNoteMs / upcomingDivisions;
+    const upcomingIntervalMs = isTupletSubdivision(upcomingSubdivision)
+      ? this.beatMs / tupletCount(upcomingSubdivision)
+      : this.quarterNoteMs / upcomingDivisions;
     return Math.min(
       this.quarterNoteMs / 4,
       gapAfterPreviousNoteMs / 2,

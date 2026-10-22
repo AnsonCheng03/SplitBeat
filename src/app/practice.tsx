@@ -102,14 +102,14 @@ export default function PracticeScreen() {
             <View style={{ flex: compact ? 0.8 : 0.95, minHeight: compact ? 78 : 130, maxHeight: compact ? 112 : 190, flexDirection: 'row', alignItems: 'center', marginTop: compact ? 1 : 5, marginBottom: compact ? 2 : 7 }}>
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', borderRightWidth: 1, borderRightColor: colors.line }}>
                 <Text style={{ color: colors.left, fontSize: compact ? 10 : 11, fontWeight: '800', letterSpacing: 1.6 }}>LEFT HAND</Text>
-                <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} compact={compact} />
+                <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} compact={compact} timeSignature={settings.timeSignature} />
                 <Text numberOfLines={2} style={{ color: colors.text, fontSize: compact ? 12 : 14, fontWeight: '700', textAlign: 'center', paddingHorizontal: 6 }}>
                   {SUBDIVISION_LABELS[step.leftSubdivision]}
                 </Text>
               </View>
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ color: colors.right, fontSize: compact ? 10 : 11, fontWeight: '800', letterSpacing: 1.6 }}>RIGHT HAND</Text>
-                <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} compact={compact} />
+                <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} compact={compact} timeSignature={settings.timeSignature} />
                 <Text numberOfLines={2} style={{ color: colors.text, fontSize: compact ? 12 : 14, fontWeight: '700', textAlign: 'center', paddingHorizontal: 6 }}>
                   {SUBDIVISION_LABELS[step.rightSubdivision]}
                 </Text>
@@ -122,6 +122,7 @@ export default function PracticeScreen() {
               secondsUntilChange={snapshot.secondsUntilChange}
               graceNotesEnabled={settings.graceNotesEnabled}
               compact={compact}
+              timeSignature={settings.timeSignature}
             />
           </>
         )}

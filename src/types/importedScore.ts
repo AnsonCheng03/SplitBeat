@@ -5,6 +5,8 @@ export interface ScoreRhythmEvent {
   startQuarter: number;
   /** Notated duration, measured in quarter notes. */
   durationQuarter: number;
+  /** Actual note count in the MusicXML tuplet group, when explicitly marked. */
+  tupletNumber?: number;
 }
 
 export interface ScoreRhythmMeasure {

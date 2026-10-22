@@ -228,6 +228,14 @@ function tieTypes(note: XmlNode): { starts: boolean; stops: boolean } {
   };
 }
 
+function tupletNumber(note: XmlNode): number | undefined {
+  const timeModification = first(note, 'time-modification');
+  const actualNotes = Number(value(first(timeModification, 'actual-notes')));
+  return Number.isInteger(actualNotes) && actualNotes >= 2 && actualNotes <= 16
+    ? actualNotes
+    : undefined;
+}
+
 function pitchKey(note: XmlNode): string {
   const pitch = first(note, 'pitch');
   if (!pitch) return '';
@@ -294,6 +302,7 @@ function scanStaff(
       }
       const startQuarter = cursorQuarter;
       const durationQuarter = durationDivisions / divisions;
+      const noteTupletNumber = tupletNumber(element);
       const isRest = Boolean(first(element, 'rest'));
 
       if (staff === selection.staff && !isRest) {
@@ -312,10 +321,12 @@ function scanStaff(
             const existing = byOnset.get(eventKey);
             if (existing) {
               existing.durationQuarter = Math.max(existing.durationQuarter, durationQuarter);
+              existing.tupletNumber ??= noteTupletNumber;
             } else {
               const event: MutableScoreEvent = {
                 startQuarter,
                 durationQuarter,
+                ...(noteTupletNumber === undefined ? {} : { tupletNumber: noteTupletNumber }),
                 absoluteStartQuarter: scoreMeasureStart + startQuarter,
                 pitchKey: key,
               };
@@ -392,8 +403,16 @@ export function parseMusicXmlRhythm(xml: string): ImportedRhythmScore {
       index,
       startQuarter: leftMeasure.startQuarter,
       durationQuarter: leftMeasure.durationQuarter,
-      leftEvents: leftMeasure.leftEvents.map(({ startQuarter, durationQuarter }) => ({ startQuarter, durationQuarter })),
-      rightEvents: rightMeasure.rightEvents.map(({ startQuarter, durationQuarter }) => ({ startQuarter, durationQuarter })),
+      leftEvents: leftMeasure.leftEvents.map(({ startQuarter, durationQuarter, tupletNumber }) => ({
+        startQuarter,
+        durationQuarter,
+        ...(tupletNumber === undefined ? {} : { tupletNumber }),
+      })),
+      rightEvents: rightMeasure.rightEvents.map(({ startQuarter, durationQuarter, tupletNumber }) => ({
+        startQuarter,
+        durationQuarter,
+        ...(tupletNumber === undefined ? {} : { tupletNumber }),
+      })),
     };
   });
   const totalQuarterNotes = measures.reduce((total, measure) => total + measure.durationQuarter, 0);
