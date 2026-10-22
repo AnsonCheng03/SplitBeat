@@ -292,9 +292,8 @@ export class RhythmTimingEngine {
   private createSnapshot(now: number): SessionSnapshot {
     const elapsed = now - this.sessionStartTime;
     const beatIndex = Math.max(0, Math.floor(elapsed / this.beatMs));
-    const currentStep = this.getStep(
-      Math.floor(beatIndex / this.settings.changeIntervalBeats),
-    );
+    const stepIndex = Math.floor(beatIndex / this.settings.changeIntervalBeats);
+    const currentStep = this.getStep(stepIndex);
     const countdownStartTime = this.sessionStartTime - COUNT_IN_BEATS * this.beatMs;
     const countInBeat = Math.floor(Math.max(0, now - countdownStartTime) / this.beatMs);
     const countdownValue = Math.max(1, COUNT_IN_BEATS - countInBeat);
@@ -302,6 +301,14 @@ export class RhythmTimingEngine {
     const overallRight = this.readHandStats('right');
     const phase = this.finished ? 'finished' : now < this.sessionStartTime ? 'countdown' : 'running';
     const remaining = this.endTime === null ? null : Math.max(0, (this.endTime - now) / 1_000);
+    const nextStepTime = expectedEventTimeMs(
+      this.sessionStartTime,
+      this.settings.bpm,
+      currentStep.startBeat + currentStep.durationBeats,
+    );
+    const hasNextStep =
+      phase === 'running' && (this.endTime === null || nextStepTime < this.endTime);
+    const nextStep = hasNextStep ? this.getStep(stepIndex + 1) : null;
 
     return {
       phase,
@@ -309,8 +316,10 @@ export class RhythmTimingEngine {
       beatIndex,
       beatInBar: beatIndex % 4,
       currentStep,
+      nextStep,
       beatsUntilChange:
         this.settings.changeIntervalBeats - (beatIndex % this.settings.changeIntervalBeats),
+      secondsUntilChange: nextStep ? Math.max(0, (nextStepTime - now) / 1_000) : null,
       secondsRemaining: remaining,
       leftAccuracy: accuracyPercent(overallLeft),
       rightAccuracy: accuracyPercent(overallRight),

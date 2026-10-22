@@ -73,6 +73,39 @@ test('exercise changes occur at configured beat boundaries without immediate rep
   }
 });
 
+test('next pattern preview counts down to the exact beat boundary', () => {
+  const start = 30_000;
+  const engine = new RhythmTimingEngine({ settings, sessionStartTime: start, random: () => 0 });
+
+  const beforeSwitch = engine.advance(start + 2_500);
+  assert.equal(beforeSwitch.currentStep.startBeat, 0);
+  assert.equal(beforeSwitch.nextStep?.startBeat, 4);
+  assert.equal(beforeSwitch.beatsUntilChange, 2);
+  assert.equal(beforeSwitch.secondsUntilChange, 1.5);
+
+  const atSwitch = engine.advance(start + 4_000);
+  assert.equal(atSwitch.currentStep.startBeat, 4);
+  assert.equal(atSwitch.nextStep?.startBeat, 8);
+  assert.equal(atSwitch.secondsUntilChange, 4);
+});
+
+test('next pattern is hidden during count-in and when the session ends before another switch', () => {
+  const start = 40_000;
+  const countdownEngine = new RhythmTimingEngine({ settings, sessionStartTime: start, random: () => 0 });
+  const countdown = countdownEngine.advance(start - 1);
+  assert.equal(countdown.nextStep, null);
+  assert.equal(countdown.secondsUntilChange, null);
+
+  const shortSession = new RhythmTimingEngine({
+    settings: { ...settings, durationSeconds: 30, changeIntervalBeats: 8 },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+  const lastPattern = shortSession.advance(start + 29_000);
+  assert.equal(lastPattern.nextStep, null);
+  assert.equal(lastPattern.secondsUntilChange, null);
+});
+
 test('tap matching grades exact, early, and late taps and rejects taps outside the window', () => {
   const exact = matchTap([{ id: 'e1', expectedTimeMs: 1_000, matched: false }], 1_000);
   const early = matchTap([{ id: 'e1', expectedTimeMs: 1_000, matched: false }], 980);

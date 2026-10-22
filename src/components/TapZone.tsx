@@ -44,7 +44,7 @@ export function TapZone({ hand, onTap, hapticsEnabled, compact = false }: TapZon
       collapsable={false}
       style={{
         flex: 1,
-        minHeight: compact ? 100 : 180,
+        minHeight: compact ? 90 : 180,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: pressed ? (isLeft ? '#1D483D' : '#382B56') : isLeft ? colors.leftSurface : colors.rightSurface,

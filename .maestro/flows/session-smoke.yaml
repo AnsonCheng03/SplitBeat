@@ -36,6 +36,10 @@ appId: com.splitbeat.twohandrhythm
     visible:
       id: practice.screen
     timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: practice.nextPattern
+    timeout: 15000
 - assertVisible:
     id: practice.tap.left
 - assertVisible:

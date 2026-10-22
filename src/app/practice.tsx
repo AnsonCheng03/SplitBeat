@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AccuracyDisplay } from '@/components/AccuracyDisplay';
 import { Countdown } from '@/components/Countdown';
 import { MetronomeIndicator } from '@/components/MetronomeIndicator';
+import { NextPatternPreview } from '@/components/NextPatternPreview';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
 import { TapZone } from '@/components/TapZone';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
@@ -76,12 +77,16 @@ export default function PracticeScreen() {
           </View>
         </View>
 
+        <NextPatternPreview
+          step={snapshot.nextStep}
+          beatsUntilChange={snapshot.beatsUntilChange}
+          secondsUntilChange={snapshot.secondsUntilChange}
+          compact={compact}
+        />
+
         <View style={{ minHeight: compact ? 34 : 48, justifyContent: 'center' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: compact ? 3 : 5 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: compact ? 3 : 5 }}>
             <Text style={{ color: colors.muted, fontSize: compact ? 10 : 11 }}>ACCURACY</Text>
-            <Text style={{ color: colors.muted, fontSize: compact ? 10 : 11 }}>
-              Next change · {snapshot.beatsUntilChange} {snapshot.beatsUntilChange === 1 ? 'beat' : 'beats'}
-            </Text>
           </View>
           <AccuracyDisplay left={snapshot.leftAccuracy} right={snapshot.rightAccuracy} compact={compact} />
         </View>

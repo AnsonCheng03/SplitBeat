@@ -68,7 +68,9 @@ export interface SessionSnapshot {
   beatIndex: number;
   beatInBar: number;
   currentStep: ExerciseStep;
+  nextStep: ExerciseStep | null;
   beatsUntilChange: number;
+  secondsUntilChange: number | null;
   secondsRemaining: number | null;
   leftAccuracy: number;
   rightAccuracy: number;
