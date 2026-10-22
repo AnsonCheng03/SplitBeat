@@ -239,7 +239,12 @@ export function TimingCalibration({
         </Text>
       </Pressable>
 
-      <Modal visible={visible} animationType="fade" onRequestClose={close}>
+      <Modal
+        visible={visible}
+        animationType="fade"
+        supportedOrientations={['landscape-left', 'landscape-right']}
+        onRequestClose={close}
+      >
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
           <View style={{ flex: 1, width: '100%', maxWidth: 950, alignSelf: 'center', paddingHorizontal: 18, paddingVertical: 10 }}>
             <View style={{ minHeight: 42, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

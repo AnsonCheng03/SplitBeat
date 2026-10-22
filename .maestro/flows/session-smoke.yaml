@@ -14,6 +14,10 @@ appId: com.splitbeat.twohandrhythm
     visible:
       id: home.screen
     timeout: 15000
+- extendedWaitUntil:
+    visible:
+      text: AUDIO READY
+    timeout: 15000
 - tapOn:
     id: home.setup
 - assertVisible:
@@ -52,16 +56,20 @@ appId: com.splitbeat.twohandrhythm
     element:
       id: setup.calibration.open
     direction: UP
+    visibilityPercentage: 90
 - tapOn:
     id: setup.calibration.open
 - assertVisible:
     id: calibration.start
 - tapOn:
     id: calibration.close
-- scrollUntilVisible:
-    element:
-      id: setup.sound.metronome.bell
-    direction: DOWN
+- waitForAnimationToEnd
+- swipe:
+    start: 90%, 90%
+    end: 90%, 20%
+    duration: 500
+- assertVisible:
+    id: setup.sound.metronome.bell
 - tapOn:
     id: setup.sound.metronome.bell
 - scrollUntilVisible:
@@ -86,6 +94,10 @@ appId: com.splitbeat.twohandrhythm
     element:
       id: setup.start
     direction: DOWN
+- extendedWaitUntil:
+    visible:
+      text: AUDIO READY
+    timeout: 15000
 - tapOn:
     id: setup.start
 - extendedWaitUntil:

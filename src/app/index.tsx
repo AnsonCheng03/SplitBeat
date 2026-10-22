@@ -1,9 +1,18 @@
 import { Link } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
 
 export default function HomeScreen() {
+  const { audioStatus, prepareAudio } = useRhythmSession();
+  const audioStatusLabel =
+    audioStatus === 'ready'
+      ? 'AUDIO READY'
+      : audioStatus === 'error'
+        ? 'AUDIO SETUP FAILED · TAP TO RETRY'
+        : 'LOADING AUDIO ENGINE…';
+
   return (
     <SafeAreaView testID="home.screen" style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={{ flex: 1, paddingHorizontal: 28, justifyContent: 'center' }}>
@@ -44,6 +53,33 @@ export default function HomeScreen() {
             </Text>
           </Pressable>
         </Link>
+        <Pressable
+          testID="home.audioStatus"
+          accessibilityRole={audioStatus === 'error' ? 'button' : 'text'}
+          accessibilityLabel={audioStatusLabel}
+          disabled={audioStatus !== 'error'}
+          onPress={() => void prepareAudio().catch(() => undefined)}
+          style={{
+            minHeight: 38,
+            maxWidth: 420,
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'row',
+            gap: 8,
+          }}
+        >
+          <View
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: 5,
+              backgroundColor: audioStatus === 'error' ? colors.danger : audioStatus === 'ready' ? colors.left : colors.accent,
+            }}
+          />
+          <Text style={{ color: audioStatus === 'error' ? colors.danger : colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1 }}>
+            {audioStatusLabel}
+          </Text>
+        </Pressable>
         <Link href="/import-score" asChild>
           <Pressable
             testID="home.importScore"

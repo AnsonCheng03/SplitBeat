@@ -31,7 +31,7 @@ An iOS build can also be offered on Apple silicon Macs as an iPhone/iPad app. Th
 - `src/rhythm/musicXmlParser.ts` converts partwise MusicXML to rhythm-only score tracks for imported-score practice.
 - `src/rhythm/timingCalibration.ts` normalizes per-hand timing calibration and the selectable scoring window.
 - src/audio/ synthesizes selectable metronome and hand click tones, then schedules metronome clicks on the native audio clock.
-- src/store/ owns session state and persists exercise settings locally.
+- src/store/ owns session state, prepares the audio context and offline click sounds at app startup, and persists exercise settings locally. The home and setup screens show when audio is ready; the setup play ring spins during preparation and turns solid when ready.
 - src/components/ contains reusable symbols, beat indicators, and large touch zones.
 - `expo-build-properties` enables the iOS scene lifecycle required by iOS 27 and builds Expo modules from source so Worklets links against this app's React Native libraries.
 - The metronome synthesizes output and never records audio. A version-pinned postinstall patch disables the audio library's unused iOS microphone permission methods; the app does not request microphone access.

@@ -1,6 +1,6 @@
 import { AudioContext } from 'react-native-audio-api';
 import type { AudioBuffer } from 'react-native-audio-api';
-import { createClickSamples } from '@/audio/soundPresets';
+import { createClickSamples, SOUND_OPTIONS } from '@/audio/soundPresets';
 import type { SoundPreset } from '@/types/rhythm';
 
 interface MetronomeStartOptions {
@@ -42,6 +42,11 @@ export class MetronomeAudio {
 
   async resume(): Promise<void> {
     await this.context.resume();
+  }
+
+  async prepare(): Promise<void> {
+    if (this.closed) throw new Error('Cannot prepare a closed audio context');
+    for (const { value } of SOUND_OPTIONS) this.getClickBuffer(value);
   }
 
   start(options: MetronomeStartOptions): void {

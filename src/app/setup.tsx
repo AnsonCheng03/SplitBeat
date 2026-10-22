@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SOUND_OPTIONS } from '@/audio/soundPresets';
+import { AudioStartButton } from '@/components/AudioStartButton';
 import { TimingCalibration } from '@/components/TimingCalibration';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import {
@@ -77,7 +78,7 @@ function signedMilliseconds(value: number): string {
 }
 
 export default function SetupScreen() {
-  const { settings, updateSettings, startExercise } = useRhythmSession();
+  const { settings, updateSettings, audioStatus, prepareAudio, startExercise } = useRhythmSession();
   const [starting, setStarting] = useState(false);
   const router = useRouter();
 
@@ -94,6 +95,7 @@ export default function SetupScreen() {
     if (starting) return;
     setStarting(true);
     try {
+      if (audioStatus === 'error') await prepareAudio();
       await startExercise();
       router.replace('/practice');
     } catch {
@@ -404,24 +406,54 @@ export default function SetupScreen() {
           When enabled, one extra pickup is expected by each hand just before every pattern change.
         </Text>
 
-        <Pressable
-          testID="setup.start"
-          onPress={start}
-          disabled={starting}
-          style={({ pressed }) => ({
-            backgroundColor: pressed ? '#A8EADB' : colors.left,
-            minHeight: 60,
-            borderRadius: 17,
-            marginTop: 22,
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: starting ? 0.7 : 1,
-          })}
-        >
-          <Text style={{ color: colors.background, fontSize: 16, fontWeight: '900', letterSpacing: 1 }}>
-            {starting ? 'PREPARING…' : 'START EXERCISE'}
-          </Text>
-        </Pressable>
+        <View style={{ marginTop: 22, paddingTop: 19, borderTopWidth: 1, borderTopColor: colors.line, flexDirection: 'row', alignItems: 'center', gap: 17 }}>
+          <AudioStartButton
+            testID="setup.start"
+            status={starting ? 'loading' : audioStatus}
+            disabled={starting || audioStatus === 'loading'}
+            onPress={() => void start()}
+            accessibilityLabel={
+              audioStatus === 'error'
+                ? 'Retry audio setup'
+                : audioStatus === 'ready'
+                  ? 'Start exercise'
+                  : 'Loading audio engine'
+            }
+          />
+          <View style={{ flex: 1, gap: 5 }}>
+            <Text
+              testID="setup.audioStatus"
+              style={{
+                color: audioStatus === 'error' ? colors.danger : audioStatus === 'ready' ? colors.left : colors.accent,
+                fontSize: 12,
+                fontWeight: '900',
+                letterSpacing: 1.2,
+              }}
+            >
+              {audioStatus === 'ready'
+                ? 'AUDIO READY'
+                : audioStatus === 'error'
+                  ? 'AUDIO SETUP FAILED'
+                  : 'LOADING AUDIO ENGINE…'}
+            </Text>
+            <Text style={{ color: colors.text, fontSize: 17, fontWeight: '900', letterSpacing: 0.3 }}>
+              {starting
+                ? 'STARTING SESSION…'
+                : audioStatus === 'ready'
+                  ? 'START EXERCISE'
+                  : audioStatus === 'error'
+                    ? 'RETRY AUDIO SETUP'
+                    : 'PREPARING AUDIO…'}
+            </Text>
+            <Text style={{ color: colors.muted, fontSize: 13, lineHeight: 19 }}>
+              {audioStatus === 'ready'
+                ? 'Tap the play button to begin.'
+                : audioStatus === 'error'
+                  ? 'Tap the play button to retry audio setup.'
+                  : 'Preparing the metronome and hand sounds.'}
+            </Text>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

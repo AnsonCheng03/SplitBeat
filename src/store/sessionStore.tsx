@@ -32,6 +32,8 @@ const SETTINGS_KEY = 'two-hand-rhythm-trainer.settings.v1';
 const COUNT_IN_BEATS = 3;
 const AUDIO_LEAD_IN_MS = 300;
 
+export type AudioPreparationStatus = 'loading' | 'ready' | 'error';
+
 export const DEFAULT_SETTINGS: ExerciseSettings = {
   bpm: 80,
   timeSignature: '4/4',
@@ -53,6 +55,8 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
 interface SessionContextValue {
   settings: ExerciseSettings;
   updateSettings: (patch: Partial<ExerciseSettings>) => void;
+  audioStatus: AudioPreparationStatus;
+  prepareAudio: () => Promise<void>;
   startExercise: () => Promise<void>;
   startScoreExercise: (score: ImportedRhythmScore) => Promise<void>;
   stopExercise: () => void;
@@ -134,8 +138,10 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [snapshot, setSnapshot] = useState<SessionSnapshot | null>(null);
   const [results, setResults] = useState<SessionResults | null>(null);
+  const [audioStatus, setAudioStatus] = useState<AudioPreparationStatus>('loading');
   const engineRef = useRef<RhythmTimingEngine | null>(null);
   const audioRef = useRef<MetronomeAudio | null>(null);
+  const audioPreparationRef = useRef<Promise<void> | null>(null);
   const uiTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
@@ -158,6 +164,55 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   useEffect(() => {
     if (settingsLoaded) void AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   }, [settings, settingsLoaded]);
+
+  const prepareAudio = useCallback(async () => {
+    if (audioRef.current) {
+      await audioRef.current.prepare();
+      setAudioStatus('ready');
+      return;
+    }
+    if (audioPreparationRef.current) return audioPreparationRef.current;
+
+    const preparation = new Promise<void>((resolve, reject) => {
+      requestAnimationFrame(() => {
+        setAudioStatus('loading');
+        requestAnimationFrame(() => {
+          let audio: MetronomeAudio;
+          try {
+            audio = new MetronomeAudio();
+            audioRef.current = audio;
+          } catch (error) {
+            reject(error);
+            return;
+          }
+          void audio.prepare().then(resolve, (error: unknown) => {
+            void audio.stop();
+            if (audioRef.current === audio) audioRef.current = null;
+            reject(error);
+          });
+        });
+      });
+    });
+    audioPreparationRef.current = preparation;
+
+    try {
+      await preparation;
+      setAudioStatus('ready');
+    } catch (error) {
+      setAudioStatus('error');
+      throw error;
+    } finally {
+      if (audioPreparationRef.current === preparation) audioPreparationRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    const startupPreparation = setTimeout(() => {
+      void prepareAudio().catch(() => undefined);
+    }, 0);
+    return () => clearTimeout(startupPreparation);
+  }, [prepareAudio, settingsLoaded]);
 
   useEffect(() => {
     audioRef.current?.setSoundEnabled(settings.soundEnabled);
@@ -182,7 +237,11 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
 
   const startSession = useCallback(async (score?: ImportedRhythmScore) => {
     stopTimers();
-    if (audioRef.current) await audioRef.current.stop();
+    if (audioPreparationRef.current) await audioPreparationRef.current;
+    if (engineRef.current && audioRef.current) {
+      await audioRef.current.stop();
+      audioRef.current = null;
+    }
 
     const sessionSettings = score
       ? {
@@ -193,9 +252,18 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       : settings;
     if (score) setSettings(sessionSettings);
 
-    const audio = new MetronomeAudio();
+    const audio = audioRef.current ?? new MetronomeAudio();
     audioRef.current = audio;
-    await audio.resume();
+    try {
+      await audio.prepare();
+      await audio.resume();
+      setAudioStatus('ready');
+    } catch (error) {
+      setAudioStatus('error');
+      void audio.stop();
+      if (audioRef.current === audio) audioRef.current = null;
+      throw error;
+    }
 
     const metrics = timeSignatureMetrics(sessionSettings.bpm, sessionSettings.timeSignature);
     const beatMs = metrics.beatDurationMs;
@@ -276,8 +344,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   );
 
   const value = useMemo(
-    () => ({ settings, updateSettings, startExercise, startScoreExercise, stopExercise, registerTap, snapshot, results }),
-    [settings, updateSettings, startExercise, startScoreExercise, stopExercise, registerTap, snapshot, results],
+    () => ({ settings, updateSettings, audioStatus, prepareAudio, startExercise, startScoreExercise, stopExercise, registerTap, snapshot, results }),
+    [settings, updateSettings, audioStatus, prepareAudio, startExercise, startScoreExercise, stopExercise, registerTap, snapshot, results],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
