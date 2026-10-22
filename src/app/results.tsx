@@ -61,12 +61,16 @@ function buildFeedback(results: SessionResults, weak?: ReturnType<typeof weakest
       eighth: 'eighth-note subdivisions',
       triplet: 'triplets',
       sixteenth: 'sixteenth-note subdivisions',
+      thirtySecond: '32nd-note subdivisions',
+      sixtyFourth: '64th-note subdivisions',
     };
     const playedPattern: Record<Subdivision, string> = {
       quarter: 'quarter notes',
       eighth: 'eighth notes',
       triplet: 'triplets',
       sixteenth: 'sixteenth notes',
+      thirtySecond: '32nd notes',
+      sixtyFourth: '64th notes',
     };
     const verb = affectedSubdivision === 'quarter' ? 'is' : 'are';
     messages.push(

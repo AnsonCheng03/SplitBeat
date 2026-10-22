@@ -21,6 +21,8 @@ test('subdivision intervals follow the selected BPM', () => {
   assert.equal(beatDurationMs(60), 1_000);
   assert.equal(subdivisionIntervalMs(60, 'quarter'), 1_000);
   assert.equal(subdivisionIntervalMs(60, 'eighth'), 500);
+  assert.equal(subdivisionIntervalMs(60, 'thirtySecond'), 125);
+  assert.equal(subdivisionIntervalMs(60, 'sixtyFourth'), 62.5);
   assert.equal(subdivisionIntervalMs(60, 'sixteenth'), 250);
   assert.ok(Math.abs(subdivisionIntervalMs(60, 'triplet') - 333.3333333333) < 0.000001);
 });
@@ -31,6 +33,21 @@ test('expected timestamps stay anchored to the session start across bars', () =>
   assert.equal(expectedEventTimeMs(start, 60, 4), start + 4_000);
   assert.equal(expectedEventTimeMs(start, 60, 8), start + 8_000);
   assert.equal(expectedEventTimeMs(start, 60, 8, 1, 'eighth'), start + 8_500);
+  assert.equal(expectedEventTimeMs(start, 60, 8, 7, 'thirtySecond'), start + 8_875);
+  assert.equal(expectedEventTimeMs(start, 60, 8, 15, 'sixtyFourth'), start + 8_937.5);
+});
+
+test('the timing engine generates all 64th-note events from beat timestamps', () => {
+  const start = 20_000;
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, enabledSubdivisions: ['sixtyFourth'] },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  const snapshot = engine.advance(start + 1_040);
+  assert.equal(snapshot.leftStats.totalExpected, 16);
+  assert.equal(snapshot.rightStats.totalExpected, 16);
 });
 
 test('long-run timestamps use the origin formula instead of accumulating timer delays', () => {

@@ -28,7 +28,7 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   bpm: 80,
   durationSeconds: 60,
   changeIntervalBeats: 4,
-  enabledSubdivisions: ['quarter', 'eighth'],
+  enabledSubdivisions: ['quarter', 'eighth', 'triplet', 'sixteenth'],
   soundEnabled: true,
   hapticsEnabled: false,
 };

@@ -1,4 +1,11 @@
-export const SUBDIVISIONS = ['quarter', 'eighth', 'triplet', 'sixteenth'] as const;
+export const SUBDIVISIONS = [
+  'quarter',
+  'eighth',
+  'triplet',
+  'sixteenth',
+  'thirtySecond',
+  'sixtyFourth',
+] as const;
 
 export type Subdivision = (typeof SUBDIVISIONS)[number];
 export type Hand = 'left' | 'right';

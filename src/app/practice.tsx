@@ -63,14 +63,14 @@ export default function PracticeScreen() {
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', borderRightWidth: 1, borderRightColor: colors.line }}>
             <Text style={{ color: colors.left, fontSize: compact ? 10 : 11, fontWeight: '800', letterSpacing: 1.6 }}>LEFT HAND</Text>
             <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} compact={compact} />
-            <Text style={{ color: colors.text, fontSize: compact ? 14 : 16, fontWeight: '700' }}>
+            <Text numberOfLines={2} style={{ color: colors.text, fontSize: compact ? 12 : 14, fontWeight: '700', textAlign: 'center', paddingHorizontal: 6 }}>
               {SUBDIVISION_LABELS[step.leftSubdivision]}
             </Text>
           </View>
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ color: colors.right, fontSize: compact ? 10 : 11, fontWeight: '800', letterSpacing: 1.6 }}>RIGHT HAND</Text>
             <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} compact={compact} />
-            <Text style={{ color: colors.text, fontSize: compact ? 14 : 16, fontWeight: '700' }}>
+            <Text numberOfLines={2} style={{ color: colors.text, fontSize: compact ? 12 : 14, fontWeight: '700', textAlign: 'center', paddingHorizontal: 6 }}>
               {SUBDIVISION_LABELS[step.rightSubdivision]}
             </Text>
           </View>

@@ -22,6 +22,14 @@ appId: com.splitbeat.twohandrhythm
     element:
       id: setup.start
     direction: DOWN
+- assertVisible:
+    id: setup.subdivision.thirtySecond
+- assertVisible:
+    id: setup.subdivision.sixtyFourth
+- tapOn:
+    id: setup.subdivision.thirtySecond
+- tapOn:
+    id: setup.subdivision.sixtyFourth
 - tapOn:
     id: setup.start
 - extendedWaitUntil:

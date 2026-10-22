@@ -186,6 +186,7 @@ export default function SetupScreen() {
             return (
               <Pressable
                 key={subdivision}
+                testID={'setup.subdivision.' + subdivision}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: selected, disabled: selected && settings.enabledSubdivisions.length <= 2 }}
                 onPress={() => toggleSubdivision(subdivision)}
@@ -209,7 +210,7 @@ export default function SetupScreen() {
           })}
         </View>
         <Text style={{ color: colors.dim, fontSize: 12, marginTop: 8 }}>
-          Keep at least two enabled. Both hands may share a pattern.
+          Keep at least two enabled. Both hands may share a pattern. 32nd and 64th notes are fastest at lower tempos.
         </Text>
 
         <View style={{ marginTop: 21, borderTopWidth: 1, borderTopColor: colors.line }}>

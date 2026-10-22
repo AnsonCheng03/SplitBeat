@@ -1,10 +1,12 @@
 import type { Subdivision } from '@/types/rhythm';
 
 export const SUBDIVISION_LABELS: Record<Subdivision, string> = {
-  quarter: 'Quarter',
-  eighth: 'Eighth',
+  quarter: 'Quarter (Crotchet)',
+  eighth: 'Quaver (Eighth)',
   triplet: 'Triplet',
-  sixteenth: 'Sixteenth',
+  sixteenth: 'Semiquaver (16th)',
+  thirtySecond: 'Demisemiquaver (32nd)',
+  sixtyFourth: 'Hemidemisemiquaver (64th)',
 };
 
 export const SUBDIVISION_COUNTS: Record<Subdivision, number> = {
@@ -12,6 +14,8 @@ export const SUBDIVISION_COUNTS: Record<Subdivision, number> = {
   eighth: 2,
   triplet: 3,
   sixteenth: 4,
+  thirtySecond: 8,
+  sixtyFourth: 16,
 };
 
 export function beatDurationMs(bpm: number): number {

@@ -20,11 +20,15 @@ An iOS build can also be offered on Apple silicon Macs as an iPhone/iPad app. Th
 ## Architecture
 
 - `src/app/` contains the setup, practice, and results routes.
-- src/rhythm/ contains subdivision math, non-repeating pair generation, tap matching, and scoring.
+- `src/rhythm/` contains subdivision math, non-repeating pair generation, tap matching, and scoring.
 - src/audio/ schedules metronome clicks on the native audio clock.
 - src/store/ owns session state and persists exercise settings locally.
 - src/components/ contains reusable symbols, beat indicators, and large touch zones.
 - `expo-build-properties` enables the iOS scene lifecycle required by iOS 27 and builds Expo modules from source so Worklets links against this app's React Native libraries.
+
+## Rhythms
+
+Each subdivision is the number of evenly spaced notes played inside one quarter-note beat: quarter (1), eighth/quaver (2), triplet (3), sixteenth/semiquaver (4), 32nd/demisemiquaver (8), and 64th/hemidemisemiquaver (16). The default enables quarter through sixteenth; 32nd and 64th notes can be enabled in setup and are most practical at lower tempos.
 
 ## End-to-end checks
 
@@ -41,7 +45,7 @@ For Android, use `npm run e2e:android`, then run `npm run e2e:maestro -- --devic
 
 The engine captures a monotonic performance.now() timestamp at touch start. Expected event times are calculated from the exercise start time, BPM, beat index, and subdivision position; timer callbacks and animations never increment the rhythm clock. The metronome click is synthesized and scheduled against react-native-audio-api's native AudioContext.currentTime with a five-second lookahead, so ordinary React renders and JavaScript scheduling do not set the click time.
 
-Each hand has its own expected-event queue. A tap claims the nearest unmatched event within 100 ms. Errors up to 30 ms are Perfect, up to 60 ms are Great, and up to 100 ms are Good. An unclaimed event becomes a miss after its 100 ms window closes; a duplicate or out-of-window tap cannot consume an already matched event. Transition accuracy covers the first two beats after each generated pair change.
+Each hand has its own expected-event queue. A tap claims the nearest unmatched event within 100 ms. Expected events within every beat are generated from the session origin and the selected event count, including 8- and 16-note beats. Errors up to 30 ms are Perfect, up to 60 ms are Great, and up to 100 ms are Good. An unclaimed event becomes a miss after its 100 ms window closes; a duplicate or out-of-window tap cannot consume an already matched event. Transition accuracy covers the first two beats after each generated pair change.
 
 ## Known platform limits
 
