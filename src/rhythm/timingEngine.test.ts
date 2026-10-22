@@ -23,6 +23,9 @@ const settings: ExerciseSettings = {
   feel: 'straight',
   graceNotesEnabled: false,
   soundEnabled: false,
+  metronomeSound: 'wood',
+  leftHandSound: 'soft',
+  rightHandSound: 'beep',
   hapticsEnabled: false,
 };
 

@@ -1,4 +1,7 @@
 import { AudioContext } from 'react-native-audio-api';
+import type { AudioBuffer } from 'react-native-audio-api';
+import { createClickSamples } from '@/audio/soundPresets';
+import type { SoundPreset } from '@/types/rhythm';
 
 interface MetronomeStartOptions {
   sessionStartAudioTime: number;
@@ -6,6 +9,13 @@ interface MetronomeStartOptions {
   beatsPerBar: number;
   durationSeconds: number | null;
   soundEnabled: boolean;
+  sounds: MetronomeSounds;
+}
+
+export interface MetronomeSounds {
+  metronome: SoundPreset;
+  leftHand: SoundPreset;
+  rightHand: SoundPreset;
 }
 
 const COUNT_IN_BEATS = 3;
@@ -15,10 +25,10 @@ const SCHEDULER_DELAY_MS = 120;
 export class MetronomeAudio {
   private readonly context = new AudioContext();
   private readonly output = this.context.createGain();
-  private normalClick = this.createClickBuffer(1_350, 0.7);
-  private accentClick = this.createClickBuffer(1_850, 1);
+  private readonly clickBuffers = new Map<SoundPreset, AudioBuffer>();
   private timer: ReturnType<typeof setTimeout> | undefined;
   private startOptions: MetronomeStartOptions | undefined;
+  private sounds: MetronomeSounds = { metronome: 'wood', leftHand: 'soft', rightHand: 'beep' };
   private nextBeatIndex = -COUNT_IN_BEATS;
   private closed = false;
 
@@ -36,13 +46,25 @@ export class MetronomeAudio {
 
   start(options: MetronomeStartOptions): void {
     this.startOptions = options;
+    this.setSounds(options.sounds);
+    for (const sound of new Set(Object.values(options.sounds))) this.getClickBuffer(sound);
     this.setSoundEnabled(options.soundEnabled);
     this.scheduleAhead();
+  }
+
+  setSounds(sounds: MetronomeSounds): void {
+    this.sounds = sounds;
   }
 
   setSoundEnabled(enabled: boolean): void {
     if (this.startOptions) this.startOptions.soundEnabled = enabled;
     this.output.gain.value = enabled ? 0.75 : 0;
+  }
+
+  playHandClick(hand: 'left' | 'right'): void {
+    if (!this.startOptions?.soundEnabled || this.closed) return;
+    const preset = hand === 'left' ? this.sounds.leftHand : this.sounds.rightHand;
+    this.scheduleClick(this.context.currentTime, preset, 0.48);
   }
 
   private scheduleAhead = (): void => {
@@ -61,7 +83,7 @@ export class MetronomeAudio {
       if (beatTime > horizon || beatTime >= endTime) break;
       if (beatTime >= this.context.currentTime - 0.01) {
         const beatInBar = ((this.nextBeatIndex % options.beatsPerBar) + options.beatsPerBar) % options.beatsPerBar;
-        this.scheduleClick(beatTime, beatInBar === 0);
+        this.scheduleClick(beatTime, this.sounds.metronome, beatInBar === 0 ? 1.15 : 0.78);
       }
       this.nextBeatIndex += 1;
     }
@@ -69,26 +91,28 @@ export class MetronomeAudio {
     this.timer = setTimeout(this.scheduleAhead, SCHEDULER_DELAY_MS);
   };
 
-  private scheduleClick(when: number, accent: boolean): void {
+  private scheduleClick(when: number, sound: SoundPreset, level: number): void {
     const source = this.context.createBufferSource();
-    source.buffer = accent ? this.accentClick : this.normalClick;
-    source.connect(this.output);
+    const gain = this.context.createGain();
+    source.buffer = this.getClickBuffer(sound);
+    gain.gain.value = level;
+    source.connect(gain);
+    gain.connect(this.output);
+    source.onEnded = () => {
+      source.disconnect();
+      gain.disconnect();
+    };
     source.start(when);
   }
 
-  private createClickBuffer(frequency: number, amplitude: number) {
-    const sampleRate = this.context.sampleRate;
-    const durationSeconds = 0.022;
-    const frameCount = Math.ceil(sampleRate * durationSeconds);
-    const buffer = this.context.createBuffer(1, frameCount, sampleRate);
-    const samples = buffer.getChannelData(0);
+  private getClickBuffer(sound: SoundPreset): AudioBuffer {
+    const cachedBuffer = this.clickBuffers.get(sound);
+    if (cachedBuffer) return cachedBuffer;
 
-    for (let frame = 0; frame < frameCount; frame += 1) {
-      const time = frame / sampleRate;
-      const envelope = Math.exp(-time * 190);
-      samples[frame] = Math.sin(2 * Math.PI * frequency * time) * envelope * amplitude;
-    }
-
+    const samples = createClickSamples(sound, this.context.sampleRate);
+    const buffer = this.context.createBuffer(1, samples.length, this.context.sampleRate);
+    buffer.copyToChannel(samples, 0);
+    this.clickBuffers.set(sound, buffer);
     return buffer;
   }
 

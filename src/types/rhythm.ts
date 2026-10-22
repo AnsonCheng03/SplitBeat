@@ -23,6 +23,7 @@ export const TIME_SIGNATURES = [
 
 export type TimeSignature = (typeof TIME_SIGNATURES)[number];
 export type Hand = 'left' | 'right';
+export type SoundPreset = 'wood' | 'beep' | 'bell' | 'soft';
 export type RhythmicFeel = 'straight' | 'swing';
 export type DurationOption = 30 | 60 | 120 | 'endless';
 export type ChangeIntervalBeats = 1 | 2 | 4 | 8;
@@ -44,6 +45,9 @@ export interface ExerciseSettings {
   feel: RhythmicFeel;
   graceNotesEnabled: boolean;
   soundEnabled: boolean;
+  metronomeSound: SoundPreset;
+  leftHandSound: SoundPreset;
+  rightHandSound: SoundPreset;
   hapticsEnabled: boolean;
 }
 

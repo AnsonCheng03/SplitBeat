@@ -44,6 +44,24 @@ appId: com.splitbeat.twohandrhythm
     id: setup.subdivision.sixtyFourth
 - scrollUntilVisible:
     element:
+      id: setup.sound.metronome.bell
+    direction: DOWN
+- tapOn:
+    id: setup.sound.metronome.bell
+- scrollUntilVisible:
+    element:
+      id: setup.sound.left.wood
+    direction: DOWN
+- tapOn:
+    id: setup.sound.left.wood
+- scrollUntilVisible:
+    element:
+      id: setup.sound.right.soft
+    direction: DOWN
+- tapOn:
+    id: setup.sound.right.soft
+- scrollUntilVisible:
+    element:
       id: setup.toggle.graceNotes
     direction: DOWN
 - tapOn:

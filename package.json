@@ -9,7 +9,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test src/rhythm/*.test.ts",
+    "test": "node --import tsx --test src/rhythm/*.test.ts src/audio/*.test.ts",
     "lint": "eslint .",
     "e2e:ios": "expo run:ios --configuration Release",
     "e2e:android": "expo run:android --variant release",

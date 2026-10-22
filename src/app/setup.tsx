@@ -3,6 +3,7 @@ import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { SOUND_OPTIONS } from '@/audio/soundPresets';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
@@ -28,7 +29,7 @@ function ChoiceRow<T extends string | number>({
   onChange,
   testIDPrefix,
 }: {
-  options: { label: string; value: T }[];
+  options: readonly { label: string; value: T }[];
   value: T;
   onChange: (value: T) => void;
   testIDPrefix?: string;
@@ -266,10 +267,35 @@ export default function SetupScreen() {
           Keep at least two enabled. Both hands may share a pattern. 32nd and 64th notes are fastest at lower tempos.
         </Text>
 
+        <Text style={sectionLabel}>METRONOME SOUND</Text>
+        <ChoiceRow
+          testIDPrefix="setup.sound.metronome"
+          options={SOUND_OPTIONS}
+          value={settings.metronomeSound}
+          onChange={(metronomeSound) => updateSettings({ metronomeSound })}
+        />
+        <Text style={sectionLabel}>LEFT HAND TAP SOUND</Text>
+        <ChoiceRow
+          testIDPrefix="setup.sound.left"
+          options={SOUND_OPTIONS}
+          value={settings.leftHandSound}
+          onChange={(leftHandSound) => updateSettings({ leftHandSound })}
+        />
+        <Text style={sectionLabel}>RIGHT HAND TAP SOUND</Text>
+        <ChoiceRow
+          testIDPrefix="setup.sound.right"
+          options={SOUND_OPTIONS}
+          value={settings.rightHandSound}
+          onChange={(rightHandSound) => updateSettings({ rightHandSound })}
+        />
+        <Text style={{ color: colors.dim, fontSize: 12, marginTop: 8 }}>
+          Choose distinct offline click tones for the pulse and each hand. Sound effects mutes all three.
+        </Text>
+
         <View style={{ marginTop: 21, borderTopWidth: 1, borderTopColor: colors.line }}>
           {[
             { label: 'Grace note pickups', value: settings.graceNotesEnabled, patch: { graceNotesEnabled: !settings.graceNotesEnabled } },
-            { label: 'Metronome sound', value: settings.soundEnabled, patch: { soundEnabled: !settings.soundEnabled } },
+            { label: 'Sound effects', value: settings.soundEnabled, patch: { soundEnabled: !settings.soundEnabled } },
             { label: 'Tap haptics', value: settings.hapticsEnabled, patch: { hapticsEnabled: !settings.hapticsEnabled } },
           ].map((toggle) => (
             <Pressable

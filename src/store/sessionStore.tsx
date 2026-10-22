@@ -9,6 +9,7 @@ import React, {
   useState,
 } from 'react';
 import { MetronomeAudio } from '@/audio/metronome';
+import { SOUND_OPTIONS } from '@/audio/soundPresets';
 import { RhythmTimingEngine } from '@/rhythm/timingEngine';
 import { timeSignatureMetrics } from '@/rhythm/subdivisions';
 import { SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
@@ -17,6 +18,7 @@ import type {
   Hand,
   SessionResults,
   SessionSnapshot,
+  SoundPreset,
   Subdivision,
 } from '@/types/rhythm';
 
@@ -33,6 +35,9 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   feel: 'straight',
   graceNotesEnabled: false,
   soundEnabled: true,
+  metronomeSound: 'wood',
+  leftHandSound: 'soft',
+  rightHandSound: 'beep',
   hapticsEnabled: false,
 };
 
@@ -70,6 +75,8 @@ function restoreSettings(raw: string | null): ExerciseSettings {
     )
       ? (parsed.timeSignature as ExerciseSettings['timeSignature'])
       : DEFAULT_SETTINGS.timeSignature;
+    const restoreSound = (sound: unknown, fallback: SoundPreset): SoundPreset =>
+      SOUND_OPTIONS.some((option) => option.value === sound) ? (sound as SoundPreset) : fallback;
 
     return {
       bpm:
@@ -86,6 +93,9 @@ function restoreSettings(raw: string | null): ExerciseSettings {
           ? parsed.graceNotesEnabled
           : DEFAULT_SETTINGS.graceNotesEnabled,
       soundEnabled: typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : true,
+      metronomeSound: restoreSound(parsed.metronomeSound, DEFAULT_SETTINGS.metronomeSound),
+      leftHandSound: restoreSound(parsed.leftHandSound, DEFAULT_SETTINGS.leftHandSound),
+      rightHandSound: restoreSound(parsed.rightHandSound, DEFAULT_SETTINGS.rightHandSound),
       hapticsEnabled: typeof parsed.hapticsEnabled === 'boolean' ? parsed.hapticsEnabled : false,
     };
   } catch {
@@ -131,6 +141,14 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     audioRef.current?.setSoundEnabled(settings.soundEnabled);
   }, [settings.soundEnabled]);
 
+  useEffect(() => {
+    audioRef.current?.setSounds({
+      metronome: settings.metronomeSound,
+      leftHand: settings.leftHandSound,
+      rightHand: settings.rightHandSound,
+    });
+  }, [settings.metronomeSound, settings.leftHandSound, settings.rightHandSound]);
+
   const updateSettings = useCallback((patch: Partial<ExerciseSettings>) => {
     setSettings((current) => ({ ...current, ...patch }));
   }, []);
@@ -165,6 +183,11 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       beatsPerBar: metrics.beatsPerBar,
       durationSeconds: settings.durationSeconds === 'endless' ? null : settings.durationSeconds,
       soundEnabled: settings.soundEnabled,
+      sounds: {
+        metronome: settings.metronomeSound,
+        leftHand: settings.leftHandSound,
+        rightHand: settings.rightHandSound,
+      },
     });
 
     const updateFromClock = () => {
@@ -189,6 +212,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     const engine = engineRef.current;
     if (!engine) return;
     engine.tap(hand, timestamp);
+    audioRef.current?.playHandClick(hand);
     setSnapshot(engine.advance(monotonicNow()));
   }, []);
 
