@@ -3,6 +3,8 @@
     "name": "Split Beat",
     "slug": "two-hand-rhythm-trainer",
     "version": "1.0.0",
+    "icon": "./assets/icon.png",
+    "backgroundColor": "#0B0F14",
     "platforms": ["ios", "android"],
     "scheme": "twohandrhythm",
     "orientation": "landscape",
@@ -10,6 +12,7 @@
     "newArchEnabled": true,
     "plugins": [
       "expo-router",
+      "./plugins/withSplitBeatBranding",
       [
         "expo-build-properties",
         {
@@ -32,6 +35,8 @@
       "typedRoutes": true
     },
     "ios": {
+      "icon": "./assets/icon.png",
+      "backgroundColor": "#0B0F14",
       "supportsTablet": true,
       "requireFullScreen": true,
       "config": {
@@ -40,7 +45,12 @@
       "bundleIdentifier": "com.splitbeat.twohandrhythm"
     },
     "android": {
-      "package": "com.splitbeat.twohandrhythm"
+      "package": "com.splitbeat.twohandrhythm",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "monochromeImage": "./assets/monochrome-icon.png",
+        "backgroundColor": "#0B0F14"
+      }
     }
   }
 }

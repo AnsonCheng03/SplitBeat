@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520">
+  <g transform="translate(-6 10) scale(.47)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M512 270v502" stroke="#263240" stroke-width="10"/>
+    <circle cx="512" cy="225" r="18" fill="#F5C46A"/>
+    <path d="M390 652V340" stroke="#46D6B3" stroke-width="32"/>
+    <path d="M690 652V390M850 652V360" stroke="#AC91FF" stroke-width="32"/>
+    <path d="M690 389l160-30v47l-160 30z" fill="#AC91FF" stroke="#AC91FF" stroke-width="4"/>
+    <ellipse cx="320" cy="665" rx="78" ry="50" transform="rotate(-18 320 665)" fill="#46D6B3"/>
+    <ellipse cx="630" cy="665" rx="78" ry="50" transform="rotate(-18 630 665)" fill="#AC91FF"/>
+    <ellipse cx="790" cy="665" rx="78" ry="50" transform="rotate(-18 790 665)" fill="#AC91FF"/>
+  </g>
+  <path d="M484 110v300" stroke="#263240" stroke-width="3"/>
+  <text x="535" y="260" fill="#F3F7FA" font-family="Avenir Next, Arial, sans-serif" font-size="92" font-weight="700" letter-spacing="6">
+    SPLIT <tspan fill="#46D6B3">BEAT</tspan>
+  </text>
+  <text x="540" y="323" fill="#8795A3" font-family="Avenir Next, Arial, sans-serif" font-size="25" font-weight="600" letter-spacing="5">
+    INDEPENDENCE IN EVERY BEAT
+  </text>
+</svg>

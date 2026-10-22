@@ -17,6 +17,13 @@ Once the development client is installed, start Metro with npm start. Expo Go do
 
 An iOS build can also be offered on Apple silicon Macs as an iPhone/iPad app. This project does not add a macOS or Mac Catalyst target; Mac App Store availability is controlled in App Store Connect.
 
+## App branding
+
+- `assets/icon.png` is the full-color 1024 px app icon for iOS and Android.
+- `assets/adaptive-icon.png` and `assets/monochrome-icon.png` provide Android's adaptive and themed icon layers; the background color is `#0B0F14`.
+- The editable vector sources are in `assets/brand/`. Android's density-sized launch images are generated from the same Split Beat wordmark artwork.
+- `plugins/withSplitBeatBranding.js` installs the branded landscape launch screen during Expo prebuild. `npm run ios` and `npm run android` run prebuild as part of native development builds.
+
 ## Architecture
 
 - `src/app/` contains the setup, practice, and results routes.
