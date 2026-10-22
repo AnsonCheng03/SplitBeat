@@ -190,6 +190,7 @@ appId: com.splitbeat.twohandrhythm
 - tapOn:
     id: practice.soundToggle
 - assertVisible: Sound off. Tap to enable.
+- assertVisible: "SOUND OFF · TAP TO ENABLE"
 - tapOn:
     id: practice.soundToggle
 - assertVisible: Sound on. Tap to mute.

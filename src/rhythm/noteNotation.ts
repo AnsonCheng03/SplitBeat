@@ -63,6 +63,26 @@ export interface BarNoteNotationOptions {
   beamGroupQuarterNotes?: number;
 }
 
+export interface StaffNotationLayout {
+  notationTop: number;
+  staffLineBottom: number;
+}
+
+/** Keep each notehead baseline attached to the same bottom staff line. */
+export function createStaffNotationLayout(rowHeight: number, notationHeight: number): StaffNotationLayout {
+  if (!Number.isFinite(rowHeight) || rowHeight <= 5) {
+    throw new RangeError('A staff row must be taller than its five-pixel bottom margin.');
+  }
+  if (!Number.isFinite(notationHeight) || notationHeight <= 0) {
+    throw new RangeError('Notation height must be positive.');
+  }
+
+  return {
+    notationTop: Math.max(0, rowHeight - notationHeight),
+    staffLineBottom: rowHeight - 5,
+  };
+}
+
 interface NoteNotationMetrics {
   width: number;
   height: number;

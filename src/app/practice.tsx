@@ -85,8 +85,14 @@ export default function PracticeScreen() {
               onPress={() => updateSettings({ soundEnabled: !settings.soundEnabled })}
               hitSlop={8}
             >
-              <Text testID="practice.soundStatus" style={{ color: settings.soundEnabled ? colors.left : colors.dim, fontSize: compact ? 8 : 9, fontWeight: '900', letterSpacing: 0.6 }}>
-                {settings.soundEnabled ? 'SOUND ON' : audioStatus === 'ready' ? 'SOUND OFF' : 'AUDIO OFF'}
+              <Text
+                testID="practice.soundStatus"
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+                style={{ color: settings.soundEnabled ? colors.left : colors.danger, fontSize: compact ? 8 : 9, fontWeight: '900', letterSpacing: compact ? 0.1 : 0.35 }}
+              >
+                {settings.soundEnabled ? 'SOUND ON' : audioStatus === 'ready' ? 'SOUND OFF · TAP TO ENABLE' : 'AUDIO OFF · TAP TO ENABLE'}
               </Text>
             </Pressable>
             <Text style={{ color: colors.muted, fontSize: compact ? 10 : 11, fontWeight: '700', marginTop: 2 }}>{timeLabel}</Text>
@@ -119,21 +125,24 @@ export default function PracticeScreen() {
           <Countdown value={snapshot.countdown} compact={compact} />
         </View>
 
-        {snapshot.scoreMeasure ? (
-          <View style={{ flex: compact ? 0.8 : 0.95, minHeight: compact ? 88 : 122, maxHeight: compact ? 116 : 160, justifyContent: 'center', marginTop: compact ? 1 : 5, marginBottom: compact ? 2 : 7 }}>
-            <Text numberOfLines={1} style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '700', textAlign: 'center' }}>
-              {snapshot.scoreTitle}
-            </Text>
-            <ScoreRhythmMeasure
-              measure={snapshot.scoreMeasure}
-              number={snapshot.scoreMeasureNumber ?? 1}
-              count={snapshot.scoreMeasureCount ?? 1}
-              compact={compact}
-              beamGroupQuarterNotes={pulseQuarterNotes(settings.timeSignature)}
-            />
-          </View>
-        ) : settings.practiceDisplay === 'piano-staff' ? (
-          <View style={{ flex: compact ? 0.8 : 0.95, minHeight: compact ? 88 : 122, maxHeight: compact ? 116 : 160, justifyContent: 'center', marginTop: compact ? 1 : 5, marginBottom: compact ? 2 : 7 }}>
+        <View
+          testID="practice.rhythmDisplay"
+          style={{ flex: compact ? 0.8 : 0.95, minHeight: compact ? 88 : 130, maxHeight: compact ? 116 : 190, justifyContent: 'center', marginTop: compact ? 1 : 5, marginBottom: compact ? 2 : 7 }}
+        >
+          {snapshot.scoreMeasure ? (
+            <>
+              <Text numberOfLines={1} style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '700', textAlign: 'center' }}>
+                {snapshot.scoreTitle}
+              </Text>
+              <ScoreRhythmMeasure
+                measure={snapshot.scoreMeasure}
+                number={snapshot.scoreMeasureNumber ?? 1}
+                count={snapshot.scoreMeasureCount ?? 1}
+                compact={compact}
+                beamGroupQuarterNotes={pulseQuarterNotes(settings.timeSignature)}
+              />
+            </>
+          ) : settings.practiceDisplay === 'piano-staff' ? (
             <PianoRhythmStaff
               steps={snapshot.barSteps}
               barStartBeat={snapshot.barStartBeat}
@@ -143,10 +152,8 @@ export default function PracticeScreen() {
               activeHand={settings.trainingMode === 'single-hand' ? settings.singleHand : undefined}
               compact={compact}
             />
-          </View>
-        ) : (
-          <>
-            <View style={{ flex: compact ? 0.8 : 0.95, minHeight: compact ? 78 : 130, maxHeight: compact ? 112 : 190, flexDirection: 'row', alignItems: 'center', marginTop: compact ? 1 : 5, marginBottom: compact ? 2 : 7 }}>
+          ) : (
+            <View style={{ flex: 1, minHeight: compact ? 78 : 130, maxHeight: compact ? 112 : 190, flexDirection: 'row', alignItems: 'center' }}>
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', borderRightWidth: 1, borderRightColor: colors.line, opacity: settings.trainingMode === 'single-hand' && settings.singleHand !== 'left' ? 0.38 : 1 }}>
                 <Text style={{ color: colors.left, fontSize: compact ? 10 : 11, fontWeight: '800', letterSpacing: 1.6 }}>{settings.trainingMode === 'single-hand' && settings.singleHand !== 'left' ? 'LEFT · REST' : 'LEFT HAND'}</Text>
                 {settings.trainingMode === 'single-hand' && settings.singleHand !== 'left' ? <View style={{ height: compact ? 56 : 68 }} /> : <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} compact={compact} timeSignature={settings.timeSignature} />}
@@ -162,8 +169,8 @@ export default function PracticeScreen() {
                 </Text>
               </View>
             </View>
-          </>
-        )}
+          )}
+        </View>
 
         <View style={{ minHeight: compact ? 34 : 48, justifyContent: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: compact ? 3 : 5 }}>

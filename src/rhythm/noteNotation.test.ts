@@ -2,7 +2,23 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createBarNoteNotationPlan, createNoteNotationPlan } from '@/rhythm/noteNotation';
+import { createBarNoteNotationPlan, createNoteNotationPlan, createStaffNotationLayout } from '@/rhythm/noteNotation';
+
+test('grand staff lines keep a fixed baseline as tuplet padding changes', () => {
+  const fullRows = [44, 58].map((notationHeight) => ({
+    layout: createStaffNotationLayout(60, notationHeight),
+    notationHeight,
+  }));
+  const compactRows = [32, 44].map((notationHeight) => ({
+    layout: createStaffNotationLayout(50, notationHeight),
+    notationHeight,
+  }));
+
+  assert.deepEqual(fullRows.map(({ layout }) => layout.staffLineBottom), [55, 55]);
+  assert.deepEqual(compactRows.map(({ layout }) => layout.staffLineBottom), [45, 45]);
+  assert.ok(fullRows.every(({ layout, notationHeight }) => layout.notationTop + notationHeight === 60));
+  assert.ok(compactRows.every(({ layout, notationHeight }) => layout.notationTop + notationHeight === 50));
+});
 
 test('note builder creates joined noteheads and stems at each supported subdivision', () => {
   const cases = [

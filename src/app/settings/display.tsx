@@ -7,7 +7,7 @@ import { colors } from '@/theme';
 
 const displayOptions: { label: string; value: PracticeDisplay }[] = [
   { label: 'Hand lanes', value: 'split' },
-  { label: 'Piano staff', value: 'piano-staff' },
+  { label: 'Piano grand staff', value: 'piano-staff' },
 ];
 
 export default function DisplaySettingsScreen() {

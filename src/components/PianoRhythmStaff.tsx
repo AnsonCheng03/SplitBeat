@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { NoteNotation } from '@/components/NoteNotation';
-import { createBarNoteNotationPlan, type NoteNotationSize } from '@/rhythm/noteNotation';
+import { createBarNoteNotationPlan, createStaffNotationLayout, type NoteNotationSize } from '@/rhythm/noteNotation';
 import { createExerciseBarEvents, durationOfSubdivisionBar } from '@/rhythm/patternNotation';
 import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import type { ExerciseStep, Hand, RhythmicFeel, TimeSignature } from '@/types/rhythm';
@@ -16,11 +16,11 @@ export function PianoRhythmStaff({
   activeHand,
   compact = false,
 }: {
-    steps: ExerciseStep[];
-    barStartBeat: number;
+  steps: ExerciseStep[];
+  barStartBeat: number;
   timeSignature: TimeSignature;
   feel: RhythmicFeel;
-    restBetweenChanges: boolean;
+  restBetweenChanges: boolean;
   activeHand?: Hand;
   compact?: boolean;
 }) {
@@ -102,8 +102,7 @@ function StaffTrack({
     })
     : null, [durationQuarter, events, size, timeSignature, width]);
   const rowHeight = size === 'compact' ? 50 : 60;
-  const notationOffset = plan ? (rowHeight - plan.height) / 2 : 0;
-  const bottomLine = notationOffset + (plan?.height ?? rowHeight) - 5;
+  const staffLayout = createStaffNotationLayout(rowHeight, plan?.height ?? rowHeight);
 
   return (
     <View testID={testID} style={{ minHeight: rowHeight, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: active ? 1 : 0.4 }}>
@@ -113,25 +112,30 @@ function StaffTrack({
       </View>
       <View
         onLayout={({ nativeEvent }) => setWidth(nativeEvent.layout.width)}
-        style={{ flex: 1, minHeight: rowHeight, justifyContent: 'center', overflow: 'hidden' }}
+        style={{ flex: 1, height: rowHeight, overflow: 'hidden' }}
       >
         {[0, 1, 2, 3, 4].map((line) => (
           <View
             key={line}
             pointerEvents="none"
-            style={{ position: 'absolute', left: 0, right: 0, top: bottomLine - line * 6, height: 1, backgroundColor: colors.line }}
+            style={{ position: 'absolute', left: 0, right: 0, top: staffLayout.staffLineBottom - line * 6, height: 1, backgroundColor: colors.line }}
           />
         ))}
         {plan ? (
-          <NoteNotation
-            plan={plan}
-            color={active ? color : colors.dim}
-            testID={`${testID}.notes`}
-            accessibilityLabel={`${label.toLowerCase()} clef ${active ? `${events.length} notes` : 'rest'}`}
-          />
+          <View
+            pointerEvents="none"
+            style={{ position: 'absolute', top: staffLayout.notationTop, left: 0, right: 0, height: plan.height, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <NoteNotation
+              plan={plan}
+              color={active ? color : colors.dim}
+              testID={`${testID}.notes`}
+              accessibilityLabel={`${label.toLowerCase()} clef ${active ? `${events.length} notes` : 'rest'}`}
+            />
+          </View>
         ) : null}
         {!active ? (
-          <Text style={{ position: 'absolute', left: 6, top: notationOffset + rowHeight / 2 - 6, color: colors.muted, fontSize: 8, fontWeight: '900', letterSpacing: 0.8 }}>
+          <Text style={{ position: 'absolute', left: 6, top: rowHeight / 2 - 6, color: colors.muted, fontSize: 8, fontWeight: '900', letterSpacing: 0.8 }}>
             REST
           </Text>
         ) : null}
