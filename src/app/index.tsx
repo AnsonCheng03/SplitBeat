@@ -40,59 +40,52 @@ export default function HomeScreen() {
               SPLIT BEAT
             </Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
-            <Text
-              testID="home.audioStatus"
-              style={{
-                color: audioStatus === 'error' ? colors.danger : audioStatus === 'ready' ? colors.left : colors.accent,
-                fontSize: 9,
-                fontWeight: '900',
-                letterSpacing: 1,
-              }}
-            >
-              {audioStatus === 'ready' ? 'AUDIO READY' : audioStatus === 'error' ? 'AUDIO NEEDS SETUP' : 'LOADING AUDIO…'}
+          <Pressable
+            testID="home.setup"
+            accessibilityRole="button"
+            accessibilityLabel="Settings"
+            onPress={() => router.push('/setup')}
+            hitSlop={12}
+            style={({ pressed }) => ({
+              minHeight: 34,
+              paddingHorizontal: 12,
+              justifyContent: 'center',
+              borderRadius: 11,
+              backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
+              borderWidth: 1,
+              borderColor: colors.line,
+            })}
+          >
+            <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1 }}>
+              SETTINGS
             </Text>
-            <Pressable testID="home.setup" onPress={() => router.push('/setup')} hitSlop={12}>
-              <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '900', letterSpacing: 1 }}>
-                SETTINGS  ›
-              </Text>
-            </Pressable>
-          </View>
+          </Pressable>
         </View>
 
-        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 28, paddingVertical: 10 }}>
-          <View style={{ flex: 0.82, justifyContent: 'center' }}>
-            <Text style={{ color: colors.text, fontSize: 36, lineHeight: 40, fontWeight: '900', letterSpacing: -1 }}>
-              Find your rhythm.
-            </Text>
-            <Text style={{ color: colors.muted, fontSize: 14, lineHeight: 20, marginTop: 9, maxWidth: 330 }}>
-              One steady pulse. Practice one hand or bring them together.
-            </Text>
-          </View>
-
-          <View style={{ flex: 1.18, gap: 9 }}>
-            <Text style={{ color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 1.2 }}>
-              CHOOSE A MODE
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 9 }}>
+        <View style={{ flex: 1, width: '100%', maxWidth: 960, alignSelf: 'center', justifyContent: 'center', paddingVertical: 10 }}>
+          <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', letterSpacing: -0.5, marginBottom: 15 }}>
+            Choose a mode
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
               <ModeChoice
                 testID="home.mode.twoHand"
+                mode="two-hand"
                 selected={settings.trainingMode === 'two-hand'}
-                title="TWO HANDS"
-                detail="Build independence"
+                title="Two hands"
                 onPress={() => updateSettings({ trainingMode: 'two-hand' })}
               />
               <ModeChoice
                 testID="home.mode.singleHand"
+                mode="single-hand"
                 selected={settings.trainingMode === 'single-hand'}
-                title="ONE HAND"
-                detail="Focus on one side"
+                title="One hand"
                 onPress={() => updateSettings({ trainingMode: 'single-hand' })}
               />
-            </View>
+          </View>
 
+          <View testID="home.handPicker" style={{ minHeight: 48, flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
             {settings.trainingMode === 'single-hand' ? (
-              <View testID="home.handPicker" style={{ flexDirection: 'row', gap: 8, alignSelf: 'flex-start' }}>
+              <>
                 <HandChoice
                   testID="home.hand.left"
                   hand="left"
@@ -105,24 +98,30 @@ export default function HomeScreen() {
                   selected={settings.singleHand === 'right'}
                   onPress={() => updateSettings({ singleHand: 'right' })}
                 />
-              </View>
+              </>
             ) : null}
-
-            <Pressable testID="home.importScore" onPress={() => router.push('/import-score')} hitSlop={8} style={{ alignSelf: 'flex-start', paddingTop: 4 }}>
-              <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }}>
-                TRAIN FROM A SCORE  ↗
-              </Text>
-            </Pressable>
           </View>
         </View>
 
-        <View style={{ paddingBottom: 2 }}>
+        <View style={{ width: '100%', maxWidth: 960, alignSelf: 'center', gap: 10, paddingBottom: 2 }}>
+          <Pressable
+            testID="home.importScore"
+            accessibilityRole="button"
+            onPress={() => router.push('/import-score')}
+            hitSlop={8}
+            style={{ alignSelf: 'flex-start', paddingVertical: 4 }}
+          >
+            <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }}>
+              TRAIN FROM A SCORE  ›
+            </Text>
+          </Pressable>
           <AudioStartButton
             testID="home.start"
             variant="wide"
             status={buttonStatus}
             disabled={starting || audioStatus === 'loading'}
             onPress={() => void startPractice()}
+            subtitleTestID="home.audioStatus"
             accessibilityLabel={
               audioStatus === 'ready'
                 ? `Start ${settings.trainingMode === 'single-hand' ? settings.singleHand + ' hand' : 'two hand'} practice`
@@ -141,10 +140,10 @@ export default function HomeScreen() {
             }
             subtitle={
               audioStatus === 'ready'
-                ? `${settings.bpm} BPM · ${settings.trainingMode === 'single-hand' ? settings.singleHand.toUpperCase() + ' HAND' : 'TWO HANDS'} · tap to begin`
+                ? `AUDIO READY · ${settings.bpm} BPM · ${settings.trainingMode === 'single-hand' ? settings.singleHand.toUpperCase() + ' HAND' : 'TWO HANDS'}`
                 : audioStatus === 'error'
-                  ? 'Tap to prepare the audio engine again'
-                  : 'Getting the metronome ready'
+                  ? 'TAP TO PREPARE THE METRONOME AGAIN'
+                  : 'PREPARING THE METRONOME'
             }
           />
         </View>
@@ -155,15 +154,15 @@ export default function HomeScreen() {
 
 function ModeChoice({
   testID,
+  mode,
   selected,
   title,
-  detail,
   onPress,
 }: {
   testID: string;
+  mode: 'two-hand' | 'single-hand';
   selected: boolean;
   title: string;
-  detail: string;
   onPress: () => void;
 }) {
   return (
@@ -174,21 +173,40 @@ function ModeChoice({
       onPress={onPress}
       style={({ pressed }) => ({
         flex: 1,
-        minHeight: 72,
-        paddingHorizontal: 12,
-        justifyContent: 'center',
-        borderRadius: 15,
+        minHeight: 82,
+        paddingHorizontal: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+        borderRadius: 16,
         backgroundColor: selected ? colors.leftSurface : colors.surface,
-        borderWidth: 1.5,
+        borderWidth: selected ? 1.5 : 1,
         borderColor: selected ? colors.left : colors.line,
         opacity: pressed ? 0.82 : 1,
       })}
     >
-      <Text style={{ color: selected ? colors.left : colors.text, fontSize: 12, fontWeight: '900', letterSpacing: 0.5 }}>
+      <ModeMark mode={mode} />
+      <Text style={{ color: selected ? colors.left : colors.text, fontSize: 17, fontWeight: '900', letterSpacing: -0.2 }}>
         {title}
       </Text>
-      <Text style={{ color: colors.muted, fontSize: 11, marginTop: 4 }}>{detail}</Text>
     </Pressable>
+  );
+}
+
+function ModeMark({ mode }: { mode: 'two-hand' | 'single-hand' }) {
+  if (mode === 'single-hand') {
+    return (
+      <View style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 13, height: 13, borderRadius: 7, backgroundColor: colors.right }} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ width: 28, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+      <View style={{ width: 11, height: 11, borderRadius: 6, backgroundColor: colors.left }} />
+      <View style={{ width: 11, height: 11, borderRadius: 6, backgroundColor: colors.right }} />
+    </View>
   );
 }
 
@@ -210,7 +228,7 @@ function HandChoice({
       accessibilityRole="radio"
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={{ paddingHorizontal: 13, minHeight: 32, justifyContent: 'center', borderRadius: 10, backgroundColor: selected ? accent : colors.surface, borderWidth: 1, borderColor: selected ? accent : colors.line }}
+      style={{ paddingHorizontal: 14, minHeight: 34, justifyContent: 'center', borderRadius: 10, backgroundColor: selected ? accent : colors.surface, borderWidth: 1, borderColor: selected ? accent : colors.line }}
     >
       <Text style={{ color: selected ? colors.background : colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 0.8 }}>
         {hand.toUpperCase()}

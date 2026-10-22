@@ -67,7 +67,7 @@ During practice, an external QWERTY keyboard can tap either hand. The practice z
 
 ## End-to-end checks
 
-Choose Two hands or One hand on the home screen, then use the large Start practice control to begin. The Settings page keeps tempo and duration close by and opens Rhythm & meter, Sounds & feedback, Timing calibration, or Practice display on separate detail pages. The mode picker follows AstroDX's compact dark-menu direction while keeping Split Beat's controls and notation distinct.
+The home screen follows AstroDX's compact main-menu hierarchy: choose Two hands or One hand, then start. Settings and score import stay secondary to that choice. One-hand mode reveals a simple left/right selector. The Settings page keeps tempo and duration close by and opens Rhythm & meter, Sounds & feedback, Timing calibration, or Practice display on separate detail pages.
 
 Build and install a release app on a simulator or device, then run the Maestro smoke flow. It exercises the multi-page settings, starts practice, checks both tap zones, ends the exercise, and verifies the results screen:
 

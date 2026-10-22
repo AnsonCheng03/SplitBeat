@@ -9,6 +9,7 @@ interface AudioStartButtonProps {
   onPress: () => void;
   accessibilityLabel: string;
   testID: string;
+  subtitleTestID?: string;
   variant?: 'circle' | 'wide';
   title?: string;
   subtitle?: string;
@@ -20,6 +21,7 @@ export function AudioStartButton({
   onPress,
   accessibilityLabel,
   testID,
+  subtitleTestID,
   variant = 'circle',
   title,
   subtitle,
@@ -119,7 +121,7 @@ export function AudioStartButton({
           <Text style={{ color: foreground, fontSize: 16, fontWeight: '900', letterSpacing: 0.6 }}>
             {title ?? (status === 'ready' ? 'START PRACTICE' : status === 'error' ? 'RETRY AUDIO' : 'GETTING READY')}
           </Text>
-          <Text style={{ color: status === 'ready' ? '#18352C' : colors.muted, fontSize: 12, fontWeight: '600' }}>
+          <Text testID={subtitleTestID} style={{ color: status === 'ready' ? '#18352C' : colors.muted, fontSize: 12, fontWeight: '700', letterSpacing: 0.3 }}>
             {subtitle ?? (status === 'ready' ? 'Audio ready · tap to begin' : status === 'error' ? 'Audio setup needs another try' : 'Preparing the metronome')}
           </Text>
         </View>

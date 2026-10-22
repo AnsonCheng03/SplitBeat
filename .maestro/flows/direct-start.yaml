@@ -16,7 +16,7 @@ appId: com.splitbeat.twohandrhythm
     timeout: 15000
 - extendedWaitUntil:
     visible:
-      text: AUDIO READY
+      id: home.audioStatus
     timeout: 15000
 - assertVisible:
     id: home.start
