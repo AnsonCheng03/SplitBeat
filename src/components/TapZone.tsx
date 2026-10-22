@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Text, View } from 'react-native';
+import { Animated, Easing, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import type { Hand, TapFeedback } from '@/types/rhythm';
 import { colors } from '@/theme';
@@ -48,10 +48,11 @@ export function TapZone({
       missOpacity.setValue(0.32);
       Animated.timing(missOpacity, {
         toValue: 0,
-        duration: 220,
+        duration: 280,
+        easing: Easing.out(Easing.quad),
         useNativeDriver: true,
       }).start();
-      resetTimer.current = setTimeout(() => setMissed(false), 500);
+      resetTimer.current = setTimeout(() => setMissed(false), 320);
     } else {
       setMissed(false);
       setPressed(true);
@@ -77,7 +78,10 @@ export function TapZone({
   }, [keyboardTapFeedback, keyboardTapToken, showFeedback]);
 
   const handleTouch = () => {
-    if (!enabled) return;
+    if (!enabled) {
+      showFeedback('miss');
+      return;
+    }
     const timestamp = globalThis.performance.now();
     const feedback = onTap(hand, timestamp);
     showFeedback(feedback);
@@ -104,7 +108,7 @@ export function TapZone({
         borderRadius: 18,
         marginHorizontal: 4,
         transform: [{ scale: pressed ? 0.985 : 1 }],
-        opacity: enabled ? 1 : 0.44,
+        opacity: enabled ? 1 : missed ? 0.82 : 0.44,
       }}
     >
       <Animated.View
@@ -131,12 +135,21 @@ export function TapZone({
         {KEYBOARD_KEYS_BY_HAND[hand]}
       </Text>
       {missed ? (
-        <Text
+        <Animated.Text
           testID={`practice.tap.${hand}.miss`}
-          style={{ position: 'absolute', top: compact ? 8 : 11, right: 10, color: colors.danger, fontSize: 8, fontWeight: '900', letterSpacing: 0.7 }}
+          style={{
+            position: 'absolute',
+            top: compact ? 8 : 11,
+            right: 10,
+            color: colors.danger,
+            fontSize: 8,
+            fontWeight: '900',
+            letterSpacing: 0.7,
+            opacity: missOpacity.interpolate({ inputRange: [0, 0.32], outputRange: [0, 1] }),
+          }}
         >
           OFF BEAT
-        </Text>
+        </Animated.Text>
       ) : null}
       <View
         style={{

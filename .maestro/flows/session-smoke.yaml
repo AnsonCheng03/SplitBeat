@@ -216,6 +216,8 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: practice.keyboard.rightKeys
 - tapOn:
+    id: practice.tap.left
+- tapOn:
     id: practice.tap.right
 - tapOn:
     id: practice.end
