@@ -43,6 +43,10 @@ Choose 2/4, 3/4, 4/4, 5/4, 7/4, 2/2, 3/8, 6/8, 9/8, or 12/8 in setup. BPM follow
 
 Choose Straight or Swing feel. Swing moves binary offbeats toward a 2:1 long-short ratio within each quarter note; quarter notes and triplets keep their regular timing. Sixteenth, 32nd, and 64th notes use the same long-short eighth-note grid. Optionally enable Grace note pickups: the engine adds one extra expected tap for each hand just before every pattern change. The pickup sits between the previous pattern's last event and the new pattern's first event, and is scored with the upcoming pair and its transition accuracy. Both settings are saved with the other local preferences.
 
+## External keyboard play
+
+During practice, an external QWERTY keyboard can tap either hand. The practice zones always show the mapping: keys on the left side (`Q W E R T`, `A S D F G`, `Z X C V B`, and `1–5`) play the left hand; keys on the right side (`Y U I O P`, `H J K L`, `N M`, and `6–0`) play the right. iOS/iPadOS receives key presses through a focused hidden text field with the software keyboard suppressed; Android forwards native key-down timestamps into the rhythm clock and filters OS key repeats. The app does not request keyboard or microphone permissions.
+
 ## End-to-end checks
 
 Build and install a release app on a simulator or device, then run the Maestro smoke flow:
@@ -70,6 +74,7 @@ Each hand has its own expected-event queue. A tap claims the nearest unmatched e
 - Timing calibration measures taps against the audible click, so it adjusts the combined output, touch, and human response timing. It is not a hardware audio loopback measurement.
 - The scheduler keeps a five-second audio lookahead while the app is active. Operating-system suspension or a native audio route change can interrupt playback; keep the screen awake and the app in the foreground for training.
 - Multi-touch uses two full-height native touch regions and should be verified on physical iOS and Android devices. Simulator touch input cannot confirm two-finger responsiveness or actual haptic strength.
+- iOS text input key events do not expose physical key-up or key-repeat state; a key held until the OS repeats it may register more than one tap. Android reports native key-down state and filters repeats.
 - At very fast subdivisions, grace pickups can be close to neighboring notes. They remain separate expected events; accurate physical touch latency depends on the device.
 - Expo development builds are required for react-native-audio-api; Expo Go is not sufficient.
 - Apple silicon Mac compatibility uses the same iOS/iPad app. The Mac App Store availability toggle is configured in App Store Connect, not as a separate native target in this repository.

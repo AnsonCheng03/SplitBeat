@@ -1,15 +1,17 @@
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AccuracyDisplay } from '@/components/AccuracyDisplay';
 import { Countdown } from '@/components/Countdown';
+import { HardwareKeyboardInput } from '@/components/HardwareKeyboardInput';
 import { MetronomeIndicator } from '@/components/MetronomeIndicator';
 import { NextPatternPreview } from '@/components/NextPatternPreview';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
 import { TapZone } from '@/components/TapZone';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import { useRhythmSession } from '@/store/sessionStore';
+import type { Hand } from '@/types/rhythm';
 import { colors } from '@/theme';
 
 export default function PracticeScreen() {
@@ -17,6 +19,7 @@ export default function PracticeScreen() {
   const compact = height < 520;
   const router = useRouter();
   const { snapshot, settings, registerTap, stopExercise, results } = useRhythmSession();
+  const [keyboardTapTokens, setKeyboardTapTokens] = useState<Record<Hand, number>>({ left: 0, right: 0 });
 
   useEffect(() => {
     if (!snapshot) router.replace('/setup');
@@ -28,6 +31,14 @@ export default function PracticeScreen() {
     router.replace('/results');
   };
 
+  const handleKeyboardTap = useCallback(
+    (hand: Hand, timestamp: number) => {
+      setKeyboardTapTokens((current) => ({ ...current, [hand]: current[hand] + 1 }));
+      registerTap(hand, timestamp);
+    },
+    [registerTap],
+  );
+
   if (!snapshot) return <View style={{ flex: 1, backgroundColor: colors.background }} />;
 
   const step = snapshot.currentStep;
@@ -35,6 +46,7 @@ export default function PracticeScreen() {
 
   return (
     <SafeAreaView testID="practice.screen" style={{ flex: 1, backgroundColor: colors.background }}>
+      <HardwareKeyboardInput onTap={handleKeyboardTap} />
       <View style={{ flex: 1, paddingHorizontal: compact ? 12 : 18, paddingTop: compact ? 2 : 8, paddingBottom: compact ? 3 : 9, maxWidth: 950, width: '100%', alignSelf: 'center' }}>
         <View style={{ minHeight: compact ? 32 : 45, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <Pressable testID="practice.end" onPress={stop} hitSlop={12}>
@@ -104,8 +116,20 @@ export default function PracticeScreen() {
         </View>
 
         <View style={{ flex: 1.25, minHeight: compact ? 100 : 180, flexDirection: 'row', marginTop: compact ? 3 : 8 }}>
-          <TapZone hand="left" onTap={registerTap} hapticsEnabled={settings.hapticsEnabled} compact={compact} />
-          <TapZone hand="right" onTap={registerTap} hapticsEnabled={settings.hapticsEnabled} compact={compact} />
+          <TapZone
+            hand="left"
+            onTap={registerTap}
+            hapticsEnabled={settings.hapticsEnabled}
+            keyboardTapToken={keyboardTapTokens.left}
+            compact={compact}
+          />
+          <TapZone
+            hand="right"
+            onTap={registerTap}
+            hapticsEnabled={settings.hapticsEnabled}
+            keyboardTapToken={keyboardTapTokens.right}
+            compact={compact}
+          />
         </View>
       </View>
     </SafeAreaView>

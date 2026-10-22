@@ -13,6 +13,7 @@
     "plugins": [
       "expo-router",
       "./plugins/withSplitBeatBranding",
+      "./plugins/withSplitBeatHardwareKeyboard",
       [
         "expo-build-properties",
         {
