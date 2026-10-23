@@ -1,8 +1,9 @@
 'use dom';
 
 import { useEffect, useRef } from 'react';
-import { Beam, Renderer, Stave, StaveNote, Stem, TickContext } from 'vexflow';
+import { Beam, Renderer, Stave, StaveNote, Stem } from 'vexflow';
 import type { NoteNotationPlan } from '@/rhythm/noteNotation';
+import { positionVexFlowNote } from '@/rhythm/vexFlowNotePlacement';
 
 interface VexFlowNotationDOMProps {
   plan: NoteNotationPlan;
@@ -69,9 +70,8 @@ function drawNotation(container: HTMLDivElement, plan: NoteNotationPlan, color: 
     note.setStave(stave);
     note.setStyle({ fillStyle: color, strokeStyle: color });
     note.setStemStyle({ fillStyle: color, strokeStyle: color });
-    note.preFormat();
     const centerX = shape.left + shape.headWidth / 2;
-    note.setTickContext(new TickContext().setX(centerX - note.getGlyphWidth() / 2));
+    positionVexFlowNote(note, centerX);
     if (note.hasStem()) note.setStemLength(stemLength);
     note.setContext(context);
     return note;
