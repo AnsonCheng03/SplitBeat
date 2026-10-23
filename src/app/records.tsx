@@ -64,7 +64,7 @@ export default function RecordsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <Pressable testID="records.home" onPress={() => router.replace('/')} hitSlop={10}>
+          <Pressable testID="records.home" accessibilityRole="button" accessibilityLabel="Return home" onPress={() => router.replace('/')} hitSlop={8} style={{ minHeight: 44, justifyContent: 'center' }}>
             <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '800', letterSpacing: 0.7 }}>‹  HOME</Text>
           </Pressable>
           <Text style={{ color: colors.dim, fontSize: 10, fontWeight: '900', letterSpacing: 1.4 }}>ON THIS DEVICE</Text>

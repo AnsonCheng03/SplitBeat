@@ -548,13 +548,27 @@ export default function ResultsScreen() {
           </Pressable>
         ) : null}
         <Link href="/setup" asChild>
-          <Pressable onPress={discardReplayData} style={({ pressed }) => ({ backgroundColor: pressed ? colors.surfaceRaised : colors.surface, minHeight: 48, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginTop: 9, borderWidth: 1, borderColor: colors.line })}>
-            <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '900', letterSpacing: 0.7 }}>CHANGE SETTINGS</Text>
+          <Pressable
+            testID="results.settings"
+            accessibilityRole="button"
+            accessibilityLabel="Change settings"
+            onPress={discardReplayData}
+            style={({ pressed }) => ({ flexDirection: 'row', backgroundColor: pressed ? colors.surface : colors.surfaceRaised, minHeight: 56, paddingHorizontal: 18, borderRadius: 15, alignItems: 'center', justifyContent: 'space-between', marginTop: 10, borderWidth: 1, borderColor: colors.line })}
+          >
+            <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>CHANGE SETTINGS</Text>
+            <Text accessibilityElementsHidden style={{ color: colors.muted, fontSize: 24, lineHeight: 28, fontWeight: '500' }}>›</Text>
           </Pressable>
         </Link>
         <Link href="/records" asChild>
-          <Pressable testID="results.records" onPress={discardReplayData} style={({ pressed }) => ({ backgroundColor: pressed ? colors.surfaceRaised : colors.surface, minHeight: 48, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginTop: 9, borderWidth: 1, borderColor: colors.line })}>
-            <Text style={{ color: colors.left, fontSize: 12, fontWeight: '900', letterSpacing: 0.7 }}>VIEW MY RECORD</Text>
+          <Pressable
+            testID="results.records"
+            accessibilityRole="button"
+            accessibilityLabel="View my record"
+            onPress={discardReplayData}
+            style={({ pressed }) => ({ flexDirection: 'row', backgroundColor: pressed ? colors.surface : colors.surfaceRaised, minHeight: 56, paddingHorizontal: 18, borderRadius: 15, alignItems: 'center', justifyContent: 'space-between', marginTop: 10, borderWidth: 1, borderColor: colors.line })}
+          >
+            <Text style={{ color: colors.left, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>VIEW MY RECORD</Text>
+            <Text accessibilityElementsHidden style={{ color: colors.left, fontSize: 24, lineHeight: 28, fontWeight: '500' }}>›</Text>
           </Pressable>
         </Link>
       </ScrollView>

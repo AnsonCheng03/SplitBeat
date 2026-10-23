@@ -49,7 +49,7 @@ export default function ImportScoreScreen() {
       <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 9, paddingBottom: 24, maxWidth: 850, width: '100%', alignSelf: 'center' }} keyboardShouldPersistTaps="handled">
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <Link href="/" asChild>
-            <Pressable hitSlop={12}><Text style={{ color: colors.muted, fontSize: 13, fontWeight: '800' }}>‹  BACK</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Go back" hitSlop={8} style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ color: colors.muted, fontSize: 13, fontWeight: '800' }}>‹  BACK</Text></Pressable>
           </Link>
           <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1.7 }}>SCORE TRAINING</Text>
         </View>

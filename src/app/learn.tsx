@@ -197,7 +197,7 @@ export default function LearnScreen() {
         contentContainerStyle={{ flexGrow: 1, paddingHorizontal: compact ? 16 : 24, paddingVertical: compact ? 10 : 18 }}
         showsVerticalScrollIndicator={false}
       >
-        <Pressable testID="learn.home" onPress={() => router.replace('/')} hitSlop={10} style={{ minHeight: 32, justifyContent: 'center' }}>
+        <Pressable testID="learn.home" onPress={() => router.replace('/')} hitSlop={8} style={{ minHeight: 44, justifyContent: 'center' }}>
           <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 0.9 }}>‹  HOME</Text>
         </Pressable>
         <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 1.5, marginTop: compact ? 7 : 15 }}>
@@ -227,7 +227,7 @@ export default function LearnScreen() {
             accessibilityState={{ disabled: !purchase.connected || purchase.isRestoring }}
             disabled={!purchase.connected || purchase.isRestoring}
             onPress={() => void purchase.restoreFullCourse()}
-            style={({ pressed }) => ({ alignSelf: 'flex-end', minHeight: 30, justifyContent: 'center', opacity: !purchase.connected || purchase.isRestoring ? 0.5 : pressed ? 0.7 : 1 })}
+            style={({ pressed }) => ({ alignSelf: 'flex-end', minHeight: 44, paddingHorizontal: 10, justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, opacity: !purchase.connected || purchase.isRestoring ? 0.5 : pressed ? 0.7 : 1 })}
           >
             <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>
               {purchase.isRestoring ? 'RESTORING…' : 'RESTORE PURCHASE'}
