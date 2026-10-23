@@ -105,7 +105,7 @@ export function SettingsPage({
 
         <View style={{ flex: 1 }} />
         <Text style={{ color: colors.dim, fontSize: 10, fontWeight: '800', letterSpacing: 1.1, paddingHorizontal: 8 }}>
-          SPLIT BEAT
+          BEEP BEEP BEAT - RHYTHM COACH
         </Text>
       </View>
 

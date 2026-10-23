@@ -1,4 +1,4 @@
-# Beep Beep Beat - xxxxxx
+# Beep Beep Beat - Rhythm Coach
 
 A small offline React Native rhythm trainer for iOS and Android. It keeps one metronome pulse running while the left and right hands work through different subdivisions. The app is locked to landscape and supports iPhone and iPad. iPad full-screen mode is enabled to enforce the landscape-only layout.
 

@@ -37,7 +37,7 @@ export default function HomeScreen() {
             <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.left }} />
             <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.right }} />
             <Text style={{ color: colors.text, fontSize: 12, fontWeight: '900', letterSpacing: 2, marginLeft: 4 }}>
-              SPLIT BEAT
+              BEEP BEEP BEAT - RHYTHM COACH
             </Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 7 }}>

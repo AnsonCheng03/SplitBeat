@@ -108,7 +108,7 @@ if [[ ! -e "$archive_path" ]]; then
     CURRENT_PROJECT_VERSION="$build_number"
   )
 
-  echo "Archiving Beep Beep Beat - xxxxxx $app_version ($build_number) with local Xcode..."
+  echo "Archiving Beep Beep Beat - Rhythm Coach $app_version ($build_number) with local Xcode..."
   xcodebuild "${xcodebuild_args[@]}" archive
 else
   echo "Reusing existing archive at $archive_path."
