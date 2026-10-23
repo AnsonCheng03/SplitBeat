@@ -129,11 +129,21 @@ export default function HomeScreen() {
           <Pressable
             testID="home.importScore"
             accessibilityRole="button"
+            accessibilityLabel="Train from a score"
             onPress={() => router.push('/import-score')}
             hitSlop={8}
-            style={{ alignSelf: 'flex-start', paddingVertical: 4 }}
+            style={({ pressed }) => ({
+              alignSelf: 'flex-start',
+              minHeight: 48,
+              paddingHorizontal: 16,
+              justifyContent: 'center',
+              borderRadius: 13,
+              backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
+              borderWidth: 1,
+              borderColor: colors.line,
+            })}
           >
-            <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }}>
+            <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '900', letterSpacing: 0.8 }}>
               TRAIN FROM A SCORE  ›
             </Text>
           </Pressable>

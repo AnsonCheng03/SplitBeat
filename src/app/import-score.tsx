@@ -162,11 +162,11 @@ export default function ImportScoreScreen() {
               })}
             </View>
             <View style={{ flexDirection: 'row', gap: 9, marginTop: 11 }}>
-              <Pressable testID="scoreImport.edit" onPress={() => setScore(null)} style={{ minHeight: 49, width: 105, borderRadius: 14, borderWidth: 1, borderColor: colors.line, justifyContent: 'center', alignItems: 'center' }}>
+              <Pressable testID="scoreImport.edit" onPress={() => setScore(null)} style={{ minHeight: 56, width: 105, borderRadius: 14, borderWidth: 1, borderColor: colors.line, justifyContent: 'center', alignItems: 'center' }}>
                 <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '800' }}>EDIT XML</Text>
               </Pressable>
-              <Pressable testID="scoreImport.start" disabled={starting} onPress={() => void start()} style={{ flex: 1, minHeight: 49, borderRadius: 14, backgroundColor: colors.left, justifyContent: 'center', alignItems: 'center' }}>
-                <Text style={{ color: colors.background, fontSize: 13, fontWeight: '900', letterSpacing: 0.7 }}>{starting ? 'STARTING…' : 'PRACTISE THIS SCORE'}</Text>
+              <Pressable testID="scoreImport.start" disabled={starting} onPress={() => void start()} style={{ flex: 1, minHeight: 56, borderRadius: 14, backgroundColor: colors.left, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: colors.background, fontSize: 15, fontWeight: '900', letterSpacing: 0.7 }}>{starting ? 'STARTING…' : 'PRACTISE THIS SCORE'}</Text>
               </Pressable>
             </View>
           </>
