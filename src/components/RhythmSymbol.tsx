@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { View } from 'react-native';
 import { NoteNotation } from '@/components/NoteNotation';
 import { createNoteNotationPlan, type NoteNotationSize } from '@/rhythm/noteNotation';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
@@ -10,6 +11,7 @@ interface RhythmSymbolProps {
   compact?: boolean;
   mini?: boolean;
   timeSignature?: TimeSignature;
+  scale?: number;
 }
 
 function notationSize(compact: boolean, mini: boolean): NoteNotationSize {
@@ -17,11 +19,18 @@ function notationSize(compact: boolean, mini: boolean): NoteNotationSize {
   return compact ? 'compact' : 'full';
 }
 
-export function RhythmSymbol({ subdivision, color, compact = false, mini = false, timeSignature = '4/4' }: RhythmSymbolProps) {
+export function RhythmSymbol({ subdivision, color, compact = false, mini = false, timeSignature = '4/4', scale = 1 }: RhythmSymbolProps) {
   const size = notationSize(compact, mini);
   const plan = useMemo(() => createNoteNotationPlan(subdivision, size, timeSignature), [size, subdivision, timeSignature]);
 
+  const notation = <NoteNotation plan={plan} color={color} accessibilityLabel={SUBDIVISION_LABELS[subdivision]} />;
+  if (scale === 1) return notation;
+
   return (
-    <NoteNotation plan={plan} color={color} accessibilityLabel={SUBDIVISION_LABELS[subdivision]} />
+    <View style={{ width: plan.width * scale, height: plan.height * scale, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: plan.width, height: plan.height, transform: [{ scale }] }}>
+        {notation}
+      </View>
+    </View>
   );
 }

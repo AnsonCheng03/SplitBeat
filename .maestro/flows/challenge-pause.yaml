@@ -1,0 +1,73 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: LANDSCAPE_LEFT
+- launchApp:
+    clearState: true
+- runFlow:
+    when:
+      visible:
+        text: Beep Beep Beat - Rhythm Coach
+    commands:
+      - tapOn: Beep Beep Beat - Rhythm Coach
+- runFlow:
+    when:
+      visible:
+        text: Open
+    commands:
+      - tapOn: Open
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
+- tapOn:
+    id: home.setup
+- assertVisible:
+    id: setup.screen
+- scrollUntilVisible:
+    element: { id: setup.card.rhythm }
+    direction: DOWN
+- tapOn:
+    id: setup.card.rhythm
+- assertVisible:
+    id: settings.rhythm.screen
+- scrollUntilVisible:
+    element: { id: setup.challenge.misses.1 }
+    direction: DOWN
+- tapOn:
+    id: setup.challenge.misses.1
+- tapOn:
+    id: setup.challenge.action.pause
+- tapOn:
+    id: settings.rhythm.back
+- tapOn:
+    id: setup.start
+- extendedWaitUntil:
+    visible:
+      id: practice.tutorial
+    timeout: 15000
+- tapOn:
+    id: practice.tutorial
+- assertNotVisible:
+    id: practice.tutorial
+- tapOn:
+    id: practice.tap.left
+- extendedWaitUntil:
+    visible:
+      id: practice.challengePause
+    timeout: 5000
+- assertVisible:
+    id: practice.challengeResume
+- tapOn:
+    id: practice.challengeResume
+- extendedWaitUntil:
+    visible:
+      id: practice.nextPattern.countdown
+    timeout: 7000
+- tapOn:
+    id: practice.end
+- extendedWaitUntil:
+    visible:
+      id: results.screen
+    timeout: 15000
+- assertVisible: SESSION COMPLETE

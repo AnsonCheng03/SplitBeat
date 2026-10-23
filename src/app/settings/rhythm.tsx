@@ -151,6 +151,39 @@ export default function RhythmSettingsScreen() {
           Both hands pause for the last beat before a new pattern. The metronome keeps going; this pause replaces grace pickups.
         </Text>
       </Section>
+
+      <Section title="CHALLENGE">
+        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700', marginBottom: 8 }}>
+          WHEN A MISTAKE HAPPENS
+        </Text>
+        <SettingsChoiceRow
+          testIDPrefix="setup.challenge.action"
+          options={[
+            { label: 'Off', value: 'off' as const },
+            { label: 'Pause', value: 'pause' as const },
+            { label: 'End session', value: 'stop' as const },
+          ]}
+          value={settings.challengeAction}
+          onChange={(challengeAction) => updateSettings({ challengeAction })}
+        />
+        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700', marginTop: 16, marginBottom: 8 }}>
+          TRIGGER AFTER
+        </Text>
+        <SettingsChoiceRow
+          testIDPrefix="setup.challenge.misses"
+          options={[
+            { label: 'Any error', value: 1 as const },
+            { label: '2 in a row', value: 2 as const },
+            { label: '3 in a row', value: 3 as const },
+            { label: '5 in a row', value: 5 as const },
+          ]}
+          value={settings.challengeMissStreak}
+          onChange={(challengeMissStreak) => updateSettings({ challengeMissStreak })}
+        />
+        <Text style={helperText}>
+          Any error reacts to an off-beat tap or missed note. Consecutive misses count separately for each hand; a correct note resets that hand’s streak. A pause can be resumed from the practice screen.
+        </Text>
+      </Section>
     </SettingsPage>
   );
 }

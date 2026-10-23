@@ -6,6 +6,7 @@ interface MetronomeIndicatorProps {
   beatsPerBar: number;
   isRunning: boolean;
   isRest?: boolean;
+  isPaused?: boolean;
   compact?: boolean;
 }
 
@@ -14,6 +15,7 @@ export function MetronomeIndicator({
   beatsPerBar,
   isRunning,
   isRest = false,
+  isPaused = false,
   compact = false,
 }: MetronomeIndicatorProps) {
   return (
@@ -35,8 +37,8 @@ export function MetronomeIndicator({
           );
         })}
       </View>
-      <Text testID={isRest ? 'practice.restBeat' : undefined} style={{ color: isRest ? colors.accent : colors.muted, fontSize: compact ? 10 : 11, letterSpacing: 1.4, fontWeight: isRest ? '900' : '500' }}>
-        {isRest ? 'REST' : isRunning ? 'BEAT' : 'GET READY'}
+      <Text testID={isRest ? 'practice.restBeat' : undefined} style={{ color: isRest || isPaused ? colors.accent : colors.muted, fontSize: compact ? 10 : 11, letterSpacing: 1.4, fontWeight: isRest || isPaused ? '900' : '500' }}>
+        {isRest ? 'REST' : isPaused ? 'PAUSED' : isRunning ? 'BEAT' : 'GET READY'}
       </Text>
     </View>
   );

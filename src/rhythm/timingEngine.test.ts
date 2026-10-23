@@ -36,6 +36,8 @@ const settings: ExerciseSettings = {
   rightFlashSource: 'tap',
   tapResultFlashEnabled: true,
   referenceRhythmEnabled: false,
+  challengeAction: 'off',
+  challengeMissStreak: 3,
   leftTapOffsetMs: 0,
   rightTapOffsetMs: 0,
   goodWindowMs: 100,
@@ -760,5 +762,31 @@ test('visual replay assigns compound-meter taps to the correct measure', () => {
     ?.filter((event) => event.matched)
     .map(({ barIndex, beatInBar }) => ({ barIndex, beatInBar })), [
     { barIndex: 2, beatInBar: 0 },
+  ]);
+});
+
+test('pausing freezes the rhythm clock and excludes the pause from session duration', () => {
+  const start = 90_000;
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, enabledSubdivisions: ['quarter'], trainingMode: 'single-hand', singleHand: 'left' },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  assert.equal(engine.tap('left', start), 'hit');
+  engine.pause(start + 500);
+  assert.equal(engine.advance(start + 8_500).beatIndex, 0);
+  assert.equal(engine.tap('left', start + 8_500), 'ignored');
+
+  engine.resume(start + 10_500);
+  assert.equal(engine.advance(start + 11_000).beatIndex, 1);
+  assert.equal(engine.tap('left', start + 11_000), 'hit');
+
+  const results = engine.getResults(start + 11_100);
+  assert.equal(results.left.totalHit, 2);
+  assert.ok(Math.abs(results.durationSeconds - 1.1) < 0.001);
+  assert.deepEqual(engine.takeChallengeOutcomes().map(({ hand, matched }) => [hand, matched]), [
+    ['left', true],
+    ['left', true],
   ]);
 });

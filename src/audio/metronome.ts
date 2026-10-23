@@ -39,6 +39,7 @@ export class MetronomeAudio {
   private sounds: MetronomeSounds = { metronome: 'wood', leftHand: 'soft', rightHand: 'beep' };
   private nextBeatIndex = -COUNT_IN_BEATS;
   private readonly scheduledReferenceEventIds = new Set<string>();
+  private paused = false;
   private closed = false;
 
   constructor() {
@@ -51,6 +52,20 @@ export class MetronomeAudio {
 
   async resume(): Promise<void> {
     await this.context.resume();
+    if (this.paused) {
+      this.paused = false;
+      this.output.gain.value = this.startOptions?.soundEnabled ? 0.75 : 0;
+      this.scheduleAhead();
+    }
+  }
+
+  async pause(): Promise<void> {
+    if (this.closed || this.paused) return;
+    this.paused = true;
+    this.output.gain.value = 0;
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = undefined;
+    await this.context.suspend();
   }
 
   async prepare(): Promise<void> {
@@ -72,7 +87,7 @@ export class MetronomeAudio {
 
   setSoundEnabled(enabled: boolean): void {
     if (this.startOptions) this.startOptions.soundEnabled = enabled;
-    this.output.gain.value = enabled ? 0.75 : 0;
+    this.output.gain.value = enabled && !this.paused ? 0.75 : 0;
   }
 
   setReferenceRhythmEnabled(enabled: boolean): void {
@@ -96,7 +111,7 @@ export class MetronomeAudio {
 
   private scheduleAhead = (): void => {
     const options = this.startOptions;
-    if (!options || this.closed) return;
+    if (!options || this.closed || this.paused) return;
 
     const beatDurationSeconds = 60 / options.bpm;
     const horizon = this.context.currentTime + LOOKAHEAD_SECONDS;

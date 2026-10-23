@@ -36,25 +36,27 @@ interface HandPreviewProps {
   colorOverride?: string;
 }
 
-function HandPreview({ hand, subdivision, timeSignature, compact, label = hand.toUpperCase(), colorOverride }: HandPreviewProps) {
+function HandPreview({ hand, subdivision, timeSignature, compact, label = 'NEXT', colorOverride }: HandPreviewProps) {
   const color = colorOverride ?? (hand === 'left' ? colors.left : colors.right);
 
   return (
-    <View style={{ flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', gap: compact ? 1 : 3 }}>
+    <View style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: compact ? 8 : 12, paddingHorizontal: compact ? 5 : 12 }}>
       <Text
         numberOfLines={1}
-        style={{ color, fontSize: compact ? 9 : 11, fontWeight: '900', letterSpacing: 1 }}
+        style={{ color, fontSize: compact ? 9 : 11, fontWeight: '900', letterSpacing: 1, minWidth: compact ? 29 : 38 }}
       >
         {label}
       </Text>
-      <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} />
+      <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} compact scale={compact ? 0.65 : 0.78} />
       <Text
         numberOfLines={1}
+        adjustsFontSizeToFit
         style={{
           color: colors.text,
           fontSize: compact ? 11 : 13,
-          lineHeight: compact ? 13 : 16,
+          lineHeight: compact ? 14 : 17,
           fontWeight: '800',
+          flexShrink: 1,
         }}
       >
         {SUBDIVISION_LABELS[subdivision]}
@@ -146,32 +148,34 @@ export function NextPatternPreview({
           backgroundColor: colors.surface,
           borderColor: colors.line,
           borderWidth: 1,
-          borderRadius: 15,
-          paddingHorizontal: compact ? 9 : 13,
-          paddingVertical: compact ? 6 : 9,
+          borderRadius: 13,
+          paddingHorizontal: compact ? 5 : 10,
+          paddingVertical: compact ? 3 : 5,
         }}
       >
-        <View style={{ minHeight: compact ? 18 : 23, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: compact ? 4 : 6 }}>
-          <Text style={{ color: colors.muted, fontSize: compact ? 9 : 11, fontWeight: '900', letterSpacing: 1.2 }}>
-            {title}
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5 }}>
-            {isScorePreview && scoreMeasureNumber !== undefined && scoreMeasureCount !== undefined ? (
-              <Text style={{ color: colors.text, fontSize: compact ? 10 : 12, fontWeight: '800', marginRight: 3 }}>
-                {scoreMeasureNumber}/{scoreMeasureCount}
+        {isScorePreview ? (
+          <View style={{ minHeight: compact ? 18 : 23, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: compact ? 4 : 6 }}>
+            <Text style={{ color: colors.muted, fontSize: compact ? 9 : 11, fontWeight: '900', letterSpacing: 1.2 }}>
+              {title}
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5 }}>
+              {scoreMeasureNumber !== undefined && scoreMeasureCount !== undefined ? (
+                <Text style={{ color: colors.text, fontSize: compact ? 10 : 12, fontWeight: '800', marginRight: 3 }}>
+                  {scoreMeasureNumber}/{scoreMeasureCount}
+                </Text>
+              ) : null}
+              <Text
+                testID="practice.nextScore.countdown"
+                style={{ color: colors.accent, fontSize: compact ? 18 : 22, lineHeight: compact ? 20 : 24, fontWeight: '900', fontVariant: ['tabular-nums'] }}
+              >
+                {countdown}
               </Text>
-            ) : null}
-            <Text
-              testID="practice.nextPattern.countdown"
-              style={{ color: colors.accent, fontSize: compact ? 18 : 22, lineHeight: compact ? 20 : 24, fontWeight: '900', fontVariant: ['tabular-nums'] }}
-            >
-              {countdown}
-            </Text>
-            <Text style={{ color: colors.accent, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 0.5 }}>
-              {countdownLabel}
-            </Text>
+              <Text style={{ color: colors.accent, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 0.5 }}>
+                {countdownLabel}
+              </Text>
+            </View>
           </View>
-        </View>
+        ) : null}
 
         {scoreMeasure ? (
           <View style={{ flex: 1, justifyContent: 'center' }}>
@@ -193,7 +197,6 @@ export function NextPatternPreview({
             {focusedHand ? (
               <HandPreview
                 hand={focusedHand}
-                label="ONE HAND"
                 subdivision={focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision}
                 timeSignature={timeSignature}
                 compact={compact}

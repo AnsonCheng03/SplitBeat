@@ -11,6 +11,7 @@ import React, {
 import { MetronomeAudio } from '@/audio/metronome';
 import { SOUND_OPTIONS } from '@/audio/soundPresets';
 import { normalizeFlashSource } from '@/rhythm/flashSource';
+import { applyChallengeOutcomes, challengeMessage, createChallengeStreaks, createWrongTapTrigger } from '@/rhythm/challenge';
 import { RhythmTimingEngine } from '@/rhythm/timingEngine';
 import {
   DEFAULT_GOOD_WINDOW_MS,
@@ -25,6 +26,7 @@ import type { ImportedRhythmScore } from '@/types/importedScore';
 import type {
   ExerciseSettings,
   Hand,
+  ChallengeMissStreak,
   SessionResults,
   SessionSnapshot,
   RhythmPatternPair,
@@ -65,6 +67,8 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   rightFlashSource: 'tap',
   tapResultFlashEnabled: true,
   referenceRhythmEnabled: false,
+  challengeAction: 'off',
+  challengeMissStreak: 3,
   leftTapOffsetMs: 0,
   rightTapOffsetMs: 0,
   goodWindowMs: DEFAULT_GOOD_WINDOW_MS,
@@ -82,6 +86,7 @@ interface SessionContextValue {
   startPreparedExercise: () => Promise<void>;
   exercisePrepared: boolean;
   stopExercise: () => void;
+  resumeExercise: () => Promise<void>;
   registerTap: (hand: Hand, timestamp: number) => TapFeedback | null;
   snapshot: SessionSnapshot | null;
   results: SessionResults | null;
@@ -148,6 +153,12 @@ function restoreSettings(raw: string | null): ExerciseSettings {
         ? parsed.tapResultFlashEnabled
         : DEFAULT_SETTINGS.tapResultFlashEnabled,
       referenceRhythmEnabled: parsed.referenceRhythmEnabled === true,
+      challengeAction: parsed.challengeAction === 'pause' || parsed.challengeAction === 'stop'
+        ? parsed.challengeAction
+        : 'off',
+      challengeMissStreak: [1, 2, 3, 5].includes(parsed.challengeMissStreak ?? -1)
+        ? parsed.challengeMissStreak as ChallengeMissStreak
+        : DEFAULT_SETTINGS.challengeMissStreak,
       leftTapOffsetMs:
         typeof parsed.leftTapOffsetMs === 'number'
           ? normalizeTapOffsetMs(parsed.leftTapOffsetMs)
@@ -189,6 +200,9 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   const lastScoreRef = useRef<ImportedRhythmScore | undefined>(undefined);
   const pendingOptionsRef = useRef<ExercisePreparationOptions>({});
   const lastOptionsRef = useRef<ExercisePreparationOptions>({});
+  const sessionSettingsRef = useRef<ExerciseSettings>(DEFAULT_SETTINGS);
+  const challengeStreaksRef = useRef(createChallengeStreaks());
+  const challengePausedRef = useRef(false);
   const [exercisePrepared, setExercisePrepared] = useState(false);
 
   useEffect(() => {
@@ -315,6 +329,76 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     });
   }, []);
 
+  const stopExercise = useCallback(() => {
+    const engine = engineRef.current;
+    if (!engine) return;
+    const now = monotonicNow();
+    const finalResults = engine.getResults(now);
+    const finalSnapshot = engine.advance(now);
+    setResults(finalResults);
+    saveCompletedSession(finalResults);
+    setSnapshot({ ...finalSnapshot, phase: 'finished', results: finalResults });
+    stopTimers();
+    challengePausedRef.current = false;
+    void audioRef.current?.stop();
+    audioRef.current = null;
+    engineRef.current = null;
+  }, [saveCompletedSession, stopTimers]);
+
+  const pauseForChallenge = useCallback((message: string) => {
+    const engine = engineRef.current;
+    if (!engine) return;
+    const now = monotonicNow();
+    engine.pause(now);
+    challengePausedRef.current = true;
+    stopTimers();
+    setSnapshot({ ...engine.advance(now), phase: 'paused', challengeMessage: message });
+    void audioRef.current?.pause().catch(() => undefined);
+  }, [stopTimers]);
+
+  const checkChallenge = useCallback((engine: RhythmTimingEngine, feedback?: TapFeedback, hand?: Hand): boolean => {
+    const activeSettings = sessionSettingsRef.current;
+    const processed = applyChallengeOutcomes(
+      challengeStreaksRef.current,
+      engine.takeChallengeOutcomes(),
+      activeSettings.challengeMissStreak,
+    );
+    challengeStreaksRef.current = processed.streaks;
+    if (activeSettings.challengeAction === 'off') return false;
+
+    const trigger = activeSettings.challengeMissStreak === 1 && feedback === 'miss' && hand
+      ? createWrongTapTrigger(hand)
+      : processed.trigger;
+    if (!trigger) return false;
+
+    const message = challengeMessage(trigger, activeSettings.challengeAction);
+    if (activeSettings.challengeAction === 'stop') stopExercise();
+    else pauseForChallenge(message);
+    return true;
+  }, [pauseForChallenge, stopExercise]);
+
+  const scheduleSessionClock = useCallback((initialDelayMs = 30) => {
+    const updateFromClock = () => {
+      const engine = engineRef.current;
+      if (!engine) return;
+      const nextSnapshot = engine.advance(monotonicNow());
+      if (nextSnapshot.phase === 'finished' && nextSnapshot.results) {
+        setSnapshot(nextSnapshot);
+        setResults(nextSnapshot.results);
+        saveCompletedSession(nextSnapshot.results);
+        stopTimers();
+        void audioRef.current?.stop();
+        audioRef.current = null;
+        engineRef.current = null;
+        return;
+      }
+      if (checkChallenge(engine)) return;
+      setSnapshot(nextSnapshot);
+      uiTimerRef.current = setTimeout(updateFromClock, 50);
+    };
+    uiTimerRef.current = setTimeout(updateFromClock, initialDelayMs);
+  }, [checkChallenge, saveCompletedSession, stopTimers]);
+
   const startSession = useCallback(async (
     score?: ImportedRhythmScore,
     preparationOptions: ExercisePreparationOptions = {},
@@ -334,6 +418,9 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
           timeSignature: score.timeSignature,
         }
       : configuredSettings;
+    sessionSettingsRef.current = activeSettings;
+    challengeStreaksRef.current = createChallengeStreaks();
+    challengePausedRef.current = false;
     setSessionSettings(activeSettings);
     if (score) setSettings(activeSettings);
     sessionIdRef.current = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -384,24 +471,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       },
     });
 
-    const updateFromClock = () => {
-      const currentEngine = engineRef.current;
-      if (!currentEngine) return;
-      const nextSnapshot = currentEngine.advance(monotonicNow());
-      setSnapshot(nextSnapshot);
-      if (nextSnapshot.phase === 'finished' && nextSnapshot.results) {
-        setResults(nextSnapshot.results);
-        saveCompletedSession(nextSnapshot.results);
-        stopTimers();
-        void audioRef.current?.stop();
-        audioRef.current = null;
-        engineRef.current = null;
-        return;
-      }
-      uiTimerRef.current = setTimeout(updateFromClock, 50);
-    };
-    uiTimerRef.current = setTimeout(updateFromClock, 30);
-  }, [saveCompletedSession, settings, stopTimers]);
+    scheduleSessionClock(30);
+  }, [scheduleSessionClock, settings, stopTimers]);
 
   const prepareExercise = useCallback(async (
     score?: ImportedRhythmScore,
@@ -434,29 +505,35 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   const registerTap = useCallback((hand: Hand, timestamp: number): TapFeedback | null => {
     const engine = engineRef.current;
     if (!engine) return null;
+    if (challengePausedRef.current) return 'ignored';
     const tapResult = engine.tapWithDetails(hand, timestamp);
-    if (tapResult.feedback !== 'ignored') {
-      if (tapResult.midiPitches?.length) audioRef.current?.playScorePitches(tapResult.midiPitches);
-      else audioRef.current?.playHandClick(hand);
-    }
-    setSnapshot(engine.advance(monotonicNow()));
+    if (tapResult.feedback === 'ignored') return 'ignored';
+    if (tapResult.midiPitches?.length) audioRef.current?.playScorePitches(tapResult.midiPitches);
+    else audioRef.current?.playHandClick(hand);
+    const nextSnapshot = engine.advance(monotonicNow());
+    if (nextSnapshot.phase === 'finished') setSnapshot(nextSnapshot);
+    else if (!checkChallenge(engine, tapResult.feedback, hand)) setSnapshot(nextSnapshot);
     return tapResult.feedback;
-  }, []);
+  }, [checkChallenge]);
 
-  const stopExercise = useCallback(() => {
+  const resumeExercise = useCallback(async () => {
     const engine = engineRef.current;
-    if (!engine) return;
-    const now = monotonicNow();
-    const finalResults = engine.getResults(now);
-    const finalSnapshot = engine.advance(now);
-    setResults(finalResults);
-    saveCompletedSession(finalResults);
-    setSnapshot({ ...finalSnapshot, phase: 'finished', results: finalResults });
-    stopTimers();
-    void audioRef.current?.stop();
-    audioRef.current = null;
-    engineRef.current = null;
-  }, [saveCompletedSession, stopTimers]);
+    const audio = audioRef.current;
+    if (!engine || snapshot?.phase !== 'paused') return;
+    try {
+      if (!audio) throw new Error('The metronome audio session is unavailable.');
+      await audio.resume();
+      const now = monotonicNow();
+      engine.resume(now);
+      challengePausedRef.current = false;
+      challengeStreaksRef.current = createChallengeStreaks();
+      setSnapshot(engine.advance(now));
+      scheduleSessionClock(30);
+    } catch {
+      setAudioStatus('error');
+      throw new Error('The metronome audio could not resume.');
+    }
+  }, [scheduleSessionClock, snapshot?.phase]);
 
   const discardReplayData = useCallback(() => {
     setResults((current) => current ? {
@@ -488,8 +565,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   );
 
   const value = useMemo(
-    () => ({ settings, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, discardReplayData }),
-    [settings, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, discardReplayData],
+    () => ({ settings, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, resumeExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, discardReplayData }),
+    [settings, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, resumeExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, discardReplayData],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

@@ -7,6 +7,7 @@ import {
   tupletCount,
 } from '@/rhythm/subdivisions';
 import { accuracyPercent, emptyHandStats, finalizeHandStats } from '@/rhythm/scoring';
+import type { ChallengeOutcome } from '@/rhythm/challenge';
 import { matchTap, timingWindowsForGoodWindow } from '@/rhythm/tapMatcher';
 import type { TimingWindows } from '@/rhythm/tapMatcher';
 import type { ImportedRhythmScore } from '@/types/importedScore';
@@ -139,6 +140,9 @@ export class RhythmTimingEngine {
   private cachedNotationBarSteps: ExerciseStep[] = [];
   private nextReplayTapId = 0;
   private finished = false;
+  private pausedAt: number | null = null;
+  private pausedDurationMs = 0;
+  private readonly challengeOutcomes: ChallengeOutcome[] = [];
 
   constructor(options: TimingEngineOptions) {
     this.settings = options.settings;
@@ -190,16 +194,36 @@ export class RhythmTimingEngine {
   }
 
   advance(now: number): SessionSnapshot {
+    const activeNow = this.toActiveTime(now);
     if (!this.finished) {
-      this.generateThrough(now + this.timingWindows.goodMs);
-      this.settleDueEvents(now);
-      if (this.endTime !== null && now >= this.endTime + this.sessionSettleWindowMs) {
+      this.generateThrough(activeNow + this.timingWindows.goodMs);
+      this.settleDueEvents(activeNow);
+      if (this.endTime !== null && activeNow >= this.endTime + this.sessionSettleWindowMs) {
         this.finishPendingEvents();
         this.finished = true;
       }
     }
 
-    return this.createSnapshot(now);
+    return this.createSnapshot(activeNow);
+  }
+
+  pause(now: number): void {
+    if (this.finished || this.pausedAt !== null) return;
+    this.advance(now);
+    this.pausedAt = now;
+  }
+
+  resume(now: number): void {
+    if (this.finished || this.pausedAt === null) return;
+    this.pausedDurationMs += Math.max(0, now - this.pausedAt);
+    this.pausedAt = null;
+  }
+
+  takeChallengeOutcomes(): ChallengeOutcome[] {
+    const outcomes = this.challengeOutcomes.splice(0);
+    return outcomes.sort(
+      (first, second) => first.expectedTimeMs - second.expectedTimeMs || first.hand.localeCompare(second.hand),
+    );
   }
 
   getReferenceEventsThrough(timeMs: number): readonly ReferenceRhythmEvent[] {
@@ -221,18 +245,20 @@ export class RhythmTimingEngine {
   }
 
   tapWithDetails(hand: Hand, actualTapTime: number): TapResult {
-    if (this.finished) return { feedback: 'ignored' };
+    if (this.finished || this.pausedAt !== null) return { feedback: 'ignored' };
     if (this.settings.trainingMode === 'single-hand' && hand !== this.settings.singleHand) {
       return { feedback: 'ignored' };
     }
 
-    const replayTap = this.recordReplayTap(hand, actualTapTime);
+    const activeTapTime = this.toActiveTime(actualTapTime);
+
+    const replayTap = this.recordReplayTap(hand, activeTapTime);
 
     const tapOffsetMs =
       hand === 'left' ? this.settings.leftTapOffsetMs : this.settings.rightTapOffsetMs;
-    const calibratedTapTime = actualTapTime - tapOffsetMs;
+    const calibratedTapTime = activeTapTime - tapOffsetMs;
     this.generateThrough(calibratedTapTime + this.timingWindows.goodMs);
-    this.settleDueEvents(actualTapTime);
+    this.settleDueEvents(activeTapTime);
     if (this.isRestAt(calibratedTapTime)) return { feedback: 'miss' };
 
     const candidates = this.events[hand].filter(
@@ -254,7 +280,7 @@ export class RhythmTimingEngine {
     const matchedEvent = candidates.find((event) => event.id === match.eventId);
     if (!matchedEvent) return { feedback: 'miss' };
     replayTap.matchedEventId = matchedEvent.id;
-    replayTap.timingErrorMs = actualTapTime - matchedEvent.expectedTimeMs;
+    replayTap.timingErrorMs = activeTapTime - matchedEvent.expectedTimeMs;
     matchedEvent.settled = true;
     this.recordEvent(hand, matchedEvent, match.grade, match.timingErrorMs);
     return {
@@ -265,7 +291,7 @@ export class RhythmTimingEngine {
 
   getResults(now: number): SessionResults {
     this.advance(now);
-    this.finishPendingEvents(now);
+    this.finishPendingEvents(this.toActiveTime(now));
     this.finished = true;
 
     return {
@@ -286,7 +312,7 @@ export class RhythmTimingEngine {
         left: toAccuracyStats(combination.left),
         right: toAccuracyStats(combination.right),
       })),
-      durationSeconds: Math.max(0, (now - this.sessionStartTime) / 1_000),
+      durationSeconds: Math.max(0, (this.toActiveTime(now) - this.sessionStartTime) / 1_000),
       missedEvents: [...this.missedEvents].sort(
         (firstEvent, secondEvent) =>
           firstEvent.barIndex - secondEvent.barIndex ||
@@ -545,6 +571,11 @@ export class RhythmTimingEngine {
     grade: 'perfect' | 'great' | 'good' | null,
     errorMs: number | null,
   ): void {
+    this.challengeOutcomes.push({
+      hand,
+      matched: grade !== null,
+      expectedTimeMs: event.expectedTimeMs,
+    });
     const beatPosition = (event.expectedTimeMs - this.sessionStartTime) / this.beatMs;
     const barOffset = Math.floor(beatPosition / this.beatsPerBar);
     const beatInBar = beatPosition - barOffset * this.beatsPerBar;
@@ -788,6 +819,11 @@ export class RhythmTimingEngine {
         ? { source: 'score' as const, scoreTitle: this.importedScore.title }
         : {}),
     };
+  }
+
+  private toActiveTime(now: number): number {
+    const inProgressPause = this.pausedAt === null ? 0 : Math.max(0, now - this.pausedAt);
+    return now - this.pausedDurationMs - inProgressPause;
   }
 }
 

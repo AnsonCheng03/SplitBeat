@@ -9,7 +9,7 @@ import { NextPatternPreview } from '@/components/NextPatternPreview';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
 import { ScrollingScoreRhythm } from '@/components/ScoreRhythmMeasure';
 import { TapZone } from '@/components/TapZone';
-import { pulseQuarterNotes } from '@/rhythm/subdivisions';
+import { pulseQuarterNotes, SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import { useRhythmSession } from '@/store/sessionStore';
 import type { Hand, TapFeedback } from '@/types/rhythm';
 import { colors } from '@/theme';
@@ -29,6 +29,7 @@ export default function PracticeScreen() {
     startPreparedExercise,
     registerTap,
     stopExercise,
+    resumeExercise,
     results,
   } = useRhythmSession();
   const activeSettings = sessionSettings ?? settings;
@@ -90,7 +91,20 @@ export default function PracticeScreen() {
     ? snapshot.scoreNextMeasure
     : snapshot?.nextStep);
   const previewTop = Math.max(insets.top, 8) + (compact ? 46 : 58);
-  const previewHeight = Math.min(220, Math.max(112, height * 0.25));
+  const previewHeight = snapshot?.scoreMeasure
+    ? Math.min(220, Math.max(112, height * 0.25))
+    : compact ? 62 : 74;
+  const changeCountdown = snapshot?.scoreMeasure
+    ? snapshot.beatsPerBar - snapshot.beatInBar
+    : snapshot?.beatsUntilChange;
+
+  const resumeFromChallenge = async () => {
+    try {
+      await resumeExercise();
+    } catch {
+      Alert.alert('Could not resume audio', 'Check your device audio settings and try again.');
+    }
+  };
 
   return (
     <View testID="practice.screen" style={{ flex: 1, backgroundColor: colors.background }}>
@@ -205,24 +219,39 @@ export default function PracticeScreen() {
                 />
               </View>
             ) : singleHandMode && step ? (
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: compact ? 6 : 10 }}>
+                <Text style={{ color: colors.accent, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>
+                  {focusedHand.toUpperCase()}
+                </Text>
                 <RhythmSymbol
                   subdivision={focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision}
                   color={colors.accent}
                   compact={compact}
                   timeSignature={activeSettings.timeSignature}
+                  scale={compact ? 1.35 : 1.8}
                 />
+                <Text style={{ color: colors.text, fontSize: compact ? 13 : 17, fontWeight: '800' }}>
+                  {SUBDIVISION_LABELS[focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision]}
+                </Text>
               </View>
             ) : (
               <>
-                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', opacity: enabledHand('left') ? 1 : 0.12 }}>
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: compact ? 6 : 10, opacity: enabledHand('left') ? 1 : 0.12 }}>
                   {enabledHand('left') && step ? (
-                    <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} compact={compact} timeSignature={activeSettings.timeSignature} />
+                    <>
+                      <Text style={{ color: colors.left, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>LEFT</Text>
+                      <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} compact={compact} timeSignature={activeSettings.timeSignature} scale={compact ? 1.35 : 1.8} />
+                      <Text style={{ color: colors.text, fontSize: compact ? 13 : 17, fontWeight: '800' }}>{SUBDIVISION_LABELS[step.leftSubdivision]}</Text>
+                    </>
                   ) : null}
                 </View>
-                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', opacity: enabledHand('right') ? 1 : 0.12 }}>
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: compact ? 6 : 10, opacity: enabledHand('right') ? 1 : 0.12 }}>
                   {enabledHand('right') && step ? (
-                    <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} compact={compact} timeSignature={activeSettings.timeSignature} />
+                    <>
+                      <Text style={{ color: colors.right, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>RIGHT</Text>
+                      <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} compact={compact} timeSignature={activeSettings.timeSignature} scale={compact ? 1.35 : 1.8} />
+                      <Text style={{ color: colors.text, fontSize: compact ? 13 : 17, fontWeight: '800' }}>{SUBDIVISION_LABELS[step.rightSubdivision]}</Text>
+                    </>
                   ) : null}
                 </View>
               </>
@@ -245,11 +274,23 @@ export default function PracticeScreen() {
                 beatsPerBar={snapshot.beatsPerBar}
                 isRunning={snapshot.phase === 'running'}
                 isRest={snapshot.isRest}
+                isPaused={snapshot.phase === 'paused'}
                 compact={compact}
               />
             ) : null}
           </View>
-          <View style={{ width: compact ? 35 : 48 }} />
+          <View testID="practice.changeCountdown" style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'flex-end', minWidth: compact ? 74 : 112, gap: compact ? 4 : 7 }}>
+            {snapshot && showNextPattern && snapshot.phase === 'running' && changeCountdown !== undefined ? (
+              <>
+                <Text testID="practice.nextPattern.countdown" style={{ color: colors.accent, fontSize: compact ? 21 : 30, lineHeight: compact ? 25 : 34, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
+                  {changeCountdown}
+                </Text>
+                <Text style={{ color: colors.accent, fontSize: compact ? 9 : 11, fontWeight: '900', letterSpacing: 1 }}>
+                  {changeCountdown === 1 ? 'BEAT' : 'BEATS'}
+                </Text>
+              </>
+            ) : null}
+          </View>
         </View>
 
         {tutorialVisible ? (
@@ -306,6 +347,25 @@ export default function PracticeScreen() {
               </View>
             </View>
           </Pressable>
+        ) : null}
+
+        {snapshot?.phase === 'paused' ? (
+          <View testID="practice.challengePause" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(7, 10, 14, 0.72)', paddingHorizontal: 24 }}>
+            <View style={{ width: '100%', maxWidth: 460, alignItems: 'center', padding: compact ? 18 : 26, borderRadius: 20, borderWidth: 1, borderColor: colors.accent, backgroundColor: colors.surface }}>
+              <Text style={{ color: colors.accent, fontSize: compact ? 12 : 14, fontWeight: '900', letterSpacing: 1.6 }}>
+                CHALLENGE PAUSE
+              </Text>
+              <Text style={{ color: colors.text, fontSize: compact ? 17 : 22, lineHeight: compact ? 23 : 29, fontWeight: '800', textAlign: 'center', marginTop: 10 }}>
+                {snapshot.challengeMessage ?? 'Take a breath, then continue when you are ready.'}
+              </Text>
+              <Pressable testID="practice.challengeResume" accessibilityRole="button" onPress={() => void resumeFromChallenge()} style={{ minHeight: 54, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', marginTop: 20, borderRadius: 14, backgroundColor: colors.accent }}>
+                <Text style={{ color: colors.background, fontSize: 14, fontWeight: '900', letterSpacing: 1.1 }}>CONTINUE</Text>
+              </Pressable>
+              <Pressable testID="practice.challengeEnd" accessibilityRole="button" onPress={stop} style={{ minHeight: 44, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center', marginTop: 4 }}>
+                <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '900', letterSpacing: 1 }}>END SESSION</Text>
+              </Pressable>
+            </View>
+          </View>
         ) : null}
       </View>
     </View>

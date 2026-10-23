@@ -45,6 +45,8 @@ export type FlashSource = 'tap' | 'beat';
 export type RhythmicFeel = 'straight' | 'swing';
 export type DurationOption = 30 | 60 | 120 | 'endless';
 export type ChangeIntervalBeats = 1 | 2 | 4 | 8;
+export type ChallengeAction = 'off' | 'pause' | 'stop';
+export type ChallengeMissStreak = 1 | 2 | 3 | 5;
 
 export interface ExerciseStep {
   id: string;
@@ -85,6 +87,8 @@ export interface ExerciseSettings {
   rightFlashSource: FlashSource;
   tapResultFlashEnabled: boolean;
   referenceRhythmEnabled: boolean;
+  challengeAction: ChallengeAction;
+  challengeMissStreak: ChallengeMissStreak;
   leftTapOffsetMs: number;
   rightTapOffsetMs: number;
   goodWindowMs: number;
@@ -171,7 +175,7 @@ export interface SessionResults {
 }
 
 export interface SessionSnapshot {
-  phase: 'countdown' | 'running' | 'finished';
+  phase: 'countdown' | 'running' | 'paused' | 'finished';
   bpm: number;
   timeSignature: TimeSignature;
   beatsPerBar: number;
@@ -190,6 +194,7 @@ export interface SessionSnapshot {
   leftStats: HandStats;
   rightStats: HandStats;
   countdown: number | 'START' | null;
+  challengeMessage?: string;
   results?: SessionResults;
   scoreMeasure?: ScoreRhythmMeasure;
   scorePreviousMeasure?: ScoreRhythmMeasure;

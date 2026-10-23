@@ -31,6 +31,8 @@ const preferences: ExerciseSettings = {
   rightFlashSource: 'tap',
   tapResultFlashEnabled: true,
   referenceRhythmEnabled: false,
+  challengeAction: 'off',
+  challengeMissStreak: 3,
   leftTapOffsetMs: -20,
   rightTapOffsetMs: 15,
   goodWindowMs: 80,
