@@ -118,7 +118,7 @@ function inferredBeamCount(durationQuarter: number): number {
     return roundedTripletBeamCount;
   }
 
-  return Math.max(0, Math.min(4, Math.ceil(Math.log2(1 / durationQuarter) - EPSILON)));
+  return Math.max(0, Math.min(4, Math.round(Math.log2(1 / durationQuarter))));
 }
 
 function slotWidthFor(count: number, size: NoteNotationSize): number {

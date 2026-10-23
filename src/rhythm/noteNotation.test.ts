@@ -185,6 +185,15 @@ test('triplets include a visible group label and all display sizes keep their no
   }
 });
 
+test('quintuplet preview uses two beams for the five notes in a quarter-note beat', () => {
+  const quintuplet = createNoteNotationPlan('quintuplet', 'compact', '3/4');
+
+  assert.equal(quintuplet.tupletLabels[0]?.text, '5');
+  assert.ok(quintuplet.events.every((event) => event.beamCount === 2));
+  assert.equal(quintuplet.beams.filter((beam) => beam.kind === 'beam' && beam.level === 0).length, 1);
+  assert.equal(quintuplet.beams.filter((beam) => beam.kind === 'beam' && beam.level === 1).length, 2);
+});
+
 test('tuplet note groups span the selected meter pulse', () => {
   const dupletInCompound = createNoteNotationPlan('duplet', 'full', '6/8');
   const tripletInHalfTime = createNoteNotationPlan('triplet', 'full', '2/2');

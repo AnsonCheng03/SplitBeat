@@ -42,9 +42,10 @@ function LessonTile({
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => ({
-        flexGrow: 1,
-        flexBasis: '30%',
-        minWidth: 145,
+        flexGrow: 0,
+        flexBasis: 'auto',
+        width: '100%',
+        minWidth: 0,
         minHeight: 76,
         paddingHorizontal: 12,
         paddingVertical: 10,
@@ -96,11 +97,11 @@ function PatternNote({
   timeSignature: LearnLesson['timeSignature'];
 }) {
   return (
-    <View style={{ flex: 1, minWidth: 0, minHeight: 50, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 8, borderRadius: 11, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
-      <RhythmSymbol subdivision={subdivision} color={color} mini timeSignature={timeSignature} />
+    <View style={{ flex: 1, minWidth: 0, minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, borderRadius: 11, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
+      <RhythmSymbol subdivision={subdivision} color={color} compact timeSignature={timeSignature} />
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={{ color, fontSize: 8, fontWeight: '900', letterSpacing: 0.7 }}>{label}</Text>
-        <Text numberOfLines={1} style={{ color: colors.text, fontSize: 10, fontWeight: '700', marginTop: 2 }}>{SUBDIVISION_LABELS[subdivision]}</Text>
+        <Text style={{ color, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>{label}</Text>
+        <Text numberOfLines={1} style={{ color: colors.text, fontSize: 11, fontWeight: '700', marginTop: 2 }}>{SUBDIVISION_LABELS[subdivision]}</Text>
       </View>
     </View>
   );
@@ -117,6 +118,7 @@ export default function LearnScreen() {
   const [progressLoaded, setProgressLoaded] = useState(false);
   const [starting, setStarting] = useState(false);
   const compact = width < 950;
+  const detailWidth = compact ? '56%' : '64%';
 
   useFocusEffect(useCallback(() => {
     let active = true;
@@ -170,7 +172,7 @@ export default function LearnScreen() {
   return (
     <SafeAreaView testID="learn.screen" style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.background }}>
       <ScrollView
-        style={{ width: compact ? '40%' : 350, flexGrow: 0, borderRightWidth: 1, borderRightColor: colors.line, backgroundColor: colors.surface }}
+        style={{ width: detailWidth, flexGrow: 0, borderRightWidth: 1, borderRightColor: colors.line, backgroundColor: colors.surface }}
         contentContainerStyle={{ flexGrow: 1, paddingHorizontal: compact ? 16 : 24, paddingVertical: compact ? 10 : 18 }}
         showsVerticalScrollIndicator={false}
       >
@@ -293,12 +295,12 @@ export default function LearnScreen() {
         ) : null}
       </ScrollView>
 
-      <View style={{ flex: 1, minWidth: 0, paddingHorizontal: compact ? 14 : 25, paddingTop: compact ? 13 : 20, paddingBottom: 12 }}>
+      <View style={{ flex: 1, minWidth: 0, paddingHorizontal: compact ? 10 : 18, paddingTop: compact ? 13 : 20, paddingBottom: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: compact ? 9 : 14 }}>
           <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>COURSE PATH</Text>
-          <Text style={{ color: colors.dim, fontSize: 10, fontWeight: '700' }}>First 3 free · finish each to progress</Text>
+          <Text numberOfLines={1} style={{ color: colors.dim, fontSize: compact ? 9 : 10, fontWeight: '700' }}>First 3 free · finish each to progress</Text>
         </View>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingBottom: 14 }}>
+        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
           {LEARN_COURSE.map((lesson) => {
             const availability = getLessonAvailability(lesson.id, completedLessonIds);
             const paywalled = requiresLearnCourseUnlock(lesson, purchase.hasFullCourseUnlock);
