@@ -57,6 +57,24 @@ function RhythmTrack({
   );
 }
 
+function MeasureBarLine({ testID, inset = 0 }: { testID?: string; inset?: number }) {
+  return (
+    <View
+      testID={testID}
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        top: 1,
+        bottom: 1,
+        right: inset,
+        width: 2,
+        backgroundColor: colors.muted,
+        opacity: 0.7,
+      }}
+    />
+  );
+}
+
 export function ScoreRhythmMeasure({
   measure,
   number,
@@ -73,7 +91,7 @@ export function ScoreRhythmMeasure({
   const size: NoteNotationSize = compact ? 'compact' : 'full';
 
   return (
-    <View testID="practice.scoreMeasure" style={{ paddingHorizontal: compact ? 4 : 12, paddingVertical: compact ? 3 : 7, gap: compact ? 2 : 4 }}>
+    <View testID="practice.scoreMeasure" style={{ position: 'relative', paddingHorizontal: compact ? 4 : 12, paddingVertical: compact ? 3 : 7, gap: compact ? 2 : 4 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: compact ? 0 : 2 }}>
         <Text style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '800', letterSpacing: 1.1 }}>SCORE RHYTHM</Text>
         <Text style={{ color: colors.text, fontSize: compact ? 10 : 11, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
@@ -96,6 +114,7 @@ export function ScoreRhythmMeasure({
         size={size}
         beamGroupQuarterNotes={beamGroupQuarterNotes}
       />
+      <MeasureBarLine testID="practice.scoreMeasure.barline" inset={2} />
     </View>
   );
 }
@@ -141,7 +160,7 @@ function ScoreBarPanel({
   minimal: boolean;
 }) {
   return (
-    <View style={{ width, paddingHorizontal: 4, paddingVertical: size === 'compact' ? 3 : 7, gap: size === 'compact' ? 2 : 4 }}>
+    <View style={{ position: 'relative', width, paddingHorizontal: 4, paddingVertical: size === 'compact' ? 3 : 7, gap: size === 'compact' ? 2 : 4 }}>
       {!minimal ? (
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: size === 'compact' ? 0 : 2 }}>
           <Text style={{ color: colors.text, fontSize: size === 'compact' ? 10 : 11, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
@@ -167,6 +186,7 @@ function ScoreBarPanel({
         beamGroupQuarterNotes={beamGroupQuarterNotes}
         minimal={minimal}
       />
+      <MeasureBarLine testID={`practice.scoreMeasure.barline.${bar.sequence}`} inset={4} />
     </View>
   );
 }
