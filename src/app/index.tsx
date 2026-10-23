@@ -85,44 +85,40 @@ export default function HomeScreen() {
         </View>
 
         <View style={{ flex: 1, width: '100%', maxWidth: 960, alignSelf: 'center', justifyContent: 'center', paddingVertical: 10 }}>
-          <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', letterSpacing: -0.5, marginBottom: 15 }}>
-            Choose a mode
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 }}>
+            <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', letterSpacing: -0.5 }}>
+              Choose a mode
+            </Text>
+            <Pressable
+              testID="home.learn"
+              accessibilityRole="button"
+              accessibilityLabel="Open the guided rhythm course"
+              onPress={() => router.push('/learn')}
+              hitSlop={8}
+              style={({ pressed }) => ({ minHeight: 40, justifyContent: 'center', paddingHorizontal: 13, borderRadius: 12, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line })}
+            >
+              <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.7 }}>
+                LEARN RHYTHM  ›
+              </Text>
+            </Pressable>
+          </View>
           <View style={{ flexDirection: 'row', gap: 12 }}>
-              <ModeChoice
-                testID="home.mode.twoHand"
-                mode="two-hand"
-                selected={settings.trainingMode === 'two-hand'}
-                title="Two hands"
-                onPress={() => updateSettings({ trainingMode: 'two-hand' })}
-              />
-              <ModeChoice
-                testID="home.mode.singleHand"
-                mode="single-hand"
-                selected={settings.trainingMode === 'single-hand'}
-                title="One hand"
-                onPress={() => updateSettings({ trainingMode: 'single-hand' })}
-              />
+            <ModeChoice
+              testID="home.mode.twoHand"
+              mode="two-hand"
+              selected={settings.trainingMode === 'two-hand'}
+              title="Two hands"
+              onPress={() => updateSettings({ trainingMode: 'two-hand' })}
+            />
+            <ModeChoice
+              testID="home.mode.singleHand"
+              mode="single-hand"
+              selected={settings.trainingMode === 'single-hand'}
+              title="One hand"
+              onPress={() => updateSettings({ trainingMode: 'single-hand', singleHand: 'left' })}
+            />
           </View>
 
-          <View testID="home.handPicker" style={{ minHeight: 48, flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
-            {settings.trainingMode === 'single-hand' ? (
-              <>
-                <HandChoice
-                  testID="home.hand.left"
-                  hand="left"
-                  selected={settings.singleHand === 'left'}
-                  onPress={() => updateSettings({ singleHand: 'left' })}
-                />
-                <HandChoice
-                  testID="home.hand.right"
-                  hand="right"
-                  selected={settings.singleHand === 'right'}
-                  onPress={() => updateSettings({ singleHand: 'right' })}
-                />
-              </>
-            ) : null}
-          </View>
         </View>
 
         <View style={{ width: '100%', maxWidth: 960, alignSelf: 'center', gap: 10, paddingBottom: 2 }}>
@@ -156,7 +152,7 @@ export default function HomeScreen() {
             subtitleTestID="home.audioStatus"
             accessibilityLabel={
               audioStatus === 'ready'
-                ? `Start ${settings.trainingMode === 'single-hand' ? settings.singleHand + ' hand' : 'two hand'} practice`
+                ? `Start ${settings.trainingMode === 'single-hand' ? 'one hand' : 'two hand'} practice`
                 : audioStatus === 'error'
                   ? 'Retry audio setup'
                   : 'Loading audio engine'
@@ -172,7 +168,7 @@ export default function HomeScreen() {
             }
             subtitle={
               audioStatus === 'ready'
-                ? `AUDIO READY · ${settings.bpm} BPM · ${settings.trainingMode === 'single-hand' ? settings.singleHand.toUpperCase() + ' HAND' : 'TWO HANDS'}`
+                ? `AUDIO READY · ${settings.bpm} BPM · ${settings.trainingMode === 'single-hand' ? 'ONE HAND' : 'TWO HANDS'}`
                 : audioStatus === 'error'
                   ? 'TAP TO PREPARE THE METRONOME AGAIN'
                   : 'PREPARING THE METRONOME'
@@ -197,6 +193,8 @@ function ModeChoice({
   title: string;
   onPress: () => void;
 }) {
+  const selectedColor = mode === 'single-hand' ? colors.accent : colors.left;
+
   return (
     <Pressable
       testID={testID}
@@ -211,14 +209,14 @@ function ModeChoice({
         alignItems: 'center',
         gap: 14,
         borderRadius: 16,
-        backgroundColor: selected ? colors.leftSurface : colors.surface,
+        backgroundColor: selected ? colors.surfaceRaised : colors.surface,
         borderWidth: selected ? 1.5 : 1,
-        borderColor: selected ? colors.left : colors.line,
+        borderColor: selected ? selectedColor : colors.line,
         opacity: pressed ? 0.82 : 1,
       })}
     >
       <ModeMark mode={mode} />
-      <Text style={{ color: selected ? colors.left : colors.text, fontSize: 17, fontWeight: '900', letterSpacing: -0.2 }}>
+      <Text style={{ color: selected ? selectedColor : colors.text, fontSize: 17, fontWeight: '900', letterSpacing: -0.2 }}>
         {title}
       </Text>
     </Pressable>
@@ -229,7 +227,7 @@ function ModeMark({ mode }: { mode: 'two-hand' | 'single-hand' }) {
   if (mode === 'single-hand') {
     return (
       <View style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center' }}>
-        <View style={{ width: 13, height: 13, borderRadius: 7, backgroundColor: colors.right }} />
+        <View style={{ width: 13, height: 13, borderRadius: 7, backgroundColor: colors.accent }} />
       </View>
     );
   }
@@ -239,32 +237,5 @@ function ModeMark({ mode }: { mode: 'two-hand' | 'single-hand' }) {
       <View style={{ width: 11, height: 11, borderRadius: 6, backgroundColor: colors.left }} />
       <View style={{ width: 11, height: 11, borderRadius: 6, backgroundColor: colors.right }} />
     </View>
-  );
-}
-
-function HandChoice({
-  testID,
-  hand,
-  selected,
-  onPress,
-}: {
-  testID: string;
-  hand: 'left' | 'right';
-  selected: boolean;
-  onPress: () => void;
-}) {
-  const accent = hand === 'left' ? colors.left : colors.right;
-  return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
-      onPress={onPress}
-      style={{ paddingHorizontal: 14, minHeight: 34, justifyContent: 'center', borderRadius: 10, backgroundColor: selected ? accent : colors.surface, borderWidth: 1, borderColor: selected ? accent : colors.line }}
-    >
-      <Text style={{ color: selected ? colors.background : colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 0.8 }}>
-        {hand.toUpperCase()}
-      </Text>
-    </Pressable>
   );
 }

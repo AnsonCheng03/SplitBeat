@@ -53,6 +53,11 @@ export interface ExerciseStep {
   durationBeats: number;
 }
 
+export interface RhythmPatternPair {
+  leftSubdivision: Subdivision;
+  rightSubdivision: Subdivision;
+}
+
 export interface ExerciseSettings {
   bpm: number;
   timeSignature: TimeSignature;

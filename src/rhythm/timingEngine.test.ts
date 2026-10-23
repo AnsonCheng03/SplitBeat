@@ -147,6 +147,28 @@ test('single-hand mode scores only the selected hand and ignores the other side'
   assert.equal(results.singleHand, 'right');
 });
 
+test('a guided lesson only generates its authored hand patterns', () => {
+  const steps = generateExerciseSteps({
+    enabledSubdivisions: ['quarter', 'eighth', 'triplet'],
+    changeIntervalBeats: 4,
+    patternPairs: [
+      { leftSubdivision: 'quarter', rightSubdivision: 'triplet' },
+      { leftSubdivision: 'triplet', rightSubdivision: 'quarter' },
+    ],
+    random: () => 0.99,
+  }, 6);
+
+  assert.deepEqual(steps.map(({ leftSubdivision, rightSubdivision }) => [leftSubdivision, rightSubdivision]), [
+    ['triplet', 'quarter'],
+    ['quarter', 'triplet'],
+    ['triplet', 'quarter'],
+    ['quarter', 'triplet'],
+    ['triplet', 'quarter'],
+    ['quarter', 'triplet'],
+  ]);
+  assert.deepEqual(steps.map(({ startBeat }) => startBeat), [0, 4, 8, 12, 16, 20]);
+});
+
 test('rest before a change silences the last beat while the metronome beat stays aligned', () => {
   const start = 36_000;
   const engine = new RhythmTimingEngine({

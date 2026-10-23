@@ -7,6 +7,7 @@ import { colors } from '@/theme';
 
 interface TapZoneProps {
   hand: Hand;
+  testID?: string;
   onTap: (hand: Hand, timestamp: number) => TapFeedback | null;
   hapticsEnabled: boolean;
   keyboardTapToken?: number;
@@ -15,6 +16,8 @@ interface TapZoneProps {
   resting?: boolean;
   compact?: boolean;
   minimal?: boolean;
+  singleHand?: boolean;
+  accessibilityLabelOverride?: string;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -25,6 +28,7 @@ const KEYBOARD_KEYS_BY_HAND = {
 
 export function TapZone({
   hand,
+  testID,
   onTap,
   hapticsEnabled,
   keyboardTapToken = 0,
@@ -33,6 +37,8 @@ export function TapZone({
   resting = false,
   compact = false,
   minimal = false,
+  singleHand = false,
+  accessibilityLabelOverride,
   style,
 }: TapZoneProps) {
   const [pressed, setPressed] = useState(false);
@@ -41,7 +47,10 @@ export function TapZone({
   const resetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const previousKeyboardTapToken = useRef(keyboardTapToken);
   const isLeft = hand === 'left';
-  const accent = isLeft ? colors.left : colors.right;
+  const accent = singleHand ? colors.accent : isLeft ? colors.left : colors.right;
+  const restingBackground = singleHand ? '#0E201F' : isLeft ? colors.leftSurface : colors.rightSurface;
+  const pressedBackground = singleHand ? '#183A35' : isLeft ? '#1D483D' : '#382B56';
+  const restingBorder = singleHand ? '#183D38' : isLeft ? '#1A4037' : '#302747';
 
   const showFeedback = useCallback((feedback: TapFeedback | null) => {
     if (!feedback || feedback === 'ignored') return;
@@ -94,14 +103,14 @@ export function TapZone({
 
   return (
     <View
-      testID={`practice.tap.${hand}`}
+      testID={testID ?? `practice.tap.${hand}`}
       accessibilityRole="button"
       accessibilityState={{ disabled: !enabled }}
-      accessibilityLabel={minimal
+      accessibilityLabel={accessibilityLabelOverride ?? (minimal
         ? `${hand} hand tap zone${enabled ? '' : ', inactive in single hand mode'}`
         : missed
           ? 'OFF BEAT'
-          : `${hand} hand tap zone${enabled ? `, keyboard keys ${KEYBOARD_KEYS_BY_HAND[hand]}` : ', inactive in single hand mode'}`}
+          : `${hand} hand tap zone${enabled ? `, keyboard keys ${KEYBOARD_KEYS_BY_HAND[hand]}` : ', inactive in single hand mode'}`)}
       onTouchStart={handleTouch}
       collapsable={false}
       style={[
@@ -110,8 +119,8 @@ export function TapZone({
           minHeight: minimal ? 0 : compact ? 90 : 180,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: pressed ? (isLeft ? '#1D483D' : '#382B56') : isLeft ? colors.leftSurface : colors.rightSurface,
-          borderColor: pressed ? accent : isLeft ? '#1A4037' : '#302747',
+          backgroundColor: pressed ? pressedBackground : restingBackground,
+          borderColor: pressed ? accent : restingBorder,
           borderWidth: minimal ? 0 : 1,
           borderRadius: minimal ? 0 : 18,
           marginHorizontal: minimal ? 0 : 4,

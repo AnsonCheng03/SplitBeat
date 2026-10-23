@@ -26,6 +26,7 @@ import type {
   Hand,
   SessionResults,
   SessionSnapshot,
+  RhythmPatternPair,
   SoundPreset,
   Subdivision,
   TapFeedback,
@@ -38,6 +39,11 @@ const AUDIO_LEAD_IN_MS = 300;
 const FORCE_SILENT_E2E = process.env.EXPO_PUBLIC_E2E_SILENT === '1';
 
 export type AudioPreparationStatus = 'loading' | 'ready' | 'error';
+
+export interface ExercisePreparationOptions {
+  settings?: Partial<ExerciseSettings>;
+  patternPairs?: readonly RhythmPatternPair[];
+}
 
 export const DEFAULT_SETTINGS: ExerciseSettings = {
   bpm: 80,
@@ -62,10 +68,11 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
 
 interface SessionContextValue {
   settings: ExerciseSettings;
+  sessionSettings: ExerciseSettings | null;
   updateSettings: (patch: Partial<ExerciseSettings>) => void;
   audioStatus: AudioPreparationStatus;
   prepareAudio: () => Promise<void>;
-  prepareExercise: (score?: ImportedRhythmScore) => Promise<void>;
+  prepareExercise: (score?: ImportedRhythmScore, options?: ExercisePreparationOptions) => Promise<void>;
   prepareRepeatExercise: () => Promise<void>;
   startPreparedExercise: () => Promise<void>;
   exercisePrepared: boolean;
@@ -155,6 +162,7 @@ function monotonicNow(): number {
 
 export function SessionProvider({ children }: React.PropsWithChildren) {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [sessionSettings, setSessionSettings] = useState<ExerciseSettings | null>(null);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [snapshot, setSnapshot] = useState<SessionSnapshot | null>(null);
   const [results, setResults] = useState<SessionResults | null>(null);
@@ -168,6 +176,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   const sessionIdRef = useRef<string | null>(null);
   const pendingScoreRef = useRef<ImportedRhythmScore | undefined>(undefined);
   const lastScoreRef = useRef<ImportedRhythmScore | undefined>(undefined);
+  const pendingOptionsRef = useRef<ExercisePreparationOptions>({});
+  const lastOptionsRef = useRef<ExercisePreparationOptions>({});
   const [exercisePrepared, setExercisePrepared] = useState(false);
 
   useEffect(() => {
@@ -290,7 +300,10 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     });
   }, []);
 
-  const startSession = useCallback(async (score?: ImportedRhythmScore) => {
+  const startSession = useCallback(async (
+    score?: ImportedRhythmScore,
+    preparationOptions: ExercisePreparationOptions = {},
+  ) => {
     stopTimers();
     if (audioPreparationRef.current) await audioPreparationRef.current;
     if (engineRef.current && audioRef.current) {
@@ -298,14 +311,16 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       audioRef.current = null;
     }
 
-    const sessionSettings = score
+    const configuredSettings = { ...settings, ...preparationOptions.settings };
+    const activeSettings = score
       ? {
-          ...settings,
-          bpm: score.bpm ?? settings.bpm,
+          ...configuredSettings,
+          bpm: score.bpm ?? configuredSettings.bpm,
           timeSignature: score.timeSignature,
         }
-      : settings;
-    if (score) setSettings(sessionSettings);
+      : configuredSettings;
+    setSessionSettings(activeSettings);
+    if (score) setSettings(activeSettings);
     sessionIdRef.current = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     const audio = audioRef.current ?? new MetronomeAudio();
@@ -322,27 +337,32 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       throw error;
     }
 
-    const metrics = timeSignatureMetrics(sessionSettings.bpm, sessionSettings.timeSignature);
+    const metrics = timeSignatureMetrics(activeSettings.bpm, activeSettings.timeSignature);
     const beatMs = metrics.beatDurationMs;
     const performanceNow = monotonicNow();
     const audioNow = audio.currentTime;
     const sessionStartTime = performanceNow + AUDIO_LEAD_IN_MS + COUNT_IN_BEATS * beatMs;
     const sessionStartAudioTime =
       audioNow + AUDIO_LEAD_IN_MS / 1_000 + (COUNT_IN_BEATS * beatMs) / 1_000;
-    const engine = new RhythmTimingEngine({ settings: sessionSettings, sessionStartTime, importedScore: score });
+    const engine = new RhythmTimingEngine({
+      settings: activeSettings,
+      sessionStartTime,
+      importedScore: score,
+      patternPairs: preparationOptions.patternPairs,
+    });
     engineRef.current = engine;
     setResults(null);
     setSnapshot(engine.advance(performanceNow));
     audio.start({
       sessionStartAudioTime,
-      bpm: sessionSettings.bpm,
+      bpm: activeSettings.bpm,
       beatsPerBar: metrics.beatsPerBar,
-      durationSeconds: sessionSettings.durationSeconds === 'endless' ? null : sessionSettings.durationSeconds,
-      soundEnabled: sessionSettings.soundEnabled && !FORCE_SILENT_E2E,
+      durationSeconds: activeSettings.durationSeconds === 'endless' ? null : activeSettings.durationSeconds,
+      soundEnabled: activeSettings.soundEnabled && !FORCE_SILENT_E2E,
       sounds: {
-        metronome: sessionSettings.metronomeSound,
-        leftHand: sessionSettings.leftHandSound,
-        rightHand: sessionSettings.rightHandSound,
+        metronome: activeSettings.metronomeSound,
+        leftHand: activeSettings.leftHandSound,
+        rightHand: activeSettings.rightHandSound,
       },
     });
 
@@ -365,23 +385,31 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     uiTimerRef.current = setTimeout(updateFromClock, 30);
   }, [saveCompletedSession, settings, stopTimers]);
 
-  const prepareExercise = useCallback(async (score?: ImportedRhythmScore) => {
+  const prepareExercise = useCallback(async (
+    score?: ImportedRhythmScore,
+    options: ExercisePreparationOptions = {},
+  ) => {
+    pendingOptionsRef.current = options;
+    setSessionSettings({ ...settings, ...options.settings });
     await prepareAudio();
     pendingScoreRef.current = score;
     setExercisePrepared(true);
-  }, [prepareAudio]);
+  }, [prepareAudio, settings]);
 
   const prepareRepeatExercise = useCallback(async () => {
     if (!results) throw new Error('There is no completed exercise to repeat.');
-    await prepareExercise(lastScoreRef.current);
+    await prepareExercise(lastScoreRef.current, lastOptionsRef.current);
   }, [prepareExercise, results]);
 
   const startPreparedExercise = useCallback(async () => {
     if (!exercisePrepared) throw new Error('Prepare an exercise before starting.');
     const score = pendingScoreRef.current;
-    await startSession(score);
+    const options = pendingOptionsRef.current;
+    await startSession(score, options);
     lastScoreRef.current = score;
+    lastOptionsRef.current = options;
     pendingScoreRef.current = undefined;
+    pendingOptionsRef.current = {};
     setExercisePrepared(false);
   }, [exercisePrepared, startSession]);
 
@@ -442,8 +470,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   );
 
   const value = useMemo(
-    () => ({ settings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, discardReplayData }),
-    [settings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, discardReplayData],
+    () => ({ settings, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, discardReplayData }),
+    [settings, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, discardReplayData],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

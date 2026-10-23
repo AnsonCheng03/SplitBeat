@@ -19,6 +19,7 @@ import type {
   MissedEvent,
   ReplayExpectedEvent,
   ReplayTap,
+  RhythmPatternPair,
   SessionResults,
   SessionSnapshot,
   Subdivision,
@@ -78,6 +79,7 @@ interface TimingEngineOptions {
   settings: ExerciseSettings;
   sessionStartTime: number;
   importedScore?: ImportedRhythmScore;
+  patternPairs?: readonly RhythmPatternPair[];
   random?: () => number;
 }
 
@@ -181,6 +183,7 @@ export class RhythmTimingEngine {
     this.getStep = createExerciseStepGenerator({
       enabledSubdivisions: options.settings.enabledSubdivisions,
       changeIntervalBeats: options.settings.changeIntervalBeats,
+      patternPairs: options.patternPairs,
       random: options.random,
     });
   }

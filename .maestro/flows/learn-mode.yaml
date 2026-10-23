@@ -1,0 +1,70 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: LANDSCAPE_LEFT
+- launchApp:
+    clearState: true
+- runFlow:
+    when:
+      visible:
+        text: Two-Hand Rhythm Trainer
+    commands:
+      - tapOn: Two-Hand Rhythm Trainer
+- runFlow:
+    when:
+      visible:
+        text: Open
+    commands:
+      - tapOn: Open
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
+- tapOn:
+    id: home.learn
+- extendedWaitUntil:
+    visible:
+      id: learn.screen
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: learn.start
+    timeout: 15000
+- assertVisible:
+    id: learn.start
+- assertVisible: Find the pulse
+- assertVisible: 0 / 12
+- assertVisible:
+    id: learn.lesson.together-pulse
+- tapOn:
+    id: learn.start
+- extendedWaitUntil:
+    visible:
+      id: practice.screen
+    timeout: 15000
+- assertVisible:
+    id: practice.tutorial
+- tapOn:
+    id: practice.tutorial
+- assertVisible:
+    id: practice.beatCounter
+- tapOn:
+    id: practice.end
+- extendedWaitUntil:
+    visible:
+      id: results.screen
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: results.continueLearning
+    timeout: 15000
+- assertVisible: LESSON COMPLETE
+- tapOn:
+    id: results.continueLearning
+- extendedWaitUntil:
+    visible:
+      id: learn.screen
+    timeout: 15000
+- assertVisible: 1 / 12
+- assertVisible:
+    id: learn.lesson.together-pulse

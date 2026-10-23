@@ -3,6 +3,7 @@ import { Animated, Easing, Text, View } from 'react-native';
 import { NoteNotation } from '@/components/NoteNotation';
 import { createBarNoteNotationPlan, type NoteNotationSize } from '@/rhythm/noteNotation';
 import type { ScoreRhythmEvent, ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
+import type { Hand } from '@/types/rhythm';
 import { colors } from '@/theme';
 
 function RhythmTrack({
@@ -13,6 +14,7 @@ function RhythmTrack({
   size,
   beamGroupQuarterNotes,
   minimal = false,
+  testIdPrefix = 'practice.scoreMeasure',
 }: {
   label: string;
   events: ScoreRhythmEvent[];
@@ -21,9 +23,10 @@ function RhythmTrack({
   size: NoteNotationSize;
   beamGroupQuarterNotes: number;
   minimal?: boolean;
+  testIdPrefix?: string;
 }) {
   const [notationWidth, setNotationWidth] = useState(0);
-  const plan = useMemo(() => notationWidth > 0
+  const plan = useMemo(() => events.length > 0 && notationWidth > 0
     ? createBarNoteNotationPlan(events, {
       durationQuarter,
       width: notationWidth,
@@ -39,11 +42,15 @@ function RhythmTrack({
         onLayout={({ nativeEvent }) => setNotationWidth(nativeEvent.layout.width)}
         style={{ flex: 1, minHeight: size === 'compact' ? 28 : 42, justifyContent: 'center' }}
       >
-        {plan ? (
+        {events.length === 0 ? (
+          <Text style={{ color: colors.muted, fontSize: size === 'compact' ? 9 : 11, fontWeight: '800', letterSpacing: 1.1, textAlign: 'center' }}>
+            REST
+          </Text>
+        ) : plan ? (
           <NoteNotation
             plan={plan}
             color={color}
-            testID={`practice.scoreMeasure.${label.toLowerCase()}Notation`}
+            testID={`${testIdPrefix}.${label.toLowerCase()}Notation`}
             accessibilityLabel={`${label.toLowerCase()} bar with ${events.length} notes`}
           />
         ) : null}
@@ -81,40 +88,60 @@ export function ScoreRhythmMeasure({
   count,
   compact = false,
   beamGroupQuarterNotes = 1,
+  hideHeader = false,
+  testIdPrefix = 'practice.scoreMeasure',
+  visibleHand,
+  focusedColor,
+  minimal = false,
 }: {
   measure: ScoreMeasure;
   number: number;
   count: number;
   compact?: boolean;
   beamGroupQuarterNotes?: number;
+  hideHeader?: boolean;
+  testIdPrefix?: string;
+  visibleHand?: Hand;
+  focusedColor?: string;
+  minimal?: boolean;
 }) {
   const size: NoteNotationSize = compact ? 'compact' : 'full';
 
   return (
-    <View testID="practice.scoreMeasure" style={{ position: 'relative', paddingHorizontal: compact ? 4 : 12, paddingVertical: compact ? 3 : 7, gap: compact ? 2 : 4 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: compact ? 0 : 2 }}>
-        <Text style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '800', letterSpacing: 1.1 }}>SCORE RHYTHM</Text>
-        <Text style={{ color: colors.text, fontSize: compact ? 10 : 11, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-          BAR {number} / {count}
-        </Text>
-      </View>
-      <RhythmTrack
-        label="LEFT"
-        events={measure.leftEvents}
-        durationQuarter={measure.durationQuarter}
-        color={colors.left}
-        size={size}
-        beamGroupQuarterNotes={beamGroupQuarterNotes}
-      />
-      <RhythmTrack
-        label="RIGHT"
-        events={measure.rightEvents}
-        durationQuarter={measure.durationQuarter}
-        color={colors.right}
-        size={size}
-        beamGroupQuarterNotes={beamGroupQuarterNotes}
-      />
-      <MeasureBarLine testID="practice.scoreMeasure.barline" inset={2} />
+    <View testID={testIdPrefix} style={{ position: 'relative', paddingHorizontal: compact ? 4 : 12, paddingVertical: compact ? 3 : 7, gap: compact ? 2 : 4 }}>
+      {!hideHeader ? (
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: compact ? 0 : 2 }}>
+          <Text style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '800', letterSpacing: 1.1 }}>SCORE RHYTHM</Text>
+          <Text style={{ color: colors.text, fontSize: compact ? 10 : 11, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+            BAR {number} / {count}
+          </Text>
+        </View>
+      ) : null}
+      {!visibleHand || visibleHand === 'left' ? (
+        <RhythmTrack
+          label="LEFT"
+          events={measure.leftEvents}
+          durationQuarter={measure.durationQuarter}
+          color={visibleHand ? focusedColor ?? colors.left : colors.left}
+          size={size}
+          beamGroupQuarterNotes={beamGroupQuarterNotes}
+          minimal={minimal}
+          testIdPrefix={testIdPrefix}
+        />
+      ) : null}
+      {!visibleHand || visibleHand === 'right' ? (
+        <RhythmTrack
+          label="RIGHT"
+          events={measure.rightEvents}
+          durationQuarter={measure.durationQuarter}
+          color={visibleHand ? focusedColor ?? colors.right : colors.right}
+          size={size}
+          beamGroupQuarterNotes={beamGroupQuarterNotes}
+          minimal={minimal}
+          testIdPrefix={testIdPrefix}
+        />
+      ) : null}
+      <MeasureBarLine testID={`${testIdPrefix}.barline`} inset={2} />
     </View>
   );
 }
@@ -128,6 +155,8 @@ interface ScrollingScoreRhythmProps {
   compact?: boolean;
   beamGroupQuarterNotes?: number;
   minimal?: boolean;
+  visibleHand?: Hand;
+  focusedColor?: string;
 }
 
 interface VisibleScoreBar {
@@ -151,6 +180,8 @@ function ScoreBarPanel({
   size,
   beamGroupQuarterNotes,
   minimal,
+  visibleHand,
+  focusedColor,
 }: {
   bar: VisibleScoreBar;
   count: number;
@@ -158,6 +189,8 @@ function ScoreBarPanel({
   size: NoteNotationSize;
   beamGroupQuarterNotes: number;
   minimal: boolean;
+  visibleHand?: Hand;
+  focusedColor?: string;
 }) {
   return (
     <View style={{ position: 'relative', width, paddingHorizontal: 4, paddingVertical: size === 'compact' ? 3 : 7, gap: size === 'compact' ? 2 : 4 }}>
@@ -168,24 +201,24 @@ function ScoreBarPanel({
           </Text>
         </View>
       ) : null}
-      <RhythmTrack
+      {(!visibleHand || visibleHand === 'left') ? <RhythmTrack
         label="LEFT"
         events={bar.measure.leftEvents}
         durationQuarter={bar.measure.durationQuarter}
-        color={colors.left}
+        color={visibleHand ? focusedColor ?? colors.left : colors.left}
         size={size}
         beamGroupQuarterNotes={beamGroupQuarterNotes}
         minimal={minimal}
-      />
-      <RhythmTrack
+      /> : null}
+      {(!visibleHand || visibleHand === 'right') ? <RhythmTrack
         label="RIGHT"
         events={bar.measure.rightEvents}
         durationQuarter={bar.measure.durationQuarter}
-        color={colors.right}
+        color={visibleHand ? focusedColor ?? colors.right : colors.right}
         size={size}
         beamGroupQuarterNotes={beamGroupQuarterNotes}
         minimal={minimal}
-      />
+      /> : null}
       <MeasureBarLine testID={`practice.scoreMeasure.barline.${bar.sequence}`} inset={4} />
     </View>
   );
@@ -201,6 +234,8 @@ export function ScrollingScoreRhythm({
   compact = false,
   beamGroupQuarterNotes = 1,
   minimal = false,
+  visibleHand,
+  focusedColor,
 }: ScrollingScoreRhythmProps) {
   const [viewportWidth, setViewportWidth] = useState(0);
   const size: NoteNotationSize = compact ? 'compact' : 'full';
@@ -258,6 +293,8 @@ export function ScrollingScoreRhythm({
               size={size}
               beamGroupQuarterNotes={beamGroupQuarterNotes}
               minimal={minimal}
+              visibleHand={visibleHand}
+              focusedColor={focusedColor}
             />
           ))}
         </Animated.View>

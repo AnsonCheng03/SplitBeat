@@ -1,9 +1,10 @@
 import { SUBDIVISIONS } from '@/types/rhythm';
-import type { ExerciseStep, Subdivision } from '@/types/rhythm';
+import type { ExerciseStep, RhythmPatternPair, Subdivision } from '@/types/rhythm';
 
 export interface ExerciseGeneratorOptions {
   enabledSubdivisions: Subdivision[];
   changeIntervalBeats: number;
+  patternPairs?: readonly RhythmPatternPair[];
   random?: () => number;
 }
 
@@ -17,9 +18,16 @@ export function createExerciseStepGenerator(options: ExerciseGeneratorOptions) {
   return (stepIndex: number): ExerciseStep => {
     while (steps.length <= stepIndex) {
       const previous = steps.at(-1);
-      const candidates = allowed.flatMap((leftSubdivision) =>
-        allowed.map((rightSubdivision) => ({ leftSubdivision, rightSubdivision })),
-      );
+      const candidates = options.patternPairs?.length
+        ? options.patternPairs.filter((candidate, index, pairs) =>
+            pairs.findIndex((pair) =>
+              pair.leftSubdivision === candidate.leftSubdivision &&
+              pair.rightSubdivision === candidate.rightSubdivision,
+            ) === index,
+          )
+        : allowed.flatMap((leftSubdivision) =>
+            allowed.map((rightSubdivision) => ({ leftSubdivision, rightSubdivision })),
+          );
       const nonRepeating = candidates.filter(
         (candidate) =>
           !previous ||
