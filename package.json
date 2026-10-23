@@ -13,6 +13,8 @@
     "lint": "eslint .",
     "e2e:ios": "expo run:ios --configuration Release",
     "e2e:android": "expo run:android --variant release",
+    "ios:archive": "SPLITBEAT_ARCHIVE_ONLY=1 bash scripts/release-testflight.sh",
+    "release:testflight": "bash scripts/release-testflight.sh",
     "e2e:maestro": "node scripts/e2e/run-maestro.mjs",
     "e2e:direct-start": "E2E_MAESTRO_FLOW=direct-start.yaml node scripts/e2e/run-maestro.mjs",
     "e2e:score-import": "E2E_MAESTRO_FLOW=score-import.yaml node scripts/e2e/run-maestro.mjs"

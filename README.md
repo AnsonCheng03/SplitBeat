@@ -19,14 +19,17 @@ An iOS build can also be offered on Apple silicon Macs as an iPhone/iPad app. Th
 
 ## iOS release and TestFlight
 
-EAS profiles follow the same staging, E2E, and production layout used by TechQ. Production builds use remote build-number management and are submitted with the production profile:
+TestFlight builds use a local Xcode archive and upload, following TechQ's `release:testflight` workflow. This does not use EAS Build. On the Mac, sign in to Xcode with the Apple Developer account for team `538FVU496F`, then run:
 
 ~~~sh
-eas build --platform ios --profile production
-eas submit --platform ios --profile production --latest
+npm run release:testflight
 ~~~
 
-The iOS config sets `usesNonExemptEncryption` to `false`; the generated `Info.plist` contains `ITSAppUsesNonExemptEncryption=false` and does not include a microphone purpose string. The app synthesizes sound and does not use the microphone.
+This requires macOS, Xcode, CocoaPods, and at least 20 GiB free on `/private/tmp`. To create and validate an archive without uploading it, run `npm run ios:archive`; set `SPLITBEAT_ARCHIVE_PATH` to choose another `.xcarchive` location. The archive is retained if signing or upload fails.
+
+The release script uses Xcode automatic signing with the configured Apple team. It can also use an App Store Connect API key when `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID`, and optionally `ASC_API_KEY_PATH` are set; the default key location is `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8`. Keep API keys out of the repository. The configured iOS build number is `2`; increment `ios.buildNumber` in `app.json` for each subsequent upload.
+
+The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.plist` is checked for `ITSAppUsesNonExemptEncryption=false` and for absence of a microphone purpose string before upload. The app synthesizes sound and does not use the microphone. App Store Connect still processes each accepted upload before it appears in TestFlight.
 
 ## App branding
 
