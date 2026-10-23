@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Text, View } from 'react-native';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Easing, Text, View } from 'react-native';
 import { NoteNotation } from '@/components/NoteNotation';
 import { createBarNoteNotationPlan, type NoteNotationSize } from '@/rhythm/noteNotation';
 import type { ScoreRhythmEvent, ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
@@ -92,6 +92,141 @@ export function ScoreRhythmMeasure({
         size={size}
         beamGroupQuarterNotes={beamGroupQuarterNotes}
       />
+    </View>
+  );
+}
+
+interface ScrollingScoreRhythmProps {
+  measure: ScoreMeasure;
+  previousMeasure?: ScoreMeasure;
+  nextMeasure: ScoreMeasure;
+  sequence: number;
+  count: number;
+  compact?: boolean;
+  beamGroupQuarterNotes?: number;
+}
+
+interface VisibleScoreBar {
+  measure: ScoreMeasure;
+  number: number;
+  sequence: number;
+}
+
+function scoreBar(measure: ScoreMeasure, count: number, sequence: number): VisibleScoreBar {
+  return {
+    measure,
+    number: ((sequence % count) + count) % count + 1,
+    sequence,
+  };
+}
+
+function ScoreBarPanel({
+  bar,
+  count,
+  width,
+  size,
+  beamGroupQuarterNotes,
+}: {
+  bar: VisibleScoreBar;
+  count: number;
+  width: number;
+  size: NoteNotationSize;
+  beamGroupQuarterNotes: number;
+}) {
+  return (
+    <View style={{ width, paddingHorizontal: 4, paddingVertical: size === 'compact' ? 3 : 7, gap: size === 'compact' ? 2 : 4 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: size === 'compact' ? 0 : 2 }}>
+        <Text style={{ color: colors.text, fontSize: size === 'compact' ? 10 : 11, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+          BAR {bar.number} / {count}
+        </Text>
+      </View>
+      <RhythmTrack
+        label="LEFT"
+        events={bar.measure.leftEvents}
+        durationQuarter={bar.measure.durationQuarter}
+        color={colors.left}
+        size={size}
+        beamGroupQuarterNotes={beamGroupQuarterNotes}
+      />
+      <RhythmTrack
+        label="RIGHT"
+        events={bar.measure.rightEvents}
+        durationQuarter={bar.measure.durationQuarter}
+        color={colors.right}
+        size={size}
+        beamGroupQuarterNotes={beamGroupQuarterNotes}
+      />
+    </View>
+  );
+}
+
+/** Advances one complete bar at a time; both hand rows share the same horizontal motion. */
+export function ScrollingScoreRhythm({
+  measure,
+  previousMeasure,
+  nextMeasure,
+  sequence,
+  count,
+  compact = false,
+  beamGroupQuarterNotes = 1,
+}: ScrollingScoreRhythmProps) {
+  const [viewportWidth, setViewportWidth] = useState(0);
+  const size: NoteNotationSize = compact ? 'compact' : 'full';
+  const [translateX] = useState(() => new Animated.Value(0));
+  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
+  const visibleSequenceRef = useRef(sequence);
+  const visibleBars = sequence === 0 || !previousMeasure
+    ? [scoreBar(measure, count, sequence), scoreBar(nextMeasure, count, sequence + 1)]
+    : [scoreBar(previousMeasure, count, sequence - 1), scoreBar(measure, count, sequence)];
+
+  useLayoutEffect(() => {
+    if (sequence === visibleSequenceRef.current) return;
+    visibleSequenceRef.current = sequence;
+    animationRef.current?.stop();
+
+    if (viewportWidth <= 0 || previousMeasure?.index === measure.index) {
+      translateX.setValue(0);
+      return;
+    }
+
+    translateX.setValue(0);
+    animationRef.current = Animated.timing(translateX, {
+      toValue: -viewportWidth,
+      duration: 190,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+    animationRef.current.start();
+
+    return () => animationRef.current?.stop();
+  }, [measure.index, previousMeasure?.index, sequence, translateX, viewportWidth]);
+
+  return (
+    <View
+      testID="practice.scoreMeasure"
+      onLayout={({ nativeEvent }) => setViewportWidth(nativeEvent.layout.width)}
+      style={{ overflow: 'hidden', paddingHorizontal: compact ? 4 : 12, paddingVertical: compact ? 3 : 7 }}
+    >
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: compact ? 0 : 2 }}>
+        <Text style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '800', letterSpacing: 1.1 }}>SCORE RHYTHM</Text>
+      </View>
+      {viewportWidth > 0 ? (
+        <Animated.View
+          testID="practice.scoreMeasure.strip"
+          style={{ width: viewportWidth * 2, flexDirection: 'row', transform: [{ translateX }] }}
+        >
+          {visibleBars.map((bar) => (
+            <ScoreBarPanel
+              key={bar.sequence}
+              bar={bar}
+              count={count}
+              width={viewportWidth}
+              size={size}
+              beamGroupQuarterNotes={beamGroupQuarterNotes}
+            />
+          ))}
+        </Animated.View>
+      ) : null}
     </View>
   );
 }

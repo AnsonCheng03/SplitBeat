@@ -515,6 +515,9 @@ test('score events use MusicXML quarter-note positions, loop, and score independ
   const preview = engine.advance(start + 100);
   assert.equal(preview.scoreTitle, 'Etude');
   assert.equal(preview.scoreMeasureNumber, 1);
+  assert.equal(preview.scorePreviousMeasure, importedScore.measures[0]);
+  assert.equal(preview.scoreMeasureSequence, 0);
+  assert.equal(preview.scoreNextMeasure, importedScore.measures[0]);
   assert.equal(preview.scoreMeasure?.rightEvents.length, 8);
 
   engine.tap('left', start);
@@ -532,6 +535,55 @@ test('score events use MusicXML quarter-note positions, loop, and score independ
   assert.equal(results.stable.totalHit, 4);
   assert.equal(results.transition.totalExpected, 0);
   assert.deepEqual(results.combinations, []);
+});
+
+test('score view advances its measure sequence only at bar boundaries and repeats in order', () => {
+  const start = 52_000;
+  const importedScore: ImportedRhythmScore = {
+    formatVersion: 1,
+    title: 'Two-bar loop',
+    timeSignature: '4/4',
+    bpm: 60,
+    totalQuarterNotes: 8,
+    warnings: [],
+    measures: [
+      {
+        index: 0,
+        startQuarter: 0,
+        durationQuarter: 4,
+        leftEvents: [{ startQuarter: 0, durationQuarter: 1 }],
+        rightEvents: [{ startQuarter: 0, durationQuarter: 1 }],
+      },
+      {
+        index: 1,
+        startQuarter: 4,
+        durationQuarter: 4,
+        leftEvents: [{ startQuarter: 0, durationQuarter: 1 }],
+        rightEvents: [{ startQuarter: 0, durationQuarter: 1 }],
+      },
+    ],
+  };
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, bpm: 60 },
+    sessionStartTime: start,
+    importedScore,
+  });
+
+  const whileFirstBarPlays = engine.advance(start + 3_999);
+  assert.equal(whileFirstBarPlays.scoreMeasure?.index, 0);
+  assert.equal(whileFirstBarPlays.scoreMeasureSequence, 0);
+  assert.equal(whileFirstBarPlays.scorePreviousMeasure?.index, 1);
+  assert.equal(whileFirstBarPlays.scoreNextMeasure?.index, 1);
+
+  const atSecondBar = engine.advance(start + 4_000);
+  assert.equal(atSecondBar.scoreMeasure?.index, 1);
+  assert.equal(atSecondBar.scoreMeasureSequence, 1);
+  assert.equal(atSecondBar.scorePreviousMeasure?.index, 0);
+  assert.equal(atSecondBar.scoreNextMeasure?.index, 0);
+
+  const onRepeat = engine.advance(start + 8_000);
+  assert.equal(onRepeat.scoreMeasure?.index, 0);
+  assert.equal(onRepeat.scoreMeasureSequence, 2);
 });
 
 test('score taps return the imported pitch and missed notes retain replay positions', () => {

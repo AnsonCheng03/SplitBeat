@@ -580,7 +580,7 @@ export class RhythmTimingEngine {
     const overallLeft = this.readHandStats('left');
     const overallRight = this.readHandStats('right');
     const phase = this.finished ? 'finished' : now < this.sessionStartTime ? 'countdown' : 'running';
-    const scoreMeasure = this.currentScoreMeasure(now);
+    const scorePosition = this.currentScorePosition(now);
     const remaining = this.endTime === null ? null : Math.max(0, (this.endTime - now) / 1_000);
     const nextStepTime =
       this.sessionStartTime + (currentStep.startBeat + currentStep.durationBeats) * this.beatMs;
@@ -615,10 +615,13 @@ export class RhythmTimingEngine {
             ? 'START'
             : null,
       results: this.finished ? this.getResultsWithoutAdvance(now) : undefined,
-      ...(scoreMeasure
+      ...(scorePosition
         ? {
-            scoreMeasure,
-            scoreMeasureNumber: scoreMeasure.index + 1,
+            scoreMeasure: scorePosition.measure,
+            scorePreviousMeasure: scorePosition.previousMeasure,
+            scoreNextMeasure: scorePosition.nextMeasure,
+            scoreMeasureSequence: scorePosition.sequence,
+            scoreMeasureNumber: scorePosition.measure.index + 1,
             scoreMeasureCount: this.importedScore?.measures.length,
             scoreTitle: this.importedScore?.title,
           }
@@ -626,18 +629,27 @@ export class RhythmTimingEngine {
     };
   }
 
-  private currentScoreMeasure(now: number) {
+  private currentScorePosition(now: number) {
     const score = this.importedScore;
     if (!score || score.totalQuarterNotes <= 0 || score.measures.length === 0) return undefined;
     const elapsedQuarterNotes = Math.max(0, (now - this.sessionStartTime) / this.quarterNoteMs);
-    const scoreQuarter = elapsedQuarterNotes % score.totalQuarterNotes;
-    return (
-      score.measures.find(
+    const scoreRepeat = Math.floor(elapsedQuarterNotes / score.totalQuarterNotes);
+    const scoreQuarter = elapsedQuarterNotes - scoreRepeat * score.totalQuarterNotes;
+    const measureIndex = score.measures.findIndex(
         (measure) =>
           scoreQuarter >= measure.startQuarter &&
           scoreQuarter < measure.startQuarter + measure.durationQuarter,
-      ) ?? score.measures[0]
-    );
+      );
+    const index = measureIndex < 0 ? 0 : measureIndex;
+    const measure = score.measures[index];
+    if (!measure) return undefined;
+
+    return {
+      measure,
+      previousMeasure: score.measures[(index - 1 + score.measures.length) % score.measures.length] ?? measure,
+      nextMeasure: score.measures[(index + 1) % score.measures.length] ?? measure,
+      sequence: scoreRepeat * score.measures.length + index,
+    };
   }
 
   private isRestAt(timestamp: number): boolean {

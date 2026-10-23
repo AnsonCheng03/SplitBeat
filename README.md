@@ -87,7 +87,7 @@ During practice, an external QWERTY keyboard can tap either hand. The practice z
 
 The home screen follows AstroDX's compact main-menu hierarchy: choose Two hands or One hand, then start. Settings and score import stay secondary to that choice. One-hand mode reveals a simple left/right selector. The Settings page keeps tempo and duration close by and opens Rhythm & meter, Sounds & feedback, or Timing calibration on separate detail pages.
 
-Build and install a release app on a simulator or device, then run the Maestro smoke flow. The flow mutes sound effects in settings before practice and keeps replay silent. It exercises the multi-page settings, starts practice, checks both tap zones, ends the exercise, and verifies the results screen:
+Build and install the release test app on a simulator or device, then run the Maestro smoke flow. E2E builds for both platforms force all metronome, hand, score, and replay audio off, regardless of stored settings, so automated runs stay silent. The flow also checks the muted status and exercises multi-page settings, both tap zones, results, replay, and records:
 
 ~~~sh
 npm run e2e:ios

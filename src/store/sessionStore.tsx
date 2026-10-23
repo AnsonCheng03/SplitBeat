@@ -36,6 +36,7 @@ const SETTINGS_KEY = 'two-hand-rhythm-trainer.settings.v1';
 const SESSION_HISTORY_KEY = 'split-beat.session-history.v1';
 const COUNT_IN_BEATS = 3;
 const AUDIO_LEAD_IN_MS = 300;
+const FORCE_SILENT_E2E = process.env.EXPO_PUBLIC_E2E_SILENT === '1';
 
 export type AudioPreparationStatus = 'loading' | 'ready' | 'error';
 
@@ -50,7 +51,7 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   graceNotesEnabled: false,
   trainingMode: 'two-hand',
   singleHand: 'left',
-  soundEnabled: true,
+  soundEnabled: !FORCE_SILENT_E2E,
   metronomeSound: 'wood',
   leftHandSound: 'soft',
   rightHandSound: 'beep',
@@ -122,7 +123,11 @@ function restoreSettings(raw: string | null): ExerciseSettings {
           : DEFAULT_SETTINGS.graceNotesEnabled,
       trainingMode: parsed.trainingMode === 'single-hand' ? 'single-hand' : 'two-hand',
       singleHand: parsed.singleHand === 'right' ? 'right' : 'left',
-      soundEnabled: typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : true,
+      soundEnabled: FORCE_SILENT_E2E
+        ? false
+        : typeof parsed.soundEnabled === 'boolean'
+          ? parsed.soundEnabled
+          : true,
       metronomeSound: restoreSound(parsed.metronomeSound, DEFAULT_SETTINGS.metronomeSound),
       leftHandSound: restoreSound(parsed.leftHandSound, DEFAULT_SETTINGS.leftHandSound),
       rightHandSound: restoreSound(parsed.rightHandSound, DEFAULT_SETTINGS.rightHandSound),
@@ -340,7 +345,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       bpm: sessionSettings.bpm,
       beatsPerBar: metrics.beatsPerBar,
       durationSeconds: sessionSettings.durationSeconds === 'endless' ? null : sessionSettings.durationSeconds,
-      soundEnabled: sessionSettings.soundEnabled,
+      soundEnabled: sessionSettings.soundEnabled && !FORCE_SILENT_E2E,
       sounds: {
         metronome: sessionSettings.metronomeSound,
         leftHand: sessionSettings.leftHandSound,
@@ -426,7 +431,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
         events,
         bpm,
         beatsPerBar: metrics.beatsPerBar,
-        soundEnabled: settings.soundEnabled,
+        soundEnabled: settings.soundEnabled && !FORCE_SILENT_E2E,
         sounds: {
           metronome: settings.metronomeSound,
           leftHand: settings.leftHandSound,

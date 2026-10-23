@@ -8,7 +8,7 @@ import { HardwareKeyboardInput } from '@/components/HardwareKeyboardInput';
 import { MetronomeIndicator } from '@/components/MetronomeIndicator';
 import { NextPatternPreview } from '@/components/NextPatternPreview';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
-import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
+import { ScrollingScoreRhythm } from '@/components/ScoreRhythmMeasure';
 import { TapZone } from '@/components/TapZone';
 import { pulseQuarterNotes, SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import { useRhythmSession } from '@/store/sessionStore';
@@ -140,9 +140,11 @@ export default function PracticeScreen() {
               <Text numberOfLines={1} style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '700', textAlign: 'center' }}>
                 {snapshot.scoreTitle}
               </Text>
-              <ScoreRhythmMeasure
+              <ScrollingScoreRhythm
                 measure={snapshot.scoreMeasure}
-                number={snapshot.scoreMeasureNumber ?? 1}
+                previousMeasure={snapshot.scorePreviousMeasure}
+                nextMeasure={snapshot.scoreNextMeasure ?? snapshot.scoreMeasure}
+                sequence={snapshot.scoreMeasureSequence ?? 0}
                 count={snapshot.scoreMeasureCount ?? 1}
                 compact={compact}
                 beamGroupQuarterNotes={pulseQuarterNotes(settings.timeSignature)}

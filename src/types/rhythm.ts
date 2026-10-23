@@ -154,6 +154,10 @@ export interface SessionSnapshot {
   countdown: number | 'START' | null;
   results?: SessionResults;
   scoreMeasure?: ScoreRhythmMeasure;
+  scorePreviousMeasure?: ScoreRhythmMeasure;
+  scoreNextMeasure?: ScoreRhythmMeasure;
+  /** Monotonic bar number across score repeats, used to advance the score view at bar lines. */
+  scoreMeasureSequence?: number;
   scoreMeasureNumber?: number;
   scoreMeasureCount?: number;
   scoreTitle?: string;
