@@ -44,7 +44,6 @@ const results: SessionResults = {
     hand: 'left',
     barIndex: 1,
     beatInBar: 0,
-    midiPitches: [60],
     isScoreEvent: true,
   }],
 };
@@ -56,6 +55,8 @@ test('session history stores summary results without missed-note replay data', (
   assert.equal(record.leftAccuracy, 90);
   assert.equal(record.rightAccuracy, 80);
   assert.equal('missedEvents' in record, false);
+  assert.equal('replayExpectedEvents' in record, false);
+  assert.equal('replayTaps' in record, false);
   assert.equal('midiPitches' in record, false);
 });
 

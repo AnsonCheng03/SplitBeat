@@ -224,6 +224,8 @@ appId: com.splitbeat.twohandrhythm
 - tapOn:
     id: results.replayBar.1
 - assertVisible:
+    id: results.replayTimeline.1
+- assertVisible:
     id: results.screen
 - scrollUntilVisible:
     element:

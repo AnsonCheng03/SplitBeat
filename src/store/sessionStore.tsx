@@ -25,7 +25,6 @@ import type {
   ExerciseSettings,
   Hand,
   SessionResults,
-  MissedEvent,
   SessionSnapshot,
   SoundPreset,
   Subdivision,
@@ -76,8 +75,6 @@ interface SessionContextValue {
   results: SessionResults | null;
   sessionHistory: SessionRecord[];
   sessionHistoryLoaded: boolean;
-  replayMissedBar: (events: readonly MissedEvent[]) => Promise<number>;
-  stopReplay: () => void;
   discardReplayData: () => void;
 }
 
@@ -166,10 +163,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   const [audioStatus, setAudioStatus] = useState<AudioPreparationStatus>('loading');
   const engineRef = useRef<RhythmTimingEngine | null>(null);
   const audioRef = useRef<MetronomeAudio | null>(null);
-  const replayAudioRef = useRef<MetronomeAudio | null>(null);
   const audioPreparationRef = useRef<Promise<void> | null>(null);
   const uiTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const replayTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const sessionIdRef = useRef<string | null>(null);
   const pendingScoreRef = useRef<ImportedRhythmScore | undefined>(undefined);
   const lastScoreRef = useRef<ImportedRhythmScore | undefined>(undefined);
@@ -297,13 +292,6 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
 
   const startSession = useCallback(async (score?: ImportedRhythmScore) => {
     stopTimers();
-    if (replayTimerRef.current) clearTimeout(replayTimerRef.current);
-    replayTimerRef.current = undefined;
-    if (replayAudioRef.current) {
-      const replayAudio = replayAudioRef.current;
-      replayAudioRef.current = null;
-      void replayAudio.stop();
-    }
     if (audioPreparationRef.current) await audioPreparationRef.current;
     if (engineRef.current && audioRef.current) {
       await audioRef.current.stop();
@@ -424,75 +412,38 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     engineRef.current = null;
   }, [saveCompletedSession, stopTimers]);
 
-  const stopReplay = useCallback(() => {
-    if (replayTimerRef.current) clearTimeout(replayTimerRef.current);
-    replayTimerRef.current = undefined;
-    const audio = replayAudioRef.current;
-    if (audio) {
-      replayAudioRef.current = null;
-      void audio.stop();
-    }
-  }, []);
-
-  const replayMissedBar = useCallback(async (events: readonly MissedEvent[]) => {
-    if (events.length === 0) return 0;
-    stopReplay();
-    const audio = new MetronomeAudio();
-    replayAudioRef.current = audio;
-    try {
-      await audio.prepare();
-      await audio.resume();
-      setAudioStatus('ready');
-      const bpm = results?.bpm ?? settings.bpm;
-      const timeSignature = results?.timeSignature ?? settings.timeSignature;
-      const metrics = timeSignatureMetrics(bpm, timeSignature);
-      const durationMs = audio.replayMissedBar({
-        events,
-        bpm,
-        beatsPerBar: metrics.beatsPerBar,
-        soundEnabled: settings.soundEnabled && !FORCE_SILENT_E2E,
-        sounds: {
-          metronome: settings.metronomeSound,
-          leftHand: settings.leftHandSound,
-          rightHand: settings.rightHandSound,
-        },
-      });
-      replayTimerRef.current = setTimeout(() => {
-        if (replayAudioRef.current !== audio) return;
-        replayTimerRef.current = undefined;
-        replayAudioRef.current = null;
-        void audio.stop();
-      }, durationMs + 80);
-      return durationMs;
-    } catch (error) {
-      if (replayAudioRef.current === audio) replayAudioRef.current = null;
-      void audio.stop();
-      setAudioStatus('error');
-      throw error;
-    }
-  }, [results, settings, stopReplay]);
-
   const discardReplayData = useCallback(() => {
-    stopReplay();
-    setResults((current) => current ? { ...current, missedEvents: [] } : current);
+    setResults((current) => current ? {
+      ...current,
+      missedEvents: [],
+      replayExpectedEvents: [],
+      replayTaps: [],
+    } : current);
     setSnapshot((current) => current?.results
-      ? { ...current, results: { ...current.results, missedEvents: [] } }
+      ? {
+          ...current,
+          results: {
+            ...current.results,
+            missedEvents: [],
+            replayExpectedEvents: [],
+            replayTaps: [],
+          },
+        }
       : current,
     );
-  }, [stopReplay]);
+  }, []);
 
   useEffect(
     () => () => {
       stopTimers();
       void audioRef.current?.stop();
-      stopReplay();
     },
-    [stopReplay, stopTimers],
+    [stopTimers],
   );
 
   const value = useMemo(
-    () => ({ settings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, replayMissedBar, stopReplay, discardReplayData }),
-    [settings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, replayMissedBar, stopReplay, discardReplayData],
+    () => ({ settings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, discardReplayData }),
+    [settings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, discardReplayData],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

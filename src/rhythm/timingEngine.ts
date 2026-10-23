@@ -17,6 +17,8 @@ import type {
   Hand,
   HandStats,
   MissedEvent,
+  ReplayExpectedEvent,
+  ReplayTap,
   SessionResults,
   SessionSnapshot,
   Subdivision,
@@ -124,12 +126,15 @@ export class RhythmTimingEngine {
   };
   private readonly combinations = new Map<string, MutableCombinationStats>();
   private readonly missedEvents: MissedEvent[] = [];
+  private readonly replayExpectedEvents: ReplayExpectedEvent[] = [];
+  private readonly replayTaps: ReplayTap[] = [];
   private readonly stable = createMutableAccuracyStats();
   private readonly transition = createMutableAccuracyStats();
   private nextStepToGenerate = 0;
   private nextScoreEventToGenerate = 0;
   private cachedNotationBarStartBeat = -1;
   private cachedNotationBarSteps: ExerciseStep[] = [];
+  private nextReplayTapId = 0;
   private finished = false;
 
   constructor(options: TimingEngineOptions) {
@@ -203,6 +208,8 @@ export class RhythmTimingEngine {
       return { feedback: 'ignored' };
     }
 
+    const replayTap = this.recordReplayTap(hand, actualTapTime);
+
     const tapOffsetMs =
       hand === 'left' ? this.settings.leftTapOffsetMs : this.settings.rightTapOffsetMs;
     const calibratedTapTime = actualTapTime - tapOffsetMs;
@@ -228,6 +235,8 @@ export class RhythmTimingEngine {
 
     const matchedEvent = candidates.find((event) => event.id === match.eventId);
     if (!matchedEvent) return { feedback: 'miss' };
+    replayTap.matchedEventId = matchedEvent.id;
+    replayTap.timingErrorMs = actualTapTime - matchedEvent.expectedTimeMs;
     matchedEvent.settled = true;
     this.recordEvent(hand, matchedEvent, match.grade, match.timingErrorMs);
     return {
@@ -265,6 +274,15 @@ export class RhythmTimingEngine {
           firstEvent.barIndex - secondEvent.barIndex ||
           firstEvent.beatInBar - secondEvent.beatInBar ||
           firstEvent.hand.localeCompare(secondEvent.hand),
+      ),
+      replayExpectedEvents: [...this.replayExpectedEvents].sort(
+        (firstEvent, secondEvent) =>
+          firstEvent.barIndex - secondEvent.barIndex ||
+          firstEvent.beatInBar - secondEvent.beatInBar ||
+          firstEvent.hand.localeCompare(secondEvent.hand),
+      ),
+      replayTaps: [...this.replayTaps].sort(
+        (firstTap, secondTap) => firstTap.timestampMs - secondTap.timestampMs,
       ),
       ...(this.importedScore
         ? { source: 'score' as const, scoreTitle: this.importedScore.title }
@@ -489,12 +507,55 @@ export class RhythmTimingEngine {
     }
   }
 
+  private recordReplayTap(hand: Hand, timestamp: number): ReplayTap {
+    const timestampMs = Math.max(0, timestamp - this.sessionStartTime);
+    const barDurationMs = this.beatsPerBar * this.beatMs;
+    const tap: ReplayTap = {
+      id: `tap-${this.nextReplayTapId}`,
+      hand,
+      barIndex: Math.floor(timestampMs / barDurationMs) + 1,
+      timestampMs,
+    };
+    this.nextReplayTapId += 1;
+    this.replayTaps.push(tap);
+    return tap;
+  }
+
   private recordEvent(
     hand: Hand,
     event: ExpectedEvent,
     grade: 'perfect' | 'great' | 'good' | null,
     errorMs: number | null,
   ): void {
+    const beatPosition = (event.expectedTimeMs - this.sessionStartTime) / this.beatMs;
+    const barOffset = Math.floor(beatPosition / this.beatsPerBar);
+    const beatInBar = beatPosition - barOffset * this.beatsPerBar;
+    const subdivision = event.isScoreEvent
+      ? undefined
+      : hand === 'left' ? event.step.leftSubdivision : event.step.rightSubdivision;
+    const durationQuarter = event.durationQuarter ?? (
+      subdivision && isTupletSubdivision(subdivision)
+        ? this.quarterNoteMs / this.beatMs / tupletCount(subdivision)
+        : subdivision
+          ? 1 / SUBDIVISION_COUNTS[subdivision]
+          : 1
+    );
+    const replayEvent: ReplayExpectedEvent = {
+      id: event.id,
+      hand,
+      barIndex: barOffset + 1,
+      beatInBar,
+      ...(subdivision ? { subdivision } : {}),
+      durationQuarter,
+      ...(event.tupletNumber === undefined
+        ? subdivision && isTupletSubdivision(subdivision) ? { tupletNumber: tupletCount(subdivision) } : {}
+        : { tupletNumber: event.tupletNumber }),
+      isScoreEvent: event.isScoreEvent,
+      matched: grade !== null,
+      ...(errorMs === null ? {} : { timingErrorMs: errorMs }),
+    };
+    this.replayExpectedEvents.push(replayEvent);
+
     const stats = this.hands[hand];
     stats.totalExpected += 1;
     if (grade) {
@@ -504,21 +565,17 @@ export class RhythmTimingEngine {
       stats.signedErrorTotal += errorMs ?? 0;
     } else {
       stats.miss += 1;
-      const beatPosition = (event.expectedTimeMs - this.sessionStartTime) / this.beatMs;
-      const barOffset = Math.floor(beatPosition / this.beatsPerBar);
-      const beatInBar = beatPosition - barOffset * this.beatsPerBar;
       this.missedEvents.push({
-        id: event.id,
-        hand,
-        barIndex: barOffset + 1,
-        beatInBar,
+        id: replayEvent.id,
+        hand: replayEvent.hand,
+        barIndex: replayEvent.barIndex,
+        beatInBar: replayEvent.beatInBar,
         ...(event.isScoreEvent
           ? {
               ...(event.durationQuarter === undefined ? {} : { durationQuarter: event.durationQuarter }),
               ...(event.tupletNumber === undefined ? {} : { tupletNumber: event.tupletNumber }),
             }
-          : { subdivision: hand === 'left' ? event.step.leftSubdivision : event.step.rightSubdivision }),
-        ...(event.midiPitches ? { midiPitches: [...event.midiPitches] } : {}),
+          : { subdivision }),
         isScoreEvent: event.isScoreEvent,
       });
     }
@@ -705,6 +762,10 @@ export class RhythmTimingEngine {
       })),
       durationSeconds: Math.max(0, (now - this.sessionStartTime) / 1_000),
       missedEvents: [...this.missedEvents],
+      replayExpectedEvents: [...this.replayExpectedEvents],
+      replayTaps: [...this.replayTaps].sort(
+        (firstTap, secondTap) => firstTap.timestampMs - secondTap.timestampMs,
+      ),
       ...(this.importedScore
         ? { source: 'score' as const, scoreTitle: this.importedScore.title }
         : {}),

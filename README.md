@@ -46,7 +46,7 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 - `src/rhythm/musicXmlParser.ts` converts partwise MusicXML to rhythm-only score tracks for imported-score practice.
 - `src/rhythm/timingCalibration.ts` normalizes per-hand timing calibration and the selectable scoring window.
 - src/audio/ synthesizes selectable metronome and hand click tones, then schedules metronome clicks on the native audio clock.
-- src/store/ owns session state, prepares the audio context and offline click sounds at app startup, and persists exercise settings and summary-only session history locally. Missed-event replay data stays with the open result screen.
+- src/store/ owns session state, prepares the audio context and offline click sounds at app startup, and persists exercise settings and summary-only session history locally. Expected note positions and actual tap timestamps stay in the active result screen for visual replay only.
 - `src/components/` contains reusable symbols, settings controls, beat indicators, start buttons, and large touch zones. Noteheads, stems, flags, and beams are engraved by VexFlow in an offline Expo DOM view; the native rhythm planner supplies note times and beam groups.
 - `expo-build-properties` enables the iOS scene lifecycle required by iOS 27 and builds Expo modules from source so Worklets links against this app's React Native libraries.
 - The metronome synthesizes output and never records audio. A version-pinned postinstall patch disables the audio library's unused iOS microphone permission methods; the app does not request microphone access.
@@ -77,7 +77,7 @@ The internal `ImportedRhythmScore` JSON stores each measure's start and duration
 
 ## Session records and missed-note replay
 
-The home screen's **My Records** page keeps the 100 most recent summary records on the device, including date, meter, tempo, mode, and overall/hand accuracy. Missed notes are listed by bar on the result page and can be replayed one bar at a time with the metronome and expected hand sounds; imported score misses replay their MusicXML pitches. Replay details are removed when the result page loses focus, and are never stored in session history.
+The home screen's **My Records** page keeps the 100 most recent summary records on the device, including date, meter, tempo, mode, and overall/hand accuracy. Missed notes are listed by bar on the result page. Visual replay shows the expected note values and the recorded taps on the same beat timeline, with a moving playhead; missed and extra taps are highlighted. Replay details are removed when the result page loses focus, and are never stored in session history. Replay is visual and silent.
 
 ## External keyboard play
 
@@ -87,7 +87,7 @@ During practice, an external QWERTY keyboard can tap either hand. Keys on the le
 
 The home screen follows AstroDX's compact main-menu hierarchy: choose Two hands or One hand, then start. Settings and score import stay secondary to that choice. One-hand mode reveals a simple left/right selector. The Settings page keeps tempo and duration close by and opens Rhythm & meter, Sounds & feedback, or Timing calibration on separate detail pages.
 
-Build and install the release test app on a simulator or device, then run the Maestro smoke flow. E2E builds for both platforms force all metronome, hand, score, and replay audio off, regardless of stored settings, so automated runs stay silent. The flow exercises multi-page settings, both tap zones, results, replay, and records:
+Build and install the release test app on a simulator or device, then run the Maestro smoke flow. E2E builds for both platforms force metronome, hand, and score audio off, regardless of stored settings, so automated runs stay silent. The flow exercises multi-page settings, both tap zones, results, visual replay, and records:
 
 ~~~sh
 npm run e2e:ios

@@ -3,8 +3,9 @@ import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { useCallback, useRef, useState } from 'react';
 import type { DimensionValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ReplayTimeline } from '@/components/ReplayTimeline';
 import { accuracyPercent } from '@/rhythm/scoring';
-import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
+import { SUBDIVISION_LABELS, timeSignatureMetrics } from '@/rhythm/subdivisions';
 import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
 import type { HandStats, MissedEvent, SessionResults, Subdivision } from '@/types/rhythm';
@@ -194,33 +195,28 @@ function scoreDurationLabel(durationQuarter: number, tupletNumber?: number): str
 }
 
 export default function ResultsScreen() {
-  const { results, replayMissedBar, prepareRepeatExercise, discardReplayData } = useRhythmSession();
+  const { results, prepareRepeatExercise, discardReplayData } = useRhythmSession();
   const router = useRouter();
-  const [playingBar, setPlayingBar] = useState<number | null>(null);
+  const [replay, setReplay] = useState<{ barIndex: number; playbackId: number; isPlaying: boolean } | null>(null);
+  const replaySequenceRef = useRef(0);
   const [startingAgain, setStartingAgain] = useState(false);
-  const replayTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const missedBars = missedBarGroups(results?.missedEvents ?? []);
 
   useFocusEffect(useCallback(() => () => {
-    if (replayTimerRef.current) clearTimeout(replayTimerRef.current);
-    replayTimerRef.current = undefined;
-    setPlayingBar(null);
     discardReplayData();
   }, [discardReplayData]));
 
-  const replayBar = useCallback(async (barIndex: number, events: readonly MissedEvent[]) => {
-    if (replayTimerRef.current) clearTimeout(replayTimerRef.current);
-    setPlayingBar(barIndex);
-    try {
-      const durationMs = await replayMissedBar(events);
-      replayTimerRef.current = setTimeout(() => {
-        replayTimerRef.current = undefined;
-        setPlayingBar(null);
-      }, durationMs);
-    } catch {
-      setPlayingBar(null);
-    }
-  }, [replayMissedBar]);
+  const replayBar = useCallback((barIndex: number) => {
+    replaySequenceRef.current += 1;
+    setReplay({ barIndex, playbackId: replaySequenceRef.current, isPlaying: true });
+  }, []);
+
+  const finishVisualReplay = useCallback((barIndex: number, playbackId: number) => {
+    setReplay((current) => current?.barIndex === barIndex && current.playbackId === playbackId
+      ? { ...current, isPlaying: false }
+      : current,
+    );
+  }, []);
 
   const startAgain = async () => {
     if (startingAgain) return;
@@ -310,37 +306,59 @@ export default function ResultsScreen() {
               MISSED NOTES · {results.missedEvents.length}
             </Text>
             <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18, marginBottom: 9 }}>
-              Tap Replay to hear the missed notes in a bar. Leaving this page clears replay.
+              Replay shows the expected notes beside your recorded taps. Leaving this page clears replay.
             </Text>
             {missedBars.map(([barIndex, events]) => {
               const leftEvents = events.filter((event) => event.hand === 'left');
               const rightEvents = events.filter((event) => event.hand === 'right');
+              const expectedEvents = results.replayExpectedEvents?.filter((event) => event.barIndex === barIndex) ?? [];
+              const taps = results.replayTaps?.filter((tap) => tap.barIndex === barIndex) ?? [];
+              const replayHands = results.trainingMode === 'single-hand'
+                ? [results.singleHand]
+                : ['left', 'right'] as const;
+              const metrics = timeSignatureMetrics(results.bpm, results.timeSignature);
               return (
-                <View key={barIndex} testID={`results.missedBar.${barIndex}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.line }}>
-                  <View style={{ flex: 1, gap: 4 }}>
-                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>BAR {barIndex}</Text>
-                    {leftEvents.length > 0 ? (
-                      <Text numberOfLines={2} style={{ color: colors.left, fontSize: 11, lineHeight: 16 }}>
-                        LEFT · {leftEvents.length} missed · {leftEvents.slice(0, 4).map(missedPosition).join(', ')}{leftEvents.length > 4 ? `, +${leftEvents.length - 4}` : ''}
+                <View key={barIndex} testID={'results.missedBar.' + barIndex} style={{ paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.line }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View style={{ flex: 1, gap: 4 }}>
+                      <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>BAR {barIndex}</Text>
+                      {leftEvents.length > 0 ? (
+                        <Text numberOfLines={2} style={{ color: colors.left, fontSize: 11, lineHeight: 16 }}>
+                          LEFT · {leftEvents.length} missed · {leftEvents.slice(0, 4).map(missedPosition).join(', ')}{leftEvents.length > 4 ? ', +' + (leftEvents.length - 4) : ''}
+                        </Text>
+                      ) : null}
+                      {rightEvents.length > 0 ? (
+                        <Text numberOfLines={2} style={{ color: colors.right, fontSize: 11, lineHeight: 16 }}>
+                          RIGHT · {rightEvents.length} missed · {rightEvents.slice(0, 4).map(missedPosition).join(', ')}{rightEvents.length > 4 ? ', +' + (rightEvents.length - 4) : ''}
+                        </Text>
+                      ) : null}
+                    </View>
+                    <Pressable
+                      testID={'results.replayBar.' + barIndex}
+                      accessibilityRole="button"
+                      accessibilityLabel={'Play visual replay for bar ' + barIndex}
+                      onPress={() => replayBar(barIndex)}
+                      style={({ pressed }) => ({ paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', borderRadius: 11, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: replay?.barIndex === barIndex && replay.isPlaying ? colors.accent : colors.line })}
+                    >
+                      <Text style={{ color: replay?.barIndex === barIndex && replay.isPlaying ? colors.accent : colors.text, fontSize: 11, fontWeight: '900', letterSpacing: 0.6 }}>
+                        {replay?.barIndex === barIndex && replay.isPlaying ? 'PLAYING' : 'REPLAY'}
                       </Text>
-                    ) : null}
-                    {rightEvents.length > 0 ? (
-                      <Text numberOfLines={2} style={{ color: colors.right, fontSize: 11, lineHeight: 16 }}>
-                        RIGHT · {rightEvents.length} missed · {rightEvents.slice(0, 4).map(missedPosition).join(', ')}{rightEvents.length > 4 ? `, +${rightEvents.length - 4}` : ''}
-                      </Text>
-                    ) : null}
+                    </Pressable>
                   </View>
-                  <Pressable
-                    testID={`results.replayBar.${barIndex}`}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Replay missed notes from bar ${barIndex}`}
-                    onPress={() => void replayBar(barIndex, events)}
-                    style={({ pressed }) => ({ paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', borderRadius: 11, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: playingBar === barIndex ? colors.accent : colors.line })}
-                  >
-                    <Text style={{ color: playingBar === barIndex ? colors.accent : colors.text, fontSize: 11, fontWeight: '900', letterSpacing: 0.6 }}>
-                      {playingBar === barIndex ? 'PLAYING' : 'REPLAY'}
-                    </Text>
-                  </Pressable>
+                  {replay?.barIndex === barIndex ? (
+                    <ReplayTimeline
+                      key={String(barIndex) + '.' + replay.playbackId}
+                      barIndex={barIndex}
+                      expectedEvents={expectedEvents}
+                      taps={taps}
+                      hands={replayHands}
+                      beatsPerBar={metrics.beatsPerBar}
+                      bpm={results.bpm}
+                      timeSignature={results.timeSignature}
+                      playbackId={replay.playbackId}
+                      onPlaybackEnd={finishVisualReplay}
+                    />
+                  ) : null}
                 </View>
               );
             })}

@@ -108,9 +108,27 @@ export interface MissedEvent {
   subdivision?: Subdivision;
   durationQuarter?: number;
   tupletNumber?: number;
-  /** Kept only in the active result session to replay imported score pitches. */
-  midiPitches?: number[];
   isScoreEvent: boolean;
+}
+
+export interface ReplayExpectedEvent extends MissedEvent {
+  /** Duration used to draw the expected rhythm in the replay timeline. */
+  durationQuarter: number;
+  matched: boolean;
+  /** Calibrated error used for scoring; negative is early and positive is late. */
+  timingErrorMs?: number;
+}
+
+export interface ReplayTap {
+  id: string;
+  hand: Hand;
+  barIndex: number;
+  /** Actual click timestamp relative to session start, in milliseconds. */
+  timestampMs: number;
+  /** Event accepted by scoring, when this click matched an expected note. */
+  matchedEventId?: string;
+  /** Raw click error against its matched note, before calibration correction. */
+  timingErrorMs?: number;
 }
 
 export interface SessionResults {
@@ -128,6 +146,9 @@ export interface SessionResults {
   combinations: CombinationStats[];
   durationSeconds: number;
   missedEvents: MissedEvent[];
+  /** In-memory replay data; deliberately omitted from saved session history. */
+  replayExpectedEvents?: ReplayExpectedEvent[];
+  replayTaps?: ReplayTap[];
   source?: 'score';
   scoreTitle?: string;
 }

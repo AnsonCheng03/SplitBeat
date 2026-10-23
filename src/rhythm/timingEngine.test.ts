@@ -596,7 +596,7 @@ test('score view advances its measure sequence only at bar boundaries and repeat
   assert.equal(onRepeat.scoreMeasureSequence, 2);
 });
 
-test('score taps return the imported pitch and missed notes retain replay positions', () => {
+test('score taps return imported pitch while visual replay records expected note positions', () => {
   const start = 66_000;
   const importedScore: ImportedRhythmScore = {
     formatVersion: 1,
@@ -628,13 +628,83 @@ test('score taps return the imported pitch and missed notes retain replay positi
   });
   const results = engine.getResults(start + 1_250);
 
-  assert.deepEqual(results.missedEvents.map(({ hand, barIndex, beatInBar, midiPitches }) => ({
+  assert.deepEqual(results.missedEvents.map(({ hand, barIndex, beatInBar }) => ({
     hand,
     barIndex,
     beatInBar,
-    midiPitches,
   })), [
-    { hand: 'right', barIndex: 1, beatInBar: 0, midiPitches: [48] },
-    { hand: 'left', barIndex: 1, beatInBar: 1, midiPitches: [64] },
+    { hand: 'right', barIndex: 1, beatInBar: 0 },
+    { hand: 'left', barIndex: 1, beatInBar: 1 },
+  ]);
+  assert.deepEqual(results.replayExpectedEvents?.map(({ hand, beatInBar, matched, durationQuarter }) => ({
+    hand,
+    beatInBar,
+    matched,
+    durationQuarter,
+  })), [
+    { hand: 'left', beatInBar: 0, matched: true, durationQuarter: 1 },
+    { hand: 'right', beatInBar: 0, matched: false, durationQuarter: 2 },
+    { hand: 'left', beatInBar: 1, matched: false, durationQuarter: 1 },
+  ]);
+  assert.deepEqual(results.replayTaps?.map(({ hand, timestampMs, timingErrorMs }) => ({
+    hand,
+    timestampMs,
+    timingErrorMs,
+  })), [{ hand: 'left', timestampMs: 0, timingErrorMs: 0 }]);
+});
+
+test('visual replay preserves actual tap positions including unmatched extra taps', () => {
+  const start = 70_000;
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, enabledSubdivisions: ['quarter'] },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  engine.tapWithDetails('left', start + 80);
+  engine.tapWithDetails('left', start + 250);
+  engine.tapWithDetails('right', start + 1_100);
+  const results = engine.getResults(start + 1_500);
+
+  assert.deepEqual(results.replayTaps?.map(({ hand, timestampMs, matchedEventId, timingErrorMs }) => ({
+    hand,
+    timestampMs,
+    matchedEventId,
+    timingErrorMs,
+  })), [
+    { hand: 'left', timestampMs: 80, matchedEventId: 'left:step-0:0', timingErrorMs: 80 },
+    { hand: 'left', timestampMs: 250, matchedEventId: undefined, timingErrorMs: undefined },
+    { hand: 'right', timestampMs: 1_100, matchedEventId: 'right:step-0:1', timingErrorMs: 100 },
+  ]);
+  assert.deepEqual(results.replayExpectedEvents?.map(({ hand, beatInBar, matched }) => ({
+    hand,
+    beatInBar,
+    matched,
+  })), [
+    { hand: 'left', beatInBar: 0, matched: true },
+    { hand: 'right', beatInBar: 0, matched: false },
+    { hand: 'left', beatInBar: 1, matched: false },
+    { hand: 'right', beatInBar: 1, matched: true },
+  ]);
+});
+
+test('visual replay assigns compound-meter taps to the correct measure', () => {
+  const start = 75_000;
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, timeSignature: '6/8', enabledSubdivisions: ['quarter'] },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  engine.tapWithDetails('left', start + 2_000);
+  const results = engine.getResults(start + 2_100);
+
+  assert.deepEqual(results.replayTaps?.map(({ barIndex, timestampMs }) => ({ barIndex, timestampMs })), [
+    { barIndex: 2, timestampMs: 2_000 },
+  ]);
+  assert.deepEqual(results.replayExpectedEvents
+    ?.filter((event) => event.matched)
+    .map(({ barIndex, beatInBar }) => ({ barIndex, beatInBar })), [
+    { barIndex: 2, beatInBar: 0 },
   ]);
 });

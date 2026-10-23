@@ -47,6 +47,9 @@ export interface NoteBeamShape {
 export interface NoteNotationPlan {
   width: number;
   height: number;
+  /** Horizontal note-anchor range used to align overlays with rendered noteheads. */
+  anchorStartX: number;
+  anchorWidth: number;
   durationQuarter: number;
   beamGroupQuarterNotes: number;
   events: NoteNotationEvent[];
@@ -69,6 +72,8 @@ export interface BarNoteNotationOptions {
 interface NoteNotationMetrics {
   width: number;
   height: number;
+  anchorStartX: number;
+  anchorWidth: number;
   durationQuarter: number;
   noteAnchors: number[];
   headWidth: number;
@@ -320,6 +325,8 @@ function buildNotationPlan(
   return {
     width: metrics.width,
     height: metrics.height,
+    anchorStartX: metrics.anchorStartX,
+    anchorWidth: metrics.anchorWidth,
     durationQuarter: metrics.durationQuarter,
     beamGroupQuarterNotes: metrics.beamGroupQuarterNotes,
     events: notes.map(({ startQuarter, durationQuarter, beamCount, tupletNumber }) => ({
@@ -390,6 +397,8 @@ export function createBarNoteNotationPlan(
   return buildNotationPlan(orderedEvents, {
     width: options.width,
     height,
+    anchorStartX: horizontalInset,
+    anchorWidth: usableWidth,
     durationQuarter: options.durationQuarter,
     noteAnchors,
     headWidth,
@@ -442,6 +451,8 @@ export function createNoteNotationPlan(
   return buildNotationPlan(events, {
     width: count * slotWidth,
     height: mini ? 34 : compact ? 56 : 68,
+    anchorStartX: 0,
+    anchorWidth: count * slotWidth,
     durationQuarter: count * noteDurationQuarter,
     noteAnchors: Array.from({ length: count }, (_, index) => (index + 0.5) * slotWidth),
     headWidth,
