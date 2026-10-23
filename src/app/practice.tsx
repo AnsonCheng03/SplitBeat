@@ -48,7 +48,7 @@ export default function PracticeScreen() {
 
   useEffect(() => {
     if (!snapshot && !exercisePrepared) router.replace(lessonId ? '/learn' : '/setup');
-    else if (snapshot?.phase === 'finished' && results) navigateToResults();
+    else if (!exercisePrepared && snapshot?.phase === 'finished' && results) navigateToResults();
   }, [exercisePrepared, lessonId, navigateToResults, router, snapshot, results]);
 
   const stop = () => {
