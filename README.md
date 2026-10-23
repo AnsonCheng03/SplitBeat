@@ -77,7 +77,7 @@ The internal `ImportedRhythmScore` JSON stores each measure's start and duration
 
 ## Session records and missed-note replay
 
-The home screen's **My Record** page keeps the 100 most recent summary records on the device, including date, meter, tempo, mode, and overall/hand accuracy. Missed notes are listed by bar on the result page and can be replayed one bar at a time with the metronome and expected hand sounds; imported score misses replay their MusicXML pitches. Replay details are removed when the result page loses focus, and are never stored in session history.
+The home screen's **My Records** page keeps the 100 most recent summary records on the device, including date, meter, tempo, mode, and overall/hand accuracy. Missed notes are listed by bar on the result page and can be replayed one bar at a time with the metronome and expected hand sounds; imported score misses replay their MusicXML pitches. Replay details are removed when the result page loses focus, and are never stored in session history.
 
 ## External keyboard play
 

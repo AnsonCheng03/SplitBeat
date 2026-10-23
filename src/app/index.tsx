@@ -48,8 +48,8 @@ export default function HomeScreen() {
               onPress={() => router.push('/records')}
               hitSlop={10}
               style={({ pressed }) => ({
-                minHeight: 34,
-                paddingHorizontal: 12,
+                minHeight: 38,
+                paddingHorizontal: 14,
                 justifyContent: 'center',
                 borderRadius: 11,
                 backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
@@ -57,8 +57,8 @@ export default function HomeScreen() {
                 borderColor: colors.line,
               })}
             >
-              <Text style={{ color: colors.left, fontSize: 10, fontWeight: '900', letterSpacing: 1 }}>
-                MY RECORD
+              <Text style={{ color: colors.left, fontSize: 12, fontWeight: '900', letterSpacing: 0.8 }}>
+                MY RECORDS
               </Text>
             </Pressable>
             <Pressable

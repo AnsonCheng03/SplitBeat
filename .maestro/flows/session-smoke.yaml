@@ -21,6 +21,14 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: home.start
 - tapOn:
+    id: home.records
+- assertVisible:
+    id: records.screen
+- tapOn:
+    id: records.home
+- assertVisible:
+    id: home.start
+- tapOn:
     id: home.mode.singleHand
 - tapOn:
     id: home.hand.right
