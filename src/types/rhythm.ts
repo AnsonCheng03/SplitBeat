@@ -83,6 +83,7 @@ export interface ExerciseSettings {
   rightHandSound: SoundPreset;
   leftFlashSource: FlashSource;
   rightFlashSource: FlashSource;
+  tapResultFlashEnabled: boolean;
   referenceRhythmEnabled: boolean;
   leftTapOffsetMs: number;
   rightTapOffsetMs: number;

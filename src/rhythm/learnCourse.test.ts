@@ -29,6 +29,7 @@ const preferences: ExerciseSettings = {
   rightHandSound: 'beep',
   leftFlashSource: 'tap',
   rightFlashSource: 'tap',
+  tapResultFlashEnabled: true,
   referenceRhythmEnabled: false,
   leftTapOffsetMs: -20,
   rightTapOffsetMs: 15,

@@ -63,6 +63,7 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   rightHandSound: 'beep',
   leftFlashSource: 'tap',
   rightFlashSource: 'tap',
+  tapResultFlashEnabled: true,
   referenceRhythmEnabled: false,
   leftTapOffsetMs: 0,
   rightTapOffsetMs: 0,
@@ -143,6 +144,9 @@ function restoreSettings(raw: string | null): ExerciseSettings {
       rightHandSound: restoreSound(parsed.rightHandSound, DEFAULT_SETTINGS.rightHandSound),
       leftFlashSource: normalizeFlashSource(parsed.leftFlashSource, DEFAULT_SETTINGS.leftFlashSource),
       rightFlashSource: normalizeFlashSource(parsed.rightFlashSource, DEFAULT_SETTINGS.rightFlashSource),
+      tapResultFlashEnabled: typeof parsed.tapResultFlashEnabled === 'boolean'
+        ? parsed.tapResultFlashEnabled
+        : DEFAULT_SETTINGS.tapResultFlashEnabled,
       referenceRhythmEnabled: parsed.referenceRhythmEnabled === true,
       leftTapOffsetMs:
         typeof parsed.leftTapOffsetMs === 'number'

@@ -5,5 +5,15 @@ export function normalizeFlashSource(value: unknown, fallback: FlashSource = 'ta
 }
 
 export function shouldFlashOnTap(source: FlashSource, feedback: TapFeedback): boolean {
-  return feedback === 'miss' || (feedback === 'hit' && source === 'tap');
+  return feedback === 'hit' && source === 'tap';
+}
+
+export type TapResultFlash = 'correct' | 'incorrect';
+
+export function getTapResultFlash(
+  enabled: boolean,
+  feedback: TapFeedback,
+): TapResultFlash | null {
+  if (!enabled || feedback === 'ignored') return null;
+  return feedback === 'hit' ? 'correct' : 'incorrect';
 }

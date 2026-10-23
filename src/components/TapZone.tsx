@@ -2,8 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Text, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { shouldFlashOnTap } from '@/rhythm/flashSource';
+import { getTapResultFlash, shouldFlashOnTap } from '@/rhythm/flashSource';
 import type { FlashSource, Hand, TapFeedback } from '@/types/rhythm';
+import type { TapResultFlash } from '@/rhythm/flashSource';
 import { colors } from '@/theme';
 
 interface TapZoneProps {
@@ -11,6 +12,7 @@ interface TapZoneProps {
   testID?: string;
   onTap: (hand: Hand, timestamp: number) => TapFeedback | null;
   hapticsEnabled: boolean;
+  tapResultFlashEnabled?: boolean;
   flashSource?: FlashSource;
   beatFlashToken?: number;
   keyboardTapToken?: number;
@@ -34,6 +36,7 @@ export function TapZone({
   testID,
   onTap,
   hapticsEnabled,
+  tapResultFlashEnabled = true,
   flashSource = 'tap',
   beatFlashToken = 0,
   keyboardTapToken = 0,
@@ -48,10 +51,11 @@ export function TapZone({
 }: TapZoneProps) {
   const [pressed, setPressed] = useState(false);
   const [missed, setMissed] = useState(false);
-  const [missOpacity] = useState(() => new Animated.Value(0));
+  const [tapResultColor, setTapResultColor] = useState<TapResultFlash | null>(null);
+  const [tapResultOpacity] = useState(() => new Animated.Value(0));
   const [beatFlashOpacity] = useState(() => new Animated.Value(0));
   const pressResetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const missResetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const resultResetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const previousKeyboardTapToken = useRef(keyboardTapToken);
   const previousBeatFlashToken = useRef(beatFlashToken);
   const isLeft = hand === 'left';
@@ -60,26 +64,41 @@ export function TapZone({
   const pressedBackground = singleHand ? '#183A35' : isLeft ? '#1D483D' : '#382B56';
   const restingBorder = singleHand ? '#183D38' : isLeft ? '#1A4037' : '#302747';
 
+  const clearTapResult = useCallback(() => {
+    if (resultResetTimer.current) clearTimeout(resultResetTimer.current);
+    setMissed(false);
+    setTapResultColor(null);
+    tapResultOpacity.stopAnimation();
+    tapResultOpacity.setValue(0);
+  }, [tapResultOpacity]);
+
+  const flashTapResult = useCallback((color: TapResultFlash) => {
+    setTapResultColor(color);
+    tapResultOpacity.stopAnimation();
+    tapResultOpacity.setValue(color === 'incorrect' ? 0.5 : 0.38);
+    Animated.timing(tapResultOpacity, {
+      toValue: 0,
+      duration: 280,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start();
+    if (resultResetTimer.current) clearTimeout(resultResetTimer.current);
+    setMissed(color === 'incorrect');
+    if (color === 'incorrect') {
+      resultResetTimer.current = setTimeout(() => setMissed(false), 320);
+    }
+  }, [tapResultOpacity]);
+
   const showFeedback = useCallback((feedback: TapFeedback | null) => {
     if (!feedback || feedback === 'ignored') return;
+    const resultFlash = getTapResultFlash(tapResultFlashEnabled, feedback);
     if (pressResetTimer.current) clearTimeout(pressResetTimer.current);
-    if (feedback === 'miss') {
+    if (resultFlash) {
       setPressed(false);
-      setMissed(true);
-      if (missResetTimer.current) clearTimeout(missResetTimer.current);
-      missOpacity.stopAnimation();
-      missOpacity.setValue(0.32);
-      Animated.timing(missOpacity, {
-        toValue: 0,
-        duration: 280,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: true,
-      }).start();
-      missResetTimer.current = setTimeout(() => setMissed(false), 320);
+      flashTapResult(resultFlash);
     } else {
-      if (missResetTimer.current) clearTimeout(missResetTimer.current);
-      setMissed(false);
-      if (shouldFlashOnTap(flashSource, feedback)) {
+      clearTapResult();
+      if (feedback === 'hit' && shouldFlashOnTap(flashSource, feedback)) {
         setPressed(true);
         pressResetTimer.current = setTimeout(() => setPressed(false), 110);
       } else {
@@ -89,16 +108,16 @@ export function TapZone({
     if (hapticsEnabled) {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
     }
-  }, [flashSource, hapticsEnabled, missOpacity]);
+  }, [clearTapResult, flashSource, flashTapResult, hapticsEnabled, tapResultFlashEnabled]);
 
   useEffect(
     () => () => {
       if (pressResetTimer.current !== undefined) clearTimeout(pressResetTimer.current);
-      if (missResetTimer.current !== undefined) clearTimeout(missResetTimer.current);
-      missOpacity.stopAnimation();
+      if (resultResetTimer.current !== undefined) clearTimeout(resultResetTimer.current);
+      tapResultOpacity.stopAnimation();
       beatFlashOpacity.stopAnimation();
     },
-    [beatFlashOpacity, missOpacity],
+    [beatFlashOpacity, tapResultOpacity],
   );
 
   useEffect(() => {
@@ -166,7 +185,7 @@ export function TapZone({
       />
       <Animated.View
         pointerEvents="none"
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: minimal ? 0 : 18, backgroundColor: colors.danger, opacity: missOpacity }}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: minimal ? 0 : 18, backgroundColor: tapResultColor === 'correct' ? colors.left : colors.danger, opacity: tapResultOpacity }}
       />
       {!minimal ? (
         <>
@@ -202,7 +221,7 @@ export function TapZone({
             fontSize: 8,
             fontWeight: '900',
             letterSpacing: 0.7,
-            opacity: missOpacity.interpolate({ inputRange: [0, 0.32], outputRange: [0, 1] }),
+            opacity: tapResultOpacity.interpolate({ inputRange: [0, 0.5], outputRange: [0, 1] }),
           }}
         >
           OFF BEAT

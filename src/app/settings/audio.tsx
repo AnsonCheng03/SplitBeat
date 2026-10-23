@@ -16,7 +16,7 @@ export default function AudioSettingsScreen() {
       backTestID="settings.audio.back"
       section="audio"
       title="Sounds & feedback"
-      description="Choose each hand's sound and when its side flashes."
+      description="Choose each hand's sound and visual tap feedback."
     >
       <View style={{ marginTop: 18, borderTopWidth: 1, borderTopColor: colors.line }}>
         <SettingsToggleRow
@@ -32,12 +32,21 @@ export default function AudioSettingsScreen() {
           onChange={(hapticsEnabled) => updateSettings({ hapticsEnabled })}
         />
         <SettingsToggleRow
+          testID="setup.toggle.tapResultFlash"
+          label="Show correct / missed tap colors"
+          value={settings.tapResultFlashEnabled}
+          onChange={(tapResultFlashEnabled) => updateSettings({ tapResultFlashEnabled })}
+        />
+        <SettingsToggleRow
           testID="setup.toggle.referenceRhythm"
           label="Play the shown rhythm"
           value={settings.referenceRhythmEnabled}
           onChange={(referenceRhythmEnabled) => updateSettings({ referenceRhythmEnabled })}
         />
       </View>
+      <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
+        Correct taps flash teal; off-beat taps flash red. Turn this off for less visual feedback.
+      </Text>
       <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
         The shown left and right patterns play automatically using each hand&apos;s selected sound. Keep this off to practice from the visual rhythm alone.
       </Text>
@@ -73,7 +82,7 @@ export default function AudioSettingsScreen() {
         onChange={(rightFlashSource) => updateSettings({ rightFlashSource })}
       />
       <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 18 }}>
-        Tap flashes follow your touch. Beat flashes follow the metronome. Misses always flash red. Sounds are generated on your device; turn off Sound effects to mute them.
+        Tap flashes follow your touch. Beat flashes follow the metronome. Sounds are generated on your device; turn off Sound effects to mute them.
       </Text>
     </SettingsPage>
   );

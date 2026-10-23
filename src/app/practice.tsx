@@ -106,6 +106,7 @@ export default function PracticeScreen() {
               testID="practice.tap.single"
               onTap={registerTap}
               hapticsEnabled={activeSettings.hapticsEnabled}
+              tapResultFlashEnabled={activeSettings.tapResultFlashEnabled}
               flashSource={focusedHand === 'left' ? activeSettings.leftFlashSource : activeSettings.rightFlashSource}
               beatFlashToken={beatFlashToken}
               singleHand
@@ -123,6 +124,7 @@ export default function PracticeScreen() {
                 hand="left"
                 onTap={registerTap}
                 hapticsEnabled={activeSettings.hapticsEnabled}
+                tapResultFlashEnabled={activeSettings.tapResultFlashEnabled}
                 flashSource={activeSettings.leftFlashSource}
                 beatFlashToken={beatFlashToken}
                 keyboardTapToken={keyboardTapTokens.left.token}
@@ -137,6 +139,7 @@ export default function PracticeScreen() {
                 hand="right"
                 onTap={registerTap}
                 hapticsEnabled={activeSettings.hapticsEnabled}
+                tapResultFlashEnabled={activeSettings.tapResultFlashEnabled}
                 flashSource={activeSettings.rightFlashSource}
                 beatFlashToken={beatFlashToken}
                 keyboardTapToken={keyboardTapTokens.right.token}
