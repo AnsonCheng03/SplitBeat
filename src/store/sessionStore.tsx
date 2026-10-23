@@ -67,6 +67,7 @@ interface SessionContextValue {
   audioStatus: AudioPreparationStatus;
   prepareAudio: () => Promise<void>;
   prepareExercise: (score?: ImportedRhythmScore) => Promise<void>;
+  prepareRepeatExercise: () => Promise<void>;
   startPreparedExercise: () => Promise<void>;
   exercisePrepared: boolean;
   stopExercise: () => void;
@@ -171,6 +172,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   const replayTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const sessionIdRef = useRef<string | null>(null);
   const pendingScoreRef = useRef<ImportedRhythmScore | undefined>(undefined);
+  const lastScoreRef = useRef<ImportedRhythmScore | undefined>(undefined);
   const [exercisePrepared, setExercisePrepared] = useState(false);
 
   useEffect(() => {
@@ -381,9 +383,16 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     setExercisePrepared(true);
   }, [prepareAudio]);
 
+  const prepareRepeatExercise = useCallback(async () => {
+    if (!results) throw new Error('There is no completed exercise to repeat.');
+    await prepareExercise(lastScoreRef.current);
+  }, [prepareExercise, results]);
+
   const startPreparedExercise = useCallback(async () => {
     if (!exercisePrepared) throw new Error('Prepare an exercise before starting.');
-    await startSession(pendingScoreRef.current);
+    const score = pendingScoreRef.current;
+    await startSession(score);
+    lastScoreRef.current = score;
     pendingScoreRef.current = undefined;
     setExercisePrepared(false);
   }, [exercisePrepared, startSession]);
@@ -482,8 +491,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   );
 
   const value = useMemo(
-    () => ({ settings, updateSettings, audioStatus, prepareAudio, prepareExercise, startPreparedExercise, stopExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, replayMissedBar, stopReplay, discardReplayData }),
-    [settings, updateSettings, audioStatus, prepareAudio, prepareExercise, startPreparedExercise, stopExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, replayMissedBar, stopReplay, discardReplayData],
+    () => ({ settings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, replayMissedBar, stopReplay, discardReplayData }),
+    [settings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, replayMissedBar, stopReplay, discardReplayData],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

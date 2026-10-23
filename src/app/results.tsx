@@ -1,5 +1,5 @@
 import { Link, useFocusEffect, useRouter } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { useCallback, useRef, useState } from 'react';
 import type { DimensionValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -194,9 +194,10 @@ function scoreDurationLabel(durationQuarter: number, tupletNumber?: number): str
 }
 
 export default function ResultsScreen() {
-  const { results, replayMissedBar, discardReplayData } = useRhythmSession();
+  const { results, replayMissedBar, prepareRepeatExercise, discardReplayData } = useRhythmSession();
   const router = useRouter();
   const [playingBar, setPlayingBar] = useState<number | null>(null);
+  const [startingAgain, setStartingAgain] = useState(false);
   const replayTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const missedBars = missedBarGroups(results?.missedEvents ?? []);
 
@@ -220,6 +221,19 @@ export default function ResultsScreen() {
       setPlayingBar(null);
     }
   }, [replayMissedBar]);
+
+  const startAgain = async () => {
+    if (startingAgain) return;
+    setStartingAgain(true);
+    try {
+      await prepareRepeatExercise();
+      discardReplayData();
+      router.replace('/practice');
+    } catch {
+      setStartingAgain(false);
+      Alert.alert('Audio could not start', 'Check your device audio settings and try again.');
+    }
+  };
 
   if (!results) {
     return (
@@ -400,9 +414,22 @@ export default function ResultsScreen() {
           ))}
         </View>
 
+        <Pressable
+          testID="results.startAgain"
+          accessibilityRole="button"
+          accessibilityLabel="Start the same exercise again"
+          accessibilityState={{ disabled: startingAgain }}
+          disabled={startingAgain}
+          onPress={() => void startAgain()}
+          style={({ pressed }) => ({ backgroundColor: pressed ? '#A8EADB' : colors.left, minHeight: 58, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginTop: 27, opacity: startingAgain ? 0.72 : 1 })}
+        >
+          <Text style={{ color: colors.background, fontSize: 15, fontWeight: '900', letterSpacing: 0.8 }}>
+            {startingAgain ? 'PREPARING…' : 'START AGAIN'}
+          </Text>
+        </Pressable>
         <Link href="/setup" asChild>
-          <Pressable onPress={discardReplayData} style={({ pressed }) => ({ backgroundColor: pressed ? '#A8EADB' : colors.left, minHeight: 58, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginTop: 27 })}>
-            <Text style={{ color: colors.background, fontSize: 15, fontWeight: '900', letterSpacing: 0.8 }}>TRAIN AGAIN</Text>
+          <Pressable onPress={discardReplayData} style={({ pressed }) => ({ backgroundColor: pressed ? colors.surfaceRaised : colors.surface, minHeight: 48, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginTop: 9, borderWidth: 1, borderColor: colors.line })}>
+            <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '900', letterSpacing: 0.7 }}>CHANGE SETTINGS</Text>
           </Pressable>
         </Link>
         <Link href="/records" asChild>
