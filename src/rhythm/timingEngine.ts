@@ -19,6 +19,7 @@ import type {
   MissedEvent,
   ReplayExpectedEvent,
   ReplayTap,
+  ReferenceRhythmEvent,
   RhythmPatternPair,
   SessionResults,
   SessionSnapshot,
@@ -199,6 +200,20 @@ export class RhythmTimingEngine {
     }
 
     return this.createSnapshot(now);
+  }
+
+  getReferenceEventsThrough(timeMs: number): readonly ReferenceRhythmEvent[] {
+    this.generateThrough(timeMs);
+    return (['left', 'right'] as const).flatMap((hand) =>
+      this.events[hand]
+        .filter((event) => event.expectedTimeMs <= timeMs)
+        .map((event) => ({
+          id: event.id,
+          hand,
+          expectedTimeMs: event.expectedTimeMs,
+          ...(event.midiPitches ? { midiPitches: event.midiPitches } : {}),
+        })),
+    );
   }
 
   tap(hand: Hand, actualTapTime: number): TapFeedback {

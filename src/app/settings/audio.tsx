@@ -16,7 +16,7 @@ export default function AudioSettingsScreen() {
       backTestID="settings.audio.back"
       section="audio"
       title="Sounds & feedback"
-      description="Set the click sounds apart so each part is easy to hear."
+      description="Choose each hand's sound and when its side flashes."
     >
       <View style={{ marginTop: 18, borderTopWidth: 1, borderTopColor: colors.line }}>
         <SettingsToggleRow
@@ -31,7 +31,16 @@ export default function AudioSettingsScreen() {
           value={settings.hapticsEnabled}
           onChange={(hapticsEnabled) => updateSettings({ hapticsEnabled })}
         />
+        <SettingsToggleRow
+          testID="setup.toggle.referenceRhythm"
+          label="Play the shown rhythm"
+          value={settings.referenceRhythmEnabled}
+          onChange={(referenceRhythmEnabled) => updateSettings({ referenceRhythmEnabled })}
+        />
       </View>
+      <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
+        The shown left and right patterns play automatically using each hand&apos;s selected sound. Keep this off to practice from the visual rhythm alone.
+      </Text>
 
       <SoundChoice
         title="METRONOME"
@@ -51,10 +60,53 @@ export default function AudioSettingsScreen() {
         value={settings.rightHandSound}
         onChange={(rightHandSound) => updateSettings({ rightHandSound })}
       />
+      <FlashSourceChoice
+        hand="LEFT"
+        testIDPrefix="setup.flash.left"
+        value={settings.leftFlashSource}
+        onChange={(leftFlashSource) => updateSettings({ leftFlashSource })}
+      />
+      <FlashSourceChoice
+        hand="RIGHT"
+        testIDPrefix="setup.flash.right"
+        value={settings.rightFlashSource}
+        onChange={(rightFlashSource) => updateSettings({ rightFlashSource })}
+      />
       <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 18 }}>
-        These tones are generated on your device and work offline. Turn off Sound effects to mute all clicks.
+        Tap flashes follow your touch. Beat flashes follow the metronome. Misses always flash red. Sounds are generated on your device; turn off Sound effects to mute them.
       </Text>
     </SettingsPage>
+  );
+}
+
+const FLASH_SOURCE_OPTIONS = [
+  { label: 'On tap', value: 'tap' },
+  { label: 'On beat', value: 'beat' },
+] as const;
+
+function FlashSourceChoice({
+  hand,
+  testIDPrefix,
+  value,
+  onChange,
+}: {
+  hand: 'LEFT' | 'RIGHT';
+  testIDPrefix: string;
+  value: 'tap' | 'beat';
+  onChange: (value: 'tap' | 'beat') => void;
+}) {
+  return (
+    <View style={{ marginTop: 23 }}>
+      <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6, marginBottom: 10 }}>
+        {hand} HAND FLASH
+      </Text>
+      <SettingsChoiceRow
+        options={FLASH_SOURCE_OPTIONS}
+        value={value}
+        onChange={onChange}
+        testIDPrefix={testIDPrefix}
+      />
+    </View>
   );
 }
 

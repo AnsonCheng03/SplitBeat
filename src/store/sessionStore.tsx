@@ -10,6 +10,7 @@ import React, {
 } from 'react';
 import { MetronomeAudio } from '@/audio/metronome';
 import { SOUND_OPTIONS } from '@/audio/soundPresets';
+import { normalizeFlashSource } from '@/rhythm/flashSource';
 import { RhythmTimingEngine } from '@/rhythm/timingEngine';
 import {
   DEFAULT_GOOD_WINDOW_MS,
@@ -60,6 +61,9 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   metronomeSound: 'wood',
   leftHandSound: 'soft',
   rightHandSound: 'beep',
+  leftFlashSource: 'tap',
+  rightFlashSource: 'tap',
+  referenceRhythmEnabled: false,
   leftTapOffsetMs: 0,
   rightTapOffsetMs: 0,
   goodWindowMs: DEFAULT_GOOD_WINDOW_MS,
@@ -137,6 +141,9 @@ function restoreSettings(raw: string | null): ExerciseSettings {
       metronomeSound: restoreSound(parsed.metronomeSound, DEFAULT_SETTINGS.metronomeSound),
       leftHandSound: restoreSound(parsed.leftHandSound, DEFAULT_SETTINGS.leftHandSound),
       rightHandSound: restoreSound(parsed.rightHandSound, DEFAULT_SETTINGS.rightHandSound),
+      leftFlashSource: normalizeFlashSource(parsed.leftFlashSource, DEFAULT_SETTINGS.leftFlashSource),
+      rightFlashSource: normalizeFlashSource(parsed.rightFlashSource, DEFAULT_SETTINGS.rightFlashSource),
+      referenceRhythmEnabled: parsed.referenceRhythmEnabled === true,
       leftTapOffsetMs:
         typeof parsed.leftTapOffsetMs === 'number'
           ? normalizeTapOffsetMs(parsed.leftTapOffsetMs)
@@ -272,6 +279,10 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   }, [settings.soundEnabled]);
 
   useEffect(() => {
+    audioRef.current?.setReferenceRhythmEnabled(settings.referenceRhythmEnabled);
+  }, [settings.referenceRhythmEnabled]);
+
+  useEffect(() => {
     audioRef.current?.setSounds({
       metronome: settings.metronomeSound,
       leftHand: settings.leftHandSound,
@@ -355,10 +366,13 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     setSnapshot(engine.advance(performanceNow));
     audio.start({
       sessionStartAudioTime,
+      sessionStartTime,
       bpm: activeSettings.bpm,
       beatsPerBar: metrics.beatsPerBar,
       durationSeconds: activeSettings.durationSeconds === 'endless' ? null : activeSettings.durationSeconds,
       soundEnabled: activeSettings.soundEnabled && !FORCE_SILENT_E2E,
+      referenceRhythmEnabled: activeSettings.referenceRhythmEnabled,
+      getReferenceEventsThrough: (timeMs) => engine.getReferenceEventsThrough(timeMs),
       sounds: {
         metronome: activeSettings.metronomeSound,
         leftHand: activeSettings.leftHandSound,

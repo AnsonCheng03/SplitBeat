@@ -41,6 +41,7 @@ export type Hand = 'left' | 'right';
 export type TrainingMode = 'two-hand' | 'single-hand';
 export type TapFeedback = 'hit' | 'miss' | 'ignored';
 export type SoundPreset = 'wood' | 'beep' | 'bell' | 'soft';
+export type FlashSource = 'tap' | 'beat';
 export type RhythmicFeel = 'straight' | 'swing';
 export type DurationOption = 30 | 60 | 120 | 'endless';
 export type ChangeIntervalBeats = 1 | 2 | 4 | 8;
@@ -51,6 +52,13 @@ export interface ExerciseStep {
   rightSubdivision: Subdivision;
   startBeat: number;
   durationBeats: number;
+}
+
+export interface ReferenceRhythmEvent {
+  id: string;
+  hand: Hand;
+  expectedTimeMs: number;
+  midiPitches?: readonly number[];
 }
 
 export interface RhythmPatternPair {
@@ -73,6 +81,9 @@ export interface ExerciseSettings {
   metronomeSound: SoundPreset;
   leftHandSound: SoundPreset;
   rightHandSound: SoundPreset;
+  leftFlashSource: FlashSource;
+  rightFlashSource: FlashSource;
+  referenceRhythmEnabled: boolean;
   leftTapOffsetMs: number;
   rightTapOffsetMs: number;
   goodWindowMs: number;

@@ -114,6 +114,12 @@ npm run e2e:ios
 E2E_MAESTRO_FLOW=learn-mode.yaml npm run e2e:maestro -- --device DEVICE_ID
 ~~~
 
+The audio settings flow checks independent left/right flash sources and optional playback of the displayed rhythm:
+
+~~~sh
+E2E_MAESTRO_FLOW=flash-source.yaml npm run e2e:maestro -- --device DEVICE_ID
+~~~
+
 The MusicXML import flow has a separate Maestro test:
 
 ~~~sh
@@ -123,7 +129,7 @@ npm run e2e:score-import -- --device DEVICE_ID
 
 ## Timing and scoring
 
-The engine captures a monotonic performance.now() timestamp at touch start. Expected event times are calculated from the exercise start time, selected meter, pattern boundary, and quarter-note subdivision interval; timer callbacks and animations never increment the rhythm clock. The metronome click is synthesized and scheduled against react-native-audio-api's native AudioContext.currentTime with a five-second lookahead, so ordinary React renders and JavaScript scheduling do not set the click time. Its bar accent and the visual beat indicator follow the selected meter. Setup offers Wood, Beep, Bell, and Soft sounds independently for the metronome, left-hand taps, and right-hand taps. These tones are synthesized locally and work offline; the Sound effects switch mutes them all. If sound is disabled, the tutorial warns before practice starts. Tap sound feedback is played immediately after capturing the touch timestamp and does not change event matching. A tap outside its timing window flashes that hand's full-screen zone red briefly.
+The engine captures a monotonic performance.now() timestamp at touch start. Expected event times are calculated from the exercise start time, selected meter, pattern boundary, and quarter-note subdivision interval; timer callbacks and animations never increment the rhythm clock. The metronome click is synthesized and scheduled against react-native-audio-api's native AudioContext.currentTime with a five-second lookahead, so ordinary React renders and JavaScript scheduling do not set the click time. Its bar accent and the visual beat indicator follow the selected meter. Setup offers Wood, Beep, Bell, and Soft sounds independently for the metronome, left-hand taps, and right-hand taps. **Play the shown rhythm** is off by default; when enabled, expected left/right events are scheduled on the native audio clock using each hand's selected sound (imported scores use their written pitches). Each hand can flash on its own tap or on the metronome beat; missed taps flash red for either setting. These tones are synthesized locally and work offline; the Sound effects switch mutes them all. If sound is disabled, the tutorial warns before practice starts. Tap sound feedback is played immediately after capturing the touch timestamp and does not change event matching. A tap outside its timing window flashes that hand's full-screen zone red briefly.
 
 Timing calibration can measure a separate signed tap offset for each hand from eight on-time taps against the native metronome click. Positive offsets shift that hand's measured tap earlier during scoring; negative offsets shift it later. The sliders allow manual adjustment from -200 to +200 ms. The acceptable hit range can be tuned from ±50 to ±200 ms; Perfect and Great thresholds remain 30% and 60% of that range. Reset Timing Defaults restores both offsets to 0 ms and the hit range to ±100 ms. Calibration and range settings are stored locally.
 

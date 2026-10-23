@@ -1,0 +1,45 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: LANDSCAPE_LEFT
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
+- tapOn:
+    id: home.setup
+- assertVisible:
+    id: setup.screen
+- tapOn:
+    id: setup.card.audio
+- assertVisible:
+    id: settings.audio.screen
+- tapOn:
+    id: setup.toggle.referenceRhythm
+- scrollUntilVisible:
+    element:
+      id: setup.flash.left.beat
+    direction: DOWN
+- tapOn:
+    id: setup.flash.left.beat
+- scrollUntilVisible:
+    element:
+      id: setup.flash.right.beat
+    direction: DOWN
+- tapOn:
+    id: setup.flash.right.beat
+- scrollUntilVisible:
+    element:
+      id: setup.flash.left.tap
+    direction: UP
+- tapOn:
+    id: setup.flash.left.tap
+- scrollUntilVisible:
+    element:
+      id: setup.flash.right.tap
+    direction: DOWN
+- tapOn:
+    id: setup.flash.right.tap
+- assertVisible:
+    id: settings.audio.screen

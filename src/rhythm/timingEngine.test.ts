@@ -32,6 +32,9 @@ const settings: ExerciseSettings = {
   metronomeSound: 'wood',
   leftHandSound: 'soft',
   rightHandSound: 'beep',
+  leftFlashSource: 'tap',
+  rightFlashSource: 'tap',
+  referenceRhythmEnabled: false,
   leftTapOffsetMs: 0,
   rightTapOffsetMs: 0,
   goodWindowMs: 100,
@@ -51,6 +54,31 @@ test('subdivision intervals follow the selected BPM', () => {
   assert.ok(Math.abs(subdivisionIntervalMs(60, 'sextuplet', '4/4') - 1_000 / 6) < 0.000001);
   assert.equal(subdivisionIntervalQuarterNotes('duplet', '6/8'), 0.75);
   assert.equal(expectedEventTimeMs(5_000, 60, 1, 1, 'duplet', '6/8'), 6_500);
+});
+
+test('reference playback events use the same mixed left and right pattern timestamps', () => {
+  const start = 12_000;
+  const engine = new RhythmTimingEngine({
+    settings,
+    sessionStartTime: start,
+    patternPairs: [{ leftSubdivision: 'quarter', rightSubdivision: 'eighth' }],
+  });
+
+  const events = engine.getReferenceEventsThrough(start + 2_500);
+  assert.deepEqual(
+    events.map(({ hand, expectedTimeMs }) => [hand, expectedTimeMs]),
+    [
+      ['left', start],
+      ['left', start + 1_000],
+      ['left', start + 2_000],
+      ['right', start],
+      ['right', start + 500],
+      ['right', start + 1_000],
+      ['right', start + 1_500],
+      ['right', start + 2_000],
+      ['right', start + 2_500],
+    ],
+  );
 });
 
 test('swing stretches binary offbeats while triplets remain even', () => {

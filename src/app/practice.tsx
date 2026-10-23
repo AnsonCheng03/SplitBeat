@@ -85,6 +85,7 @@ export default function PracticeScreen() {
   const singleHandMode = activeSettings.trainingMode === 'single-hand';
   const focusedHand = activeSettings.singleHand;
   const step = snapshot?.currentStep;
+  const beatFlashToken = snapshot?.phase === 'running' ? snapshot.beatIndex + 1 : 0;
   const showNextPattern = Boolean(snapshot?.scoreMeasure
     ? snapshot.scoreNextMeasure
     : snapshot?.nextStep);
@@ -105,6 +106,8 @@ export default function PracticeScreen() {
               testID="practice.tap.single"
               onTap={registerTap}
               hapticsEnabled={activeSettings.hapticsEnabled}
+              flashSource={focusedHand === 'left' ? activeSettings.leftFlashSource : activeSettings.rightFlashSource}
+              beatFlashToken={beatFlashToken}
               singleHand
               accessibilityLabelOverride="One-hand full-screen tap area"
               keyboardTapToken={keyboardTapTokens[focusedHand].token}
@@ -120,6 +123,8 @@ export default function PracticeScreen() {
                 hand="left"
                 onTap={registerTap}
                 hapticsEnabled={activeSettings.hapticsEnabled}
+                flashSource={activeSettings.leftFlashSource}
+                beatFlashToken={beatFlashToken}
                 keyboardTapToken={keyboardTapTokens.left.token}
                 keyboardTapFeedback={keyboardTapTokens.left.feedback}
                 enabled={enabledHand('left')}
@@ -132,6 +137,8 @@ export default function PracticeScreen() {
                 hand="right"
                 onTap={registerTap}
                 hapticsEnabled={activeSettings.hapticsEnabled}
+                flashSource={activeSettings.rightFlashSource}
+                beatFlashToken={beatFlashToken}
                 keyboardTapToken={keyboardTapTokens.right.token}
                 keyboardTapFeedback={keyboardTapTokens.right.feedback}
                 enabled={enabledHand('right')}

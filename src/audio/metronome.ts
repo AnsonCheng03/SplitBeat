@@ -5,14 +5,17 @@ import {
   createPitchedNoteSamples,
   SOUND_OPTIONS,
 } from '@/audio/soundPresets';
-import type { SoundPreset } from '@/types/rhythm';
+import type { ReferenceRhythmEvent, SoundPreset } from '@/types/rhythm';
 
 interface MetronomeStartOptions {
   sessionStartAudioTime: number;
+  sessionStartTime?: number;
   bpm: number;
   beatsPerBar: number;
   durationSeconds: number | null;
   soundEnabled: boolean;
+  referenceRhythmEnabled?: boolean;
+  getReferenceEventsThrough?: (timeMs: number) => readonly ReferenceRhythmEvent[];
   sounds: MetronomeSounds;
 }
 
@@ -35,6 +38,7 @@ export class MetronomeAudio {
   private startOptions: MetronomeStartOptions | undefined;
   private sounds: MetronomeSounds = { metronome: 'wood', leftHand: 'soft', rightHand: 'beep' };
   private nextBeatIndex = -COUNT_IN_BEATS;
+  private readonly scheduledReferenceEventIds = new Set<string>();
   private closed = false;
 
   constructor() {
@@ -71,6 +75,10 @@ export class MetronomeAudio {
     this.output.gain.value = enabled ? 0.75 : 0;
   }
 
+  setReferenceRhythmEnabled(enabled: boolean): void {
+    if (this.startOptions) this.startOptions.referenceRhythmEnabled = enabled;
+  }
+
   playHandClick(hand: 'left' | 'right'): void {
     if (!this.startOptions?.soundEnabled || this.closed) return;
     const preset = hand === 'left' ? this.sounds.leftHand : this.sounds.rightHand;
@@ -105,6 +113,32 @@ export class MetronomeAudio {
         this.scheduleClick(beatTime, this.sounds.metronome, beatInBar === 0 ? 1.15 : 0.78);
       }
       this.nextBeatIndex += 1;
+    }
+
+    if (
+      options.referenceRhythmEnabled
+      && options.soundEnabled
+      && options.sessionStartTime !== undefined
+      && options.getReferenceEventsThrough
+    ) {
+      const performanceHorizon =
+        options.sessionStartTime + (horizon - options.sessionStartAudioTime) * 1_000;
+      for (const event of options.getReferenceEventsThrough(performanceHorizon)) {
+        if (this.scheduledReferenceEventIds.has(event.id)) continue;
+        this.scheduledReferenceEventIds.add(event.id);
+        const audioTime = options.sessionStartAudioTime
+          + (event.expectedTimeMs - options.sessionStartTime) / 1_000;
+        if (audioTime < this.context.currentTime - 0.01 || audioTime > horizon) continue;
+        if (event.midiPitches?.length) {
+          for (const midiPitch of event.midiPitches) {
+            if (!Number.isFinite(midiPitch) || midiPitch < 0 || midiPitch > 127) continue;
+            this.scheduleBuffer(audioTime, this.getPitchedNoteBuffer(midiPitch), 0.5);
+          }
+        } else {
+          const preset = event.hand === 'left' ? this.sounds.leftHand : this.sounds.rightHand;
+          this.scheduleClick(audioTime, preset, 0.42);
+        }
+      }
     }
 
     this.timer = setTimeout(this.scheduleAhead, SCHEDULER_DELAY_MS);

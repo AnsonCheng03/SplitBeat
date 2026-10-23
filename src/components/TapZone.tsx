@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Text, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import type { Hand, TapFeedback } from '@/types/rhythm';
+import { shouldFlashOnTap } from '@/rhythm/flashSource';
+import type { FlashSource, Hand, TapFeedback } from '@/types/rhythm';
 import { colors } from '@/theme';
 
 interface TapZoneProps {
@@ -10,6 +11,8 @@ interface TapZoneProps {
   testID?: string;
   onTap: (hand: Hand, timestamp: number) => TapFeedback | null;
   hapticsEnabled: boolean;
+  flashSource?: FlashSource;
+  beatFlashToken?: number;
   keyboardTapToken?: number;
   keyboardTapFeedback?: TapFeedback | null;
   enabled?: boolean;
@@ -31,6 +34,8 @@ export function TapZone({
   testID,
   onTap,
   hapticsEnabled,
+  flashSource = 'tap',
+  beatFlashToken = 0,
   keyboardTapToken = 0,
   keyboardTapFeedback = null,
   enabled = true,
@@ -44,8 +49,11 @@ export function TapZone({
   const [pressed, setPressed] = useState(false);
   const [missed, setMissed] = useState(false);
   const [missOpacity] = useState(() => new Animated.Value(0));
-  const resetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [beatFlashOpacity] = useState(() => new Animated.Value(0));
+  const pressResetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const missResetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const previousKeyboardTapToken = useRef(keyboardTapToken);
+  const previousBeatFlashToken = useRef(beatFlashToken);
   const isLeft = hand === 'left';
   const accent = singleHand ? colors.accent : isLeft ? colors.left : colors.right;
   const restingBackground = singleHand ? '#0E201F' : isLeft ? colors.leftSurface : colors.rightSurface;
@@ -54,10 +62,11 @@ export function TapZone({
 
   const showFeedback = useCallback((feedback: TapFeedback | null) => {
     if (!feedback || feedback === 'ignored') return;
-    if (resetTimer.current) clearTimeout(resetTimer.current);
+    if (pressResetTimer.current) clearTimeout(pressResetTimer.current);
     if (feedback === 'miss') {
       setPressed(false);
       setMissed(true);
+      if (missResetTimer.current) clearTimeout(missResetTimer.current);
       missOpacity.stopAnimation();
       missOpacity.setValue(0.32);
       Animated.timing(missOpacity, {
@@ -66,24 +75,45 @@ export function TapZone({
         easing: Easing.out(Easing.quad),
         useNativeDriver: true,
       }).start();
-      resetTimer.current = setTimeout(() => setMissed(false), 320);
+      missResetTimer.current = setTimeout(() => setMissed(false), 320);
     } else {
+      if (missResetTimer.current) clearTimeout(missResetTimer.current);
       setMissed(false);
-      setPressed(true);
-      resetTimer.current = setTimeout(() => setPressed(false), 110);
+      if (shouldFlashOnTap(flashSource, feedback)) {
+        setPressed(true);
+        pressResetTimer.current = setTimeout(() => setPressed(false), 110);
+      } else {
+        setPressed(false);
+      }
     }
     if (hapticsEnabled) {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
     }
-  }, [hapticsEnabled, missOpacity]);
+  }, [flashSource, hapticsEnabled, missOpacity]);
 
   useEffect(
     () => () => {
-      if (resetTimer.current !== undefined) clearTimeout(resetTimer.current);
+      if (pressResetTimer.current !== undefined) clearTimeout(pressResetTimer.current);
+      if (missResetTimer.current !== undefined) clearTimeout(missResetTimer.current);
       missOpacity.stopAnimation();
+      beatFlashOpacity.stopAnimation();
     },
-    [missOpacity],
+    [beatFlashOpacity, missOpacity],
   );
+
+  useEffect(() => {
+    if (beatFlashToken === previousBeatFlashToken.current) return;
+    previousBeatFlashToken.current = beatFlashToken;
+    if (flashSource !== 'beat' || beatFlashToken === 0) return;
+    beatFlashOpacity.stopAnimation();
+    beatFlashOpacity.setValue(0.34);
+    Animated.timing(beatFlashOpacity, {
+      toValue: 0,
+      duration: 150,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start();
+  }, [beatFlashOpacity, beatFlashToken, flashSource]);
 
   useEffect(() => {
     if (keyboardTapToken === previousKeyboardTapToken.current) return;
@@ -130,6 +160,10 @@ export function TapZone({
         style,
       ]}
     >
+      <Animated.View
+        pointerEvents="none"
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: minimal ? 0 : 18, backgroundColor: accent, opacity: beatFlashOpacity }}
+      />
       <Animated.View
         pointerEvents="none"
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: minimal ? 0 : 18, backgroundColor: colors.danger, opacity: missOpacity }}
