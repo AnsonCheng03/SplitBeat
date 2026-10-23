@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { Link } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FullBleedSafeArea } from '@/components/FullBleedSafeArea';
 import { colors } from '@/theme';
 
 export type SettingsSection = 'session' | 'rhythm' | 'audio' | 'timing';
@@ -30,17 +31,36 @@ export function SettingsPage({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView testID={testID} style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.background }}>
+    <FullBleedSafeArea
+      testID={testID}
+      backgroundColor={colors.background}
+      contentStyle={{ flexDirection: 'row' }}
+      underlay={(
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            width: 224 + insets.left,
+            borderRightWidth: 1,
+            borderRightColor: colors.line,
+            backgroundColor: colors.surface,
+          }}
+        />
+      )}
+    >
       <View
         style={{
           width: 224,
           paddingHorizontal: 14,
           paddingTop: 14,
           paddingBottom: 12,
-          borderRightWidth: 1,
-          borderRightColor: colors.line,
-          backgroundColor: colors.surface,
+          backgroundColor: 'transparent',
         }}
       >
         <Link href={section === 'session' ? '/' : '/setup'} asChild>
@@ -105,6 +125,6 @@ export function SettingsPage({
         </ScrollView>
         {footer}
       </View>
-    </SafeAreaView>
+    </FullBleedSafeArea>
   );
 }

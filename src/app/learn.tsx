@@ -1,7 +1,8 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FullBleedSafeArea } from '@/components/FullBleedSafeArea';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
 import {
   getLessonAvailability,
@@ -109,6 +110,7 @@ function PatternNote({
 
 export default function LearnScreen() {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { lessonId: routeLessonId } = useLocalSearchParams<{ lessonId?: string }>();
   const { settings, audioStatus, prepareExercise } = useRhythmSession();
@@ -118,7 +120,7 @@ export default function LearnScreen() {
   const [progressLoaded, setProgressLoaded] = useState(false);
   const [starting, setStarting] = useState(false);
   const compact = width < 950;
-  const detailWidth = compact ? '56%' : '64%';
+  const detailWidth = (width - insets.left - insets.right) * (compact ? 0.56 : 0.64);
 
   useFocusEffect(useCallback(() => {
     let active = true;
@@ -170,9 +172,28 @@ export default function LearnScreen() {
   };
 
   return (
-    <SafeAreaView testID="learn.screen" style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.background }}>
+    <FullBleedSafeArea
+      testID="learn.screen"
+      backgroundColor={colors.background}
+      contentStyle={{ flexDirection: 'row' }}
+      underlay={(
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            width: detailWidth + insets.left,
+            borderRightWidth: 1,
+            borderRightColor: colors.line,
+            backgroundColor: colors.surface,
+          }}
+        />
+      )}
+    >
       <ScrollView
-        style={{ width: detailWidth, flexGrow: 0, borderRightWidth: 1, borderRightColor: colors.line, backgroundColor: colors.surface }}
+        style={{ width: detailWidth, flexGrow: 0, backgroundColor: 'transparent' }}
         contentContainerStyle={{ flexGrow: 1, paddingHorizontal: compact ? 16 : 24, paddingVertical: compact ? 10 : 18 }}
         showsVerticalScrollIndicator={false}
       >
@@ -318,6 +339,6 @@ export default function LearnScreen() {
           })}
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </FullBleedSafeArea>
   );
 }

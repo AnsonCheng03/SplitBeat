@@ -239,6 +239,10 @@ appId: com.splitbeat.twohandrhythm
     id: results.breakdown.details
 - tapOn:
     id: results.breakdown
+- scrollUntilVisible:
+    element:
+      id: results.breakdown.details
+    direction: DOWN
 - assertVisible:
     id: results.breakdown.details
 - scrollUntilVisible:
