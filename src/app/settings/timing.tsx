@@ -28,6 +28,7 @@ export default function TimingSettingsScreen() {
     <SettingsPage
       testID="settings.timing.screen"
       backTestID="settings.timing.back"
+      section="timing"
       title="Timing calibration"
       description="Fine-tune how close a tap must be and correct consistent early or late taps."
     >

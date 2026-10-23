@@ -32,6 +32,7 @@ export default function RhythmSettingsScreen() {
     <SettingsPage
       testID="settings.rhythm.screen"
       backTestID="settings.rhythm.back"
+      section="rhythm"
       title="Rhythm & meter"
       description="Choose the pulse and the patterns Split Beat can use."
     >

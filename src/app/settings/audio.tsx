@@ -14,6 +14,7 @@ export default function AudioSettingsScreen() {
     <SettingsPage
       testID="settings.audio.screen"
       backTestID="settings.audio.back"
+      section="audio"
       title="Sounds & feedback"
       description="Set the click sounds apart so each part is easy to hear."
     >
