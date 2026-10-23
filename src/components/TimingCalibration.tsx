@@ -248,7 +248,13 @@ export function TimingCalibration({
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
           <View style={{ flex: 1, width: '100%', maxWidth: 950, alignSelf: 'center', paddingHorizontal: 18, paddingVertical: 10 }}>
             <View style={{ minHeight: 42, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Pressable testID="calibration.close" onPress={close} hitSlop={12}>
+              <Pressable
+                testID="calibration.close"
+                accessibilityRole="button"
+                accessibilityLabel="Close timing calibration"
+                onPress={close}
+                style={{ minWidth: 76, minHeight: 44, justifyContent: 'center' }}
+              >
                 <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '800' }}>‹  CLOSE</Text>
               </Pressable>
               <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.8 }}>
