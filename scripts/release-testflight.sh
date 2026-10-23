@@ -51,68 +51,68 @@ cleanup_release_files() {
 }
 trap cleanup_release_files EXIT
 
-available_kb="$(df -Pk /private/tmp | awk 'NR == 2 { print $4 }')"
-if [[ ! "$available_kb" =~ ^[0-9]+$ ]] || (( available_kb < 20971520 )); then
-  echo "At least 20 GiB of free space is required for a local iOS Release archive." >&2
-  echo "Current free space on /private/tmp: ${available_kb:-unknown} KiB." >&2
-  exit 1
-fi
-
-echo "Regenerating the iOS project from Expo config..."
-npx expo prebuild --platform ios --no-install
-pod install --project-directory=ios
-
-workspace_path="$(find ios -maxdepth 1 -type d -name '*.xcworkspace' -print -quit)"
-if [[ -z "$workspace_path" ]]; then
-  echo "Expo prebuild and CocoaPods did not generate an iOS workspace." >&2
-  exit 1
-fi
-scheme="$(basename "$workspace_path" .xcworkspace)"
-
-if [[ -e "$archive_path" ]]; then
-  echo "An archive already exists at $archive_path; increment ios.buildNumber or choose another SPLITBEAT_ARCHIVE_PATH." >&2
-  exit 1
-fi
-if [[ -n "${SPLITBEAT_DERIVED_DATA_PATH:-}" ]]; then
-  derived_data_path="$SPLITBEAT_DERIVED_DATA_PATH"
-  if [[ -e "$derived_data_path" ]]; then
-    echo "Derived data path already exists: $derived_data_path" >&2
-    echo "Choose a new SPLITBEAT_DERIVED_DATA_PATH or leave it unset." >&2
+if [[ ! -e "$archive_path" ]]; then
+  available_kb="$(df -Pk /private/tmp | awk 'NR == 2 { print $4 }')"
+  if [[ ! "$available_kb" =~ ^[0-9]+$ ]] || (( available_kb < 20971520 )); then
+    echo "At least 20 GiB of free space is required for a local iOS Release archive." >&2
+    echo "Current free space on /private/tmp: ${available_kb:-unknown} KiB." >&2
     exit 1
   fi
-  mkdir -p "$derived_data_path"
-else
-  derived_data_path="$(mktemp -d /private/tmp/splitbeat-testflight-derived.XXXXXX)"
-  owns_derived_data_path=1
-fi
 
-mkdir -p "$(dirname "$archive_path")"
+  echo "Regenerating the iOS project from Expo config..."
+  npx expo prebuild --platform ios --no-install
+  pod install --project-directory=ios
 
-xcodebuild_args=(
-  -workspace "$workspace_path"
-  -scheme "$scheme"
-  -configuration Release
-  -destination 'generic/platform=iOS'
-  -archivePath "$archive_path"
-  -derivedDataPath "$derived_data_path"
-  -allowProvisioningUpdates
-)
-if [[ -n "$auth_key_id" ]]; then
-  xcodebuild_args+=(
-    -authenticationKeyPath "$auth_key_path"
-    -authenticationKeyID "$auth_key_id"
-    -authenticationKeyIssuerID "$auth_issuer_id"
+  workspace_path="$(find ios -maxdepth 1 -type d -name '*.xcworkspace' -print -quit)"
+  if [[ -z "$workspace_path" ]]; then
+    echo "Expo prebuild and CocoaPods did not generate an iOS workspace." >&2
+    exit 1
+  fi
+  scheme="$(basename "$workspace_path" .xcworkspace)"
+
+  if [[ -n "${SPLITBEAT_DERIVED_DATA_PATH:-}" ]]; then
+    derived_data_path="$SPLITBEAT_DERIVED_DATA_PATH"
+    if [[ -e "$derived_data_path" ]]; then
+      echo "Derived data path already exists: $derived_data_path" >&2
+      echo "Choose a new SPLITBEAT_DERIVED_DATA_PATH or leave it unset." >&2
+      exit 1
+    fi
+    mkdir -p "$derived_data_path"
+  else
+    derived_data_path="$(mktemp -d /private/tmp/splitbeat-testflight-derived.XXXXXX)"
+    owns_derived_data_path=1
+  fi
+
+  mkdir -p "$(dirname "$archive_path")"
+
+  xcodebuild_args=(
+    -workspace "$workspace_path"
+    -scheme "$scheme"
+    -configuration Release
+    -destination 'generic/platform=iOS'
+    -archivePath "$archive_path"
+    -derivedDataPath "$derived_data_path"
+    -allowProvisioningUpdates
   )
-fi
-xcodebuild_args+=(
-  CODE_SIGN_STYLE=Automatic
-  DEVELOPMENT_TEAM="$team_id"
-  MARKETING_VERSION="$app_version"
-  CURRENT_PROJECT_VERSION="$build_number"
-)
+  if [[ -n "$auth_key_id" ]]; then
+    xcodebuild_args+=(
+      -authenticationKeyPath "$auth_key_path"
+      -authenticationKeyID "$auth_key_id"
+      -authenticationKeyIssuerID "$auth_issuer_id"
+    )
+  fi
+  xcodebuild_args+=(
+    CODE_SIGN_STYLE=Automatic
+    DEVELOPMENT_TEAM="$team_id"
+    MARKETING_VERSION="$app_version"
+    CURRENT_PROJECT_VERSION="$build_number"
+  )
 
-echo "Archiving Split Beat $app_version ($build_number) with local Xcode..."
-xcodebuild "${xcodebuild_args[@]}" archive
+  echo "Archiving Split Beat $app_version ($build_number) with local Xcode..."
+  xcodebuild "${xcodebuild_args[@]}" archive
+else
+  echo "Reusing existing archive at $archive_path."
+fi
 
 archived_app="$(find "$archive_path/Products/Applications" -maxdepth 1 -name '*.app' -print -quit)"
 if [[ -z "$archived_app" ]]; then
