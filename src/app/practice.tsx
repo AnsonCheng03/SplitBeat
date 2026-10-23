@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AccuracyDisplay } from '@/components/AccuracyDisplay';
@@ -7,7 +7,6 @@ import { Countdown } from '@/components/Countdown';
 import { HardwareKeyboardInput } from '@/components/HardwareKeyboardInput';
 import { MetronomeIndicator } from '@/components/MetronomeIndicator';
 import { NextPatternPreview } from '@/components/NextPatternPreview';
-import { PianoRhythmStaff } from '@/components/PianoRhythmStaff';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
 import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
 import { TapZone } from '@/components/TapZone';
@@ -21,19 +20,26 @@ export default function PracticeScreen() {
   const compact = height < 520;
   const router = useRouter();
   const { snapshot, settings, updateSettings, audioStatus, registerTap, stopExercise, results } = useRhythmSession();
+  const hasNavigatedToResultsRef = useRef(false);
   const [keyboardTapTokens, setKeyboardTapTokens] = useState<Record<Hand, { token: number; feedback: TapFeedback | null }>>({
     left: { token: 0, feedback: null },
     right: { token: 0, feedback: null },
   });
 
+  const navigateToResults = useCallback(() => {
+    if (hasNavigatedToResultsRef.current) return;
+    hasNavigatedToResultsRef.current = true;
+    router.replace('/results');
+  }, [router]);
+
   useEffect(() => {
     if (!snapshot) router.replace('/setup');
-    if (snapshot?.phase === 'finished' && results) router.replace('/results');
-  }, [router, snapshot, results]);
+    else if (snapshot.phase === 'finished' && results) navigateToResults();
+  }, [navigateToResults, router, snapshot, results]);
 
   const stop = () => {
     stopExercise();
-    router.replace('/results');
+    navigateToResults();
   };
 
   const handleKeyboardTap = useCallback(
@@ -142,16 +148,6 @@ export default function PracticeScreen() {
                 beamGroupQuarterNotes={pulseQuarterNotes(settings.timeSignature)}
               />
             </>
-          ) : settings.practiceDisplay === 'piano-staff' ? (
-            <PianoRhythmStaff
-              steps={snapshot.barSteps}
-              barStartBeat={snapshot.barStartBeat}
-              timeSignature={settings.timeSignature}
-              feel={settings.feel}
-              restBetweenChanges={settings.restBetweenChanges}
-              activeHand={settings.trainingMode === 'single-hand' ? settings.singleHand : undefined}
-              compact={compact}
-            />
           ) : (
             <View style={{ flex: 1, minHeight: compact ? 78 : 130, maxHeight: compact ? 112 : 190, flexDirection: 'row', alignItems: 'center' }}>
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', borderRightWidth: 1, borderRightColor: colors.line, opacity: settings.trainingMode === 'single-hand' && settings.singleHand !== 'left' ? 0.38 : 1 }}>

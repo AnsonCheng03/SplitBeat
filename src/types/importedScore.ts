@@ -5,6 +5,8 @@ export interface ScoreRhythmEvent {
   startQuarter: number;
   /** Notated duration, measured in quarter notes. */
   durationQuarter: number;
+  /** MIDI pitches for the note or chord; omitted for unpitched score events. */
+  midiPitches?: number[];
   /** Actual note count in the MusicXML tuplet group, when explicitly marked. */
   tupletNumber?: number;
 }
@@ -17,7 +19,7 @@ export interface ScoreRhythmMeasure {
   rightEvents: ScoreRhythmEvent[];
 }
 
-/** Rhythm-only score data produced from a partwise MusicXML file. */
+/** Rhythm events and hidden playback pitches parsed from a partwise MusicXML file. */
 export interface ImportedRhythmScore {
   formatVersion: 1;
   title: string;

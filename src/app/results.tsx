@@ -1,12 +1,13 @@
 import { Link, useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DimensionValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { accuracyPercent } from '@/rhythm/scoring';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
-import type { HandStats, SessionResults, Subdivision } from '@/types/rhythm';
+import type { HandStats, MissedEvent, SessionResults, Subdivision } from '@/types/rhythm';
 
 function percent(value: number) {
   return Math.round(value) + '%';
@@ -159,9 +160,61 @@ function weakLabel(subdivision: Subdivision) {
   return SUBDIVISION_LABELS[subdivision].toUpperCase();
 }
 
+function missedBarGroups(events: readonly MissedEvent[]) {
+  const groups = new Map<number, MissedEvent[]>();
+  for (const event of events) {
+    const group = groups.get(event.barIndex) ?? [];
+    group.push(event);
+    groups.set(event.barIndex, group);
+  }
+  return Array.from(groups.entries()).sort(([first], [second]) => first - second);
+}
+
+function missedPosition(event: MissedEvent): string {
+  const beat = Math.floor(event.beatInBar) + 1;
+  const fraction = event.beatInBar - Math.floor(event.beatInBar);
+  const offset = fraction < 0.005 ? '' : ` + ${fraction.toFixed(2)}`;
+  const rhythm = event.subdivision
+    ? SUBDIVISION_LABELS[event.subdivision]
+    : event.durationQuarter === undefined
+      ? 'score note'
+      : scoreDurationLabel(event.durationQuarter, event.tupletNumber);
+  return `beat ${beat}${offset} · ${rhythm}`;
+}
+
+function scoreDurationLabel(durationQuarter: number, tupletNumber?: number): string {
+  if (tupletNumber) return `${tupletNumber}-note tuplet`;
+  const noteValues = [
+    [4, 'whole'], [3, 'dotted half'], [2, 'half'], [1.5, 'dotted quarter'], [1, 'quarter'],
+    [0.75, 'dotted eighth'], [0.5, 'eighth'], [0.375, 'dotted sixteenth'], [0.25, 'sixteenth'],
+    [0.1875, 'dotted 32nd'], [0.125, '32nd'], [0.09375, 'dotted 64th'], [0.0625, '64th'],
+  ] as const;
+  const noteValue = noteValues.find(([duration]) => Math.abs(duration - durationQuarter) < 0.00001);
+  return noteValue?.[1] ?? 'score note';
+}
+
 export default function ResultsScreen() {
-  const { results } = useRhythmSession();
+  const { results, replayMissedBar, discardReplayData } = useRhythmSession();
   const router = useRouter();
+  const [playingBar, setPlayingBar] = useState<number | null>(null);
+  const replayTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const missedBars = missedBarGroups(results?.missedEvents ?? []);
+
+  useEffect(() => () => discardReplayData(), [discardReplayData]);
+
+  const replayBar = useCallback(async (barIndex: number, events: readonly MissedEvent[]) => {
+    if (replayTimerRef.current) clearTimeout(replayTimerRef.current);
+    setPlayingBar(barIndex);
+    try {
+      const durationMs = await replayMissedBar(events);
+      replayTimerRef.current = setTimeout(() => {
+        replayTimerRef.current = undefined;
+        setPlayingBar(null);
+      }, durationMs);
+    } catch {
+      setPlayingBar(null);
+    }
+  }, [replayMissedBar]);
 
   if (!results) {
     return (
@@ -232,6 +285,49 @@ export default function ResultsScreen() {
           </View>
         )}
 
+        {missedBars.length > 0 ? (
+          <View style={{ marginTop: 22 }}>
+            <Text testID="results.missedNotes" style={{ color: colors.text, fontSize: 15, fontWeight: '800', marginBottom: 5 }}>
+              MISSED NOTES · {results.missedEvents.length}
+            </Text>
+            <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18, marginBottom: 9 }}>
+              Review the missed beats. Replay is available while this result is open.
+            </Text>
+            {missedBars.map(([barIndex, events]) => {
+              const leftEvents = events.filter((event) => event.hand === 'left');
+              const rightEvents = events.filter((event) => event.hand === 'right');
+              return (
+                <View key={barIndex} testID={`results.missedBar.${barIndex}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.line }}>
+                  <View style={{ flex: 1, gap: 4 }}>
+                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>BAR {barIndex}</Text>
+                    {leftEvents.length > 0 ? (
+                      <Text numberOfLines={2} style={{ color: colors.left, fontSize: 10, lineHeight: 15 }}>
+                        LEFT · {leftEvents.length} missed · {leftEvents.slice(0, 4).map(missedPosition).join(', ')}{leftEvents.length > 4 ? `, +${leftEvents.length - 4}` : ''}
+                      </Text>
+                    ) : null}
+                    {rightEvents.length > 0 ? (
+                      <Text numberOfLines={2} style={{ color: colors.right, fontSize: 10, lineHeight: 15 }}>
+                        RIGHT · {rightEvents.length} missed · {rightEvents.slice(0, 4).map(missedPosition).join(', ')}{rightEvents.length > 4 ? `, +${rightEvents.length - 4}` : ''}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <Pressable
+                    testID={`results.replayBar.${barIndex}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Replay missed notes from bar ${barIndex}`}
+                    onPress={() => void replayBar(barIndex, events)}
+                    style={({ pressed }) => ({ paddingHorizontal: 12, minHeight: 36, justifyContent: 'center', borderRadius: 11, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: playingBar === barIndex ? colors.accent : colors.line })}
+                  >
+                    <Text style={{ color: playingBar === barIndex ? colors.accent : colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 }}>
+                      {playingBar === barIndex ? 'PLAYING' : 'REPLAY'}
+                    </Text>
+                  </Pressable>
+                </View>
+              );
+            })}
+          </View>
+        ) : null}
+
         <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', marginTop: 25, marginBottom: 10 }}>HAND TIMING</Text>
         {displayedHands.map((hand) => {
           const stats = results[hand];
@@ -300,8 +396,13 @@ export default function ResultsScreen() {
         </View>
 
         <Link href="/setup" asChild>
-          <Pressable style={({ pressed }) => ({ backgroundColor: pressed ? '#A8EADB' : colors.left, minHeight: 58, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginTop: 27 })}>
+          <Pressable onPress={discardReplayData} style={({ pressed }) => ({ backgroundColor: pressed ? '#A8EADB' : colors.left, minHeight: 58, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginTop: 27 })}>
             <Text style={{ color: colors.background, fontSize: 15, fontWeight: '900', letterSpacing: 0.8 }}>TRAIN AGAIN</Text>
+          </Pressable>
+        </Link>
+        <Link href="/records" asChild>
+          <Pressable testID="results.records" onPress={discardReplayData} style={({ pressed }) => ({ backgroundColor: pressed ? colors.surfaceRaised : colors.surface, minHeight: 48, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginTop: 9, borderWidth: 1, borderColor: colors.line })}>
+            <Text style={{ color: colors.left, fontSize: 12, fontWeight: '900', letterSpacing: 0.7 }}>VIEW MY RECORD</Text>
           </Pressable>
         </Link>
       </ScrollView>

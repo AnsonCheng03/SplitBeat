@@ -28,7 +28,6 @@ const settings: ExerciseSettings = {
   graceNotesEnabled: false,
   trainingMode: 'two-hand',
   singleHand: 'left',
-  practiceDisplay: 'split',
   soundEnabled: false,
   metronomeSound: 'wood',
   leftHandSound: 'soft',
@@ -533,4 +532,47 @@ test('score events use MusicXML quarter-note positions, loop, and score independ
   assert.equal(results.stable.totalHit, 4);
   assert.equal(results.transition.totalExpected, 0);
   assert.deepEqual(results.combinations, []);
+});
+
+test('score taps return the imported pitch and missed notes retain replay positions', () => {
+  const start = 66_000;
+  const importedScore: ImportedRhythmScore = {
+    formatVersion: 1,
+    title: 'Pitch check',
+    timeSignature: '2/4',
+    bpm: 60,
+    totalQuarterNotes: 2,
+    warnings: [],
+    measures: [{
+      index: 0,
+      startQuarter: 0,
+      durationQuarter: 2,
+      leftEvents: [
+        { startQuarter: 0, durationQuarter: 1, midiPitches: [60] },
+        { startQuarter: 1, durationQuarter: 1, midiPitches: [64] },
+      ],
+      rightEvents: [{ startQuarter: 0, durationQuarter: 2, midiPitches: [48] }],
+    }],
+  };
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, timeSignature: '2/4' },
+    sessionStartTime: start,
+    importedScore,
+  });
+
+  assert.deepEqual(engine.tapWithDetails('left', start), {
+    feedback: 'hit',
+    midiPitches: [60],
+  });
+  const results = engine.getResults(start + 1_250);
+
+  assert.deepEqual(results.missedEvents.map(({ hand, barIndex, beatInBar, midiPitches }) => ({
+    hand,
+    barIndex,
+    beatInBar,
+    midiPitches,
+  })), [
+    { hand: 'right', barIndex: 1, beatInBar: 0, midiPitches: [48] },
+    { hand: 'left', barIndex: 1, beatInBar: 1, midiPitches: [64] },
+  ]);
 });

@@ -39,7 +39,6 @@ export const TIME_SIGNATURES = [
 export type TimeSignature = (typeof TIME_SIGNATURES)[number];
 export type Hand = 'left' | 'right';
 export type TrainingMode = 'two-hand' | 'single-hand';
-export type PracticeDisplay = 'split' | 'piano-staff';
 export type TapFeedback = 'hit' | 'miss' | 'ignored';
 export type SoundPreset = 'wood' | 'beep' | 'bell' | 'soft';
 export type RhythmicFeel = 'straight' | 'swing';
@@ -65,7 +64,6 @@ export interface ExerciseSettings {
   graceNotesEnabled: boolean;
   trainingMode: TrainingMode;
   singleHand: Hand;
-  practiceDisplay: PracticeDisplay;
   soundEnabled: boolean;
   metronomeSound: SoundPreset;
   leftHandSound: SoundPreset;
@@ -99,6 +97,22 @@ export interface CombinationStats {
   right: AccuracyStats;
 }
 
+export interface MissedEvent {
+  id: string;
+  hand: Hand;
+  /** One-based bar number in the played session. */
+  barIndex: number;
+  /** Zero-based metronome-beat position inside the bar. */
+  beatInBar: number;
+  /** Omitted for score notes, whose printed value can be mixed within a bar. */
+  subdivision?: Subdivision;
+  durationQuarter?: number;
+  tupletNumber?: number;
+  /** Kept only in the active result session to replay imported score pitches. */
+  midiPitches?: number[];
+  isScoreEvent: boolean;
+}
+
 export interface SessionResults {
   bpm: number;
   timeSignature: TimeSignature;
@@ -113,6 +127,7 @@ export interface SessionResults {
   transition: AccuracyStats;
   combinations: CombinationStats[];
   durationSeconds: number;
+  missedEvents: MissedEvent[];
   source?: 'score';
   scoreTitle?: string;
 }

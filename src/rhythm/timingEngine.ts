@@ -16,6 +16,7 @@ import type {
   ExerciseStep,
   Hand,
   HandStats,
+  MissedEvent,
   SessionResults,
   SessionSnapshot,
   Subdivision,
@@ -29,12 +30,23 @@ interface ExpectedEvent {
   beatIndex: number;
   isGraceNote: boolean;
   isScoreEvent: boolean;
+  midiPitches?: number[];
+  durationQuarter?: number;
+  tupletNumber?: number;
   settled: boolean;
 }
 
 interface TimedScoreEvent {
   hand: Hand;
   startQuarter: number;
+  durationQuarter: number;
+  tupletNumber?: number;
+  midiPitches?: number[];
+}
+
+export interface TapResult {
+  feedback: TapFeedback;
+  midiPitches?: number[];
 }
 
 interface MutableHandStats {
@@ -111,6 +123,7 @@ export class RhythmTimingEngine {
     right: createMutableHandStats(),
   };
   private readonly combinations = new Map<string, MutableCombinationStats>();
+  private readonly missedEvents: MissedEvent[] = [];
   private readonly stable = createMutableAccuracyStats();
   private readonly transition = createMutableAccuracyStats();
   private nextStepToGenerate = 0;
@@ -128,10 +141,16 @@ export class RhythmTimingEngine {
             ...measure.leftEvents.map((event) => ({
               hand: 'left' as const,
               startQuarter: measure.startQuarter + event.startQuarter,
+              durationQuarter: event.durationQuarter,
+              ...(event.tupletNumber === undefined ? {} : { tupletNumber: event.tupletNumber }),
+              ...(event.midiPitches ? { midiPitches: event.midiPitches } : {}),
             })),
             ...measure.rightEvents.map((event) => ({
               hand: 'right' as const,
               startQuarter: measure.startQuarter + event.startQuarter,
+              durationQuarter: event.durationQuarter,
+              ...(event.tupletNumber === undefined ? {} : { tupletNumber: event.tupletNumber }),
+              ...(event.midiPitches ? { midiPitches: event.midiPitches } : {}),
             })),
           ])
           .sort((firstEvent, secondEvent) => firstEvent.startQuarter - secondEvent.startQuarter)
@@ -175,9 +194,13 @@ export class RhythmTimingEngine {
   }
 
   tap(hand: Hand, actualTapTime: number): TapFeedback {
-    if (this.finished) return 'ignored';
+    return this.tapWithDetails(hand, actualTapTime).feedback;
+  }
+
+  tapWithDetails(hand: Hand, actualTapTime: number): TapResult {
+    if (this.finished) return { feedback: 'ignored' };
     if (this.settings.trainingMode === 'single-hand' && hand !== this.settings.singleHand) {
-      return 'ignored';
+      return { feedback: 'ignored' };
     }
 
     const tapOffsetMs =
@@ -185,7 +208,7 @@ export class RhythmTimingEngine {
     const calibratedTapTime = actualTapTime - tapOffsetMs;
     this.generateThrough(calibratedTapTime + this.timingWindows.goodMs);
     this.settleDueEvents(actualTapTime);
-    if (this.isRestAt(calibratedTapTime)) return 'miss';
+    if (this.isRestAt(calibratedTapTime)) return { feedback: 'miss' };
 
     const candidates = this.events[hand].filter(
       (event) =>
@@ -201,13 +224,16 @@ export class RhythmTimingEngine {
       calibratedTapTime,
       this.timingWindows,
     );
-    if (!match) return 'miss';
+    if (!match) return { feedback: 'miss' };
 
     const matchedEvent = candidates.find((event) => event.id === match.eventId);
-    if (!matchedEvent) return 'miss';
+    if (!matchedEvent) return { feedback: 'miss' };
     matchedEvent.settled = true;
     this.recordEvent(hand, matchedEvent, match.grade, match.timingErrorMs);
-    return 'hit';
+    return {
+      feedback: 'hit',
+      ...(matchedEvent.midiPitches ? { midiPitches: [...matchedEvent.midiPitches] } : {}),
+    };
   }
 
   getResults(now: number): SessionResults {
@@ -234,6 +260,12 @@ export class RhythmTimingEngine {
         right: toAccuracyStats(combination.right),
       })),
       durationSeconds: Math.max(0, (now - this.sessionStartTime) / 1_000),
+      missedEvents: [...this.missedEvents].sort(
+        (firstEvent, secondEvent) =>
+          firstEvent.barIndex - secondEvent.barIndex ||
+          firstEvent.beatInBar - secondEvent.beatInBar ||
+          firstEvent.hand.localeCompare(secondEvent.hand),
+      ),
       ...(this.importedScore
         ? { source: 'score' as const, scoreTitle: this.importedScore.title }
         : {}),
@@ -377,6 +409,9 @@ export class RhythmTimingEngine {
         beatIndex: Math.floor((expectedTimeMs - this.sessionStartTime) / this.beatMs + 1e-9),
         isGraceNote: false,
         isScoreEvent: true,
+        durationQuarter: scoreEvent.durationQuarter,
+        ...(scoreEvent.tupletNumber === undefined ? {} : { tupletNumber: scoreEvent.tupletNumber }),
+        ...(scoreEvent.midiPitches ? { midiPitches: scoreEvent.midiPitches } : {}),
         settled: false,
       });
     }
@@ -469,6 +504,23 @@ export class RhythmTimingEngine {
       stats.signedErrorTotal += errorMs ?? 0;
     } else {
       stats.miss += 1;
+      const beatPosition = (event.expectedTimeMs - this.sessionStartTime) / this.beatMs;
+      const barOffset = Math.floor(beatPosition / this.beatsPerBar);
+      const beatInBar = beatPosition - barOffset * this.beatsPerBar;
+      this.missedEvents.push({
+        id: event.id,
+        hand,
+        barIndex: barOffset + 1,
+        beatInBar,
+        ...(event.isScoreEvent
+          ? {
+              ...(event.durationQuarter === undefined ? {} : { durationQuarter: event.durationQuarter }),
+              ...(event.tupletNumber === undefined ? {} : { tupletNumber: event.tupletNumber }),
+            }
+          : { subdivision: hand === 'left' ? event.step.leftSubdivision : event.step.rightSubdivision }),
+        ...(event.midiPitches ? { midiPitches: [...event.midiPitches] } : {}),
+        isScoreEvent: event.isScoreEvent,
+      });
     }
 
     if (event.isScoreEvent) {
@@ -640,6 +692,7 @@ export class RhythmTimingEngine {
         right: toAccuracyStats(combination.right),
       })),
       durationSeconds: Math.max(0, (now - this.sessionStartTime) / 1_000),
+      missedEvents: [...this.missedEvents],
       ...(this.importedScore
         ? { source: 'score' as const, scoreTitle: this.importedScore.title }
         : {}),

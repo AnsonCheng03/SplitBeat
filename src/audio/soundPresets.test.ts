@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createClickSamples, SOUND_OPTIONS } from './soundPresets';
+import {
+  createClickSamples,
+  createPitchedNoteSamples,
+  midiPitchToFrequency,
+  SOUND_OPTIONS,
+} from './soundPresets';
 
 test('sound choices are unique and each choice produces its own offline click', () => {
   const soundIds = SOUND_OPTIONS.map(({ value }) => value);
@@ -19,4 +24,14 @@ test('sound choices are unique and each choice produces its own offline click', 
       assert.ok(differs, `${soundIds[first]} and ${soundIds[second]} should sound different`);
     }
   }
+});
+
+test('MusicXML MIDI pitches map to equal-tempered frequencies and playable offline samples', () => {
+  assert.equal(midiPitchToFrequency(69), 440);
+  assert.ok(Math.abs(midiPitchToFrequency(60) - 261.625565) < 0.001);
+
+  const note = createPitchedNoteSamples(60, 44_100);
+  assert.equal(note.length, Math.ceil(44_100 * 0.22));
+  assert.ok([...note].every(Number.isFinite));
+  assert.ok([...note].every((sample) => Math.abs(sample) <= 1));
 });

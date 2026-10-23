@@ -2,23 +2,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createBarNoteNotationPlan, createNoteNotationPlan, createStaffNotationLayout } from '@/rhythm/noteNotation';
-
-test('grand staff lines keep a fixed baseline as tuplet padding changes', () => {
-  const fullRows = [44, 58].map((notationHeight) => ({
-    layout: createStaffNotationLayout(60, notationHeight),
-    notationHeight,
-  }));
-  const compactRows = [32, 44].map((notationHeight) => ({
-    layout: createStaffNotationLayout(50, notationHeight),
-    notationHeight,
-  }));
-
-  assert.deepEqual(fullRows.map(({ layout }) => layout.staffLineBottom), [55, 55]);
-  assert.deepEqual(compactRows.map(({ layout }) => layout.staffLineBottom), [45, 45]);
-  assert.ok(fullRows.every(({ layout, notationHeight }) => layout.notationTop + notationHeight === 60));
-  assert.ok(compactRows.every(({ layout, notationHeight }) => layout.notationTop + notationHeight === 50));
-});
+import { createBarNoteNotationPlan, createNoteNotationPlan } from '@/rhythm/noteNotation';
 
 test('note builder creates joined noteheads and stems at each supported subdivision', () => {
   const cases = [
@@ -64,6 +48,8 @@ test('bar note builder beams adjacent notes according to each note duration', ()
   );
 
   assert.equal(plan.notes.length, 4);
+  assert.equal(plan.durationQuarter, 1);
+  assert.deepEqual(plan.events.map((event) => event.startQuarter), [0, 0.125, 0.25, 0.5]);
   assert.deepEqual(
     [0, 1, 2].map((level) => plan.beams.filter((beam) => beam.kind === 'beam' && beam.level === level).length),
     [1, 1, 1],
@@ -81,6 +67,25 @@ test('bar note builder beams adjacent notes according to each note duration', ()
   );
   assert.equal(triplet.beams.filter((beam) => beam.kind === 'beam').length, 1);
   assert.equal(triplet.tupletLabels[0]?.text, '3');
+});
+
+test('engraving plans preserve sorted mixed note values and tuplet metadata', () => {
+  const plan = createBarNoteNotationPlan(
+    [
+      { startQuarter: 1.5, durationQuarter: 0.5 },
+      { startQuarter: 0, durationQuarter: 0.25 },
+      { startQuarter: 0.25, durationQuarter: 0.25, tupletNumber: 3 },
+    ],
+    { durationQuarter: 2, width: 280, beamGroupQuarterNotes: 1 },
+  );
+
+  assert.equal(plan.durationQuarter, 2);
+  assert.deepEqual(plan.events.map(({ startQuarter, durationQuarter }) => [startQuarter, durationQuarter]), [
+    [0, 0.25],
+    [0.25, 0.25],
+    [1.5, 0.5],
+  ]);
+  assert.equal(plan.events[1]?.tupletNumber, 3);
 });
 
 test('bar note builder labels imported duplet, sextuplet, and mixed tuplet groups', () => {

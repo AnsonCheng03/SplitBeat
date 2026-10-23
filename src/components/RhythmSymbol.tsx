@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { NoteNotation } from '@/components/NoteNotation';
 import { createNoteNotationPlan, type NoteNotationSize } from '@/rhythm/noteNotation';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
@@ -17,7 +18,8 @@ function notationSize(compact: boolean, mini: boolean): NoteNotationSize {
 }
 
 export function RhythmSymbol({ subdivision, color, compact = false, mini = false, timeSignature = '4/4' }: RhythmSymbolProps) {
-  const plan = createNoteNotationPlan(subdivision, notationSize(compact, mini), timeSignature);
+  const size = notationSize(compact, mini);
+  const plan = useMemo(() => createNoteNotationPlan(subdivision, size, timeSignature), [size, subdivision, timeSignature]);
 
   return (
     <NoteNotation plan={plan} color={color} accessibilityLabel={SUBDIVISION_LABELS[subdivision]} />

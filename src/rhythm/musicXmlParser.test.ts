@@ -84,8 +84,8 @@ test('keeps note positions stable when MusicXML divisions change inside a measur
   const score = parseMusicXmlRhythm(xml);
 
   assert.deepEqual(score.measures[0].rightEvents, [
-    { startQuarter: 0, durationQuarter: 1 },
-    { startQuarter: 1, durationQuarter: 0.5 },
+    { startQuarter: 0, durationQuarter: 1, midiPitches: [60] },
+    { startQuarter: 1, durationQuarter: 0.5, midiPitches: [62] },
   ]);
   assert.equal(score.measures[0].durationQuarter, 2);
 });
@@ -99,7 +99,20 @@ test('merges tied note durations without expecting a second tap', () => {
   const score = parseMusicXmlRhythm(xml);
   assert.equal(score.measures[0].rightEvents.length, 1);
   assert.equal(score.measures[0].rightEvents[0].durationQuarter, 2);
+  assert.deepEqual(score.measures[0].rightEvents[0].midiPitches, [60]);
   assert.equal(score.measures[1].rightEvents[0].startQuarter, 1);
+});
+
+test('preserves MusicXML pitch alterations and chord pitches for score playback', () => {
+  const xml = scoreWithTwoStaves(
+    `<measure>${attributes('2/4')}<note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><staff>1</staff></note><note><chord/><pitch><step>F</step><alter>-1</alter><octave>4</octave></pitch><duration>4</duration><staff>1</staff></note><backup><duration>4</duration></backup>${note(8, 2, 'C')}</measure>`,
+    '2/4',
+  );
+  const score = parseMusicXmlRhythm(xml);
+
+  assert.equal(score.measures[0].rightEvents.length, 1);
+  assert.equal(score.measures[0].rightEvents[0].startQuarter, 0);
+  assert.deepEqual(score.measures[0].rightEvents[0].midiPitches, [60, 64]);
 });
 
 test('rejects malformed, unsupported, and single-staff scores with useful errors', () => {

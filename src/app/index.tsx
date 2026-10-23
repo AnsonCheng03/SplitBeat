@@ -40,26 +40,48 @@ export default function HomeScreen() {
               SPLIT BEAT
             </Text>
           </View>
-          <Pressable
-            testID="home.setup"
-            accessibilityRole="button"
-            accessibilityLabel="Settings"
-            onPress={() => router.push('/setup')}
-            hitSlop={12}
-            style={({ pressed }) => ({
-              minHeight: 34,
-              paddingHorizontal: 12,
-              justifyContent: 'center',
-              borderRadius: 11,
-              backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-              borderWidth: 1,
-              borderColor: colors.line,
-            })}
-          >
-            <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1 }}>
-              SETTINGS
-            </Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', gap: 7 }}>
+            <Pressable
+              testID="home.records"
+              accessibilityRole="button"
+              accessibilityLabel="View training records"
+              onPress={() => router.push('/records')}
+              hitSlop={10}
+              style={({ pressed }) => ({
+                minHeight: 34,
+                paddingHorizontal: 12,
+                justifyContent: 'center',
+                borderRadius: 11,
+                backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
+                borderWidth: 1,
+                borderColor: colors.line,
+              })}
+            >
+              <Text style={{ color: colors.left, fontSize: 10, fontWeight: '900', letterSpacing: 1 }}>
+                MY RECORD
+              </Text>
+            </Pressable>
+            <Pressable
+              testID="home.setup"
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
+              onPress={() => router.push('/setup')}
+              hitSlop={10}
+              style={({ pressed }) => ({
+                minHeight: 34,
+                paddingHorizontal: 12,
+                justifyContent: 'center',
+                borderRadius: 11,
+                backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
+                borderWidth: 1,
+                borderColor: colors.line,
+              })}
+            >
+              <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1 }}>
+                SETTINGS
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         <View style={{ flex: 1, width: '100%', maxWidth: 960, alignSelf: 'center', justifyContent: 'center', paddingVertical: 10 }}>

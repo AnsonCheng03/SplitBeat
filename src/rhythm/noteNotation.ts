@@ -47,10 +47,13 @@ export interface NoteBeamShape {
 export interface NoteNotationPlan {
   width: number;
   height: number;
+  durationQuarter: number;
+  beamGroupQuarterNotes: number;
+  events: NoteNotationEvent[];
   notes: NoteGlyphShape[];
   beams: NoteBeamShape[];
   tupletLabels: { key: string; text: string; left: number; width: number; top: number; fontSize: number }[];
-  staffLineY: number | null;
+  noteBaselineY: number | null;
 }
 
 export interface BarNoteNotationOptions {
@@ -63,29 +66,10 @@ export interface BarNoteNotationOptions {
   beamGroupQuarterNotes?: number;
 }
 
-export interface StaffNotationLayout {
-  notationTop: number;
-  staffLineBottom: number;
-}
-
-/** Keep each notehead baseline attached to the same bottom staff line. */
-export function createStaffNotationLayout(rowHeight: number, notationHeight: number): StaffNotationLayout {
-  if (!Number.isFinite(rowHeight) || rowHeight <= 5) {
-    throw new RangeError('A staff row must be taller than its five-pixel bottom margin.');
-  }
-  if (!Number.isFinite(notationHeight) || notationHeight <= 0) {
-    throw new RangeError('Notation height must be positive.');
-  }
-
-  return {
-    notationTop: Math.max(0, rowHeight - notationHeight),
-    staffLineBottom: rowHeight - 5,
-  };
-}
-
 interface NoteNotationMetrics {
   width: number;
   height: number;
+  durationQuarter: number;
   noteAnchors: number[];
   headWidth: number;
   headHeight: number;
@@ -97,7 +81,7 @@ interface NoteNotationMetrics {
   beamGroupQuarterNotes: number;
   maxBeamNotesByLevel?: number[];
   tupletLabelFontSize: number;
-  staffLineY: number | null;
+  noteBaselineY: number | null;
 };
 
 interface PositionedNote extends NoteNotationEvent {
@@ -336,10 +320,18 @@ function buildNotationPlan(
   return {
     width: metrics.width,
     height: metrics.height,
+    durationQuarter: metrics.durationQuarter,
+    beamGroupQuarterNotes: metrics.beamGroupQuarterNotes,
+    events: notes.map(({ startQuarter, durationQuarter, beamCount, tupletNumber }) => ({
+      startQuarter,
+      durationQuarter,
+      beamCount,
+      ...(tupletNumber === undefined ? {} : { tupletNumber }),
+    })),
     notes: glyphs,
     beams,
     tupletLabels,
-    staffLineY: metrics.staffLineY,
+    noteBaselineY: metrics.noteBaselineY,
   };
 }
 
@@ -398,6 +390,7 @@ export function createBarNoteNotationPlan(
   return buildNotationPlan(orderedEvents, {
     width: options.width,
     height,
+    durationQuarter: options.durationQuarter,
     noteAnchors,
     headWidth,
     headHeight,
@@ -408,7 +401,7 @@ export function createBarNoteNotationPlan(
     flagWidth: Math.max(size === 'mini' ? 5 : 7, headWidth * 0.9),
     beamGroupQuarterNotes,
     tupletLabelFontSize: size === 'mini' ? 8 : size === 'compact' ? 10 : 12,
-    staffLineY: height - 5,
+    noteBaselineY: height - 5,
   });
 }
 
@@ -449,6 +442,7 @@ export function createNoteNotationPlan(
   return buildNotationPlan(events, {
     width: count * slotWidth,
     height: mini ? 34 : compact ? 56 : 68,
+    durationQuarter: count * noteDurationQuarter,
     noteAnchors: Array.from({ length: count }, (_, index) => (index + 0.5) * slotWidth),
     headWidth,
     headHeight,
@@ -460,6 +454,6 @@ export function createNoteNotationPlan(
     beamGroupQuarterNotes: isTuplet ? pulseQuarterNotes(timeSignature) : 1,
     maxBeamNotesByLevel: Array.from({ length: beamCount }, (_, beamIndex) => beamGroupSize(count, beamIndex)),
     tupletLabelFontSize: mini ? 8 : compact ? 12 : 14,
-    staffLineY: null,
+    noteBaselineY: null,
   });
 }

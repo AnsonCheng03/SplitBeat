@@ -92,3 +92,24 @@ export function createClickSamples(
 
   return samples;
 }
+
+export function midiPitchToFrequency(midiPitch: number): number {
+  return 440 * 2 ** ((midiPitch - 69) / 12);
+}
+
+export function createPitchedNoteSamples(
+  midiPitch: number,
+  sampleRate: number,
+): Float32Array<ArrayBuffer> {
+  const durationSeconds = 0.22;
+  const frequency = midiPitchToFrequency(midiPitch);
+  const samples = new Float32Array(Math.ceil(sampleRate * durationSeconds));
+  for (let frame = 0; frame < samples.length; frame += 1) {
+    const time = frame / sampleRate;
+    const envelope = Math.exp(-time * 10) * Math.min(1, time * 120);
+    const fundamental = Math.sin(2 * Math.PI * frequency * time);
+    const secondHarmonic = Math.sin(2 * Math.PI * frequency * 2 * time) * 0.16;
+    samples[frame] = (fundamental + secondHarmonic) * envelope * 0.55;
+  }
+  return samples;
+}

@@ -27,7 +27,7 @@ npm run release:testflight
 
 This requires macOS, Xcode, CocoaPods, and at least 20 GiB free on `/private/tmp`. To create and validate an archive without uploading it, run `npm run ios:archive`; set `SPLITBEAT_ARCHIVE_PATH` to choose another `.xcarchive` location. The archive is retained if signing or upload fails.
 
-The release script uses Xcode automatic signing with the configured Apple team. It can also use an App Store Connect API key when `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID`, and optionally `ASC_API_KEY_PATH` are set; the default key location is `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8`. Keep API keys out of the repository. The configured iOS build number is `2`; increment `ios.buildNumber` in `app.json` for each subsequent upload.
+The release script uses Xcode automatic signing with the configured Apple team. It can also use an App Store Connect API key when `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID`, and optionally `ASC_API_KEY_PATH` are set; the default key location is `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8`. Keep API keys out of the repository. The configured iOS build number is `5`; increment `ios.buildNumber` in `app.json` for each subsequent upload.
 
 The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.plist` is checked for `ITSAppUsesNonExemptEncryption=false` and for absence of a microphone purpose string before upload. The app synthesizes sound and does not use the microphone. App Store Connect still processes each accepted upload before it appears in TestFlight.
 
@@ -40,14 +40,14 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 
 ## Architecture
 
-- `src/app/` contains the mode-select home, session setup, separate rhythm/audio/timing/display settings pages, practice, score import, and results routes.
+- `src/app/` contains the mode-select home, session setup, separate rhythm/audio/timing settings pages, practice, score import, results, and records routes.
 - `src/rhythm/` contains subdivision math, non-repeating pair generation, tap matching, and scoring.
-- `src/rhythm/noteNotation.ts` builds repeated subdivision symbols and mixed-duration bar notation with beat-aware beams and flags; `patternNotation.ts` lays changing patterns across a stable piano grand staff.
+- `src/rhythm/noteNotation.ts` builds repeated subdivision symbols and mixed-duration bar notation with beat-aware beams and flags.
 - `src/rhythm/musicXmlParser.ts` converts partwise MusicXML to rhythm-only score tracks for imported-score practice.
 - `src/rhythm/timingCalibration.ts` normalizes per-hand timing calibration and the selectable scoring window.
 - src/audio/ synthesizes selectable metronome and hand click tones, then schedules metronome clicks on the native audio clock.
-- src/store/ owns session state, prepares the audio context and offline click sounds at app startup, and persists exercise settings locally. The home and setup screens show when audio is ready; the play ring spins during preparation and turns solid when ready.
-- `src/components/` contains reusable symbols, settings controls, beat indicators, the piano staff display, start buttons, and large touch zones.
+- src/store/ owns session state, prepares the audio context and offline click sounds at app startup, and persists exercise settings and summary-only session history locally. Missed-event replay data stays with the open result screen.
+- `src/components/` contains reusable symbols, settings controls, beat indicators, start buttons, and large touch zones. Noteheads, stems, flags, and beams are engraved by VexFlow in an offline Expo DOM view; the native rhythm planner supplies note times and beam groups.
 - `expo-build-properties` enables the iOS scene lifecycle required by iOS 27 and builds Expo modules from source so Worklets links against this app's React Native libraries.
 - The metronome synthesizes output and never records audio. A version-pinned postinstall patch disables the audio library's unused iOS microphone permission methods; the app does not request microphone access.
 
@@ -59,7 +59,7 @@ Choose 2/4, 3/4, 4/4, 5/4, 7/4, 2/2, 3/8, 6/8, 9/8, or 12/8 in Rhythm & meter se
 
 Choose Straight or Swing feel in Rhythm & meter settings. Swing moves binary offbeats toward a 2:1 long-short ratio within each quarter note; quarter notes and all tuplets keep their regular timing. Sixteenth, 32nd, and 64th notes use the same long-short eighth-note grid. Optionally enable Grace note pickups: the engine adds one extra expected tap for each hand just before every pattern change. Or enable Rest before each change: both hands stay silent for the last beat before the next pattern while the metronome continues. The rest takes precedence over grace pickups. These settings are saved with the other local preferences.
 
-The home screen offers Two hands and One hand modes. One-hand practice lets the player choose left or right; only that hand contributes to results, and the other side stays visibly inactive. Practice display settings switch between the fixed left/right lanes and a piano grand staff (right hand on treble, left hand on bass). The generated staff stays fixed in place and includes each pattern change and any transition rest in its current bar.
+The home screen offers Two hands and One hand modes. One-hand practice lets the player choose left or right; only that hand contributes to results, and the other side stays visibly inactive. Practice uses stable left/right rhythm lanes without staff lines or pitch movement.
 
 ## Training from a score
 
@@ -73,7 +73,11 @@ HOMR supports PDF and image inputs and writes a `.musicxml` file beside the sour
 
 The importer maps staff 1 to the right hand and staff 2 to the left hand in a grand staff. If the score has separate one-staff parts, it uses the first part for the right hand and the second for the left. It converts note attacks and durations, carries explicit tuplet counts into the bar preview, treats rests as silence, merges tied notes, and treats chords as one tap. Grace notes are skipped with a warning because MusicXML does not give them a fixed duration. The extracted rhythm is previewed before practice; the score then repeats for the saved session length. A score tempo, when present, sets the practice tempo.
 
-The internal `ImportedRhythmScore` JSON stores each measure's start and duration in quarter-note units plus separate left/right note events. Its rhythm preview places notes at their score onsets, varies beam depth with note duration, and groups beams at the meter's pulse. Practice timestamps are calculated from the monotonic session start and the score's quarter-note positions, then matched by the same per-hand scoring windows as generated exercises. The current importer accepts partwise MusicXML and the time signatures already supported by Split Beat; it rejects scores with tempo or time-signature changes. It does not import PDF/image files directly or compressed `.mxl` packages, and its simplified preview does not preserve pitch or original engraving; check each bar against the source before training. The pasted score is currently kept for the active session only.
+The internal `ImportedRhythmScore` JSON stores each measure's start and duration in quarter-note units plus separate left/right note events. Its rhythm preview places notes at their score onsets, varies beam depth with note duration, groups beams at the meter's pulse, and renders every notehead at the same fixed pitch with no staff lines. MusicXML pitches remain hidden from the display but determine the synthesized note heard on a correctly matched tap; chords sound together. The current importer accepts partwise MusicXML and the time signatures already supported by Split Beat; it rejects scores with tempo or time-signature changes. It does not import PDF/image files directly or compressed `.mxl` packages; check each rhythm bar against the source before training. The pasted score is kept only for the active session.
+
+## Session records and missed-note replay
+
+The home screen's **My Record** page keeps the 100 most recent summary records on the device, including date, meter, tempo, mode, and overall/hand accuracy. Missed notes are listed by bar on the result page and can be replayed one bar at a time with the metronome and expected hand sounds; imported score misses replay their MusicXML pitches. Replay details are removed when the result page loses focus, and are never stored in session history.
 
 ## External keyboard play
 
@@ -81,9 +85,9 @@ During practice, an external QWERTY keyboard can tap either hand. The practice z
 
 ## End-to-end checks
 
-The home screen follows AstroDX's compact main-menu hierarchy: choose Two hands or One hand, then start. Settings and score import stay secondary to that choice. One-hand mode reveals a simple left/right selector. The Settings page keeps tempo and duration close by and opens Rhythm & meter, Sounds & feedback, Timing calibration, or Practice display on separate detail pages.
+The home screen follows AstroDX's compact main-menu hierarchy: choose Two hands or One hand, then start. Settings and score import stay secondary to that choice. One-hand mode reveals a simple left/right selector. The Settings page keeps tempo and duration close by and opens Rhythm & meter, Sounds & feedback, or Timing calibration on separate detail pages.
 
-Build and install a release app on a simulator or device, then run the Maestro smoke flow. It exercises the multi-page settings, starts practice, checks both tap zones, ends the exercise, and verifies the results screen:
+Build and install a release app on a simulator or device, then run the Maestro smoke flow. The flow mutes sound effects in settings before practice and keeps replay silent. It exercises the multi-page settings, starts practice, checks both tap zones, ends the exercise, and verifies the results screen:
 
 ~~~sh
 npm run e2e:ios
@@ -112,7 +116,7 @@ The engine captures a monotonic performance.now() timestamp at touch start. Expe
 
 Timing calibration can measure a separate signed tap offset for each hand from eight on-time taps against the native metronome click. Positive offsets shift that hand's measured tap earlier during scoring; negative offsets shift it later. The sliders allow manual adjustment from -200 to +200 ms. The acceptable hit range can be tuned from ±50 to ±200 ms; Perfect and Great thresholds remain 30% and 60% of that range. Reset Timing Defaults restores both offsets to 0 ms and the hit range to ±100 ms. Calibration and range settings are stored locally.
 
-During practice, a compact preview slides in at the top for the last beat before a pattern change. It shows the next pattern and beat countdown without a large seconds panel. When a change rest is enabled, the same preview marks the rest beat, and the next pattern becomes current on the scheduled beat boundary. The preview and piano staff use the same exercise sequence as the timing engine.
+During practice, a compact preview slides in at the top for the last beat before a pattern change. It shows the next pattern and beat countdown without a large seconds panel. When a change rest is enabled, the same preview marks the rest beat, and the next pattern becomes current on the scheduled beat boundary. The preview and rhythm lanes use the same exercise sequence as the timing engine.
 
 Each hand has its own expected-event queue. A tap claims the nearest unmatched event within the selected timing range after applying that hand's calibration offset. Event times are calculated from the session origin and the selected meter, subdivision, and feel; timer callbacks and animations never increment the rhythm clock. Perfect and Great use 30% and 60% of the selected range. An unclaimed event becomes a miss after the adjusted window closes; a duplicate or out-of-window tap cannot consume an already matched event. Transition accuracy covers the first two metronome pulses after each generated pair change, including enabled grace pickups.
 

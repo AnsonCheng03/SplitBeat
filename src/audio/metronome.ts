@@ -1,7 +1,11 @@
 import { AudioContext } from 'react-native-audio-api';
 import type { AudioBuffer } from 'react-native-audio-api';
-import { createClickSamples, SOUND_OPTIONS } from '@/audio/soundPresets';
-import type { SoundPreset } from '@/types/rhythm';
+import {
+  createClickSamples,
+  createPitchedNoteSamples,
+  SOUND_OPTIONS,
+} from '@/audio/soundPresets';
+import type { MissedEvent, SoundPreset } from '@/types/rhythm';
 
 interface MetronomeStartOptions {
   sessionStartAudioTime: number;
@@ -26,6 +30,7 @@ export class MetronomeAudio {
   private readonly context = new AudioContext();
   private readonly output = this.context.createGain();
   private readonly clickBuffers = new Map<SoundPreset, AudioBuffer>();
+  private readonly pitchedNoteBuffers = new Map<number, AudioBuffer>();
   private timer: ReturnType<typeof setTimeout> | undefined;
   private startOptions: MetronomeStartOptions | undefined;
   private sounds: MetronomeSounds = { metronome: 'wood', leftHand: 'soft', rightHand: 'beep' };
@@ -72,6 +77,62 @@ export class MetronomeAudio {
     this.scheduleClick(this.context.currentTime, preset, 0.48);
   }
 
+  playScorePitches(midiPitches: readonly number[]): void {
+    if (!this.startOptions?.soundEnabled || this.closed) return;
+    const when = this.context.currentTime;
+    for (const midiPitch of midiPitches) {
+      if (!Number.isFinite(midiPitch) || midiPitch < 0 || midiPitch > 127) continue;
+      this.scheduleBuffer(when, this.getPitchedNoteBuffer(midiPitch), 0.62);
+    }
+  }
+
+  replayMissedBar(options: {
+    events: readonly MissedEvent[];
+    bpm: number;
+    beatsPerBar: number;
+    soundEnabled: boolean;
+    sounds: MetronomeSounds;
+  }): number {
+    if (this.closed || options.events.length === 0) return 0;
+    this.setSounds(options.sounds);
+    const startTime = this.context.currentTime + 0.45;
+    const beatDurationSeconds = 60 / options.bpm;
+    const playbackDurationMs = options.beatsPerBar * beatDurationSeconds * 1_000 + 350;
+    this.startOptions = {
+      sessionStartAudioTime: startTime,
+      bpm: options.bpm,
+      beatsPerBar: options.beatsPerBar,
+      durationSeconds: playbackDurationMs / 1_000,
+      soundEnabled: options.soundEnabled,
+      sounds: options.sounds,
+    };
+    this.output.gain.value = options.soundEnabled ? 0.75 : 0;
+
+    for (let beat = 0; beat < options.beatsPerBar; beat += 1) {
+      this.scheduleClick(
+        startTime + beat * beatDurationSeconds,
+        options.sounds.metronome,
+        beat === 0 ? 1.15 : 0.78,
+      );
+    }
+
+    for (const event of options.events) {
+      const eventTime = startTime + event.beatInBar * beatDurationSeconds;
+      if (event.midiPitches?.length) {
+        for (const midiPitch of event.midiPitches) {
+          if (Number.isFinite(midiPitch) && midiPitch >= 0 && midiPitch <= 127) {
+            this.scheduleBuffer(eventTime, this.getPitchedNoteBuffer(midiPitch), 0.62);
+          }
+        }
+      } else {
+        const sound = event.hand === 'left' ? options.sounds.leftHand : options.sounds.rightHand;
+        this.scheduleClick(eventTime, sound, 0.48);
+      }
+    }
+
+    return playbackDurationMs;
+  }
+
   private scheduleAhead = (): void => {
     const options = this.startOptions;
     if (!options || this.closed) return;
@@ -97,9 +158,13 @@ export class MetronomeAudio {
   };
 
   private scheduleClick(when: number, sound: SoundPreset, level: number): void {
+    this.scheduleBuffer(when, this.getClickBuffer(sound), level);
+  }
+
+  private scheduleBuffer(when: number, buffer: AudioBuffer, level: number): void {
     const source = this.context.createBufferSource();
     const gain = this.context.createGain();
-    source.buffer = this.getClickBuffer(sound);
+    source.buffer = buffer;
     gain.gain.value = level;
     source.connect(gain);
     gain.connect(this.output);
@@ -118,6 +183,17 @@ export class MetronomeAudio {
     const buffer = this.context.createBuffer(1, samples.length, this.context.sampleRate);
     buffer.copyToChannel(samples, 0);
     this.clickBuffers.set(sound, buffer);
+    return buffer;
+  }
+
+  private getPitchedNoteBuffer(midiPitch: number): AudioBuffer {
+    const cachedBuffer = this.pitchedNoteBuffers.get(midiPitch);
+    if (cachedBuffer) return cachedBuffer;
+
+    const samples = createPitchedNoteSamples(midiPitch, this.context.sampleRate);
+    const buffer = this.context.createBuffer(1, samples.length, this.context.sampleRate);
+    buffer.copyToChannel(samples, 0);
+    this.pitchedNoteBuffers.set(midiPitch, buffer);
     return buffer;
   }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { NoteNotation } from '@/components/NoteNotation';
 import { createBarNoteNotationPlan, type NoteNotationSize } from '@/rhythm/noteNotation';
@@ -21,14 +21,14 @@ function RhythmTrack({
   beamGroupQuarterNotes: number;
 }) {
   const [notationWidth, setNotationWidth] = useState(0);
-  const plan = notationWidth > 0
+  const plan = useMemo(() => notationWidth > 0
     ? createBarNoteNotationPlan(events, {
       durationQuarter,
       width: notationWidth,
       size,
       beamGroupQuarterNotes,
     })
-    : null;
+    : null, [beamGroupQuarterNotes, durationQuarter, events, notationWidth, size]);
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: size === 'compact' ? 32 : 46 }}>
@@ -41,7 +41,6 @@ function RhythmTrack({
           <NoteNotation
             plan={plan}
             color={color}
-            staffLineColor={colors.line}
             testID={`practice.scoreMeasure.${label.toLowerCase()}Notation`}
             accessibilityLabel={`${label.toLowerCase()} bar with ${events.length} notes`}
           />

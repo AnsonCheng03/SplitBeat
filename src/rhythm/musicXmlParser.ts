@@ -248,6 +248,35 @@ function pitchKey(note: XmlNode): string {
   ].join(':');
 }
 
+function midiPitch(note: XmlNode): number | undefined {
+  const pitch = first(note, 'pitch');
+  if (!pitch) return undefined;
+
+  const step = value(first(pitch, 'step'));
+  const octave = Number(value(first(pitch, 'octave')));
+  const stepSemitones: Record<string, number> = {
+    C: 0,
+    D: 2,
+    E: 4,
+    F: 5,
+    G: 7,
+    A: 9,
+    B: 11,
+  };
+  if (!Object.hasOwn(stepSemitones, step) || !Number.isInteger(octave)) return undefined;
+
+  const alterText = value(first(pitch, 'alter'));
+  const alter = alterText === '' ? 0 : Number(alterText);
+  if (!Number.isFinite(alter)) return undefined;
+  return (octave + 1) * 12 + stepSemitones[step]! + alter;
+}
+
+function addMidiPitch(event: ScoreRhythmEvent, pitch: number | undefined): void {
+  if (pitch === undefined) return;
+  const pitches = event.midiPitches ?? (event.midiPitches = []);
+  if (!pitches.includes(pitch)) pitches.push(pitch);
+}
+
 function noteEventMap(events: ScoreRhythmEvent[]): Map<number, ScoreRhythmEvent> {
   return new Map(events.map((event) => [Number(event.startQuarter.toFixed(7)), event]));
 }
@@ -271,6 +300,7 @@ function scanStaff(
     const events: ScoreRhythmEvent[] = [];
     const byOnset = noteEventMap(events);
     let cursorQuarter = 0;
+    let previousChordStartQuarter = 0;
     let maxQuarterPosition = 0;
     let graceCount = 0;
 
@@ -287,6 +317,7 @@ function scanStaff(
           throw new Error('This MusicXML score contains an invalid voice backup.');
         }
         cursorQuarter = Math.max(0, cursorQuarter);
+        previousChordStartQuarter = cursorQuarter;
         maxQuarterPosition = Math.max(maxQuarterPosition, cursorQuarter);
         continue;
       }
@@ -300,10 +331,12 @@ function scanStaff(
       if (!isGraceNote && (!Number.isFinite(durationDivisions) || durationDivisions < 0)) {
         throw new Error('This MusicXML score contains an invalid note duration.');
       }
-      const startQuarter = cursorQuarter;
+      const startQuarter = isChordTone ? previousChordStartQuarter : cursorQuarter;
       const durationQuarter = durationDivisions / divisions;
       const noteTupletNumber = tupletNumber(element);
       const isRest = Boolean(first(element, 'rest'));
+
+      if (!isChordTone) previousChordStartQuarter = cursorQuarter;
 
       if (staff === selection.staff && !isRest) {
         if (isGraceNote) {
@@ -311,10 +344,12 @@ function scanStaff(
         } else {
           const ties = tieTypes(element);
           const key = pitchKey(element);
+          const noteMidiPitch = midiPitch(element);
           const tiedEvent = ties.stops ? activeTies.get(key) : undefined;
           if (tiedEvent) {
             const endQuarter = scoreMeasureStart + startQuarter + durationQuarter;
             tiedEvent.durationQuarter = endQuarter - tiedEvent.absoluteStartQuarter;
+            addMidiPitch(tiedEvent, noteMidiPitch);
             if (!ties.starts) activeTies.delete(key);
           } else {
             const eventKey = Number(startQuarter.toFixed(7));
@@ -322,6 +357,7 @@ function scanStaff(
             if (existing) {
               existing.durationQuarter = Math.max(existing.durationQuarter, durationQuarter);
               existing.tupletNumber ??= noteTupletNumber;
+              addMidiPitch(existing, noteMidiPitch);
             } else {
               const event: MutableScoreEvent = {
                 startQuarter,
@@ -330,6 +366,7 @@ function scanStaff(
                 absoluteStartQuarter: scoreMeasureStart + startQuarter,
                 pitchKey: key,
               };
+              addMidiPitch(event, noteMidiPitch);
               events.push(event);
               byOnset.set(eventKey, event);
               if (ties.starts && key) activeTies.set(key, event);
@@ -372,7 +409,7 @@ function titleOf(root: XmlNode): string {
     'Imported score';
 }
 
-/** Converts HOMR (or other partwise MusicXML) output to rhythm-only hand tracks. */
+/** Converts HOMR (or other partwise MusicXML) output to hand rhythms and hidden playback pitches. */
 export function parseMusicXmlRhythm(xml: string): ImportedRhythmScore {
   const root = parseXml(xml);
   if (root.name !== 'score-partwise') {
@@ -403,14 +440,16 @@ export function parseMusicXmlRhythm(xml: string): ImportedRhythmScore {
       index,
       startQuarter: leftMeasure.startQuarter,
       durationQuarter: leftMeasure.durationQuarter,
-      leftEvents: leftMeasure.leftEvents.map(({ startQuarter, durationQuarter, tupletNumber }) => ({
+      leftEvents: leftMeasure.leftEvents.map(({ startQuarter, durationQuarter, midiPitches, tupletNumber }) => ({
         startQuarter,
         durationQuarter,
+        ...(midiPitches === undefined ? {} : { midiPitches: [...midiPitches] }),
         ...(tupletNumber === undefined ? {} : { tupletNumber }),
       })),
-      rightEvents: rightMeasure.rightEvents.map(({ startQuarter, durationQuarter, tupletNumber }) => ({
+      rightEvents: rightMeasure.rightEvents.map(({ startQuarter, durationQuarter, midiPitches, tupletNumber }) => ({
         startQuarter,
         durationQuarter,
+        ...(midiPitches === undefined ? {} : { midiPitches: [...midiPitches] }),
         ...(tupletNumber === undefined ? {} : { tupletNumber }),
       })),
     };

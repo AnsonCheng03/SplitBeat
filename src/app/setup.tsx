@@ -147,12 +147,6 @@ export default function SetupScreen() {
             title="Timing calibration"
             detail={`±${settings.goodWindowMs} ms range · ${settings.leftTapOffsetMs >= 0 ? '+' : ''}${settings.leftTapOffsetMs}/${settings.rightTapOffsetMs >= 0 ? '+' : ''}${settings.rightTapOffsetMs} ms offsets`}
           />
-          <SettingsLink
-            testID="setup.card.display"
-            href="/settings/display"
-            title="Practice display"
-            detail={settings.practiceDisplay === 'piano-staff' ? 'Piano grand staff' : 'Separate hand lanes'}
-          />
         </ScrollView>
 
         <View style={{ paddingHorizontal: 22, paddingTop: 9, paddingBottom: 8, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.background }}>
@@ -187,7 +181,7 @@ function SettingsLink({
   detail,
 }: {
   testID: string;
-  href: '/settings/rhythm' | '/settings/audio' | '/settings/timing' | '/settings/display';
+  href: '/settings/rhythm' | '/settings/audio' | '/settings/timing';
   title: string;
   detail: string;
 }) {

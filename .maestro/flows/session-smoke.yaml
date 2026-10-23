@@ -134,6 +134,10 @@ appId: com.splitbeat.twohandrhythm
     id: setup.card.audio
 - assertVisible:
     id: settings.audio.screen
+- tapOn:
+    id: setup.toggle.sound
+- assertNotVisible:
+    text: Sound on. Tap to mute.
 - assertVisible:
     id: setup.sound.metronome.bell
 - tapOn:
@@ -156,21 +160,6 @@ appId: com.splitbeat.twohandrhythm
     visibilityPercentage: 90
 - tapOn:
     id: settings.audio.back
-- scrollUntilVisible:
-    element: { id: setup.card.display }
-    direction: DOWN
-- swipe:
-    start: 90%, 70%
-    end: 90%, 45%
-    duration: 350
-- tapOn:
-    id: setup.card.display
-- assertVisible:
-    id: settings.display.screen
-- tapOn:
-    id: setup.display.piano-staff
-- tapOn:
-    id: settings.display.back
 - assertVisible:
     id: setup.start
 - tapOn:
@@ -180,20 +169,10 @@ appId: com.splitbeat.twohandrhythm
       id: practice.screen
     timeout: 15000
 - assertVisible:
-    id: practice.grandStaff
-- assertVisible:
-    id: practice.grandStaff.treble
-- assertVisible:
-    id: practice.grandStaff.bass
+    id: practice.rhythmDisplay
 - assertVisible: RIGHT HAND ONLY
-- assertVisible: Sound on. Tap to mute.
-- tapOn:
-    id: practice.soundToggle
 - assertVisible: Sound off. Tap to enable.
 - assertVisible: "SOUND OFF · TAP TO ENABLE"
-- tapOn:
-    id: practice.soundToggle
-- assertVisible: Sound on. Tap to mute.
 - assertVisible:
     id: practice.timeSignature
 - assertVisible: 6/8
@@ -227,3 +206,27 @@ appId: com.splitbeat.twohandrhythm
       id: results.screen
     timeout: 15000
 - assertVisible: SESSION COMPLETE
+- scrollUntilVisible:
+    element:
+      id: results.missedNotes
+    direction: DOWN
+- assertVisible:
+    id: results.missedNotes
+- scrollUntilVisible:
+    element:
+      id: results.replayBar.1
+    direction: DOWN
+- tapOn:
+    id: results.replayBar.1
+- assertVisible:
+    id: results.screen
+- scrollUntilVisible:
+    element:
+      id: results.records
+    direction: DOWN
+- tapOn:
+    id: results.records
+- assertVisible:
+    id: records.screen
+- assertVisible:
+    id: records.count
