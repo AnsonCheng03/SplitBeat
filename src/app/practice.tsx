@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Countdown } from '@/components/Countdown';
 import { HardwareKeyboardInput } from '@/components/HardwareKeyboardInput';
 import { MetronomeIndicator } from '@/components/MetronomeIndicator';
+import { NextPatternPreview } from '@/components/NextPatternPreview';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
 import { ScrollingScoreRhythm } from '@/components/ScoreRhythmMeasure';
 import { TapZone } from '@/components/TapZone';
@@ -76,6 +77,12 @@ export default function PracticeScreen() {
 
   const enabledHand = (hand: Hand) => settings.trainingMode !== 'single-hand' || settings.singleHand === hand;
   const step = snapshot?.currentStep;
+  const showNextPattern = Boolean(snapshot?.nextStep && !snapshot.scoreMeasure);
+  const previewTop = compact ? 46 : 58;
+  const previewHeight = compact ? 94 : 106;
+  const rhythmDisplayTop = showNextPattern
+    ? Math.max(height * 0.21, previewTop + previewHeight + 10)
+    : height * 0.21;
 
   return (
     <SafeAreaView testID="practice.screen" style={{ flex: 1, backgroundColor: colors.background }}>
@@ -111,11 +118,24 @@ export default function PracticeScreen() {
           style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1, backgroundColor: colors.line, opacity: 0.65 }}
         />
 
+        {showNextPattern && snapshot?.nextStep ? (
+          <NextPatternPreview
+            step={snapshot.nextStep}
+            beatsUntilChange={snapshot.beatsUntilChange}
+            graceNotesEnabled={settings.graceNotesEnabled}
+            restBeforeChange={settings.restBetweenChanges}
+            compact={compact}
+            timeSignature={settings.timeSignature}
+            top={previewTop}
+            height={previewHeight}
+          />
+        ) : null}
+
         {snapshot ? (
           <View
             testID="practice.rhythmDisplay"
             pointerEvents="none"
-            style={{ position: 'absolute', top: '21%', bottom: '5%', left: 0, right: 0, flexDirection: 'row', alignItems: 'center' }}
+            style={{ position: 'absolute', top: rhythmDisplayTop, bottom: '5%', left: 0, right: 0, flexDirection: 'row', alignItems: 'center' }}
           >
             {snapshot.scoreMeasure ? (
               <View style={{ flex: 1 }}>

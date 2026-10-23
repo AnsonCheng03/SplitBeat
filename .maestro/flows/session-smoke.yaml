@@ -180,6 +180,10 @@ appId: com.splitbeat.twohandrhythm
     id: practice.rhythmDisplay
 - assertVisible:
     id: practice.beatCounter
+- assertVisible:
+    id: practice.nextPattern
+- assertVisible:
+    id: practice.nextPattern.countdown
 - extendedWaitUntil:
     visible:
       id: practice.restBeat

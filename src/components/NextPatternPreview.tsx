@@ -12,26 +12,40 @@ interface NextPatternPreviewProps {
   restBeforeChange?: boolean;
   compact?: boolean;
   timeSignature: TimeSignature;
+  top: number;
+  height: number;
 }
 
 interface HandPreviewProps {
   hand: Hand;
   subdivision: Subdivision;
   timeSignature: TimeSignature;
-  compact?: boolean;
+  compact: boolean;
 }
 
-function HandPreview({ hand, subdivision, timeSignature, compact = false }: HandPreviewProps) {
+function HandPreview({ hand, subdivision, timeSignature, compact }: HandPreviewProps) {
   const color = hand === 'left' ? colors.left : colors.right;
 
   return (
-    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: compact ? 3 : 7 }}>
-      <RhythmSymbol subdivision={subdivision} color={color} mini timeSignature={timeSignature} />
-      <View style={{ flexShrink: 1 }}>
-        <Text style={{ color, fontSize: compact ? 8 : 9, fontWeight: '800', letterSpacing: 1 }}>
-          {hand.toUpperCase()}
-        </Text>
-        <Text numberOfLines={2} style={{ color: colors.text, fontSize: compact ? 9 : 11, fontWeight: '700' }}>
+    <View style={{ flex: 1, minWidth: 0, justifyContent: 'center', gap: compact ? 3 : 5 }}>
+      <Text
+        numberOfLines={1}
+        style={{ color, fontSize: compact ? 11 : 12, fontWeight: '900', letterSpacing: 1 }}
+      >
+        {hand.toUpperCase()}
+      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: compact ? 9 : 12, minWidth: 0 }}>
+        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} />
+        <Text
+          numberOfLines={2}
+          style={{
+            flexShrink: 1,
+            color: colors.text,
+            fontSize: compact ? 14 : 16,
+            lineHeight: compact ? 17 : 19,
+            fontWeight: '800',
+          }}
+        >
           {SUBDIVISION_LABELS[subdivision]}
         </Text>
       </View>
@@ -46,75 +60,94 @@ export function NextPatternPreview({
   restBeforeChange = false,
   compact = false,
   timeSignature,
+  top,
+  height,
 }: NextPatternPreviewProps) {
   const [slideProgress] = useState(() => new Animated.Value(0));
   const stepId = step?.id;
 
   useEffect(() => {
-    if (!stepId || beatsUntilChange > 1) return;
+    if (!stepId) return;
 
     slideProgress.setValue(0);
     const animation = Animated.timing(slideProgress, {
       toValue: 1,
-      duration: 240,
+      duration: 180,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     });
     animation.start();
     return () => animation.stop();
-  }, [beatsUntilChange, slideProgress, stepId]);
+  }, [slideProgress, stepId]);
 
-  if (!step || beatsUntilChange > 1) return null;
+  if (!step) return null;
 
-  const translateY = slideProgress.interpolate({ inputRange: [0, 1], outputRange: [-12, 0] });
+  const countLabel = beatsUntilChange === 1 ? 'BEAT' : 'BEATS';
+  const changeDetail = restBeforeChange
+    ? ', with a rest before the change'
+    : graceNotesEnabled
+      ? ', with a grace note pickup before the change'
+      : '';
 
   return (
     <Animated.View
       testID="practice.nextPattern"
+      pointerEvents="none"
       accessibilityLabel={
-        `Next pattern in ${beatsUntilChange} ${beatsUntilChange === 1 ? 'beat' : 'beats'}: left ` +
-        `${SUBDIVISION_LABELS[step.leftSubdivision]}, right ${SUBDIVISION_LABELS[step.rightSubdivision]}` +
-        (restBeforeChange ? ', with a rest before the change' : graceNotesEnabled ? ', with a grace note pickup before the change' : '')
+        `Next pattern. Changes in ${beatsUntilChange} ${beatsUntilChange === 1 ? 'beat' : 'beats'}. ` +
+        `Left hand: ${SUBDIVISION_LABELS[step.leftSubdivision]}. ` +
+        `Right hand: ${SUBDIVISION_LABELS[step.rightSubdivision]}` + changeDetail
       }
       style={{
-        opacity: slideProgress,
-        transform: [{ translateY }],
+        position: 'absolute',
+        top,
         alignSelf: 'center',
-        width: compact ? 420 : 460,
-        maxWidth: '100%',
+        width: '94%',
+        maxWidth: 760,
+        height,
+        opacity: slideProgress,
+        transform: [{ translateY: slideProgress.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }],
       }}
     >
       <View
         style={{
+          flex: 1,
           flexDirection: 'row',
           alignItems: 'center',
           backgroundColor: colors.surface,
-          borderRadius: 9,
-          paddingHorizontal: compact ? 7 : 10,
-          height: compact ? 34 : 38,
-          gap: compact ? 5 : 8,
+          borderColor: colors.line,
+          borderWidth: 1,
+          borderRadius: 13,
+          paddingHorizontal: compact ? 10 : 14,
+          paddingVertical: compact ? 6 : 9,
+          gap: compact ? 8 : 12,
         }}
       >
-        <View style={{ alignItems: 'flex-start', justifyContent: 'center' }}>
-          <Text numberOfLines={1} style={{ color: colors.muted, fontSize: compact ? 7 : 8, fontWeight: '800', letterSpacing: 0.8 }}>
+        <View style={{ width: compact ? 94 : 116, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: colors.muted, fontSize: compact ? 10 : 11, fontWeight: '900', letterSpacing: 1 }}>
             UP NEXT
           </Text>
-          <Text testID="practice.nextPattern.countdown" style={{ color: colors.accent, fontSize: compact ? 9 : 10, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
-            {beatsUntilChange} {beatsUntilChange === 1 ? 'BEAT' : 'BEATS'}
-          </Text>
-            {restBeforeChange ? (
-            <Text testID="practice.restPreview" style={{ position: 'absolute', left: compact ? 48 : 56, top: 1, color: colors.accent, fontSize: compact ? 6 : 7, fontWeight: '900', letterSpacing: 0.3 }}>
-              REST
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5, marginTop: 2 }}>
+            <Text
+              testID="practice.nextPattern.countdown"
+              style={{ color: colors.accent, fontSize: compact ? 29 : 34, lineHeight: compact ? 33 : 38, fontWeight: '900', fontVariant: ['tabular-nums'] }}
+            >
+              {beatsUntilChange}
             </Text>
-          ) : graceNotesEnabled ? (
-            <Text testID="practice.gracePreview" style={{ position: 'absolute', left: compact ? 48 : 56, top: 1, color: colors.accent, fontSize: compact ? 6 : 7, fontWeight: '900', letterSpacing: 0.3 }}>
-              GRACE
+            <Text style={{ color: colors.accent, fontSize: compact ? 11 : 12, fontWeight: '900', letterSpacing: 0.5 }}>
+              {countLabel}
+            </Text>
+          </View>
+          {restBeforeChange || graceNotesEnabled ? (
+            <Text style={{ color: colors.accent, fontSize: compact ? 9 : 10, fontWeight: '800', letterSpacing: 0.4 }}>
+              {restBeforeChange ? 'REST FIRST' : 'GRACE PICKUP'}
             </Text>
           ) : null}
         </View>
-        <View style={{ width: 1, height: compact ? 23 : 27, backgroundColor: colors.line }} />
+
+        <View style={{ width: 1, height: '76%', backgroundColor: colors.line }} />
         <HandPreview hand="left" subdivision={step.leftSubdivision} timeSignature={timeSignature} compact={compact} />
-        <View style={{ width: 1, height: compact ? 23 : 27, backgroundColor: colors.line }} />
+        <View style={{ width: 1, height: '76%', backgroundColor: colors.line }} />
         <HandPreview hand="right" subdivision={step.rightSubdivision} timeSignature={timeSignature} compact={compact} />
       </View>
     </Animated.View>

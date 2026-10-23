@@ -333,15 +333,25 @@ test('next pattern preview counts down to the exact beat boundary', () => {
   const start = 30_000;
   const engine = new RhythmTimingEngine({ settings, sessionStartTime: start, random: () => 0 });
 
+  const startOfPattern = engine.advance(start + 100);
+  assert.equal(startOfPattern.nextStep?.startBeat, 4);
+  assert.equal(startOfPattern.beatsUntilChange, 4);
+
   const beforeSwitch = engine.advance(start + 2_500);
   assert.equal(beforeSwitch.currentStep.startBeat, 0);
   assert.equal(beforeSwitch.nextStep?.startBeat, 4);
   assert.equal(beforeSwitch.beatsUntilChange, 2);
   assert.equal(beforeSwitch.secondsUntilChange, 1.5);
 
+  const finalBeat = engine.advance(start + 3_500);
+  assert.equal(finalBeat.currentStep.startBeat, 0);
+  assert.equal(finalBeat.nextStep?.startBeat, 4);
+  assert.equal(finalBeat.beatsUntilChange, 1);
+
   const atSwitch = engine.advance(start + 4_000);
   assert.equal(atSwitch.currentStep.startBeat, 4);
   assert.equal(atSwitch.nextStep?.startBeat, 8);
+  assert.equal(atSwitch.beatsUntilChange, 4);
   assert.equal(atSwitch.secondsUntilChange, 4);
 });
 
