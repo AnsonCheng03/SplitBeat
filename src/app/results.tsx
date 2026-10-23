@@ -1,6 +1,6 @@
-import { Link, useRouter } from 'expo-router';
+import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { DimensionValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { accuracyPercent } from '@/rhythm/scoring';
@@ -200,7 +200,12 @@ export default function ResultsScreen() {
   const replayTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const missedBars = missedBarGroups(results?.missedEvents ?? []);
 
-  useEffect(() => () => discardReplayData(), [discardReplayData]);
+  useFocusEffect(useCallback(() => () => {
+    if (replayTimerRef.current) clearTimeout(replayTimerRef.current);
+    replayTimerRef.current = undefined;
+    setPlayingBar(null);
+    discardReplayData();
+  }, [discardReplayData]));
 
   const replayBar = useCallback(async (barIndex: number, events: readonly MissedEvent[]) => {
     if (replayTimerRef.current) clearTimeout(replayTimerRef.current);
@@ -291,7 +296,7 @@ export default function ResultsScreen() {
               MISSED NOTES · {results.missedEvents.length}
             </Text>
             <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18, marginBottom: 9 }}>
-              Review the missed beats. Replay is available while this result is open.
+              Tap Replay to hear the missed notes in a bar. Leaving this page clears replay.
             </Text>
             {missedBars.map(([barIndex, events]) => {
               const leftEvents = events.filter((event) => event.hand === 'left');
@@ -301,12 +306,12 @@ export default function ResultsScreen() {
                   <View style={{ flex: 1, gap: 4 }}>
                     <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>BAR {barIndex}</Text>
                     {leftEvents.length > 0 ? (
-                      <Text numberOfLines={2} style={{ color: colors.left, fontSize: 10, lineHeight: 15 }}>
+                      <Text numberOfLines={2} style={{ color: colors.left, fontSize: 11, lineHeight: 16 }}>
                         LEFT · {leftEvents.length} missed · {leftEvents.slice(0, 4).map(missedPosition).join(', ')}{leftEvents.length > 4 ? `, +${leftEvents.length - 4}` : ''}
                       </Text>
                     ) : null}
                     {rightEvents.length > 0 ? (
-                      <Text numberOfLines={2} style={{ color: colors.right, fontSize: 10, lineHeight: 15 }}>
+                      <Text numberOfLines={2} style={{ color: colors.right, fontSize: 11, lineHeight: 16 }}>
                         RIGHT · {rightEvents.length} missed · {rightEvents.slice(0, 4).map(missedPosition).join(', ')}{rightEvents.length > 4 ? `, +${rightEvents.length - 4}` : ''}
                       </Text>
                     ) : null}
@@ -316,9 +321,9 @@ export default function ResultsScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={`Replay missed notes from bar ${barIndex}`}
                     onPress={() => void replayBar(barIndex, events)}
-                    style={({ pressed }) => ({ paddingHorizontal: 12, minHeight: 36, justifyContent: 'center', borderRadius: 11, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: playingBar === barIndex ? colors.accent : colors.line })}
+                    style={({ pressed }) => ({ paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', borderRadius: 11, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: playingBar === barIndex ? colors.accent : colors.line })}
                   >
-                    <Text style={{ color: playingBar === barIndex ? colors.accent : colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 }}>
+                    <Text style={{ color: playingBar === barIndex ? colors.accent : colors.text, fontSize: 11, fontWeight: '900', letterSpacing: 0.6 }}>
                       {playingBar === barIndex ? 'PLAYING' : 'REPLAY'}
                     </Text>
                   </Pressable>
