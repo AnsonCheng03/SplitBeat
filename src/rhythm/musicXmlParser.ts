@@ -144,7 +144,7 @@ function readTimeSignature(parts: ScorePart[]): TimeSignature {
         const beatGroups = children(time, 'beats');
         const beatTypes = children(time, 'beat-type');
         if (beatGroups.length !== 1 || beatTypes.length !== 1) {
-          throw new Error('This score uses a composite time signature Split Beat cannot import yet.');
+          throw new Error('This score uses a composite time signature that is not supported yet.');
         }
         const beats = value(beatGroups[0])
           .split('+')
@@ -152,7 +152,7 @@ function readTimeSignature(parts: ScorePart[]): TimeSignature {
           .reduce((sum, beat) => sum + beat, 0);
         const beatType = Number(value(beatTypes[0]));
         if (!Number.isInteger(beats) || beats < 1 || !Number.isInteger(beatType)) {
-          throw new Error('This score uses a time signature Split Beat cannot import yet.');
+          throw new Error('This score uses a time signature that is not supported yet.');
         }
         const signature = `${beats}/${beatType}`;
         if (!TIME_SIGNATURES.includes(signature as TimeSignature)) {
@@ -214,7 +214,7 @@ function selectHandStaves(parts: ScorePart[]): { left: StaffSelection; right: St
       left: { partIndex: 1, staff: 1 },
     };
   }
-  throw new Error('This score needs two staves or two parts so Split Beat can map one to each hand.');
+  throw new Error('This score needs two staves or two parts so the app can map one to each hand.');
 }
 
 function tieTypes(note: XmlNode): { starts: boolean; stops: boolean } {

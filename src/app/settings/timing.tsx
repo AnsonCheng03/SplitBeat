@@ -35,7 +35,7 @@ export default function TimingSettingsScreen() {
       <View style={{ marginTop: 15, padding: 16, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
         <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>CALIBRATE BOTH HANDS</Text>
         <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 6, marginBottom: 12 }}>
-          Tap with each hand on the click. Split Beat measures and saves your timing offset.
+          Tap with each hand on the click to measure and save your timing offset.
         </Text>
         <TimingCalibration
           bpm={settings.bpm}

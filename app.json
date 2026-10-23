@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Split Beat",
+    "name": "Beep Beep Beat - xxxxxx",
     "slug": "two-hand-rhythm-trainer",
     "version": "1.0.0",
     "icon": "./assets/icon.png",
@@ -47,7 +47,7 @@
       "supportsTablet": true,
       "requireFullScreen": true,
       "appleTeamId": "538FVU496F",
-      "buildNumber": "8",
+      "buildNumber": "9",
       "config": {
         "usesNonExemptEncryption": false
       },

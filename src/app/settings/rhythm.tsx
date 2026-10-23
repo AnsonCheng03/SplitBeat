@@ -34,7 +34,7 @@ export default function RhythmSettingsScreen() {
       backTestID="settings.rhythm.back"
       section="rhythm"
       title="Rhythm & meter"
-      description="Choose the pulse and the patterns Split Beat can use."
+      description="Choose the pulse and rhythms for your session."
     >
       <Section title="TIME SIGNATURE">
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>

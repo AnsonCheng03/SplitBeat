@@ -10,10 +10,13 @@
     <ellipse cx="790" cy="665" rx="78" ry="50" transform="rotate(-18 790 665)" fill="#AC91FF"/>
   </g>
   <path d="M484 110v300" stroke="#263240" stroke-width="3"/>
-  <text x="535" y="260" fill="#F3F7FA" font-family="Avenir Next, Arial, sans-serif" font-size="92" font-weight="700" letter-spacing="6">
-    SPLIT <tspan fill="#46D6B3">BEAT</tspan>
+  <text x="535" y="235" fill="#F3F7FA" font-family="Avenir Next, Arial, sans-serif" font-size="56" font-weight="700" letter-spacing="4">
+    BEEP BEEP
   </text>
-  <text x="540" y="323" fill="#8795A3" font-family="Avenir Next, Arial, sans-serif" font-size="25" font-weight="600" letter-spacing="5">
+  <text x="535" y="296" font-family="Avenir Next, Arial, sans-serif" font-size="48" font-weight="700" letter-spacing="3">
+    <tspan fill="#46D6B3">BEAT</tspan><tspan dx="12" fill="#F3F7FA">- XXXXXX</tspan>
+  </text>
+  <text x="540" y="351" fill="#8795A3" font-family="Avenir Next, Arial, sans-serif" font-size="22" font-weight="600" letter-spacing="4">
     INDEPENDENCE IN EVERY BEAT
   </text>
 </svg>

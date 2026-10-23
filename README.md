@@ -1,4 +1,4 @@
-# Split Beat
+# Beep Beep Beat - xxxxxx
 
 A small offline React Native rhythm trainer for iOS and Android. It keeps one metronome pulse running while the left and right hands work through different subdivisions. The app is locked to landscape and supports iPhone and iPad. iPad full-screen mode is enabled to enforce the landscape-only layout.
 
@@ -27,7 +27,7 @@ npm run release:testflight
 
 This requires macOS, Xcode, CocoaPods, and at least 20 GiB free on `/private/tmp`. To create and validate an archive without uploading it, run `npm run ios:archive`; set `SPLITBEAT_ARCHIVE_PATH` to choose another `.xcarchive` location. The archive is retained if signing or upload fails.
 
-The release script uses Xcode automatic signing with the configured Apple team. It can also use an App Store Connect API key when `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID`, and optionally `ASC_API_KEY_PATH` are set; the default key location is `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8`. Keep API keys out of the repository. The configured iOS build number is `5`; increment `ios.buildNumber` in `app.json` for each subsequent upload.
+The release script uses Xcode automatic signing with the configured Apple team. It can also use an App Store Connect API key when `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID`, and optionally `ASC_API_KEY_PATH` are set; the default key location is `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8`. Keep API keys out of the repository. The configured iOS build number is `9`; increment `ios.buildNumber` in `app.json` for each subsequent upload.
 
 The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.plist` is checked for `ITSAppUsesNonExemptEncryption=false` and for absence of a microphone purpose string before upload. The app synthesizes sound and does not use the microphone. App Store Connect still processes each accepted upload before it appears in TestFlight.
 
@@ -35,7 +35,7 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 
 - `assets/icon.png` is the full-color 1024 px app icon for iOS and Android.
 - `assets/adaptive-icon.png` and `assets/monochrome-icon.png` provide Android's adaptive and themed icon layers; the background color is `#0B0F14`.
-- The editable vector sources are in `assets/brand/`. Android's density-sized launch images are generated from the same Split Beat wordmark artwork.
+- The editable vector sources are in `assets/brand/`. Android's density-sized launch images are generated from the app wordmark artwork.
 - `plugins/withSplitBeatBranding.js` installs the branded landscape launch screen during Expo prebuild. `npm run ios` and `npm run android` run prebuild as part of native development builds.
 
 ## Architecture
@@ -73,11 +73,11 @@ This offline MVP has no receipt-verification backend. It grants access from the 
 
 ## Training from a score
 
-Choose an uncompressed `.musicxml` or `.xml` file with the system file picker. Split Beat reads and parses it locally; there is no paste step and score contents are not uploaded. Files larger than 5 MB are rejected.
+Choose an uncompressed `.musicxml` or `.xml` file with the system file picker. The app reads and parses it locally; there is no paste step and score contents are not uploaded. Files larger than 5 MB are rejected.
 
 The importer maps staff 1 to the right hand and staff 2 to the left hand in a grand staff. If the score has separate one-staff parts, it uses the first part for the right hand and the second for the left. It converts note attacks and durations, carries explicit tuplet counts into the bar preview, treats rests as silence, merges tied notes, and treats chords as one tap. Grace notes are skipped with a warning because MusicXML does not give them a fixed duration. The extracted rhythm is previewed before practice; the score then repeats for the saved session length. A score tempo, when present, sets the practice tempo.
 
-The internal `ImportedRhythmScore` JSON stores each measure's start and duration in quarter-note units plus separate left/right note events. Its rhythm preview places notes at their score onsets, varies beam depth with note duration, groups beams at the meter's pulse, and renders every notehead at the same fixed pitch with no staff lines. MusicXML pitches remain hidden from the display but determine the synthesized note heard on a correctly matched tap; chords sound together. The current importer accepts partwise MusicXML and the time signatures already supported by Split Beat; it rejects scores with tempo or time-signature changes. Compressed `.mxl` packages are not supported; check each rhythm bar against the source before training. PDF/image recognition is not currently available in the app: it requires a cross-platform on-device OMR engine, and Split Beat does not send score files to an online converter.
+The internal `ImportedRhythmScore` JSON stores each measure's start and duration in quarter-note units plus separate left/right note events. Its rhythm preview places notes at their score onsets, varies beam depth with note duration, groups beams at the meter's pulse, and renders every notehead at the same fixed pitch with no staff lines. MusicXML pitches remain hidden from the display but determine the synthesized note heard on a correctly matched tap; chords sound together. The current importer accepts partwise MusicXML and the time signatures already supported by the app; it rejects scores with tempo or time-signature changes. Compressed `.mxl` packages are not supported; check each rhythm bar against the source before training. PDF/image recognition is not currently available in the app: it requires a cross-platform on-device OMR engine, and score files are not sent to an online converter.
 
 ## Session records and missed-note replay
 
