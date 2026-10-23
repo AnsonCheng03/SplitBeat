@@ -157,6 +157,44 @@ function ScorePanel({
   );
 }
 
+function DisclosureHeader({
+  title,
+  expanded,
+  onPress,
+  testID,
+}: {
+  title: string;
+  expanded: boolean;
+  onPress: () => void;
+  testID: string;
+}) {
+  return (
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}, ${expanded ? 'hide' : 'show'} details`}
+      accessibilityState={{ expanded }}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        minHeight: 48,
+        paddingHorizontal: 14,
+        borderRadius: 13,
+        backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
+        borderWidth: 1,
+        borderColor: colors.line,
+      })}
+    >
+      <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800', flex: 1 }}>{title}</Text>
+      <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '900', letterSpacing: 0.8 }}>
+        {expanded ? 'HIDE  −' : 'VIEW  +'}
+      </Text>
+    </Pressable>
+  );
+}
+
 function weakLabel(subdivision: Subdivision) {
   return SUBDIVISION_LABELS[subdivision].toUpperCase();
 }
@@ -200,6 +238,8 @@ export default function ResultsScreen() {
   const [replay, setReplay] = useState<{ barIndex: number; playbackId: number; isPlaying: boolean } | null>(null);
   const replaySequenceRef = useRef(0);
   const [startingAgain, setStartingAgain] = useState(false);
+  const [showMissedNotes, setShowMissedNotes] = useState(false);
+  const [showBreakdown, setShowBreakdown] = useState(false);
   const missedBars = missedBarGroups(results?.missedEvents ?? []);
 
   useFocusEffect(useCallback(() => () => {
@@ -302,134 +342,153 @@ export default function ResultsScreen() {
 
         {missedBars.length > 0 ? (
           <View style={{ marginTop: 22 }}>
-            <Text testID="results.missedNotes" style={{ color: colors.text, fontSize: 15, fontWeight: '800', marginBottom: 5 }}>
-              MISSED NOTES · {results.missedEvents.length}
-            </Text>
-            <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18, marginBottom: 9 }}>
-              Replay shows the expected notes beside your recorded taps. Leaving this page clears replay.
-            </Text>
-            {missedBars.map(([barIndex, events]) => {
-              const leftEvents = events.filter((event) => event.hand === 'left');
-              const rightEvents = events.filter((event) => event.hand === 'right');
-              const expectedEvents = results.replayExpectedEvents?.filter((event) => event.barIndex === barIndex) ?? [];
-              const taps = results.replayTaps?.filter((tap) => tap.barIndex === barIndex) ?? [];
-              const replayHands = results.trainingMode === 'single-hand'
-                ? [results.singleHand]
-                : ['left', 'right'] as const;
-              const metrics = timeSignatureMetrics(results.bpm, results.timeSignature);
-              return (
-                <View key={barIndex} testID={'results.missedBar.' + barIndex} style={{ paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.line }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <View style={{ flex: 1, gap: 4 }}>
-                      <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>BAR {barIndex}</Text>
-                      {leftEvents.length > 0 ? (
-                        <Text numberOfLines={2} style={{ color: colors.left, fontSize: 11, lineHeight: 16 }}>
-                          LEFT · {leftEvents.length} missed · {leftEvents.slice(0, 4).map(missedPosition).join(', ')}{leftEvents.length > 4 ? ', +' + (leftEvents.length - 4) : ''}
-                        </Text>
-                      ) : null}
-                      {rightEvents.length > 0 ? (
-                        <Text numberOfLines={2} style={{ color: colors.right, fontSize: 11, lineHeight: 16 }}>
-                          RIGHT · {rightEvents.length} missed · {rightEvents.slice(0, 4).map(missedPosition).join(', ')}{rightEvents.length > 4 ? ', +' + (rightEvents.length - 4) : ''}
-                        </Text>
+            <DisclosureHeader
+              testID="results.missedNotes"
+              title={`MISSED NOTES · ${results.missedEvents.length}`}
+              expanded={showMissedNotes}
+              onPress={() => setShowMissedNotes((expanded) => !expanded)}
+            />
+            {showMissedNotes ? (
+              <View style={{ paddingTop: 12 }}>
+                <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18, marginBottom: 9 }}>
+                  Replay shows the expected notes beside your recorded taps. Leaving this page clears replay.
+                </Text>
+                {missedBars.map(([barIndex, events]) => {
+                  const leftEvents = events.filter((event) => event.hand === 'left');
+                  const rightEvents = events.filter((event) => event.hand === 'right');
+                  const expectedEvents = results.replayExpectedEvents?.filter((event) => event.barIndex === barIndex) ?? [];
+                  const taps = results.replayTaps?.filter((tap) => tap.barIndex === barIndex) ?? [];
+                  const replayHands = results.trainingMode === 'single-hand'
+                    ? [results.singleHand]
+                    : ['left', 'right'] as const;
+                  const metrics = timeSignatureMetrics(results.bpm, results.timeSignature);
+                  return (
+                    <View key={barIndex} testID={'results.missedBar.' + barIndex} style={{ paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.line }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <View style={{ flex: 1, gap: 4 }}>
+                          <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>BAR {barIndex}</Text>
+                          {leftEvents.length > 0 ? (
+                            <Text numberOfLines={2} style={{ color: colors.left, fontSize: 11, lineHeight: 16 }}>
+                              LEFT · {leftEvents.length} missed · {leftEvents.slice(0, 4).map(missedPosition).join(', ')}{leftEvents.length > 4 ? ', +' + (leftEvents.length - 4) : ''}
+                            </Text>
+                          ) : null}
+                          {rightEvents.length > 0 ? (
+                            <Text numberOfLines={2} style={{ color: colors.right, fontSize: 11, lineHeight: 16 }}>
+                              RIGHT · {rightEvents.length} missed · {rightEvents.slice(0, 4).map(missedPosition).join(', ')}{rightEvents.length > 4 ? ', +' + (rightEvents.length - 4) : ''}
+                            </Text>
+                          ) : null}
+                        </View>
+                        <Pressable
+                          testID={'results.replayBar.' + barIndex}
+                          accessibilityRole="button"
+                          accessibilityLabel={'Play visual replay for bar ' + barIndex}
+                          onPress={() => replayBar(barIndex)}
+                          style={({ pressed }) => ({ paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', borderRadius: 11, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: replay?.barIndex === barIndex && replay.isPlaying ? colors.accent : colors.line })}
+                        >
+                          <Text style={{ color: replay?.barIndex === barIndex && replay.isPlaying ? colors.accent : colors.text, fontSize: 11, fontWeight: '900', letterSpacing: 0.6 }}>
+                            {replay?.barIndex === barIndex && replay.isPlaying ? 'PLAYING' : 'REPLAY'}
+                          </Text>
+                        </Pressable>
+                      </View>
+                      {replay?.barIndex === barIndex ? (
+                        <ReplayTimeline
+                          key={String(barIndex) + '.' + replay.playbackId}
+                          barIndex={barIndex}
+                          expectedEvents={expectedEvents}
+                          taps={taps}
+                          hands={replayHands}
+                          beatsPerBar={metrics.beatsPerBar}
+                          bpm={results.bpm}
+                          timeSignature={results.timeSignature}
+                          playbackId={replay.playbackId}
+                          onPlaybackEnd={finishVisualReplay}
+                        />
                       ) : null}
                     </View>
-                    <Pressable
-                      testID={'results.replayBar.' + barIndex}
-                      accessibilityRole="button"
-                      accessibilityLabel={'Play visual replay for bar ' + barIndex}
-                      onPress={() => replayBar(barIndex)}
-                      style={({ pressed }) => ({ paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', borderRadius: 11, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: replay?.barIndex === barIndex && replay.isPlaying ? colors.accent : colors.line })}
-                    >
-                      <Text style={{ color: replay?.barIndex === barIndex && replay.isPlaying ? colors.accent : colors.text, fontSize: 11, fontWeight: '900', letterSpacing: 0.6 }}>
-                        {replay?.barIndex === barIndex && replay.isPlaying ? 'PLAYING' : 'REPLAY'}
+                  );
+                })}
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        <View style={{ marginTop: 25 }}>
+          <DisclosureHeader
+            testID="results.breakdown"
+            title="PERFORMANCE BREAKDOWN"
+            expanded={showBreakdown}
+            onPress={() => setShowBreakdown((expanded) => !expanded)}
+          />
+          {showBreakdown ? (
+            <View style={{ paddingTop: 16 }}>
+              <Text testID="results.breakdown.details" style={{ color: colors.text, fontSize: 15, fontWeight: '800', marginBottom: 10 }}>HAND TIMING</Text>
+              {displayedHands.map((hand) => {
+                const stats = results[hand];
+                return (
+                  <View key={hand} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: colors.line }}>
+                    <View>
+                      <Text style={{ color: hand === 'left' ? colors.left : colors.right, fontWeight: '800', fontSize: 12, letterSpacing: 1 }}>
+                        {hand.toUpperCase()} HAND
                       </Text>
-                    </Pressable>
+                      <Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>{timingNote(stats)}</Text>
+                    </View>
+                    <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                      {timingText(stats)}
+                    </Text>
                   </View>
-                  {replay?.barIndex === barIndex ? (
-                    <ReplayTimeline
-                      key={String(barIndex) + '.' + replay.playbackId}
-                      barIndex={barIndex}
-                      expectedEvents={expectedEvents}
-                      taps={taps}
-                      hands={replayHands}
-                      beatsPerBar={metrics.beatsPerBar}
-                      bpm={results.bpm}
-                      timeSignature={results.timeSignature}
-                      playbackId={replay.playbackId}
-                      onPlaybackEnd={finishVisualReplay}
-                    />
-                  ) : null}
-                </View>
-              );
-            })}
-          </View>
-        ) : null}
+                );
+              })}
 
-        <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', marginTop: 25, marginBottom: 10 }}>HAND TIMING</Text>
-        {displayedHands.map((hand) => {
-          const stats = results[hand];
-          return (
-            <View key={hand} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: colors.line }}>
-              <View>
-                <Text style={{ color: hand === 'left' ? colors.left : colors.right, fontWeight: '800', fontSize: 12, letterSpacing: 1 }}>
-                  {hand.toUpperCase()} HAND
-                </Text>
-                <Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>{timingNote(stats)}</Text>
-              </View>
-              <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-                {timingText(stats)}
-              </Text>
-            </View>
-          );
-        })}
-
-        {weakest && results.source !== 'score' ? (
-          <View style={{ backgroundColor: colors.surface, borderColor: colors.line, borderWidth: 1, borderRadius: 18, padding: 17, marginTop: 22 }}>
-            <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>{results.trainingMode === 'single-hand' ? 'MOST DIFFICULT PATTERN' : 'MOST DIFFICULT PAIR'}</Text>
-            <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', marginTop: 13 }}>
-              {results.trainingMode === 'single-hand'
-                ? `${results.singleHand.toUpperCase()}: ${SUBDIVISION_LABELS[weakest[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision']]}`
-                : `Left: ${SUBDIVISION_LABELS[weakest.leftSubdivision]}   ·   Right: ${SUBDIVISION_LABELS[weakest.rightSubdivision]}`}
-            </Text>
-            <Text style={{ color: colors.accent, fontSize: 30, fontWeight: '900', marginTop: 5 }}>
-              {weakest.weakHand.toUpperCase()} {percent(weakest.accuracy)}
-            </Text>
-          </View>
-        ) : null}
-
-        {combinations.length > 0 && results.source !== 'score' ? (
-          <View style={{ marginTop: 22 }}>
-            <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', marginBottom: 5 }}>{results.trainingMode === 'single-hand' ? 'PATTERN BREAKDOWN' : 'PAIR BREAKDOWN'}</Text>
-            {combinations.map((combination) => (
-              <View key={combination.leftSubdivision + ':' + combination.rightSubdivision} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line }}>
-                <Text style={{ color: colors.muted, flex: 1, fontSize: 12 }}>
-                  {results.trainingMode === 'single-hand'
-                    ? `${results.singleHand.toUpperCase()} · ${weakLabel(combination[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision'])}`
-                    : `${weakLabel(combination.leftSubdivision)} / ${weakLabel(combination.rightSubdivision)}`}
-                </Text>
-                {results.trainingMode === 'single-hand' ? (
-                  <Text style={{ color: results.singleHand === 'left' ? colors.left : colors.right, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>
-                    {percent(accuracyPercent(combination[results.singleHand]))}
+              {weakest && results.source !== 'score' ? (
+                <View style={{ backgroundColor: colors.surface, borderColor: colors.line, borderWidth: 1, borderRadius: 18, padding: 17, marginTop: 22 }}>
+                  <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>{results.trainingMode === 'single-hand' ? 'MOST DIFFICULT PATTERN' : 'MOST DIFFICULT PAIR'}</Text>
+                  <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', marginTop: 13 }}>
+                    {results.trainingMode === 'single-hand'
+                      ? `${results.singleHand.toUpperCase()}: ${SUBDIVISION_LABELS[weakest[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision']]}`
+                      : `Left: ${SUBDIVISION_LABELS[weakest.leftSubdivision]}   ·   Right: ${SUBDIVISION_LABELS[weakest.rightSubdivision]}`}
                   </Text>
-                ) : (
-                  <>
-                    <Text style={{ color: colors.left, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>
-                      {percent(accuracyPercent(combination.left))}
-                    </Text>
-                    <Text style={{ color: colors.right, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>
-                      {percent(accuracyPercent(combination.right))}
-                    </Text>
-                  </>
-                )}
-              </View>
-            ))}
-          </View>
-        ) : null}
+                  <Text style={{ color: colors.accent, fontSize: 30, fontWeight: '900', marginTop: 5 }}>
+                    {weakest.weakHand.toUpperCase()} {percent(weakest.accuracy)}
+                  </Text>
+                </View>
+              ) : null}
 
-        <View style={{ marginTop: 23, gap: 9 }}>
-          {feedback.map((message) => (
-            <Text key={message} style={{ color: colors.muted, fontSize: 14, lineHeight: 21 }}>{message}</Text>
-          ))}
+              {combinations.length > 0 && results.source !== 'score' ? (
+                <View style={{ marginTop: 22 }}>
+                  <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', marginBottom: 5 }}>{results.trainingMode === 'single-hand' ? 'PATTERN BREAKDOWN' : 'PAIR BREAKDOWN'}</Text>
+                  {combinations.map((combination) => (
+                    <View key={combination.leftSubdivision + ':' + combination.rightSubdivision} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line }}>
+                      <Text style={{ color: colors.muted, flex: 1, fontSize: 12 }}>
+                        {results.trainingMode === 'single-hand'
+                          ? `${results.singleHand.toUpperCase()} · ${weakLabel(combination[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision'])}`
+                          : `${weakLabel(combination.leftSubdivision)} / ${weakLabel(combination.rightSubdivision)}`}
+                      </Text>
+                      {results.trainingMode === 'single-hand' ? (
+                        <Text style={{ color: results.singleHand === 'left' ? colors.left : colors.right, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>
+                          {percent(accuracyPercent(combination[results.singleHand]))}
+                        </Text>
+                      ) : (
+                        <>
+                          <Text style={{ color: colors.left, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>
+                            {percent(accuracyPercent(combination.left))}
+                          </Text>
+                          <Text style={{ color: colors.right, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>
+                            {percent(accuracyPercent(combination.right))}
+                          </Text>
+                        </>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+
+              <View style={{ marginTop: 23, gap: 9 }}>
+                {feedback.map((message) => (
+                  <Text key={message} style={{ color: colors.muted, fontSize: 14, lineHeight: 21 }}>{message}</Text>
+                ))}
+              </View>
+            </View>
+          ) : null}
         </View>
 
         <Pressable
