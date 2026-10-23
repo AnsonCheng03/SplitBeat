@@ -309,10 +309,30 @@ export default function LearnScreen() {
           <Text accessibilityLiveRegion="polite" numberOfLines={2} style={{ color: colors.right, fontSize: 9, lineHeight: 13, marginTop: 6 }}>
             {purchase.errorMessage}
           </Text>
+        ) : purchase.storeErrorMessage ? (
+          <Text accessibilityLiveRegion="polite" numberOfLines={2} style={{ color: colors.right, fontSize: 9, lineHeight: 13, marginTop: 6 }}>
+            {purchase.storeErrorMessage}
+          </Text>
         ) : purchase.notice ? (
           <Text accessibilityLiveRegion="polite" numberOfLines={2} style={{ color: colors.left, fontSize: 9, lineHeight: 13, marginTop: 6 }}>
             {purchase.notice}
           </Text>
+        ) : purchase.connected && purchase.productLookupFinished && !purchase.unlockProduct ? (
+          <Text accessibilityLiveRegion="polite" numberOfLines={2} style={{ color: colors.muted, fontSize: 9, lineHeight: 13, marginTop: 6 }}>
+            The course offer is not available in the store yet. Check the in-app purchase setup and try again.
+          </Text>
+        ) : null}
+        {purchase.storeErrorMessage || (purchase.connected && purchase.productLookupFinished && !purchase.unlockProduct) ? (
+          <Pressable
+            testID="learn.purchase.retry"
+            accessibilityRole="button"
+            accessibilityLabel={purchase.connected ? 'Reload course offer from the store' : 'Retry app store connection'}
+            disabled={purchase.isRetryingStore}
+            onPress={() => void purchase.retryStoreConnection()}
+            style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', paddingHorizontal: 8, opacity: purchase.isRetryingStore ? 0.55 : pressed ? 0.7 : 1 })}
+          >
+            <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.6 }}>{purchase.isRetryingStore ? 'CHECKING STORE…' : purchase.connected ? 'RELOAD STORE OFFER' : 'RETRY STORE CONNECTION'}</Text>
+          </Pressable>
         ) : null}
       </ScrollView>
 

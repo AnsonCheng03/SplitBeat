@@ -67,9 +67,11 @@ Choose **Learn rhythm** on the home screen for a 12-lesson path from a steady si
 
 ### Learn course purchase
 
-The store product ID is `com.splitbeat.learncourse.unlock` on both platforms. Create it as a **non-consumable** in App Store Connect and as a **one-time product** in Google Play Console, then set its localized prices in each store. The Learn page fetches and displays the store's localized price and includes a Restore Purchase action. In-app purchases require a native development/release build; Expo Go does not include the native billing module. Rebuild the app after adding `expo-iap`.
+The Learn paywall uses native StoreKit and Google Play Billing through `expo-iap`; it does not simulate a successful purchase in the app. Its product ID is `com.splitbeat.learncourse.unlock` on both platforms. To make the offer available, create a **non-consumable** with that exact ID for this app in App Store Connect and an active **one-time product** with the same ID in Google Play Console. Complete each store's product name, description, territories, and price. The app reads the localized price from the store instead of hardcoding one.
 
-This offline MVP has no receipt-verification backend. It grants access from the native store purchase result and stores a local entitlement for offline use, then checks owned purchases from the store and offers restore. A server-side verifier would be needed to prevent entitlement tampering and to reconcile refunds across devices.
+The purchase button stays unavailable until the store returns the configured product. A successful, matching, non-revoked purchase unlocks the lessons and is finalized with the store; pending, canceled, unknown, and revoked transactions do not grant access. The app checks owned purchases on the next store connection, removes a stale local unlock when the store confirms there is no active purchase, and provides **Restore Purchase** for recovery. The local entitlement cache keeps an already verified unlock usable offline.
+
+In-app purchases require a native development or release build; Expo Go does not include the billing module. Test StoreKit purchases with an App Store sandbox account or TestFlight, and Google Play purchases with a license tester and a build distributed through a Play testing track. The product records, paid-app agreements, sandbox/license testers, and pricing must be configured in the store consoles; they cannot be created by shipping app code. This offline MVP has no receipt-verification backend, so the local cache is not tamper-resistant and refund changes are reconciled when the app next connects to the store.
 
 ## Training from a score
 

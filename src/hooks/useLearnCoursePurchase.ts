@@ -8,15 +8,15 @@ import {
 import type { ExpoPurchaseError, Purchase } from 'expo-iap';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  LEARN_COURSE_UNLOCK_PRODUCT_ID,
+  clearLearnCourseUnlock,
   readLearnCourseUnlock,
   saveLearnCourseUnlock,
 } from '@/store/learnCourseEntitlement';
-
-function isCourseUnlockPurchase(purchase: Purchase): boolean {
-  return purchase.productId === LEARN_COURSE_UNLOCK_PRODUCT_ID
-    && purchase.purchaseState === 'purchased';
-}
+import {
+  findActiveLearnCoursePurchase,
+  isActiveLearnCoursePurchase,
+  LEARN_COURSE_UNLOCK_PRODUCT_ID,
+} from '@/rhythm/learnCoursePurchase';
 
 async function finishPurchaseIfNeeded(purchase: Purchase): Promise<void> {
   const isAlreadyAcknowledged = 'isAcknowledgedAndroid' in purchase
@@ -34,18 +34,24 @@ export function useLearnCoursePurchase() {
   const [isRestoring, setIsRestoring] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [storeErrorMessage, setStoreErrorMessage] = useState<string | null>(null);
+  const [isRetryingStore, setIsRetryingStore] = useState(false);
   const processedTransactionIds = useRef(new Set<string>());
+  const storeEntitlementResolved = useRef(false);
+  const storeEntitlementRevision = useRef(0);
 
   const grantPurchase = useCallback(async (purchase: Purchase) => {
-    if (!isCourseUnlockPurchase(purchase)) return false;
+    if (!isActiveLearnCoursePurchase(purchase)) return false;
 
+    storeEntitlementRevision.current += 1;
+    storeEntitlementResolved.current = true;
     setHasFullCourseUnlock(true);
     await saveLearnCourseUnlock();
     return true;
   }, []);
 
   const processPurchaseUpdate = useCallback(async (purchase: Purchase) => {
-    if (!isCourseUnlockPurchase(purchase)) {
+    if (!isActiveLearnCoursePurchase(purchase)) {
       if (
         purchase.productId === LEARN_COURSE_UNLOCK_PRODUCT_ID
         && purchase.purchaseState === 'pending'
@@ -82,7 +88,7 @@ export function useLearnCoursePurchase() {
   }, []);
 
   const handleStoreError = useCallback((error: Error) => {
-    setErrorMessage(error.message || 'The app store is unavailable right now.');
+    setStoreErrorMessage(error.message || 'The app store is unavailable right now.');
   }, []);
 
   const {
@@ -91,6 +97,7 @@ export function useLearnCoursePurchase() {
     fetchProducts,
     requestPurchase,
     restorePurchases,
+    reconnect,
   } = useIAP({
     onPurchaseSuccess: (purchase) => {
       void processPurchaseUpdate(purchase);
@@ -103,7 +110,7 @@ export function useLearnCoursePurchase() {
     let active = true;
     void readLearnCourseUnlock().then((unlocked) => {
       if (!active) return;
-      setHasFullCourseUnlock(unlocked);
+      if (!storeEntitlementResolved.current) setHasFullCourseUnlock(unlocked);
       setEntitlementLoaded(true);
     });
     return () => {
@@ -117,18 +124,32 @@ export function useLearnCoursePurchase() {
 
     void fetchProducts({ skus: [LEARN_COURSE_UNLOCK_PRODUCT_ID], type: 'in-app' })
       .then(() => {
-        if (active) setProductLookupFinished(true);
+        if (active) {
+          setStoreErrorMessage(null);
+          setProductLookupFinished(true);
+        }
       })
       .catch((error: unknown) => {
         if (!active) return;
         setProductLookupFinished(true);
-        setErrorMessage(error instanceof Error ? error.message : 'Could not load the store offer.');
+        setStoreErrorMessage(error instanceof Error ? error.message : 'Could not load the store offer.');
       });
 
+    const entitlementRevisionAtCheckStart = storeEntitlementRevision.current;
     void getAvailablePurchases()
       .then(async (purchases) => {
-        const ownedPurchase = purchases.find(isCourseUnlockPurchase);
-        if (!active || !ownedPurchase) return;
+        if (!active || entitlementRevisionAtCheckStart !== storeEntitlementRevision.current) return;
+        storeEntitlementResolved.current = true;
+        const ownedPurchase = findActiveLearnCoursePurchase(purchases);
+        if (!ownedPurchase) {
+          setHasFullCourseUnlock(false);
+          try {
+            await clearLearnCourseUnlock();
+          } catch {
+            if (active) setStoreErrorMessage('The course is locked, but saved purchase data could not be cleared.');
+          }
+          return;
+        }
         try {
           await grantPurchase(ownedPurchase);
           await finishPurchaseIfNeeded(ownedPurchase);
@@ -138,7 +159,7 @@ export function useLearnCoursePurchase() {
       })
       .catch((error: unknown) => {
         if (active) {
-          setErrorMessage(error instanceof Error ? error.message : 'Could not check your store purchases.');
+          setStoreErrorMessage(error instanceof Error ? error.message : 'Could not check your store purchases.');
         }
       });
 
@@ -176,15 +197,24 @@ export function useLearnCoursePurchase() {
     setIsRestoring(true);
     setNotice(null);
     setErrorMessage(null);
+    const entitlementRevisionAtRestoreStart = storeEntitlementRevision.current;
     try {
       await restorePurchases();
       const purchases = await getAvailablePurchases();
-      const ownedPurchase = purchases.find(isCourseUnlockPurchase);
+      if (entitlementRevisionAtRestoreStart !== storeEntitlementRevision.current) {
+        setNotice('Full course restored.');
+        return;
+      }
+      const ownedPurchase = findActiveLearnCoursePurchase(purchases);
       if (ownedPurchase) {
         await grantPurchase(ownedPurchase);
         await finishPurchaseIfNeeded(ownedPurchase);
         setNotice('Full course restored.');
       } else {
+        storeEntitlementRevision.current += 1;
+        storeEntitlementResolved.current = true;
+        setHasFullCourseUnlock(false);
+        await clearLearnCourseUnlock();
         setNotice('No full-course purchase was found for this store account.');
       }
     } catch (error) {
@@ -194,16 +224,39 @@ export function useLearnCoursePurchase() {
     }
   }, [connected, grantPurchase, isRestoring, restorePurchases]);
 
+  const retryStoreConnection = useCallback(async () => {
+    if (isRetryingStore) return;
+    setIsRetryingStore(true);
+    setStoreErrorMessage(null);
+    try {
+      const didConnect = connected || await reconnect();
+      if (!didConnect) setStoreErrorMessage('Could not connect to the app store. Check your connection and try again.');
+      else {
+        setProductLookupFinished(false);
+        await fetchProducts({ skus: [LEARN_COURSE_UNLOCK_PRODUCT_ID], type: 'in-app' });
+        setProductLookupFinished(true);
+      }
+    } catch (error) {
+      setStoreErrorMessage(error instanceof Error ? error.message : 'Could not connect to the app store.');
+      setProductLookupFinished(true);
+    } finally {
+      setIsRetryingStore(false);
+    }
+  }, [connected, fetchProducts, isRetryingStore, reconnect]);
+
   return {
     connected,
     entitlementLoaded,
     errorMessage,
+    storeErrorMessage,
     hasFullCourseUnlock,
     isPurchasing,
     isRestoring,
     notice,
     productLookupFinished,
+    isRetryingStore,
     unlockProduct,
+    retryStoreConnection,
     buyFullCourse,
     restoreFullCourse,
   };
