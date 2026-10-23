@@ -63,7 +63,13 @@ The home screen offers Two hands and One hand modes. One-hand practice has no le
 
 ## Guided learning
 
-Choose **Learn rhythm** on the home screen for a 12-lesson path from a steady single-hand pulse through two-hand independence, eighths, triplets, sixteenths, compound meter, swing, tuplets, and mixed rhythms. Each lesson uses a fixed authored hand-pattern set and a short 30-second exercise. Lessons unlock in order after the previous exercise is completed; no minimum score is required. Progress is stored locally and the course does not overwrite the player's normal settings. Leaving a lesson's results returns to the next available lesson.
+Choose **Learn rhythm** on the home screen for a 12-lesson path from a steady single-hand pulse through two-hand independence, eighths, triplets, sixteenths, compound meter, swing, tuplets, and mixed rhythms. The first three lessons are free; one non-consumable purchase unlocks the full course. Each lesson uses a fixed authored hand-pattern set and a short 30-second exercise. Lessons unlock in order after the previous exercise is completed; no minimum score is required. Progress is stored locally and the course does not overwrite the player's normal settings. Leaving a lesson's results returns to the next available lesson.
+
+### Learn course purchase
+
+The store product ID is `com.splitbeat.learncourse.unlock` on both platforms. Create it as a **non-consumable** in App Store Connect and as a **one-time product** in Google Play Console, then set its localized prices in each store. The Learn page fetches and displays the store's localized price and includes a Restore Purchase action. In-app purchases require a native development/release build; Expo Go does not include the native billing module. Rebuild the app after adding `expo-iap`.
+
+This offline MVP has no receipt-verification backend. It grants access from the native store purchase result and stores a local entitlement for offline use, then checks owned purchases from the store and offers restore. A server-side verifier would be needed to prevent entitlement tampering and to reconcile refunds across devices.
 
 ## Training from a score
 

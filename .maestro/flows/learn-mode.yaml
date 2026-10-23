@@ -37,6 +37,16 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: learn.lesson.together-pulse
 - tapOn:
+    id: learn.lesson.triplet-spacing
+- assertVisible:
+    id: learn.purchase.offer
+- assertVisible:
+    id: learn.purchase
+- assertVisible:
+    id: learn.restore
+- tapOn:
+    id: learn.lesson.steady-pulse
+- tapOn:
     id: learn.start
 - extendedWaitUntil:
     visible:

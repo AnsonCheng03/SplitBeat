@@ -98,7 +98,7 @@ export default function HomeScreen() {
               style={({ pressed }) => ({ minHeight: 40, justifyContent: 'center', paddingHorizontal: 13, borderRadius: 12, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line })}
             >
               <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.7 }}>
-                LEARN RHYTHM  ›
+                LEARN RHYTHM · 3 FREE  ›
               </Text>
             </Pressable>
           </View>

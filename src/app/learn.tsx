@@ -9,7 +9,9 @@ import {
   lessonProgressPercent,
   lessonSettings,
 } from '@/rhythm/learnCourse';
+import { requiresLearnCourseUnlock } from '@/rhythm/learnCourseAccess';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
+import { useLearnCoursePurchase } from '@/hooks/useLearnCoursePurchase';
 import { readLearnProgress } from '@/store/learnProgress';
 import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
@@ -20,21 +22,24 @@ function LessonTile({
   selected,
   completed,
   locked,
+  paywalled,
   onPress,
 }: {
   lesson: LearnLesson;
   selected: boolean;
   completed: boolean;
   locked: boolean;
+  paywalled: boolean;
   onPress: () => void;
 }) {
+  const disabled = locked && !paywalled;
   return (
     <Pressable
       testID={`learn.lesson.${lesson.id}`}
       accessibilityRole="button"
-      accessibilityLabel={`Lesson ${lesson.number}, ${lesson.title}${completed ? ', complete' : locked ? ', locked' : ''}`}
-      accessibilityState={{ selected, disabled: locked }}
-      disabled={locked}
+      accessibilityLabel={`Lesson ${lesson.number}, ${lesson.title}${completed ? ', complete' : paywalled ? ', paid course, tap to unlock' : locked ? ', locked' : ''}`}
+      accessibilityState={{ selected, disabled }}
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => ({
         flexGrow: 1,
@@ -47,18 +52,18 @@ function LessonTile({
         backgroundColor: selected ? colors.surfaceRaised : colors.surface,
         borderWidth: selected ? 1.5 : 1,
         borderColor: selected ? colors.accent : colors.line,
-        opacity: locked ? 0.42 : pressed ? 0.8 : 1,
+        opacity: disabled ? 0.42 : pressed ? 0.8 : 1,
       })}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text style={{ color: colors.dim, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 }}>
           {String(lesson.number).padStart(2, '0')} · {lesson.level}
         </Text>
-        <Text style={{ color: completed ? colors.left : locked ? colors.dim : colors.accent, fontSize: 11, fontWeight: '900' }}>
-          {completed ? '✓' : locked ? 'LOCKED' : '›'}
+        <Text style={{ color: completed ? colors.left : disabled ? colors.dim : colors.accent, fontSize: 11, fontWeight: '900' }}>
+          {completed ? '✓' : paywalled ? 'PRO' : locked ? 'LOCKED' : '›'}
         </Text>
       </View>
-      <Text numberOfLines={1} style={{ color: locked ? colors.muted : colors.text, fontSize: 14, fontWeight: '800', marginTop: 8 }}>
+      <Text numberOfLines={1} style={{ color: disabled ? colors.muted : colors.text, fontSize: 14, fontWeight: '800', marginTop: 8 }}>
         {lesson.title}
       </Text>
       <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 10, marginTop: 3 }}>
@@ -106,6 +111,7 @@ export default function LearnScreen() {
   const router = useRouter();
   const { lessonId: routeLessonId } = useLocalSearchParams<{ lessonId?: string }>();
   const { settings, audioStatus, prepareExercise } = useRhythmSession();
+  const purchase = useLearnCoursePurchase();
   const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([]);
   const [selectedLessonId, setSelectedLessonId] = useState(LEARN_COURSE[0].id);
   const [progressLoaded, setProgressLoaded] = useState(false);
@@ -135,9 +141,18 @@ export default function LearnScreen() {
     [selectedLessonId],
   );
   const completedCount = completedLessonIds.length;
+  const lessonAvailability = getLessonAvailability(selectedLesson.id, completedLessonIds);
+  const requiresPurchase = requiresLearnCourseUnlock(selectedLesson, purchase.hasFullCourseUnlock);
+  const lessonSequenceLocked = lessonAvailability === 'locked';
 
   const startLesson = async () => {
-    if (starting || !progressLoaded || audioStatus === 'loading') return;
+    if (
+      starting
+      || !progressLoaded
+      || requiresPurchase
+      || lessonSequenceLocked
+      || audioStatus === 'loading'
+    ) return;
     setStarting(true);
     try {
       await prepareExercise(undefined, {
@@ -182,6 +197,19 @@ export default function LearnScreen() {
           <View style={{ height: 5, borderRadius: 4, backgroundColor: colors.line, marginTop: 8, overflow: 'hidden' }}>
             <View style={{ width: `${lessonProgressPercent(completedLessonIds)}%`, height: 5, borderRadius: 4, backgroundColor: colors.left }} />
           </View>
+          <Pressable
+            testID="learn.restore"
+            accessibilityRole="button"
+            accessibilityLabel="Restore Learn course purchase"
+            accessibilityState={{ disabled: !purchase.connected || purchase.isRestoring }}
+            disabled={!purchase.connected || purchase.isRestoring}
+            onPress={() => void purchase.restoreFullCourse()}
+            style={({ pressed }) => ({ alignSelf: 'flex-end', minHeight: 30, justifyContent: 'center', opacity: !purchase.connected || purchase.isRestoring ? 0.5 : pressed ? 0.7 : 1 })}
+          >
+            <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>
+              {purchase.isRestoring ? 'RESTORING…' : 'RESTORE PURCHASE'}
+            </Text>
+          </Pressable>
         </View>
 
         <View style={{ marginTop: compact ? 14 : 23 }}>
@@ -200,36 +228,80 @@ export default function LearnScreen() {
           <PatternPreview lesson={selectedLesson} />
         </View>
 
-        <View style={{ flex: 1, minHeight: compact ? 8 : 18 }} />
-        <Pressable
-          testID="learn.start"
-          accessibilityRole="button"
-          accessibilityLabel={`Start lesson ${selectedLesson.number}: ${selectedLesson.title}`}
-          accessibilityState={{ disabled: starting || !progressLoaded || audioStatus === 'loading' }}
-          disabled={starting || !progressLoaded || audioStatus === 'loading'}
-          onPress={() => void startLesson()}
-          style={({ pressed }) => ({ minHeight: compact ? 50 : 58, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, borderRadius: 15, backgroundColor: colors.left, opacity: starting || !progressLoaded || audioStatus === 'loading' ? 0.65 : pressed ? 0.84 : 1 })}
-        >
-          <View>
-            <Text style={{ color: colors.background, fontSize: 13, fontWeight: '900', letterSpacing: 0.5 }}>
-              {starting ? 'PREPARING…' : !progressLoaded ? 'LOADING COURSE…' : audioStatus === 'loading' ? 'PREPARING AUDIO…' : audioStatus === 'error' ? 'RETRY AUDIO & START' : 'START LESSON'}
-            </Text>
-            <Text style={{ color: '#18352C', fontSize: 10, fontWeight: '700', marginTop: 2 }}>
-              {selectedLesson.bpm} BPM · about 30 seconds
-            </Text>
+        {requiresPurchase ? (
+          <View testID="learn.purchase.offer" style={{ marginTop: 14, paddingHorizontal: 11, paddingVertical: 9, borderRadius: 12, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.line }}>
+            <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.9 }}>FULL COURSE · ONE-TIME UNLOCK</Text>
+            <Text style={{ color: colors.muted, fontSize: 10, lineHeight: 14, marginTop: 4 }}>Try the first 3 lessons free, then unlock all 12 lessons with one purchase.</Text>
           </View>
-          <Text style={{ color: colors.background, fontSize: 22, fontWeight: '700' }}>›</Text>
-        </Pressable>
+        ) : lessonSequenceLocked ? (
+          <Text style={{ color: colors.muted, fontSize: 10, lineHeight: 14, marginTop: 12 }}>
+            Complete Lesson {String(selectedLesson.number - 1).padStart(2, '0')} first to open this lesson.
+          </Text>
+        ) : null}
+
+        <View style={{ flex: 1, minHeight: compact ? 8 : 18 }} />
+        {requiresPurchase ? (
+          <Pressable
+            testID="learn.purchase"
+            accessibilityRole="button"
+            accessibilityLabel="Unlock the full Learn course"
+            accessibilityState={{ disabled: !purchase.connected || !purchase.unlockProduct || purchase.isPurchasing || !purchase.entitlementLoaded }}
+            disabled={!purchase.connected || !purchase.unlockProduct || purchase.isPurchasing || !purchase.entitlementLoaded}
+            onPress={() => void purchase.buyFullCourse()}
+            style={({ pressed }) => ({ minHeight: compact ? 50 : 58, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, borderRadius: 15, backgroundColor: colors.accent, opacity: !purchase.connected || !purchase.unlockProduct || purchase.isPurchasing || !purchase.entitlementLoaded ? 0.6 : pressed ? 0.82 : 1 })}
+          >
+            <View>
+              <Text style={{ color: colors.background, fontSize: 12, fontWeight: '900', letterSpacing: 0.4 }}>
+                {!purchase.entitlementLoaded ? 'CHECKING ACCESS…' : !purchase.connected ? 'CONNECTING TO STORE…' : !purchase.productLookupFinished ? 'LOADING OFFER…' : purchase.isPurchasing ? 'PURCHASING…' : purchase.unlockProduct ? `UNLOCK FULL COURSE · ${purchase.unlockProduct.displayPrice}` : 'OFFER UNAVAILABLE'}
+              </Text>
+              <Text style={{ color: colors.background, fontSize: 10, fontWeight: '700', marginTop: 2 }}>
+                One-time purchase · 3 lessons free
+              </Text>
+            </View>
+            <Text style={{ color: colors.background, fontSize: 22, fontWeight: '700' }}>›</Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            testID="learn.start"
+            accessibilityRole="button"
+            accessibilityLabel={`Start lesson ${selectedLesson.number}: ${selectedLesson.title}`}
+            accessibilityState={{ disabled: starting || !progressLoaded || lessonSequenceLocked || audioStatus === 'loading' }}
+            disabled={starting || !progressLoaded || lessonSequenceLocked || audioStatus === 'loading'}
+            onPress={() => void startLesson()}
+            style={({ pressed }) => ({ minHeight: compact ? 50 : 58, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, borderRadius: 15, backgroundColor: colors.left, opacity: starting || !progressLoaded || lessonSequenceLocked || audioStatus === 'loading' ? 0.65 : pressed ? 0.84 : 1 })}
+          >
+            <View>
+              <Text style={{ color: colors.background, fontSize: 13, fontWeight: '900', letterSpacing: 0.5 }}>
+                {lessonSequenceLocked ? `COMPLETE LESSON ${String(selectedLesson.number - 1).padStart(2, '0')} FIRST` : starting ? 'PREPARING…' : !progressLoaded ? 'LOADING COURSE…' : audioStatus === 'loading' ? 'PREPARING AUDIO…' : audioStatus === 'error' ? 'RETRY AUDIO & START' : 'START LESSON'}
+              </Text>
+              <Text style={{ color: '#18352C', fontSize: 10, fontWeight: '700', marginTop: 2 }}>
+                {selectedLesson.bpm} BPM · about 30 seconds
+              </Text>
+            </View>
+            <Text style={{ color: colors.background, fontSize: 22, fontWeight: '700' }}>›</Text>
+          </Pressable>
+        )}
+
+        {purchase.errorMessage ? (
+          <Text accessibilityLiveRegion="polite" numberOfLines={2} style={{ color: colors.right, fontSize: 9, lineHeight: 13, marginTop: 6 }}>
+            {purchase.errorMessage}
+          </Text>
+        ) : purchase.notice ? (
+          <Text accessibilityLiveRegion="polite" numberOfLines={2} style={{ color: colors.left, fontSize: 9, lineHeight: 13, marginTop: 6 }}>
+            {purchase.notice}
+          </Text>
+        ) : null}
       </ScrollView>
 
       <View style={{ flex: 1, minWidth: 0, paddingHorizontal: compact ? 14 : 25, paddingTop: compact ? 13 : 20, paddingBottom: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: compact ? 9 : 14 }}>
           <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>COURSE PATH</Text>
-          <Text style={{ color: colors.dim, fontSize: 10, fontWeight: '700' }}>Finish a lesson to open the next</Text>
+          <Text style={{ color: colors.dim, fontSize: 10, fontWeight: '700' }}>First 3 free · finish each to progress</Text>
         </View>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingBottom: 14 }}>
           {LEARN_COURSE.map((lesson) => {
             const availability = getLessonAvailability(lesson.id, completedLessonIds);
+            const paywalled = requiresLearnCourseUnlock(lesson, purchase.hasFullCourseUnlock);
             return (
               <LessonTile
                 key={lesson.id}
@@ -237,6 +309,7 @@ export default function LearnScreen() {
                 selected={selectedLesson.id === lesson.id}
                 completed={availability === 'complete'}
                 locked={availability === 'locked'}
+                paywalled={paywalled}
                 onPress={() => setSelectedLessonId(lesson.id)}
               />
             );
