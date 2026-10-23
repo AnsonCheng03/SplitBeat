@@ -43,7 +43,8 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 - `src/app/` contains the mode-select home, guided course, session setup, separate rhythm/audio/timing settings pages, practice, score import, results, and records routes.
 - `src/rhythm/` contains subdivision math, non-repeating pair generation, the authored 12-lesson course, tap matching, and scoring.
 - `src/rhythm/noteNotation.ts` builds repeated subdivision symbols and mixed-duration bar notation with beat-aware beams and flags.
-- `src/rhythm/musicXmlParser.ts` converts partwise MusicXML to rhythm-only score tracks for imported-score practice.
+- `src/rhythm/musicXmlParser.ts` and `src/rhythm/midiParser.ts` convert MusicXML and Standard MIDI files into one- or two-hand rhythm tracks.
+- `src/rhythm/scoreTemplates.ts` contains short built-in public-domain melody practice arrangements; `src/rhythm/importedScoreLibrary.ts` validates and indexes recent and saved score data.
 - `src/rhythm/timingCalibration.ts` normalizes per-hand timing calibration and the selectable scoring window.
 - src/audio/ synthesizes selectable metronome and hand click tones, then schedules metronome clicks on the native audio clock.
 - src/store/ owns session state, prepares the audio context and offline click sounds at app startup, and persists exercise settings, course progress, and summary-only session history locally. Expected note positions and actual tap timestamps stay in the active result screen for visual replay only.
@@ -75,11 +76,11 @@ In-app purchases require a native development or release build; Expo Go does not
 
 ## Training from a score
 
-Choose an uncompressed `.musicxml` or `.xml` file with the system file picker. The app reads and parses it locally; there is no paste step and score contents are not uploaded. Files larger than 5 MB are rejected.
+Choose a `.mid`, `.midi`, `.musicxml`, or `.xml` file with the system file picker. MIDI type 0 and synchronized type 1 files and partwise MusicXML are parsed locally; files larger than 5 MB are rejected. The app accepts one or two musical tracks/staves. Empty MIDI conductor tracks do not count; MIDI files with three or more note-bearing tracks, independent type 2 sequences, SMPTE timing, tempo changes, or meter changes are rejected instead of silently dropping parts. A one-track score starts in one-hand mode and uses the app's existing one-hand assignment; two tracks map in file order to right and left.
 
-The importer maps staff 1 to the right hand and staff 2 to the left hand in a grand staff. If the score has separate one-staff parts, it uses the first part for the right hand and the second for the left. It converts note attacks and durations, carries explicit tuplet counts into the bar preview, treats rests as silence, merges tied notes, and treats chords as one tap. Grace notes are skipped with a warning because MusicXML does not give them a fixed duration. The extracted rhythm is previewed before practice; the score then repeats for the saved session length. A score tempo, when present, sets the practice tempo.
+For MusicXML, staff 1 maps to the right hand and staff 2 to the left in a grand staff; separate one-staff parts map in part order. A single staff is assigned to the current one-hand setting. MIDI uses note on/off timing, combines simultaneous notes into chords, and uses the first note-bearing track for the right hand and second for the left. Both formats preserve MIDI pitches for audio playback and reject unsupported track counts. The MusicXML importer carries explicit tuplet counts into the bar preview, treats rests as silence, merges ties, and skips grace notes with a warning. The extracted rhythm is previewed before practice; the score then repeats for the selected session length. A score tempo and meter, when present and supported, set the practice tempo and meter.
 
-The internal `ImportedRhythmScore` JSON stores each measure's start and duration in quarter-note units plus separate left/right note events. Its rhythm preview places notes at their score onsets, varies beam depth with note duration, groups beams at the meter's pulse, and renders every notehead at the same fixed pitch with no staff lines. MusicXML pitches remain hidden from the display but determine the synthesized note heard on a correctly matched tap; chords sound together. The current importer accepts partwise MusicXML and the time signatures already supported by the app; it rejects scores with tempo or time-signature changes. Compressed `.mxl` packages are not supported; check each rhythm bar against the source before training. PDF/image recognition is not currently available in the app: it requires a cross-platform on-device OMR engine, and score files are not sent to an online converter.
+The internal `ImportedRhythmScore` JSON stores each measure's start and duration in quarter-note units plus separate left/right note events. Its rhythm preview places notes at their score onsets, varies beam depth with note duration, groups beams at the meter's pulse, and renders every notehead at the same fixed pitch with no staff lines. Imported pitches remain hidden from the display but determine the synthesized note heard on a correctly matched tap; chords sound together. The import page includes Jingle Bells, Ode to Joy, and Twinkle, Twinkle starter arrangements. Jingle Bells is a simple practice arrangement based on the public-domain song; the Library of Congress catalog lists its 1880 score as public domain: [Jingle Bells, Library of Congress](https://www.loc.gov/item/2023838067/). The app keeps up to 20 recent scores and 100 explicitly saved scores on this device. It stores the parsed practice score and file name, not the original document bytes; PDF/image recognition and compressed `.mxl` packages are not available yet.
 
 ## Session records and missed-note replay
 
@@ -127,6 +128,12 @@ The MusicXML import flow has a separate Maestro test:
 ~~~sh
 npm run e2e:ios
 npm run e2e:score-import -- --device DEVICE_ID
+~~~
+
+The template and saved-score library flow has its own Maestro test:
+
+~~~sh
+EXPO_PUBLIC_E2E_SILENT=1 E2E_MAESTRO_FLOW=score-library.yaml npm run e2e:maestro -- --device DEVICE_ID
 ~~~
 
 ## Timing and scoring

@@ -3,6 +3,19 @@ appId: com.splitbeat.twohandrhythm
 - setOrientation: LANDSCAPE_LEFT
 - launchApp:
     clearState: true
+- runFlow:
+    when:
+      visible:
+        text: Two-Hand Rhythm Trainer
+    commands:
+      - tapOn: Two-Hand Rhythm Trainer
+- runFlow:
+    when:
+      visible:
+        text: Open
+    commands:
+      - tapOn: Open
+- waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
       id: home.screen
@@ -11,16 +24,12 @@ appId: com.splitbeat.twohandrhythm
     id: home.importScore
 - assertVisible:
     id: scoreImport.screen
+- assertVisible:
+    id: scoreImport.import
+- assertVisible:
+    id: scoreImport.loadSample
 - tapOn:
-    id: scoreImport.xmlInput
-- inputText: '<score-partwise><work><work-title>E2E Two Bar Score</work-title></work><part-list><score-part id="P"><part-name>Piano</part-name></score-part></part-list><part id="P"><measure number="1"><attributes><divisions>24</divisions><staves>2</staves><time><beats>2</beats><beat-type>4</beat-type></time></attributes><note><duration>48</duration><staff>1</staff></note><backup><duration>48</duration></backup><note><duration>48</duration><staff>2</staff></note></measure><measure number="2"><note><duration>48</duration><staff>1</staff></note><backup><duration>48</duration></backup><note><duration>48</duration><staff>2</staff></note></measure></part></score-partwise>'
-- hideKeyboard
-- scrollUntilVisible:
-    element:
-      id: scoreImport.parse
-    direction: DOWN
-- tapOn:
-    id: scoreImport.parse
+    id: scoreImport.loadSample
 - assertVisible:
     id: scoreImport.summary
 - assertVisible: E2E Two Bar Score

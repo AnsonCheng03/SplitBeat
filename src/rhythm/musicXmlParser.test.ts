@@ -32,6 +32,7 @@ test('converts both staves, rests, compound meter, and metronome tempo', () => {
   assert.equal(score.title, 'Practice Etude');
   assert.equal(score.timeSignature, '6/8');
   assert.equal(score.bpm, 80);
+  assert.equal(score.trackCount, 2);
   assert.equal(score.totalQuarterNotes, 3);
   const rightOnsets = score.measures[0].rightEvents.map((event) => event.startQuarter);
   const expectedRightOnsets = [0, 1 / 3, 2 / 3, 1, 4 / 3, 5 / 3, 2, 7 / 3, 8 / 3];
@@ -115,7 +116,15 @@ test('preserves MusicXML pitch alterations and chord pitches for score playback'
   assert.deepEqual(score.measures[0].rightEvents[0].midiPitches, [60, 64]);
 });
 
-test('rejects malformed, unsupported, and single-staff scores with useful errors', () => {
+test('accepts a single-staff MusicXML file as one hand', () => {
+  const xml = `<score-partwise><work><work-title>Solo</work-title></work><part-list><score-part id="P1"><part-name>Flute</part-name></score-part></part-list><part id="P1"><measure><attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes><note><pitch><step>C</step><octave>4</octave></pitch><duration>1</duration></note></measure></part></score-partwise>`;
+  const score = parseMusicXmlRhythm(xml);
+  assert.equal(score.trackCount, 1);
+  assert.equal(score.measures[0]!.rightEvents.length, 1);
+  assert.equal(score.measures[0]!.leftEvents.length, 0);
+});
+
+test('rejects malformed, unsupported, and more-than-two-staff scores with useful errors', () => {
   assert.throws(() => parseMusicXmlRhythm('<score-partwise>'), /Invalid MusicXML/);
   assert.throws(() => parseMusicXmlRhythm('<score-timewise/>'), /partwise MusicXML/);
   assert.throws(
@@ -123,8 +132,8 @@ test('rejects malformed, unsupported, and single-staff scores with useful errors
     /11\/16 time signature is not supported/,
   );
   assert.throws(
-    () => parseMusicXmlRhythm('<score-partwise><part id="P1"><measure/></part></score-partwise>'),
-    /two staves or two parts/,
+    () => parseMusicXmlRhythm(scoreWithTwoStaves(`<measure><attributes><divisions>1</divisions><staves>3</staves><time><beats>4</beats><beat-type>4</beat-type></time></attributes></measure>`)),
+    /one or two tracks/,
   );
   assert.throws(
     () => parseMusicXmlRhythm(scoreWithTwoStaves(`<measure>${attributes('4/4')}</measure><measure><attributes><time><beats>3</beats><beat-type>4</beat-type></time></attributes></measure>`)),

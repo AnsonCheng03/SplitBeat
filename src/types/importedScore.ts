@@ -24,6 +24,8 @@ export interface ImportedRhythmScore {
   formatVersion: 1;
   title: string;
   timeSignature: TimeSignature;
+  /** Number of musical tracks represented by this score, limited to one or two. */
+  trackCount: 1 | 2;
   /** Tempo in the app's metrical beat unit. */
   bpm: number | null;
   measures: ScoreRhythmMeasure[];

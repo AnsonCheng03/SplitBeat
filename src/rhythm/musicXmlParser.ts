@@ -31,6 +31,7 @@ interface StaffSelection {
 }
 
 const MAX_MUSICXML_LENGTH = 5_000_000;
+const MAX_MUSICXML_MEASURES = 2_000;
 const MUSICXML_NOTE_UNITS: Record<string, number> = {
   maxima: 32,
   long: 16,
@@ -200,21 +201,20 @@ function readQuarterNoteTempo(root: XmlNode): number | null {
   return firstTempo;
 }
 
-function selectHandStaves(parts: ScorePart[]): { left: StaffSelection; right: StaffSelection } {
-  const grandStaffPartIndex = parts.findIndex((part) => part.staffCount >= 2);
-  if (grandStaffPartIndex >= 0) {
-    return {
-      right: { partIndex: grandStaffPartIndex, staff: 1 },
-      left: { partIndex: grandStaffPartIndex, staff: 2 },
-    };
+function selectMusicalStaves(parts: ScorePart[]): StaffSelection[] {
+  const selections = parts.flatMap((part, partIndex) =>
+    Array.from({ length: part.staffCount }, (_, staffIndex) => ({
+      partIndex,
+      staff: staffIndex + 1,
+    })),
+  );
+  if (selections.length === 0) {
+    throw new Error('This score does not contain a playable staff.');
   }
-  if (parts.length >= 2) {
-    return {
-      right: { partIndex: 0, staff: 1 },
-      left: { partIndex: 1, staff: 1 },
-    };
+  if (selections.length > 2) {
+    throw new Error(`This score has ${selections.length} staves; import a score with one or two tracks.`);
   }
-  throw new Error('This score needs two staves or two parts so the app can map one to each hand.');
+  return selections;
 }
 
 function tieTypes(note: XmlNode): { starts: boolean; stops: boolean } {
@@ -423,17 +423,19 @@ export function parseMusicXmlRhythm(xml: string): ImportedRhythmScore {
   const timeSignature = readTimeSignature(parts);
   const [numerator, denominator] = timeSignature.split('/').map(Number);
   const quarterNotesPerMeasure = (numerator * 4) / denominator;
-  const selections = selectHandStaves(parts);
+  const selections = selectMusicalStaves(parts);
   const measureCount = Math.max(...parts.map((part) => part.measures.length));
+  if (measureCount > MAX_MUSICXML_MEASURES) {
+    throw new Error(`This MusicXML score is too long to preview (maximum ${MAX_MUSICXML_MEASURES} bars).`);
+  }
   const warnings = new Set<string>();
   if (!parts.some((part) => part.measures.some((measure) => first(first(measure, 'attributes'), 'time')))) {
     warnings.add('The score has no time signature; 4/4 was assumed.');
   }
-  if (parts.length > 2 || parts[selections.right.partIndex].staffCount > 2) {
-    warnings.add('Only the first two staves or parts were mapped to the left and right hands.');
-  }
-  const left = scanStaff(parts, selections.left, 'left', measureCount, quarterNotesPerMeasure, warnings);
-  const right = scanStaff(parts, selections.right, 'right', measureCount, quarterNotesPerMeasure, warnings);
+  const right = scanStaff(parts, selections[0]!, 'right', measureCount, quarterNotesPerMeasure, warnings);
+  const left = selections[1]
+    ? scanStaff(parts, selections[1], 'left', measureCount, quarterNotesPerMeasure, warnings)
+    : right.map((measure) => ({ ...measure, leftEvents: [] }));
   const measures = left.map((leftMeasure, index) => {
     const rightMeasure = right[index];
     return {
@@ -465,6 +467,7 @@ export function parseMusicXmlRhythm(xml: string): ImportedRhythmScore {
     formatVersion: 1,
     title: titleOf(root),
     timeSignature,
+    trackCount: selections.length as 1 | 2,
     bpm: quarterTempo === null ? null : Math.max(40, Math.min(200, Math.round(quarterTempo / pulseQuarterNotes))),
     measures,
     totalQuarterNotes,

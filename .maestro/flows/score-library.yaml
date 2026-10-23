@@ -1,0 +1,41 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: LANDSCAPE_LEFT
+- launchApp:
+    clearState: true
+- runFlow:
+    when:
+      visible:
+        text: Two-Hand Rhythm Trainer
+    commands:
+      - tapOn: Two-Hand Rhythm Trainer
+- runFlow:
+    when:
+      visible:
+        text: Open
+    commands:
+      - tapOn: Open
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
+- tapOn:
+    id: home.importScore
+- extendedWaitUntil:
+    visible:
+      id: scoreImport.screen
+    timeout: 15000
+- tapOn:
+    id: scoreImport.template.jingle-bells-easy-duet
+- assertVisible:
+    id: scoreImport.summary
+- tapOn:
+    id: scoreImport.save
+- assertVisible: SAVED ✓
+- tapOn:
+    id: scoreImport.library
+- assertVisible: MY SAVED SCORES
+- tapOn: Jingle Bells · Easy Duet
+- assertVisible:
+    id: scoreImport.summary
