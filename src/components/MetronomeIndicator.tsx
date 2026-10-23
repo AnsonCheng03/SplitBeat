@@ -36,7 +36,7 @@ export function MetronomeIndicator({
         })}
       </View>
       <Text testID={isRest ? 'practice.restBeat' : undefined} style={{ color: isRest ? colors.accent : colors.muted, fontSize: compact ? 10 : 11, letterSpacing: 1.4, fontWeight: isRest ? '900' : '500' }}>
-        {isRest ? 'REST · NEXT CHANGE' : isRunning ? 'BEAT' : 'GET READY'}
+        {isRest ? 'REST' : isRunning ? 'BEAT' : 'GET READY'}
       </Text>
     </View>
   );

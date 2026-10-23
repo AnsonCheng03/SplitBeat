@@ -13,7 +13,7 @@ const HOMR_COMMAND = "uvx --from 'homr[cpu]' homr /path/to/your-score.pdf";
 
 export default function ImportScoreScreen() {
   const router = useRouter();
-  const { settings, updateSettings, startScoreExercise } = useRhythmSession();
+  const { settings, updateSettings, prepareExercise } = useRhythmSession();
   const [musicXml, setMusicXml] = useState('');
   const [score, setScore] = useState<ImportedRhythmScore | null>(null);
   const [previewMeasureIndex, setPreviewMeasureIndex] = useState(0);
@@ -36,7 +36,7 @@ export default function ImportScoreScreen() {
     if (!score || starting) return;
     setStarting(true);
     try {
-      await startScoreExercise(score);
+      await prepareExercise(score);
       router.replace('/practice');
     } catch {
       Alert.alert('Audio could not start', 'Check your device audio settings and try again.');

@@ -17,7 +17,7 @@ const durations: { label: string; value: DurationOption }[] = [
 ];
 
 export default function SetupScreen() {
-  const { settings, updateSettings, audioStatus, prepareAudio, startExercise } = useRhythmSession();
+  const { settings, updateSettings, audioStatus, prepareExercise } = useRhythmSession();
   const [starting, setStarting] = useState(false);
   const router = useRouter();
 
@@ -25,8 +25,7 @@ export default function SetupScreen() {
     if (starting || audioStatus === 'loading') return;
     setStarting(true);
     try {
-      if (audioStatus === 'error') await prepareAudio();
-      await startExercise();
+      await prepareExercise();
       router.replace('/practice');
     } catch {
       Alert.alert('Audio could not start', 'Check your device audio settings and try again.');

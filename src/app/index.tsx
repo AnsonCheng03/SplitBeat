@@ -7,7 +7,7 @@ import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
 
 export default function HomeScreen() {
-  const { settings, updateSettings, audioStatus, prepareAudio, startExercise } = useRhythmSession();
+  const { settings, updateSettings, audioStatus, prepareAudio, prepareExercise } = useRhythmSession();
   const [starting, setStarting] = useState(false);
   const router = useRouter();
   const buttonStatus = starting ? 'loading' : audioStatus;
@@ -20,7 +20,7 @@ export default function HomeScreen() {
         await prepareAudio();
         return;
       }
-      await startExercise();
+      await prepareExercise();
       router.replace('/practice');
     } catch {
       Alert.alert('Audio could not start', 'Check your device audio settings and try again.');

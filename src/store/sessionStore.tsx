@@ -66,8 +66,9 @@ interface SessionContextValue {
   updateSettings: (patch: Partial<ExerciseSettings>) => void;
   audioStatus: AudioPreparationStatus;
   prepareAudio: () => Promise<void>;
-  startExercise: () => Promise<void>;
-  startScoreExercise: (score: ImportedRhythmScore) => Promise<void>;
+  prepareExercise: (score?: ImportedRhythmScore) => Promise<void>;
+  startPreparedExercise: () => Promise<void>;
+  exercisePrepared: boolean;
   stopExercise: () => void;
   registerTap: (hand: Hand, timestamp: number) => TapFeedback | null;
   snapshot: SessionSnapshot | null;
@@ -169,6 +170,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   const uiTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const replayTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const sessionIdRef = useRef<string | null>(null);
+  const pendingScoreRef = useRef<ImportedRhythmScore | undefined>(undefined);
+  const [exercisePrepared, setExercisePrepared] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -372,11 +375,18 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     uiTimerRef.current = setTimeout(updateFromClock, 30);
   }, [saveCompletedSession, settings, stopTimers]);
 
-  const startExercise = useCallback(() => startSession(), [startSession]);
-  const startScoreExercise = useCallback(
-    (score: ImportedRhythmScore) => startSession(score),
-    [startSession],
-  );
+  const prepareExercise = useCallback(async (score?: ImportedRhythmScore) => {
+    await prepareAudio();
+    pendingScoreRef.current = score;
+    setExercisePrepared(true);
+  }, [prepareAudio]);
+
+  const startPreparedExercise = useCallback(async () => {
+    if (!exercisePrepared) throw new Error('Prepare an exercise before starting.');
+    await startSession(pendingScoreRef.current);
+    pendingScoreRef.current = undefined;
+    setExercisePrepared(false);
+  }, [exercisePrepared, startSession]);
 
   const registerTap = useCallback((hand: Hand, timestamp: number): TapFeedback | null => {
     const engine = engineRef.current;
@@ -472,8 +482,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   );
 
   const value = useMemo(
-    () => ({ settings, updateSettings, audioStatus, prepareAudio, startExercise, startScoreExercise, stopExercise, registerTap, snapshot, results, sessionHistory, sessionHistoryLoaded, replayMissedBar, stopReplay, discardReplayData }),
-    [settings, updateSettings, audioStatus, prepareAudio, startExercise, startScoreExercise, stopExercise, registerTap, snapshot, results, sessionHistory, sessionHistoryLoaded, replayMissedBar, stopReplay, discardReplayData],
+    () => ({ settings, updateSettings, audioStatus, prepareAudio, prepareExercise, startPreparedExercise, stopExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, replayMissedBar, stopReplay, discardReplayData }),
+    [settings, updateSettings, audioStatus, prepareAudio, prepareExercise, startPreparedExercise, stopExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, replayMissedBar, stopReplay, discardReplayData],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

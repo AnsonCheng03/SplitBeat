@@ -169,20 +169,17 @@ appId: com.splitbeat.twohandrhythm
       id: practice.screen
     timeout: 15000
 - assertVisible:
-    id: practice.rhythmDisplay
-- assertVisible: RIGHT HAND ONLY
-- assertVisible: Sound off. Tap to enable.
-- assertVisible: "SOUND OFF · TAP TO ENABLE"
-- assertVisible:
-    id: practice.timeSignature
-- assertVisible: 6/8
-- assertVisible: SWING
+    id: practice.tutorial
+- tapOn:
+    id: practice.tutorial
 - extendedWaitUntil:
     visible:
-      id: practice.nextPattern
-    timeout: 15000
+      id: practice.rhythmDisplay
+    timeout: 10000
 - assertVisible:
-    id: practice.nextPattern.countdown
+    id: practice.rhythmDisplay
+- assertVisible:
+    id: practice.beatCounter
 - extendedWaitUntil:
     visible:
       id: practice.restBeat
@@ -191,10 +188,6 @@ appId: com.splitbeat.twohandrhythm
     id: practice.tap.left
 - assertVisible:
     id: practice.tap.right
-- assertVisible:
-    id: practice.keyboard.leftKeys
-- assertVisible:
-    id: practice.keyboard.rightKeys
 - tapOn:
     id: practice.tap.left
 - tapOn:
@@ -224,6 +217,10 @@ appId: com.splitbeat.twohandrhythm
     element:
       id: results.records
     direction: DOWN
+- swipe:
+    start: 90%, 80%
+    end: 90%, 35%
+    duration: 500
 - tapOn:
     id: results.records
 - assertVisible:
