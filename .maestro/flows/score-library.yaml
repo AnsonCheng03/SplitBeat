@@ -27,6 +27,60 @@ appId: com.splitbeat.twohandrhythm
       id: scoreImport.screen
     timeout: 15000
 - tapOn:
+    id: scoreImport.category.pop
+- scrollUntilVisible:
+    element:
+      id: scoreImport.template.pop-groove-difficult-duet
+    direction: DOWN
+- assertVisible:
+    id: scoreImport.template.pop-groove-difficult-duet
+- assertNotVisible:
+    id: scoreImport.template.jingle-bells-easy-duet
+- scrollUntilVisible:
+    element:
+      id: scoreImport.tag.difficult
+    direction: UP
+- tapOn:
+    id: scoreImport.tag.difficult
+- scrollUntilVisible:
+    element:
+      id: scoreImport.template.pop-groove-difficult-duet
+    direction: DOWN
+- assertVisible:
+    id: scoreImport.template.pop-groove-difficult-duet
+- scrollUntilVisible:
+    element:
+      id: scoreImport.category.classical
+    direction: UP
+- tapOn:
+    id: scoreImport.category.classical
+- scrollUntilVisible:
+    element:
+      id: scoreImport.template.fur-elise-difficult-one-hand
+    direction: DOWN
+- assertVisible:
+    id: scoreImport.template.fur-elise-difficult-one-hand
+- scrollUntilVisible:
+    element:
+      id: scoreImport.filters.clear
+    direction: UP
+- tapOn:
+    id: scoreImport.filters.clear
+- scrollUntilVisible:
+    element:
+      id: scoreImport.template.jingle-bells-easy-duet
+    direction: DOWN
+- assertVisible:
+    id: scoreImport.template.jingle-bells-easy-duet
+- tapOn:
+    id: scoreImport.tag.both-hands
+- assertVisible:
+    id: scoreImport.template.jingle-bells-easy-duet
+- assertNotVisible:
+    id: scoreImport.template.fur-elise-difficult-one-hand
+- tapOn:
+    id: scoreImport.filters.clear
+- tapOn:
     id: scoreImport.template.jingle-bells-easy-duet
 - assertVisible:
     id: scoreImport.summary
@@ -38,8 +92,13 @@ appId: com.splitbeat.twohandrhythm
     direction: DOWN
 - tapOn:
     id: scoreImport.library
-- assertVisible: MY SAVED SCORES
+- scrollUntilVisible:
+    element:
+      id: scoreImport.saved.heading
+    direction: DOWN
+- assertVisible:
+    id: scoreImport.saved.heading
 - tapOn:
-    id: scoreImport.saved.*
+    id: scoreImport.saved.entry.*
 - assertVisible:
     id: scoreImport.summary

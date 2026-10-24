@@ -56,7 +56,7 @@ test('assigns a one-track score to the hand chosen for one-hand training', () =>
   assert.equal(leftHandScore.trackCount, 1);
 });
 
-test('provides built-in public-domain song templates with only one or two tracks', () => {
+test('provides public-domain and original templates with one or two tracks', () => {
   assert.equal(SCORE_TEMPLATES.length >= 3, true);
   assert.equal(SCORE_TEMPLATES[0]!.title, 'Jingle Bells');
   assert.equal(SCORE_TEMPLATES[0]!.score.trackCount, 2);

@@ -60,7 +60,7 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 - `src/rhythm/` contains subdivision math, selectable mixed note/rest patterns, non-repeating pair generation with optional independent hand rests, typed-bar validation and combination accuracy aggregation, conversion of generated patterns into pitch-free score bars, the authored 20-lesson course, tap matching, scoring, and note- or bar-based challenge rules.
 - `src/rhythm/noteNotation.ts` builds repeated subdivision symbols and mixed-duration bar notation with beat-aware beams and flags.
 - `src/rhythm/musicXmlParser.ts` and `src/rhythm/midiParser.ts` convert MusicXML and Standard MIDI files into one- or two-hand rhythm tracks.
-- `src/rhythm/scoreTemplates.ts` contains short built-in public-domain melody practice arrangements; `src/rhythm/importedScoreLibrary.ts` validates and indexes recent and saved score data.
+- `src/rhythm/scoreTemplates.ts` contains built-in practice arrangements with Pop, Classical, and Traditional categories plus combinable difficulty and hand-count tags; `src/rhythm/importedScoreLibrary.ts` validates and indexes recent and saved score data.
 - `src/rhythm/timingCalibration.ts` normalizes per-hand timing calibration and the selectable scoring window.
 - `src/audio/` synthesizes selectable metronome and hand clicks, a generated beat-synced accompaniment, and session cues; it schedules all sounds on the native audio clock.
 - src/store/ owns session state, prepares the audio context and offline click sounds at app startup, and persists exercise settings, course progress, combination accuracy, and summary-only session history locally. Expected note positions and actual tap timestamps stay in the active result screen for visual replay only.
@@ -206,6 +206,8 @@ The template and saved-score library flow has its own Maestro test:
 ~~~sh
 EXPO_PUBLIC_E2E_SILENT=1 E2E_MAESTRO_FLOW=score-library.yaml npm run e2e:maestro -- --device DEVICE_ID
 ~~~
+
+Example scores can be filtered by category and by any combination of difficulty and hand tags. The examples include one- and two-hand parts, easy and difficult arrangements, and scores in both 4/4 and 3/8.
 
 ## Timing and scoring
 

@@ -10,7 +10,13 @@ import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
 import type { ScoreDisplayMode } from '@/rhythm/scoreStaff';
 import { createImportedScoreEntry, placeSingleTrackOnHand, rememberImportedScore, setImportedScoreSaved } from '@/rhythm/importedScoreLibrary';
 import { decodeBase64Bytes, parseMidiRhythm } from '@/rhythm/midiParser';
-import { SCORE_TEMPLATES } from '@/rhythm/scoreTemplates';
+import {
+  filterScoreTemplates,
+  SCORE_TEMPLATES,
+  SCORE_TEMPLATE_CATEGORIES,
+  SCORE_TEMPLATE_TAGS,
+} from '@/rhythm/scoreTemplates';
+import type { ScoreTemplateCategory, ScoreTemplateTag } from '@/rhythm/scoreTemplates';
 import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import { parseMusicXmlRhythm } from '@/rhythm/musicXmlParser';
 import { useRhythmSession } from '@/store/sessionStore';
@@ -45,6 +51,45 @@ function currentTimestamp(): number {
   return Date.now();
 }
 
+function scoreFilterTestId(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+}
+
+function TemplateFilterChip({
+  testID,
+  label,
+  selected,
+  accessibilityLabel,
+  onPress,
+}: {
+  testID: string;
+  label: string;
+  selected: boolean;
+  accessibilityLabel: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        minHeight: 34,
+        justifyContent: 'center',
+        paddingHorizontal: 13,
+        borderRadius: 18,
+        backgroundColor: selected ? colors.accent : pressed ? colors.surfaceRaised : colors.surface,
+        borderWidth: 1,
+        borderColor: selected ? colors.accent : colors.line,
+      })}
+    >
+      <Text raw style={{ color: selected ? colors.background : colors.muted, fontSize: 11, fontWeight: '800' }}>{label}</Text>
+    </Pressable>
+  );
+}
+
 export default function ImportScoreScreen() {
   const { t } = useI18n();
   const { width } = useWindowDimensions();
@@ -63,6 +108,8 @@ export default function ImportScoreScreen() {
   const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
   const [libraryLoaded, setLibraryLoaded] = useState(false);
   const [scoreDisplayMode, setScoreDisplayMode] = useState<ScoreDisplayMode>('staff');
+  const [templateCategory, setTemplateCategory] = useState<ScoreTemplateCategory | 'All'>('All');
+  const [templateTags, setTemplateTags] = useState<ScoreTemplateTag[]>([]);
 
   useEffect(() => {
     if (!featureFlags.scoreImport) router.replace('/');
@@ -244,6 +291,20 @@ export default function ImportScoreScreen() {
         right: score.measures.reduce((count, measure) => count + measure.rightEvents.length, 0),
       })
     : '';
+  const visibleTemplates = filterScoreTemplates(SCORE_TEMPLATES, { category: templateCategory, tags: templateTags });
+  const templateCardBasis = width >= 650 ? '48%' : '100%';
+  const hasTemplateFilters = templateCategory !== 'All' || templateTags.length > 0;
+
+  const toggleTemplateTag = (tag: ScoreTemplateTag) => {
+    setTemplateTags((selected) => selected.includes(tag)
+      ? selected.filter((item) => item !== tag)
+      : [...selected, tag]);
+  };
+
+  const clearTemplateFilters = () => {
+    setTemplateCategory('All');
+    setTemplateTags([]);
+  };
 
   return (
     <SafeAreaView testID="scoreImport.screen" style={{ flex: 1, backgroundColor: colors.background }}>
@@ -280,24 +341,82 @@ export default function ImportScoreScreen() {
               </Pressable>
             ) : null}
             {featureFlags.savedScoreLibrary ? <View style={{ marginTop: 13 }}>
-              <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.3, marginBottom: 8 }}>START WITH A TEMPLATE</Text>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                {SCORE_TEMPLATES.map((template) => (
-                  <Pressable
-                    key={template.id}
-                    testID={`scoreImport.template.${template.id}`}
-                    accessibilityRole="button"
-                    onPress={() => selectTemplate(template.id)}
-                    style={({ pressed }) => ({ flex: 1, minHeight: 60, justifyContent: 'center', paddingHorizontal: 11, borderRadius: 12, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line })}
-                  >
-                    <Text raw numberOfLines={1} style={{ color: colors.text, fontSize: 12, fontWeight: '900' }}>{template.title}</Text>
-                    <Text numberOfLines={1} style={{ color: colors.dim, fontSize: 9, marginTop: 4 }}>{template.subtitle}</Text>
-                  </Pressable>
-                ))}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>EXAMPLE SCORES</Text>
+                <Text testID="scoreImport.exampleCount" style={{ color: colors.dim, fontSize: 10 }}>{t('{count} example scores', { count: visibleTemplates.length })}</Text>
               </View>
+              <Text style={{ color: colors.dim, fontSize: 11, marginBottom: 8 }}>Choose a style, level, or hand setup.</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 1.1, marginBottom: 5 }}>CATEGORY</Text>
+                {hasTemplateFilters ? (
+                  <Pressable testID="scoreImport.filters.clear" accessibilityRole="button" onPress={clearTemplateFilters} hitSlop={6} style={{ minHeight: 30, justifyContent: 'center', paddingHorizontal: 4 }}>
+                    <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900' }}>CLEAR FILTERS</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 7, paddingBottom: 8 }}>
+                {(['All', ...SCORE_TEMPLATE_CATEGORIES] as const).map((category) => (
+                  <TemplateFilterChip
+                    key={category}
+                    testID={`scoreImport.category.${scoreFilterTestId(category)}`}
+                    label={t(category)}
+                    accessibilityLabel={t('Filter scores by {value}', { value: t(category) })}
+                    selected={templateCategory === category}
+                    onPress={() => setTemplateCategory(category)}
+                  />
+                ))}
+              </ScrollView>
+              <Text style={{ color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 1.1, marginBottom: 5 }}>TAGS · COMBINE ANY</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 7, paddingBottom: 9 }}>
+                {SCORE_TEMPLATE_TAGS.map((tag) => (
+                  <TemplateFilterChip
+                    key={tag}
+                    testID={`scoreImport.tag.${scoreFilterTestId(tag)}`}
+                    label={t(tag)}
+                    accessibilityLabel={t('Filter scores by {value}', { value: t(tag) })}
+                    selected={templateTags.includes(tag)}
+                    onPress={() => toggleTemplateTag(tag)}
+                  />
+                ))}
+              </ScrollView>
+              {visibleTemplates.length === 0 ? (
+                <View style={{ minHeight: 72, alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
+                  <Text style={{ color: colors.dim, fontSize: 11, textAlign: 'center' }}>No example scores match these filters.</Text>
+                </View>
+              ) : (
+                <View testID="scoreImport.template.list" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {visibleTemplates.map((template) => (
+                    <Pressable
+                      key={template.id}
+                      testID={`scoreImport.template.${template.id}`}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('Open {title}, {category}, {tags}', {
+                        title: template.title,
+                        category: t(template.category),
+                        tags: template.tags.map((tag) => t(tag)).join(', '),
+                      })}
+                      onPress={() => selectTemplate(template.id)}
+                      style={({ pressed }) => ({ flexGrow: 1, flexBasis: templateCardBasis, maxWidth: templateCardBasis, minHeight: 96, justifyContent: 'center', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line })}
+                    >
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                        <Text raw numberOfLines={1} style={{ flex: 1, color: colors.text, fontSize: 12, fontWeight: '900' }}>{template.title}</Text>
+                        <Text raw style={{ color: colors.accent, fontSize: 9, fontWeight: '900' }}>{t(template.category).toUpperCase()}</Text>
+                      </View>
+                      <Text style={{ color: colors.dim, fontSize: 10, marginTop: 4 }} numberOfLines={1}>{template.subtitle}</Text>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 7 }}>
+                        {template.tags.map((tag) => (
+                          <View key={tag} style={{ paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: colors.background }}>
+                            <Text style={{ color: colors.muted, fontSize: 8, fontWeight: '800' }}>{t(tag)}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
             </View> : null}
             {featureFlags.savedScoreLibrary ? <View style={{ marginTop: 15 }}>
-              <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.3, marginBottom: 7 }}>MY SAVED SCORES</Text>
+              <Text testID="scoreImport.saved.heading" style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.3, marginBottom: 7 }}>MY SAVED SCORES</Text>
               {!libraryLoaded ? (
                 <Text style={{ color: colors.dim, fontSize: 11, paddingVertical: 7 }}>Loading your score library…</Text>
               ) : savedScores.length === 0 ? (
@@ -305,7 +424,7 @@ export default function ImportScoreScreen() {
               ) : savedScores.map((entry) => (
                 <Pressable
                   key={entry.id}
-                  testID={`scoreImport.saved.${entry.id}`}
+                  testID={`scoreImport.saved.entry.${entry.id}`}
                   onPress={() => loadLibraryEntry(entry)}
                   style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 11, marginBottom: 5, borderRadius: 10, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line })}
                 >
