@@ -365,19 +365,25 @@ export default function LearnScreen() {
           <Text testID="learn.progress.stars" style={{ color: colors.muted, fontSize: 9, fontWeight: '800', marginTop: 6 }}>
               {totalLearnStars(lessonRatings)} / {LEARN_COURSE.length * 5} {t('course stars earned')}
           </Text>
-          <Pressable
-            testID="learn.restore"
-            accessibilityRole="button"
-            accessibilityLabel={t('Restore Learn course purchase')}
-            accessibilityState={{ disabled: !purchase.connected || purchase.isRestoring }}
-            disabled={!purchase.connected || purchase.isRestoring}
-            onPress={() => void purchase.restoreFullCourse()}
-            style={({ pressed }) => ({ alignSelf: 'flex-end', minHeight: 44, marginTop: compact ? 10 : 12, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, opacity: !purchase.connected || purchase.isRestoring ? 0.5 : pressed ? 0.7 : 1 })}
-          >
-            <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>
-              {purchase.isRestoring ? 'RESTORING…' : 'RESTORE PURCHASE'}
-            </Text>
-          </Pressable>
+          {purchase.isTestFlightFreeAccess ? (
+            <View testID="learn.testflight-free" style={{ alignSelf: 'flex-start', minHeight: 44, marginTop: compact ? 10 : 12, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 10, backgroundColor: colors.surfaceRaised }}>
+              <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>{t('TESTFLIGHT · FULL COURSE FREE')}</Text>
+            </View>
+          ) : (
+            <Pressable
+              testID="learn.restore"
+              accessibilityRole="button"
+              accessibilityLabel={t('Restore Learn course purchase')}
+              accessibilityState={{ disabled: !purchase.connected || purchase.isRestoring }}
+              disabled={!purchase.connected || purchase.isRestoring}
+              onPress={() => void purchase.restoreFullCourse()}
+              style={({ pressed }) => ({ alignSelf: 'flex-end', minHeight: 44, marginTop: compact ? 10 : 12, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, opacity: !purchase.connected || purchase.isRestoring ? 0.5 : pressed ? 0.7 : 1 })}
+            >
+              <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>
+                {purchase.isRestoring ? 'RESTORING…' : 'RESTORE PURCHASE'}
+              </Text>
+            </Pressable>
+          )}
         </View>
 
         <View style={{ marginTop: compact ? 14 : 23 }}>
@@ -420,7 +426,7 @@ export default function LearnScreen() {
           >
             <View>
               <Text style={{ color: colors.background, fontSize: 12, fontWeight: '900', letterSpacing: 0.4 }}>
-                {!purchase.entitlementLoaded ? 'CHECKING ACCESS…' : !purchase.connected ? 'CONNECTING TO STORE…' : !purchase.productLookupFinished ? 'LOADING OFFER…' : purchase.isPurchasing ? 'PURCHASING…' : purchase.unlockProduct ? t('UNLOCK FULL COURSE · {price}', { price: purchase.unlockProduct.displayPrice }) : 'OFFER UNAVAILABLE'}
+                {purchase.isCheckingStoreEnvironment ? 'CHECKING ACCESS…' : !purchase.entitlementLoaded ? 'CHECKING ACCESS…' : !purchase.connected ? 'CONNECTING TO STORE…' : !purchase.productLookupFinished ? 'LOADING OFFER…' : purchase.isPurchasing ? 'PURCHASING…' : purchase.unlockProduct ? t('UNLOCK FULL COURSE · {price}', { price: purchase.unlockProduct.displayPrice }) : 'OFFER UNAVAILABLE'}
               </Text>
               <Text style={{ color: colors.background, fontSize: 10, fontWeight: '700', marginTop: 2 }}>
                 One-time purchase · 3 lessons free

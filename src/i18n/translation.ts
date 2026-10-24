@@ -334,6 +334,7 @@ const TRADITIONAL_CHINESE: Record<string, string> = {
   'LEARN RHYTHM · 3 FREE ›': '學習節奏 · 3 堂免費 ›',
   'LESSON': '課程',
   'Learn rhythm.': '學習節奏。',
+  'TESTFLIGHT · FULL COURSE FREE': 'TestFlight · 全課程免費',
   'Match the pulse.': '跟上拍點。',
   'NOTATION': '記譜',
   'OFF BEAT': '節拍錯誤',

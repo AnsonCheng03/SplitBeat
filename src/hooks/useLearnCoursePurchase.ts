@@ -1,11 +1,14 @@
 import {
   ErrorCode,
   finishTransaction,
+  getAppTransactionIOS,
   getAvailablePurchases,
   isUserCancelledError,
   useIAP,
 } from 'expo-iap';
 import type { ExpoPurchaseError, Purchase } from 'expo-iap';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { Platform } from 'react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   clearLearnCourseUnlock,
@@ -16,7 +19,12 @@ import {
   findActiveLearnCoursePurchase,
   isActiveLearnCoursePurchase,
   LEARN_COURSE_UNLOCK_PRODUCT_ID,
+  shouldGrantFreeTestFlightAccess,
 } from '@/rhythm/learnCoursePurchase';
+
+const canDetectTestFlightEnvironment = Platform.OS === 'ios'
+  && !__DEV__
+  && Constants.executionEnvironment === ExecutionEnvironment.Standalone;
 
 async function finishPurchaseIfNeeded(purchase: Purchase): Promise<void> {
   const isAlreadyAcknowledged = 'isAcknowledgedAndroid' in purchase
@@ -30,6 +38,8 @@ export function useLearnCoursePurchase() {
   const [hasFullCourseUnlock, setHasFullCourseUnlock] = useState(false);
   const [entitlementLoaded, setEntitlementLoaded] = useState(false);
   const [productLookupFinished, setProductLookupFinished] = useState(false);
+  const [isCheckingStoreEnvironment, setIsCheckingStoreEnvironment] = useState(canDetectTestFlightEnvironment);
+  const [isTestFlightFreeAccess, setIsTestFlightFreeAccess] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -39,6 +49,34 @@ export function useLearnCoursePurchase() {
   const processedTransactionIds = useRef(new Set<string>());
   const storeEntitlementResolved = useRef(false);
   const storeEntitlementRevision = useRef(0);
+
+  useEffect(() => {
+    if (!canDetectTestFlightEnvironment) return;
+    let active = true;
+
+    void getAppTransactionIOS()
+      .then((appTransaction) => {
+        if (!active) return;
+        const freeAccess = shouldGrantFreeTestFlightAccess({
+          platform: Platform.OS,
+          executionEnvironment: Constants.executionEnvironment,
+          isDevelopmentBuild: __DEV__,
+          appStoreEnvironment: appTransaction?.environment,
+        });
+        setIsTestFlightFreeAccess(freeAccess);
+        setIsCheckingStoreEnvironment(false);
+      })
+      .catch(() => {
+        if (!active) return;
+        // Fail closed: an unavailable StoreKit environment must never grant free access.
+        setIsTestFlightFreeAccess(false);
+        setIsCheckingStoreEnvironment(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const grantPurchase = useCallback(async (purchase: Purchase) => {
     if (!isActiveLearnCoursePurchase(purchase)) return false;
@@ -107,6 +145,13 @@ export function useLearnCoursePurchase() {
   });
 
   useEffect(() => {
+    if (isCheckingStoreEnvironment) return;
+    if (isTestFlightFreeAccess) {
+      storeEntitlementResolved.current = true;
+      void clearLearnCourseUnlock().catch(() => {});
+      return;
+    }
+
     let active = true;
     void readLearnCourseUnlock().then((unlocked) => {
       if (!active) return;
@@ -116,10 +161,10 @@ export function useLearnCoursePurchase() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [isCheckingStoreEnvironment, isTestFlightFreeAccess]);
 
   useEffect(() => {
-    if (!connected) return;
+    if (isCheckingStoreEnvironment || isTestFlightFreeAccess || !connected) return;
     let active = true;
 
     void fetchProducts({ skus: [LEARN_COURSE_UNLOCK_PRODUCT_ID], type: 'in-app' })
@@ -166,7 +211,7 @@ export function useLearnCoursePurchase() {
     return () => {
       active = false;
     };
-  }, [connected, fetchProducts, grantPurchase]);
+  }, [connected, fetchProducts, grantPurchase, isCheckingStoreEnvironment, isTestFlightFreeAccess]);
 
   const unlockProduct = useMemo(
     () => products.find((product) => product.id === LEARN_COURSE_UNLOCK_PRODUCT_ID),
@@ -174,7 +219,7 @@ export function useLearnCoursePurchase() {
   );
 
   const buyFullCourse = useCallback(async () => {
-    if (!connected || !unlockProduct || isPurchasing) return;
+    if (isTestFlightFreeAccess || isCheckingStoreEnvironment || !connected || !unlockProduct || isPurchasing) return;
     setIsPurchasing(true);
     setNotice(null);
     setErrorMessage(null);
@@ -190,10 +235,10 @@ export function useLearnCoursePurchase() {
       setIsPurchasing(false);
       setErrorMessage(error instanceof Error ? error.message : 'The purchase could not be started.');
     }
-  }, [connected, isPurchasing, requestPurchase, unlockProduct]);
+  }, [connected, isCheckingStoreEnvironment, isPurchasing, isTestFlightFreeAccess, requestPurchase, unlockProduct]);
 
   const restoreFullCourse = useCallback(async () => {
-    if (!connected || isRestoring) return;
+    if (isTestFlightFreeAccess || isCheckingStoreEnvironment || !connected || isRestoring) return;
     setIsRestoring(true);
     setNotice(null);
     setErrorMessage(null);
@@ -222,10 +267,10 @@ export function useLearnCoursePurchase() {
     } finally {
       setIsRestoring(false);
     }
-  }, [connected, grantPurchase, isRestoring, restorePurchases]);
+  }, [connected, grantPurchase, isCheckingStoreEnvironment, isRestoring, isTestFlightFreeAccess, restorePurchases]);
 
   const retryStoreConnection = useCallback(async () => {
-    if (isRetryingStore) return;
+    if (isTestFlightFreeAccess || isCheckingStoreEnvironment || isRetryingStore) return;
     setIsRetryingStore(true);
     setStoreErrorMessage(null);
     try {
@@ -242,19 +287,21 @@ export function useLearnCoursePurchase() {
     } finally {
       setIsRetryingStore(false);
     }
-  }, [connected, fetchProducts, isRetryingStore, reconnect]);
+  }, [connected, fetchProducts, isCheckingStoreEnvironment, isRetryingStore, isTestFlightFreeAccess, reconnect]);
 
   return {
     connected,
-    entitlementLoaded,
+    entitlementLoaded: isTestFlightFreeAccess || entitlementLoaded,
     errorMessage,
     storeErrorMessage,
-    hasFullCourseUnlock,
+    hasFullCourseUnlock: isTestFlightFreeAccess || hasFullCourseUnlock,
     isPurchasing,
     isRestoring,
     notice,
-    productLookupFinished,
+    productLookupFinished: isTestFlightFreeAccess || productLookupFinished,
     isRetryingStore,
+    isCheckingStoreEnvironment,
+    isTestFlightFreeAccess,
     unlockProduct,
     retryStoreConnection,
     buyFullCourse,

@@ -3,7 +3,46 @@ import test from 'node:test';
 import {
   isActiveLearnCoursePurchase,
   LEARN_COURSE_UNLOCK_PRODUCT_ID,
+  shouldGrantFreeTestFlightAccess,
 } from './learnCoursePurchase';
+
+test('grants free course access for a standalone iOS sandbox release', () => {
+  assert.equal(shouldGrantFreeTestFlightAccess({
+    platform: 'ios',
+    executionEnvironment: 'standalone',
+    isDevelopmentBuild: false,
+    appStoreEnvironment: 'Sandbox',
+  }), true);
+});
+
+test('keeps the purchase paywall in the production App Store', () => {
+  assert.equal(shouldGrantFreeTestFlightAccess({
+    platform: 'ios',
+    executionEnvironment: 'standalone',
+    isDevelopmentBuild: false,
+    appStoreEnvironment: 'Production',
+  }), false);
+});
+
+test('does not grant free access to Android sandbox billing', () => {
+  assert.equal(shouldGrantFreeTestFlightAccess({
+    platform: 'android',
+    executionEnvironment: 'standalone',
+    isDevelopmentBuild: false,
+    appStoreEnvironment: 'Sandbox',
+  }), false);
+});
+
+test('does not grant free access to development or unknown environments', () => {
+  const base = {
+    platform: 'ios',
+    executionEnvironment: 'standalone',
+    isDevelopmentBuild: false,
+  };
+  assert.equal(shouldGrantFreeTestFlightAccess({ ...base, isDevelopmentBuild: true, appStoreEnvironment: 'Sandbox' }), false);
+  assert.equal(shouldGrantFreeTestFlightAccess({ ...base, appStoreEnvironment: null }), false);
+  assert.equal(shouldGrantFreeTestFlightAccess({ ...base, executionEnvironment: 'storeClient', appStoreEnvironment: 'Sandbox' }), false);
+});
 
 test('grants the course only for a purchased matching product', () => {
   assert.equal(isActiveLearnCoursePurchase({
