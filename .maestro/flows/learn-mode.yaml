@@ -86,6 +86,10 @@ appId: com.splitbeat.twohandrhythm
       id: results.screen
     timeout: 15000
 - assertVisible: LESSON COMPLETE
+- assertVisible:
+    id: results.lessonRating
+- assertVisible:
+    id: results.lessonStars
 - scrollUntilVisible:
     element:
       id: results.continueLearning
@@ -102,4 +106,8 @@ appId: com.splitbeat.twohandrhythm
     timeout: 15000
 - assertVisible: 1 / 12
 - assertVisible:
+    id: learn.progress.stars
+- assertVisible:
     id: learn.lesson.together-pulse
+- assertVisible:
+    id: learn.rating.steady-pulse

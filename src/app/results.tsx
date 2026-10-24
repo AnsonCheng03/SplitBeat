@@ -7,14 +7,21 @@ import { ReplayTimeline } from '@/components/ReplayTimeline';
 import { GameCenterChallengeCard } from '@/components/GameCenterChallengeCard';
 import { accuracyPercent } from '@/rhythm/scoring';
 import { LEARN_COURSE } from '@/rhythm/learnCourse';
+import { starsForAccuracy } from '@/rhythm/learnRating';
 import { SUBDIVISION_LABELS, timeSignatureMetrics } from '@/rhythm/subdivisions';
-import { completeLearnLesson } from '@/store/learnProgress';
+import { completeLearnLesson, recordLearnLessonResult } from '@/store/learnProgress';
 import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
 import type { HandStats, MissedEvent, SessionResults, Subdivision } from '@/types/rhythm';
 
 function percent(value: number) {
   return Math.round(value) + '%';
+}
+
+function sessionAccuracy(results: SessionResults): number {
+  const expected = results.left.totalExpected + results.right.totalExpected;
+  const hits = results.left.totalHit + results.right.totalHit;
+  return expected === 0 ? 0 : (hits / expected) * 100;
 }
 
 function timingText(stats: HandStats): string {
@@ -264,17 +271,23 @@ export default function ResultsScreen() {
   const [showMissedNotes, setShowMissedNotes] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [lessonCompleted, setLessonCompleted] = useState(false);
+  const [lessonRating, setLessonRating] = useState<Awaited<ReturnType<typeof recordLearnLessonResult>>>(null);
   const completionAttemptedRef = useRef<string | null>(null);
   const courseLesson = LEARN_COURSE.find((lesson) => lesson.id === lessonId);
+  const lessonAccuracy = results ? sessionAccuracy(results) : 0;
   const missedBars = missedBarGroups(results?.missedEvents ?? []);
 
   useEffect(() => {
     if (!results || !courseLesson || completionAttemptedRef.current === courseLesson.id) return;
     completionAttemptedRef.current = courseLesson.id;
-    void completeLearnLesson(courseLesson.id).then((completedIds) => {
+    void Promise.all([
+      completeLearnLesson(courseLesson.id),
+      recordLearnLessonResult(courseLesson.id, lessonAccuracy),
+    ]).then(([completedIds, rating]) => {
       setLessonCompleted(completedIds.includes(courseLesson.id));
+      setLessonRating(rating);
     });
-  }, [courseLesson, results]);
+  }, [courseLesson, lessonAccuracy, results]);
 
   useFocusEffect(useCallback(() => () => {
     discardReplayData();
@@ -298,7 +311,7 @@ export default function ResultsScreen() {
     try {
       await prepareRepeatExercise();
       discardReplayData();
-      router.replace('/practice');
+      router.replace(lessonId ? { pathname: '/practice', params: { lessonId } } : '/practice');
     } catch {
       setStartingAgain(false);
       Alert.alert('Audio could not start', 'Check your device audio settings and try again.');
@@ -316,9 +329,7 @@ export default function ResultsScreen() {
     );
   }
 
-  const allExpected = results.left.totalExpected + results.right.totalExpected;
-  const allHits = results.left.totalHit + results.right.totalHit;
-  const overall = allExpected === 0 ? 0 : (allHits / allExpected) * 100;
+  const overall = lessonAccuracy;
   const weakest = weakestCombination(results);
   const feedback = buildFeedback(results, weakest);
   const displayedHands = results.trainingMode === 'single-hand' ? [results.singleHand] : ['left', 'right'] as const;
@@ -354,8 +365,23 @@ export default function ResultsScreen() {
         ) : null}
 
         <View style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 20, padding: 20, marginTop: 17 }}>
-          <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>{results.source === 'score' ? 'SCORE ACCURACY' : 'OVERALL ACCURACY'}</Text>
+          <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>{courseLesson ? 'LESSON ACCURACY' : results.source === 'score' ? 'SCORE ACCURACY' : 'OVERALL ACCURACY'}</Text>
           <Text style={{ color: colors.text, fontSize: 58, lineHeight: 66, fontWeight: '900', marginTop: 4 }}>{percent(overall)}</Text>
+          {courseLesson ? (
+            <View testID="results.lessonRating" accessibilityLabel={`${percent(overall)} correct, ${starsForAccuracy(overall)} out of 5 stars`} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
+              <Text testID="results.lessonStars" style={{ color: colors.accent, fontSize: 19, fontWeight: '900', letterSpacing: 1.4 }}>
+                {'★'.repeat(starsForAccuracy(overall))}{'☆'.repeat(5 - starsForAccuracy(overall))}
+              </Text>
+              <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.7 }}>
+                {starsForAccuracy(overall)} / 5 STARS
+              </Text>
+            </View>
+          ) : null}
+          {courseLesson && lessonRating ? (
+            <Text testID="results.lessonBest" style={{ color: colors.muted, fontSize: 10, fontWeight: '700', marginTop: 7 }}>
+              Best: {percent(lessonRating.bestAccuracy)} · {lessonRating.attempts} {lessonRating.attempts === 1 ? 'attempt' : 'attempts'}
+            </Text>
+          ) : null}
           <View style={{ height: 4, borderRadius: 3, backgroundColor: colors.line, marginTop: 11, overflow: 'hidden' }}>
             <View style={{ width: (String(overall) + '%') as DimensionValue, height: 4, backgroundColor: colors.accent, borderRadius: 3 }} />
           </View>

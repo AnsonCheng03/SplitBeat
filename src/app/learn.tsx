@@ -10,10 +10,11 @@ import {
   lessonProgressPercent,
   lessonSettings,
 } from '@/rhythm/learnCourse';
+import { starsForAccuracy, totalLearnStars } from '@/rhythm/learnRating';
 import { requiresLearnCourseUnlock } from '@/rhythm/learnCourseAccess';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import { useLearnCoursePurchase } from '@/hooks/useLearnCoursePurchase';
-import { readLearnProgress } from '@/store/learnProgress';
+import { readLearnProgress, readLearnRatings } from '@/store/learnProgress';
 import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
 import type { LearnLesson } from '@/rhythm/learnCourse';
@@ -24,6 +25,7 @@ function LessonTile({
   completed,
   locked,
   paywalled,
+  rating,
   onPress,
 }: {
   lesson: LearnLesson;
@@ -31,14 +33,16 @@ function LessonTile({
   completed: boolean;
   locked: boolean;
   paywalled: boolean;
+  rating?: { bestAccuracy: number; attempts: number };
   onPress: () => void;
 }) {
   const disabled = locked && !paywalled;
+  const stars = rating ? starsForAccuracy(rating.bestAccuracy) : 0;
   return (
     <Pressable
       testID={`learn.lesson.${lesson.id}`}
       accessibilityRole="button"
-      accessibilityLabel={`Lesson ${lesson.number}, ${lesson.title}${completed ? ', complete' : paywalled ? ', paid course, tap to unlock' : locked ? ', locked' : ''}`}
+      accessibilityLabel={`Lesson ${lesson.number}, ${lesson.title}${completed ? ', complete' : paywalled ? ', paid course, tap to unlock' : locked ? ', locked' : ''}${rating ? `, best ${Math.round(rating.bestAccuracy)} percent, ${stars} of 5 stars` : ''}`}
       accessibilityState={{ selected, disabled }}
       disabled={disabled}
       onPress={onPress}
@@ -47,7 +51,7 @@ function LessonTile({
         flexBasis: 'auto',
         width: '100%',
         minWidth: 0,
-        minHeight: 76,
+        minHeight: 82,
         paddingHorizontal: 12,
         paddingVertical: 10,
         borderRadius: 14,
@@ -68,9 +72,18 @@ function LessonTile({
       <Text numberOfLines={1} style={{ color: disabled ? colors.muted : colors.text, fontSize: 14, fontWeight: '800', marginTop: 8 }}>
         {lesson.title}
       </Text>
-      <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 10, marginTop: 3 }}>
-        {lesson.skill}
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 3 }}>
+        <Text numberOfLines={1} style={{ flex: 1, color: colors.muted, fontSize: 10 }}>
+          {lesson.skill}
+        </Text>
+        {rating ? (
+          <Text testID={`learn.rating.${lesson.id}`} style={{ color: colors.accent, fontSize: 9, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
+            {Math.round(rating.bestAccuracy)}% · {'★'.repeat(stars)}{'☆'.repeat(5 - stars)}
+          </Text>
+        ) : completed ? (
+          <Text style={{ color: colors.dim, fontSize: 8, fontWeight: '800' }}>REPLAY FOR RATING</Text>
+        ) : null}
+      </View>
     </Pressable>
   );
 }
@@ -116,6 +129,7 @@ export default function LearnScreen() {
   const { settings, audioStatus, prepareExercise } = useRhythmSession();
   const purchase = useLearnCoursePurchase();
   const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([]);
+  const [lessonRatings, setLessonRatings] = useState<Awaited<ReturnType<typeof readLearnRatings>>>([]);
   const [selectedLessonId, setSelectedLessonId] = useState(LEARN_COURSE[0].id);
   const [progressLoaded, setProgressLoaded] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -124,9 +138,10 @@ export default function LearnScreen() {
 
   useFocusEffect(useCallback(() => {
     let active = true;
-    void readLearnProgress().then((completed) => {
+    void Promise.all([readLearnProgress(), readLearnRatings()]).then(([completed, ratings]) => {
       if (!active) return;
       setCompletedLessonIds(completed);
+      setLessonRatings(ratings);
       const requested = LEARN_COURSE.find((lesson) => lesson.id === routeLessonId);
       const nextLesson = LEARN_COURSE.find((lesson) => !completed.includes(lesson.id));
       const selection = requested && !completed.includes(requested.id)
@@ -220,6 +235,9 @@ export default function LearnScreen() {
           <View style={{ height: 5, borderRadius: 4, backgroundColor: colors.line, marginTop: 8, overflow: 'hidden' }}>
             <View style={{ width: `${lessonProgressPercent(completedLessonIds)}%`, height: 5, borderRadius: 4, backgroundColor: colors.left }} />
           </View>
+          <Text testID="learn.progress.stars" style={{ color: colors.muted, fontSize: 9, fontWeight: '800', marginTop: 6 }}>
+            {totalLearnStars(lessonRatings)} / {LEARN_COURSE.length * 5} course stars earned
+          </Text>
           <Pressable
             testID="learn.restore"
             accessibilityRole="button"
@@ -353,6 +371,7 @@ export default function LearnScreen() {
                 completed={availability === 'complete'}
                 locked={availability === 'locked'}
                 paywalled={paywalled}
+                rating={lessonRatings.find((rating) => rating.lessonId === lesson.id)}
                 onPress={() => setSelectedLessonId(lesson.id)}
               />
             );
