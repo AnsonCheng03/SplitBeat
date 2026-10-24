@@ -34,6 +34,11 @@ appId: com.splitbeat.twohandrhythm
     timeout: 15000
 - assertVisible:
     id: practice.tutorial
+- assertNotVisible:
+    id: practice.rhythmDisplay
+- assertNotVisible:
+    id: practice.nextPattern
+- takeScreenshot: practice-intro
 - tapOn:
     id: practice.tutorial
 - assertVisible:
@@ -44,8 +49,7 @@ appId: com.splitbeat.twohandrhythm
     timeout: 10000
 - tapOn:
     id: practice.pause
-- assertVisible:
-    id: practice.pauseMenu
+- assertVisible: PAUSED
 - tapOn:
     id: practice.pause.finish
 - extendedWaitUntil:

@@ -293,7 +293,7 @@ export default function PracticeScreen() {
           )}
         </View>
 
-        {showNextPattern && snapshot ? (
+        {!tutorialVisible && showNextPattern && snapshot ? (
           <NextPatternPreview
             step={snapshot.scoreMeasure ? null : snapshot.nextStep}
             beatsUntilChange={snapshot.beatsUntilChange}
@@ -317,7 +317,7 @@ export default function PracticeScreen() {
           />
         ) : null}
 
-        {snapshot ? (
+        {!tutorialVisible && snapshot ? (
           <View
             testID="practice.rhythmDisplay"
             pointerEvents="none"
@@ -494,7 +494,7 @@ export default function PracticeScreen() {
               : 'Tap anywhere to start. Use your left hand on the left half and your right hand on the right half.')}
             disabled={starting}
             onPress={() => void beginExercise()}
-            style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(7, 10, 14, 0.62)' }}
+            style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: colors.background }}
           >
             <View pointerEvents="none" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}>
               {activeSettings.trainingMode === 'single-hand' ? (
