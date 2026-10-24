@@ -111,7 +111,7 @@ The internal `ImportedRhythmScore` JSON stores each measure's start and duration
 
 ## Session records and missed-note replay
 
-The home screen's **My Records** page keeps the 100 most recent summary records on the device, including date, meter, tempo, mode, and overall/hand accuracy. Missed notes are listed by bar on the result page. Visual replay shows the expected note values and the recorded taps on the same beat timeline, with a moving playhead; missed and extra taps are highlighted. Replay details are removed when the result page loses focus, and are never stored in session history. Replay is visual and silent.
+The home screen's **My Records** page keeps the 100 most recent summary records on the device, including date, meter, tempo, mode, and overall/hand accuracy. Missed notes are listed by bar on the result page. Replay shows the expected notes and recorded taps on the same beat timeline, with a moving playhead; missed and extra taps are highlighted. When sound is enabled, the expected notes play softly and recorded taps play with the selected hand sound. Imported score replays retain and sound the matched pitches. Replay timing is scheduled from the native audio clock, and the display follows the same bar duration. Replay details are removed when the result page loses focus, and are never stored in session history. Automated E2E builds keep replay audio silent.
 
 ## Challenge streak leaderboard
 

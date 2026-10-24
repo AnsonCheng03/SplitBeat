@@ -13,6 +13,7 @@ import {
   PATTERN_CHANGE_CUE,
   SESSION_START_CUE,
 } from '@/audio/musicPattern';
+import type { ReplayAudioEvent } from '@/audio/replay';
 import type { ReferenceRhythmEvent, SoundPreset } from '@/types/rhythm';
 
 interface MetronomeStartOptions {
@@ -48,6 +49,7 @@ export class MetronomeAudio {
   private readonly pitchedNoteBuffers = new Map<number, AudioBuffer>();
   private readonly musicNoteBuffers = new Map<number, AudioBuffer>();
   private timer: ReturnType<typeof setTimeout> | undefined;
+  private replayStopTimer: ReturnType<typeof setTimeout> | undefined;
   private startOptions: MetronomeStartOptions | undefined;
   private sounds: MetronomeSounds = { metronome: 'wood', leftHand: 'soft', rightHand: 'beep' };
   private nextBeatIndex = -COUNT_IN_BEATS;
@@ -120,6 +122,42 @@ export class MetronomeAudio {
       if (!Number.isFinite(midiPitch) || midiPitch < 0 || midiPitch > 127) continue;
       this.scheduleBuffer(when, this.getPitchedNoteBuffer(midiPitch), 0.62);
     }
+  }
+
+  playReplayEvents(
+    events: readonly ReplayAudioEvent[],
+    sounds: MetronomeSounds,
+    durationMs: number,
+  ): void {
+    if (this.closed) return;
+    this.setSounds(sounds);
+    for (const sound of new Set(Object.values(sounds))) this.getClickBuffer(sound);
+    this.output.gain.value = 0.75;
+
+    const preparedEvents = events.map((event) => {
+      const buffers = event.midiPitches?.length
+        ? event.midiPitches
+          .filter((midiPitch) => Number.isFinite(midiPitch) && midiPitch >= 0 && midiPitch <= 127)
+          .map((midiPitch) => this.getPitchedNoteBuffer(midiPitch))
+        : [this.getClickBuffer(event.hand === 'left' ? sounds.leftHand : sounds.rightHand)];
+      return {
+        offsetMs: event.offsetMs,
+        level: event.source === 'expected' ? 0.34 : 0.72,
+        buffers,
+      };
+    });
+
+    // Leave a short audio-clock lead-in so the native playhead can start in sync.
+    const replayStartTime = this.context.currentTime + 0.04;
+    for (const event of preparedEvents) {
+      const when = replayStartTime + event.offsetMs / 1_000;
+      for (const buffer of event.buffers) this.scheduleBuffer(when, buffer, event.level);
+    }
+
+    if (this.replayStopTimer) clearTimeout(this.replayStopTimer);
+    this.replayStopTimer = setTimeout(() => {
+      void this.stop();
+    }, Math.max(0, durationMs) + 450);
   }
 
   private scheduleAhead = (): void => {
@@ -255,7 +293,9 @@ export class MetronomeAudio {
   async stop(): Promise<void> {
     this.closed = true;
     if (this.timer) clearTimeout(this.timer);
+    if (this.replayStopTimer) clearTimeout(this.replayStopTimer);
     this.timer = undefined;
+    this.replayStopTimer = undefined;
     this.startOptions = undefined;
     await this.context.close();
   }

@@ -926,21 +926,23 @@ test('score taps return imported pitch while visual replay records expected note
     { hand: 'right', barIndex: 1, beatInBar: 0 },
     { hand: 'left', barIndex: 1, beatInBar: 1 },
   ]);
-  assert.deepEqual(results.replayExpectedEvents?.map(({ hand, beatInBar, matched, durationQuarter }) => ({
+  assert.deepEqual(results.replayExpectedEvents?.map(({ hand, beatInBar, matched, durationQuarter, midiPitches }) => ({
     hand,
     beatInBar,
     matched,
     durationQuarter,
+    ...(midiPitches ? { midiPitches } : {}),
   })), [
-    { hand: 'left', beatInBar: 0, matched: true, durationQuarter: 1 },
-    { hand: 'right', beatInBar: 0, matched: false, durationQuarter: 2 },
-    { hand: 'left', beatInBar: 1, matched: false, durationQuarter: 1 },
+    { hand: 'left', beatInBar: 0, matched: true, durationQuarter: 1, midiPitches: [60] },
+    { hand: 'right', beatInBar: 0, matched: false, durationQuarter: 2, midiPitches: [48] },
+    { hand: 'left', beatInBar: 1, matched: false, durationQuarter: 1, midiPitches: [64] },
   ]);
-  assert.deepEqual(results.replayTaps?.map(({ hand, timestampMs, timingErrorMs }) => ({
+  assert.deepEqual(results.replayTaps?.map(({ hand, timestampMs, timingErrorMs, midiPitches }) => ({
     hand,
     timestampMs,
     timingErrorMs,
-  })), [{ hand: 'left', timestampMs: 0, timingErrorMs: 0 }]);
+    ...(midiPitches ? { midiPitches } : {}),
+  })), [{ hand: 'left', timestampMs: 0, timingErrorMs: 0, midiPitches: [60] }]);
 });
 
 test('visual replay preserves actual tap positions including unmatched extra taps', () => {

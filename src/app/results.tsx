@@ -3,6 +3,8 @@ import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DimensionValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { MetronomeAudio } from '@/audio/metronome';
+import { createReplayAudioEvents } from '@/audio/replay';
 import { ReplayTimeline } from '@/components/ReplayTimeline';
 import { GameCenterChallengeCard } from '@/components/GameCenterChallengeCard';
 import { accuracyPercent } from '@/rhythm/scoring';
@@ -272,12 +274,13 @@ function scoreDurationLabel(durationQuarter: number, tupletNumber?: number): str
 }
 
 export default function ResultsScreen() {
-  const { results, featureFlags, prepareRepeatExercise, discardReplayData } = useRhythmSession();
+  const { results, settings, sessionSettings, featureFlags, prepareRepeatExercise, discardReplayData } = useRhythmSession();
   const router = useRouter();
   const { lessonId: rawLessonId } = useLocalSearchParams<{ lessonId?: string }>();
   const lessonId = Array.isArray(rawLessonId) ? rawLessonId[0] : rawLessonId;
-  const [replay, setReplay] = useState<{ barIndex: number; playbackId: number; isPlaying: boolean } | null>(null);
+  const [replay, setReplay] = useState<{ barIndex: number; playbackId: number; isPlaying: boolean; isStarting: boolean } | null>(null);
   const replaySequenceRef = useRef(0);
+  const replayAudioRef = useRef<{ playbackId: number; audio: MetronomeAudio } | null>(null);
   const [startingAgain, setStartingAgain] = useState(false);
   const [showMissedNotes, setShowMissedNotes] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(false);
@@ -287,6 +290,14 @@ export default function ResultsScreen() {
   const courseLesson = LEARN_COURSE.find((lesson) => lesson.id === lessonId);
   const lessonAccuracy = results ? sessionAccuracy(results) : 0;
   const missedBars = missedBarGroups(results?.missedEvents ?? []);
+  const replaySoundEnabled = (sessionSettings ?? settings).soundEnabled && featureFlags.soundEffects;
+
+  const stopReplayAudio = useCallback(async (playbackId?: number) => {
+    const current = replayAudioRef.current;
+    if (!current || (playbackId !== undefined && current.playbackId !== playbackId)) return;
+    replayAudioRef.current = null;
+    await current.audio.stop();
+  }, []);
 
   useEffect(() => {
     if (!results || !courseLesson || completionAttemptedRef.current === courseLesson.id) return;
@@ -301,20 +312,58 @@ export default function ResultsScreen() {
   }, [courseLesson, lessonAccuracy, results]);
 
   useFocusEffect(useCallback(() => () => {
+    void stopReplayAudio();
     discardReplayData();
-  }, [discardReplayData]));
+  }, [discardReplayData, stopReplayAudio]));
 
-  const replayBar = useCallback((barIndex: number) => {
+  const replayBar = useCallback(async (
+    barIndex: number,
+    expectedEvents: NonNullable<SessionResults['replayExpectedEvents']>,
+    taps: NonNullable<SessionResults['replayTaps']>,
+    beatsPerBar: number,
+  ) => {
     replaySequenceRef.current += 1;
-    setReplay({ barIndex, playbackId: replaySequenceRef.current, isPlaying: true });
-  }, []);
+    const playbackId = replaySequenceRef.current;
+    setReplay({ barIndex, playbackId, isPlaying: false, isStarting: true });
+    await stopReplayAudio();
+    if (playbackId !== replaySequenceRef.current) return;
+
+    if (!replaySoundEnabled || process.env.EXPO_PUBLIC_E2E_SILENT === '1') {
+      setReplay({ barIndex, playbackId, isPlaying: true, isStarting: false });
+      return;
+    }
+
+    const audio = new MetronomeAudio();
+    replayAudioRef.current = { playbackId, audio };
+    try {
+      await audio.prepare();
+      await audio.resume();
+      if (playbackId !== replaySequenceRef.current) {
+        await stopReplayAudio(playbackId);
+        return;
+      }
+      const replayEvents = createReplayAudioEvents(barIndex, beatsPerBar, results?.bpm ?? 60, expectedEvents, taps);
+      audio.playReplayEvents(replayEvents, {
+        metronome: settings.metronomeSound,
+        leftHand: settings.leftHandSound,
+        rightHand: settings.rightHandSound,
+      }, beatsPerBar * 60_000 / (results?.bpm ?? 60));
+      setReplay({ barIndex, playbackId, isPlaying: true, isStarting: false });
+    } catch {
+      await stopReplayAudio(playbackId);
+      if (playbackId !== replaySequenceRef.current) return;
+      setReplay({ barIndex, playbackId, isPlaying: true, isStarting: false });
+      Alert.alert('Replay sound unavailable', 'The visual replay will continue. Check your device audio and try again.');
+    }
+  }, [replaySoundEnabled, results, settings.leftHandSound, settings.metronomeSound, settings.rightHandSound, stopReplayAudio]);
 
   const finishVisualReplay = useCallback((barIndex: number, playbackId: number) => {
     setReplay((current) => current?.barIndex === barIndex && current.playbackId === playbackId
-      ? { ...current, isPlaying: false }
+      ? { ...current, isPlaying: false, isStarting: false }
       : current,
     );
-  }, []);
+    void stopReplayAudio(playbackId);
+  }, [stopReplayAudio]);
 
   const startAgain = async () => {
     if (startingAgain) return;
@@ -437,6 +486,11 @@ export default function ResultsScreen() {
                 <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18, marginBottom: 9 }}>
                   Replay shows the expected notes beside your recorded taps. Leaving this page clears replay.
                 </Text>
+                {!replaySoundEnabled && process.env.EXPO_PUBLIC_E2E_SILENT !== '1' ? (
+                  <Text style={{ color: colors.muted, fontSize: 11, lineHeight: 16, marginBottom: 9 }}>
+                    Replay sound is off. Turn it on in Settings → Sounds to hear the notes.
+                  </Text>
+                ) : null}
                 {missedBars.map(([barIndex, events]) => {
                   const leftEvents = events.filter((event) => event.hand === 'left');
                   const rightEvents = events.filter((event) => event.hand === 'right');
@@ -465,16 +519,16 @@ export default function ResultsScreen() {
                         <Pressable
                           testID={`results.replayBar.${barIndex}`}
                           accessibilityRole="button"
-                          accessibilityLabel={`Play visual replay for bar ${barIndex}`}
-                          onPress={() => replayBar(barIndex)}
+                          accessibilityLabel={`Play replay with sound for bar ${barIndex}`}
+                          onPress={() => void replayBar(barIndex, expectedEvents, taps, metrics.beatsPerBar)}
                           style={({ pressed }) => ({ paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', borderRadius: 11, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: replay?.barIndex === barIndex && replay.isPlaying ? colors.accent : colors.line })}
                         >
                           <Text style={{ color: replay?.barIndex === barIndex && replay.isPlaying ? colors.accent : colors.text, fontSize: 11, fontWeight: '900', letterSpacing: 0.6 }}>
-                            {replay?.barIndex === barIndex && replay.isPlaying ? 'PLAYING' : 'REPLAY'}
+                            {replay?.barIndex === barIndex && replay.isStarting ? 'LOADING' : replay?.barIndex === barIndex && replay.isPlaying ? 'PLAYING' : 'REPLAY'}
                           </Text>
                         </Pressable>
                       </View>
-                      {replay?.barIndex === barIndex ? (
+                      {replay?.barIndex === barIndex && !replay.isStarting ? (
                         <ReplayTimeline
                           key={`${barIndex}.${replay.playbackId}`}
                           barIndex={barIndex}

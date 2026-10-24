@@ -307,6 +307,7 @@ export class RhythmTimingEngine {
     if (!matchedEvent) return { feedback: 'miss' };
     replayTap.matchedEventId = matchedEvent.id;
     replayTap.timingErrorMs = activeTapTime - matchedEvent.expectedTimeMs;
+    if (matchedEvent.midiPitches) replayTap.midiPitches = [...matchedEvent.midiPitches];
     matchedEvent.settled = true;
     this.recordEvent(hand, matchedEvent, match.grade, match.timingErrorMs);
     return {
@@ -667,6 +668,7 @@ export class RhythmTimingEngine {
       isScoreEvent: event.isScoreEvent,
       matched: grade !== null,
       expectedTimeMs: event.expectedTimeMs,
+      ...(event.midiPitches ? { midiPitches: [...event.midiPitches] } : {}),
       ...(errorMs === null ? {} : { timingErrorMs: errorMs }),
     };
     this.replayExpectedEvents.push(replayEvent);

@@ -164,6 +164,8 @@ export interface ReplayExpectedEvent extends MissedEvent {
   matched: boolean;
   /** Calibrated error used for scoring; negative is early and positive is late. */
   timingErrorMs?: number;
+  /** Hidden score pitches, retained only for this session's replay. */
+  midiPitches?: number[];
 }
 
 export interface ReplayTap {
@@ -176,6 +178,8 @@ export interface ReplayTap {
   matchedEventId?: string;
   /** Raw click error against its matched note, before calibration correction. */
   timingErrorMs?: number;
+  /** Score pitches played by this tap, when it matched an imported score note. */
+  midiPitches?: number[];
 }
 
 export interface SessionResults {
