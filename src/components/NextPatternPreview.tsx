@@ -135,6 +135,7 @@ export function NextPatternPreview({
         left: -leftInset,
         right: -rightInset,
         height,
+        paddingHorizontal: Math.max(16, leftInset + 18, rightInset + 18),
         opacity: slideProgress,
         transform: [{ translateX: slideProgress.interpolate({ inputRange: [0, 1], outputRange: [26, 0] }) }],
       }}
@@ -142,15 +143,10 @@ export function NextPatternPreview({
       <View
         style={{
           flex: 1,
-          width: '94%',
-          maxWidth: 760,
+          width: '100%',
+          maxWidth: 1120,
           alignSelf: 'center',
-          backgroundColor: colors.surface,
-          borderColor: colors.line,
-          borderWidth: 1,
-          borderRadius: 13,
-          paddingHorizontal: compact ? 5 : 10,
-          paddingVertical: compact ? 3 : 5,
+          justifyContent: 'center',
         }}
       >
         {isScorePreview ? (

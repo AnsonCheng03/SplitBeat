@@ -23,7 +23,12 @@ export function RhythmSymbol({ subdivision, color, compact = false, mini = false
   const size = notationSize(compact, mini);
   const plan = useMemo(() => createNoteNotationPlan(subdivision, size, timeSignature), [size, subdivision, timeSignature]);
 
-  const notation = <NoteNotation plan={plan} color={color} accessibilityLabel={SUBDIVISION_LABELS[subdivision]} />;
+  const notation = <NoteNotation
+    plan={plan}
+    color={color}
+    accessibilityLabel={SUBDIVISION_LABELS[subdivision]}
+    useNativeGlyphs
+  />;
   if (scale === 1) return notation;
 
   return (
