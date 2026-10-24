@@ -5,6 +5,7 @@ import { test } from 'node:test';
 import {
   getLessonAvailability,
   LEARN_COURSE,
+  lessonHandPatternOptions,
   lessonOffersHandSwaps,
   lessonProgressPercent,
   lessonSettings,
@@ -102,6 +103,22 @@ test('early lessons keep a shared pulse before later lessons introduce per-hand 
       assert.equal(Math.round((handWeight / totalWeight) * 100), expectedPercent);
     }
   }
+});
+
+test('course previews expose every subdivision and rest each hand can receive', () => {
+  const fineControl = LEARN_COURSE.find((lesson) => lesson.id === 'fast-subdivisions');
+  assert.ok(fineControl);
+  const expectedFastNotes = ['quarter', 'eighth', 'sixteenth', 'thirtySecond', 'sixtyFourth'];
+  for (const hand of ['left', 'right'] as const) {
+    const options = lessonHandPatternOptions(fineControl, hand);
+    assert.deepEqual(options.subdivisions, expectedFastNotes);
+    assert.equal(options.includesRest, false);
+  }
+
+  const handRestLesson = LEARN_COURSE.find((lesson) => lesson.id === 'share-the-rest');
+  assert.ok(handRestLesson);
+  assert.equal(lessonHandPatternOptions(handRestLesson, 'left').includesRest, true);
+  assert.equal(lessonHandPatternOptions(handRestLesson, 'right').includesRest, true);
 });
 
 test('lessons unlock in order and completion can be revisited safely', () => {

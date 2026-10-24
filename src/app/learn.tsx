@@ -8,6 +8,7 @@ import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import {
   getLessonAvailability,
   LEARN_COURSE,
+  lessonHandPatternOptions,
   lessonOffersHandSwaps,
   lessonProgressPercent,
   lessonSettings,
@@ -124,6 +125,26 @@ function PatternPreview({ lesson }: { lesson: LearnLesson }) {
     );
   }
 
+  if (lesson.patternPairs.length > 1) {
+    const leftOptions = lessonHandPatternOptions(lesson, 'left');
+    const rightOptions = lessonHandPatternOptions(lesson, 'right');
+    return (
+      <View style={{ marginTop: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'stretch', gap: 10 }}>
+          <PatternNoteOptions label="LEFT" options={leftOptions} color={colors.left} timeSignature={lesson.timeSignature} />
+          {lesson.trainingMode === 'two-hand' ? (
+            <PatternNoteOptions label="RIGHT" options={rightOptions} color={colors.right} timeSignature={lesson.timeSignature} />
+          ) : null}
+        </View>
+        {lessonOffersHandSwaps(lesson) ? (
+          <Text style={{ color: colors.accent, fontSize: 8, fontWeight: '900', letterSpacing: 0.8, marginTop: 8 }}>
+            ↔ BOTH HANDS TAKE EACH RHYTHM
+          </Text>
+        ) : null}
+      </View>
+    );
+  }
+
   const pair = lesson.patternPairs[0];
   const oneHand = lesson.trainingMode === 'single-hand';
   return (
@@ -152,13 +173,47 @@ function PatternNote({
   color: string;
   timeSignature: LearnLesson['timeSignature'];
 }) {
+  const displayName = SUBDIVISION_LABELS[subdivision].replace(' (', '\n(');
   return (
-    <View style={{ flex: 1, minWidth: 0, minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, borderRadius: 11, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
+    <View style={{ flex: 1, minWidth: 0, minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, borderRadius: 11, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
       <RhythmSymbol subdivision={subdivision} color={color} compact timeSignature={timeSignature} />
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={{ color, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>{label}</Text>
-        <Text numberOfLines={1} style={{ color: colors.text, fontSize: 11, fontWeight: '700', marginTop: 2 }}>{SUBDIVISION_LABELS[subdivision]}</Text>
+        <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85} style={{ color: colors.text, fontSize: 10, lineHeight: 12, fontWeight: '700', marginTop: 2 }}>{displayName}</Text>
       </View>
+    </View>
+  );
+}
+
+function PatternNoteOptions({
+  label,
+  options,
+  color,
+  timeSignature,
+}: {
+  label: string;
+  options: ReturnType<typeof lessonHandPatternOptions>;
+  color: string;
+  timeSignature: LearnLesson['timeSignature'];
+}) {
+  const names = [
+    ...options.subdivisions.map((subdivision) => SUBDIVISION_LABELS[subdivision]),
+    ...(options.includesRest ? ['Rest'] : []),
+  ];
+  return (
+    <View style={{ flex: 1, minWidth: 0, minHeight: 82, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 11, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
+      <Text style={{ color, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>{label}</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 4 }}>
+        {options.subdivisions.map((subdivision) => (
+          <RhythmSymbol key={subdivision} subdivision={subdivision} color={color} mini timeSignature={timeSignature} />
+        ))}
+        {options.includesRest ? (
+          <Text style={{ color, fontSize: 8, fontWeight: '900', letterSpacing: 0.7 }}>REST</Text>
+        ) : null}
+      </View>
+      <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8} style={{ color: colors.text, fontSize: 9, lineHeight: 11, fontWeight: '700', marginTop: 4 }}>
+        {names.join(' · ')}
+      </Text>
     </View>
   );
 }

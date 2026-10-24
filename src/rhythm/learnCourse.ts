@@ -180,8 +180,8 @@ const AUTHORED_LEARN_COURSE: readonly LearnLesson[] = [
     number: 11,
     title: 'Build fine control',
     level: 'EXPLORE',
-    skill: '32nd + 64th notes',
-    instruction: 'Use small, relaxed motions as either hand moves from the pulse to very fast notes.',
+    skill: 'Crotchet to 64th · weighted mix',
+    instruction: 'Each hand draws from the complete mix, from quarter notes through sixty-fourths.',
     timeSignature: '4/4',
     bpm: 60,
     feel: 'straight',
@@ -420,6 +420,28 @@ export function lessonOffersHandSwaps(
     const swapped = swapPatternHands(pattern);
     return patternKey(swapped) !== patternKey(pattern) && availablePatterns.has(patternKey(swapped));
   });
+}
+
+export interface LessonHandPatternOptions {
+  subdivisions: Subdivision[];
+  includesRest: boolean;
+}
+
+export function lessonHandPatternOptions(
+  lesson: Pick<LearnLesson, 'patternPairs'>,
+  hand: 'left' | 'right',
+): LessonHandPatternOptions {
+  const subdivisions = new Set<Subdivision>();
+  let includesRest = false;
+  for (const pattern of lesson.patternPairs) {
+    const isRest = hand === 'left' ? pattern.leftRest : pattern.rightRest;
+    if (isRest) {
+      includesRest = true;
+    } else {
+      subdivisions.add(hand === 'left' ? pattern.leftSubdivision : pattern.rightSubdivision);
+    }
+  }
+  return { subdivisions: [...subdivisions], includesRest };
 }
 
 export type LessonAvailability = 'complete' | 'available' | 'locked';
