@@ -10,17 +10,18 @@ interface VexFlowNotationDOMProps {
   plan: NoteNotationPlan;
   color: string;
   noteCenterY: number;
+  restSymbol?: boolean;
   dom?: import('expo/dom').DOMProps;
 }
 
-function drawNotation(container: HTMLDivElement, plan: NoteNotationPlan, color: string, noteCenterY: number) {
+function drawNotation(container: HTMLDivElement, plan: NoteNotationPlan, color: string, noteCenterY: number, restSymbol: boolean) {
   container.replaceChildren();
   if (plan.events.length === 0) return;
   const renderer = new Renderer(container, Renderer.Backends.SVG);
   renderer.resize(plan.width, plan.height);
   const context = renderer.getContext();
   const lineSpacing = plan.noteBaselineY === null ? 3 : 6;
-  const stave = new Stave(0, noteCenterY - lineSpacing * 4, plan.width, {
+  const stave = new Stave(0, noteCenterY - lineSpacing * (restSymbol ? 2 : 4), plan.width, {
     spacing_between_lines_px: lineSpacing,
     space_above_staff_ln: 0,
     space_below_staff_ln: 0,
@@ -37,7 +38,7 @@ function drawNotation(container: HTMLDivElement, plan: NoteNotationPlan, color: 
     const shape = plan.notes[index];
     if (!shape) throw new Error(`Missing engraved note geometry for event ${index + 1}.`);
 
-    const note = createVexFlowRhythmNote(event, { color, glyphScale, stemLength });
+    const note = createVexFlowRhythmNote(event, { color, glyphScale, stemLength, rest: restSymbol });
     note.setStave(stave);
     const centerX = shape.left + shape.headWidth / 2;
     positionVexFlowNote(note, centerX);
@@ -45,7 +46,7 @@ function drawNotation(container: HTMLDivElement, plan: NoteNotationPlan, color: 
     return note;
   });
 
-  const beams = plan.beams
+  const beams = (restSymbol ? [] : plan.beams)
     .filter((beam) => beam.kind === 'beam' && beam.level === 0)
     .map((beamShape) => {
       const group = notes.slice(beamShape.startIndex, beamShape.endIndex + 1);
@@ -56,7 +57,7 @@ function drawNotation(container: HTMLDivElement, plan: NoteNotationPlan, color: 
       return beam;
     });
 
-  const ties = createVexFlowRhythmTies(notes, plan.events);
+  const ties = restSymbol ? [] : createVexFlowRhythmTies(notes, plan.events);
 
   notes.forEach((note) => note.draw());
   beams.forEach((beam) => beam?.draw());
@@ -66,12 +67,12 @@ function drawNotation(container: HTMLDivElement, plan: NoteNotationPlan, color: 
   });
 }
 
-export default function VexFlowNotationDOM({ plan, color, noteCenterY }: VexFlowNotationDOMProps) {
+export default function VexFlowNotationDOM({ plan, color, noteCenterY, restSymbol = false }: VexFlowNotationDOMProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    if (containerRef.current) drawNotation(containerRef.current, plan, color, noteCenterY);
-  }, [color, noteCenterY, plan]);
+    if (containerRef.current) drawNotation(containerRef.current, plan, color, noteCenterY, restSymbol);
+  }, [color, noteCenterY, plan, restSymbol]);
 
   return (
     <div

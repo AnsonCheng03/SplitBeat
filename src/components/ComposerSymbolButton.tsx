@@ -4,6 +4,7 @@ import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
 import { createBarNoteNotationPlan, createNoteNotationPlan } from '@/rhythm/noteNotation';
+import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import { COMPOSER_TUPLET_SYMBOLS, NOTE_VALUE_SYMBOLS } from '@/rhythm/scoreComposer';
 import type { ComposerSymbolId } from '@/rhythm/scoreComposer';
 import { TUPLET_SUBDIVISIONS } from '@/types/rhythm';
@@ -31,7 +32,18 @@ export function ComposerSymbolButton({
   const tupletValue = COMPOSER_TUPLET_SYMBOLS.find((symbol) => symbol.id === symbolId);
   const label = t(noteValue?.label ?? tupletValue?.label ?? symbolId);
   const plan = useMemo(() => {
-    if (isRest) return null;
+    if (isRest) {
+      const durationQuarter = noteValue?.durationQuarter ?? pulseQuarterNotes(timeSignature);
+      return createBarNoteNotationPlan([{
+        startQuarter: durationQuarter / 2,
+        durationQuarter,
+      }], {
+        durationQuarter: durationQuarter * 2,
+        width: 45,
+        size: 'mini',
+        beamGroupQuarterNotes: durationQuarter,
+      });
+    }
     if (TUPLET_SUBDIVISIONS.includes(symbolId as (typeof TUPLET_SUBDIVISIONS)[number])) {
       return createNoteNotationPlan(symbolId as (typeof TUPLET_SUBDIVISIONS)[number], 'mini', timeSignature);
     }
@@ -67,10 +79,13 @@ export function ComposerSymbolButton({
       })}
     >
       <View style={{ height: 39, minWidth: 46, justifyContent: 'center', alignItems: 'center' }}>
-        {isRest ? (
-          <Text raw style={{ color, fontSize: 10, fontWeight: '900', letterSpacing: 1.2 }}>REST</Text>
-        ) : plan ? (
-          <NoteNotation plan={plan} color={color} />
+        {plan ? (
+          <NoteNotation
+            plan={plan}
+            color={color}
+            restSymbol={isRest}
+            accessibilityLabel={t(isRest ? '{note} rest' : '{note}', { note: label })}
+          />
         ) : null}
       </View>
       <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 8, fontWeight: '800', marginTop: 2, maxWidth: 100 }}>

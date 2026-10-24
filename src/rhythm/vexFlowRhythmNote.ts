@@ -5,6 +5,7 @@ interface VexFlowRhythmNoteOptions {
   color: string;
   glyphScale: number;
   stemLength: number;
+  rest?: boolean;
 }
 
 const DURATION_VALUES = [
@@ -36,12 +37,12 @@ function vexFlowDuration(durationQuarter: number, beamCount: number) {
 /** Creates a rhythm note with VexFlow's engraved notehead, stem, flag, and dot glyphs. */
 export function createVexFlowRhythmNote(
   event: NoteNotationEvent,
-  { color, glyphScale, stemLength }: VexFlowRhythmNoteOptions,
+  { color, glyphScale, stemLength, rest = false }: VexFlowRhythmNoteOptions,
 ): StaveNote {
   const value = vexFlowDuration(event.durationQuarter, event.beamCount ?? 0);
   const note = new StaveNote({
     keys: ['e/4'],
-    duration: value.duration,
+    duration: `${value.duration}${rest ? 'r' : ''}`,
     dots: value.dots,
     clef: 'treble',
     stem_direction: Stem.UP,
@@ -52,7 +53,7 @@ export function createVexFlowRhythmNote(
   for (let dotIndex = 0; dotIndex < value.dots; dotIndex += 1) {
     Dot.buildAndAttach([note], { all: true });
   }
-  if (note.hasStem()) note.setStemLength(stemLength);
+  if (!rest && note.hasStem()) note.setStemLength(stemLength);
   return note;
 }
 

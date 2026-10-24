@@ -8,6 +8,7 @@ export function NoteNotation({
   color,
   accessibilityLabel,
   testID,
+  restSymbol = false,
   showStaffLines = false,
   staffLineColor,
 }: {
@@ -15,6 +16,7 @@ export function NoteNotation({
   color: string;
   accessibilityLabel?: string;
   testID?: string;
+  restSymbol?: boolean;
   showStaffLines?: boolean;
   staffLineColor?: string;
 }) {
@@ -42,7 +44,10 @@ export function NoteNotation({
       <VexFlowNotationDOM
         plan={plan}
         color={color}
-        noteCenterY={showStaffLines
+        restSymbol={restSymbol}
+        noteCenterY={restSymbol
+          ? plan.height / 2
+          : showStaffLines
           ? (plan.height - 24) / 2 + 24
           : plan.noteBaselineY ?? plan.height - 7}
         dom={{

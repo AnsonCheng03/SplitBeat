@@ -103,6 +103,22 @@ test('VexFlow rhythm-note factory engraves dotted and tuplet values through the 
   assert.ok(tripletEighth.hasStem());
 });
 
+test('VexFlow rhythm-note factory engraves rests with rest glyphs instead of text labels', () => {
+  const quarterRest = createVexFlowRhythmNote(
+    { startQuarter: 0, durationQuarter: 1 },
+    { color: '#ffffff', glyphScale: 24, stemLength: 20, rest: true },
+  );
+  const dottedEighthRest = createVexFlowRhythmNote(
+    { startQuarter: 0, durationQuarter: 0.75 },
+    { color: '#ffffff', glyphScale: 24, stemLength: 20, rest: true },
+  );
+
+  assert.equal(quarterRest.isRest(), true);
+  assert.equal(quarterRest.hasStem(), false);
+  assert.equal(dottedEighthRest.isRest(), true);
+  assert.equal(Dot.getDots(dottedEighthRest).length, 1);
+});
+
 test('VexFlow creates full ties and partial ties at bar edges', () => {
   const first = createVexFlowRhythmNote(
     { startQuarter: 0, durationQuarter: 0.5, tieToNext: true },
