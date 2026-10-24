@@ -48,9 +48,10 @@ export function scoreBeatEvents(
 }
 
 export function scoreNotationEvents(events: readonly ScoreRhythmEvent[]): NoteNotationEvent[] {
-  return events.filter((event) => !event.isRest).map((event) => ({
+  return events.map((event) => ({
     startQuarter: event.startQuarter,
     durationQuarter: event.notationDurationQuarter ?? event.durationQuarter,
+    ...(event.isRest ? { isRest: true } : {}),
     ...(event.tupletNumber === undefined ? {} : { tupletNumber: event.tupletNumber }),
     ...(event.tieToNext ? { tieToNext: true } : {}),
     ...(event.tieFromPrevious ? { tieFromPrevious: true } : {}),

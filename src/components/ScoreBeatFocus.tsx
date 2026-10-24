@@ -85,7 +85,9 @@ export function ScoreBeatFocus({
     [beatDurationQuarter, hand, measure, nextMeasure, quarterInMeasure],
   );
   const notes = useMemo(
-    () => scoreNotationEvents(events.filter((event) => !event.isCrossBarTieContinuation)),
+    () => scoreNotationEvents(events).map((notationEvent, index) =>
+      events[index]?.isCrossBarTieContinuation ? { ...notationEvent, isRest: true } : notationEvent,
+    ),
     [events],
   );
   const plan = useMemo(() => notes.length > 0 && notationWidth > 0
@@ -97,8 +99,6 @@ export function ScoreBeatFocus({
     })
     : null,
   [beatDurationQuarter, notes, notationScale, notationWidth]);
-  const restEvents = events.filter((event) => event.isRest || event.isCrossBarTieContinuation);
-
   return (
     <View
       testID={`practice.scoreBeat.${hand}`}
@@ -122,24 +122,9 @@ export function ScoreBeatFocus({
             </View>
           </View>
         ) : null}
-        {restEvents.length === 0 && !plan ? (
+        {!plan ? (
           <Text style={{ color, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 1.3 }}>{t('REST')}</Text>
-        ) : restEvents.map((event, index) => (
-          <Text
-            key={`${event.startQuarter}.${index}`}
-            style={{
-              position: 'absolute',
-              left: `${((event.startQuarter + event.durationQuarter / 2) / beatDurationQuarter) * 100}%`,
-              transform: [{ translateX: -14 }],
-              color,
-              fontSize: compact ? 7 : 9,
-              fontWeight: '900',
-              letterSpacing: 0.4,
-            }}
-          >
-            REST
-          </Text>
-        ))}
+        ) : null}
       </View>
       <Text
         numberOfLines={2}

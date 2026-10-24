@@ -104,19 +104,28 @@ test('VexFlow rhythm-note factory engraves dotted and tuplet values through the 
 });
 
 test('VexFlow rhythm-note factory engraves rests with rest glyphs instead of text labels', () => {
-  const quarterRest = createVexFlowRhythmNote(
-    { startQuarter: 0, durationQuarter: 1 },
-    { color: '#ffffff', glyphScale: 24, stemLength: 20, rest: true },
-  );
-  const dottedEighthRest = createVexFlowRhythmNote(
-    { startQuarter: 0, durationQuarter: 0.75 },
-    { color: '#ffffff', glyphScale: 24, stemLength: 20, rest: true },
-  );
+  const restDurations = [4, 3, 2, 1.5, 1, 0.75, 0.5, 0.375, 0.25, 0.1875, 0.125, 0.09375, 0.0625];
+  for (const durationQuarter of restDurations) {
+    const rest = createVexFlowRhythmNote(
+      { startQuarter: 0, durationQuarter },
+      { color: '#ffffff', glyphScale: 24, stemLength: 20, rest: true },
+    );
+    rest.setStave(new Stave(0, 10, 45, {
+      spacing_between_lines_px: 3,
+      line_config: Array.from({ length: 5 }, () => ({ visible: false })),
+    }));
+    positionVexFlowNote(rest, 22.5);
 
-  assert.equal(quarterRest.isRest(), true);
-  assert.equal(quarterRest.hasStem(), false);
-  assert.equal(dottedEighthRest.isRest(), true);
-  assert.equal(Dot.getDots(dottedEighthRest).length, 1);
+    assert.equal(rest.isRest(), true, `${durationQuarter}-quarter value uses a rest glyph`);
+    assert.equal(rest.hasStem(), false, `${durationQuarter}-quarter rest has no note stem`);
+    assert.equal(rest.getYs().length, 1, `${durationQuarter}-quarter rest has one valid staff position`);
+    assert.ok(Number.isFinite(rest.getYs()[0]), `${durationQuarter}-quarter rest has a finite position`);
+    assert.ok(
+      Math.abs(rest.getNoteHeadBeginX() + rest.getGlyphWidth() / 2 - 22.5) < 0.001,
+      `${durationQuarter}-quarter rest glyph is centered`,
+    );
+    if (durationQuarter === 0.75) assert.equal(Dot.getDots(rest).length, 1);
+  }
 });
 
 test('VexFlow creates full ties and partial ties at bar edges', () => {

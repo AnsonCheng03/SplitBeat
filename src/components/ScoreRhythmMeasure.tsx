@@ -40,16 +40,16 @@ function RhythmTrack({
   const notationWidth = measuredLayout.estimate === initialNotationWidth && measuredLayout.width > 0
     ? measuredLayout.width
     : initialNotationWidth;
-  const noteEvents = useMemo(() => scoreNotationEvents(events), [events]);
-  const restEvents = useMemo(() => events.filter((event) => event.isRest), [events]);
+  const notationEvents = useMemo(() => scoreNotationEvents(events), [events]);
+  const noteCount = useMemo(() => events.filter((event) => !event.isRest).length, [events]);
   const plan = useMemo(() => notationWidth > 0
-    ? createBarNoteNotationPlan(noteEvents, {
+    ? createBarNoteNotationPlan(notationEvents, {
       durationQuarter,
       width: notationWidth,
       size,
       beamGroupQuarterNotes,
     })
-    : null, [beamGroupQuarterNotes, durationQuarter, noteEvents, notationWidth, size]);
+    : null, [beamGroupQuarterNotes, durationQuarter, notationEvents, notationWidth, size]);
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: minimal ? 0 : 10, minHeight: size === 'compact' ? 40 : 54 }}>
@@ -67,7 +67,7 @@ function RhythmTrack({
           </View>
         ) : plan ? (
           <View style={{ minHeight: size === 'compact' ? 36 : 50, justifyContent: 'center' }}>
-            {noteEvents.length > 0 || showStaffLines ? (
+            {notationEvents.length > 0 || showStaffLines ? (
               <NoteNotation
                 plan={plan}
                 color={color}
@@ -76,34 +76,17 @@ function RhythmTrack({
                 testID={`${testIdPrefix}.${label.toLowerCase()}Notation`}
                 accessibilityLabel={t('{hand} bar with {notes} notes and {rests} rests', {
                   hand: t(label.toLowerCase()),
-                  notes: noteEvents.length,
-                  rests: restEvents.length,
+                  notes: noteCount,
+                  rests: events.filter((event) => event.isRest).length,
                 })}
               />
             ) : null}
-            {restEvents.map((event, index) => (
-              <Text
-                key={`${label}.rest.${event.startQuarter}.${index}`}
-                style={{
-                  position: 'absolute',
-                  left: `${((event.startQuarter + event.durationQuarter / 2) / durationQuarter) * 100}%`,
-                  transform: [{ translateX: -12 }],
-                  color,
-                  fontSize: size === 'compact' ? 7 : 8,
-                  fontWeight: '900',
-                  letterSpacing: 0.2,
-                  textAlign: 'center',
-                }}
-              >
-                REST
-              </Text>
-            ))}
           </View>
         ) : null}
       </View>
       {!minimal ? (
         <Text style={{ color: colors.muted, fontSize: 10, fontVariant: ['tabular-nums'], width: 28, textAlign: 'right' }}>
-          {noteEvents.length}
+          {noteCount}
         </Text>
       ) : null}
     </View>

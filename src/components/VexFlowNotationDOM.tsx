@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef } from 'react';
 import { Beam, Renderer, Stave } from 'vexflow';
+import type { StaveNote } from 'vexflow';
 import type { NoteNotationPlan } from '@/rhythm/noteNotation';
 import { positionVexFlowNote } from '@/rhythm/vexFlowNotePlacement';
 import { createVexFlowRhythmNote, createVexFlowRhythmTies } from '@/rhythm/vexFlowRhythmNote';
@@ -48,13 +49,26 @@ function drawNotation(container: HTMLDivElement, plan: NoteNotationPlan, color: 
 
   const beams = (restSymbol ? [] : plan.beams)
     .filter((beam) => beam.kind === 'beam' && beam.level === 0)
-    .map((beamShape) => {
-      const group = notes.slice(beamShape.startIndex, beamShape.endIndex + 1);
-      if (group.length < 2) return null;
-      const beam = new Beam(group, false);
-      beam.setStyle({ fillStyle: color, strokeStyle: color });
-      beam.setContext(context);
-      return beam;
+    .flatMap((beamShape) => {
+      const groups: StaveNote[][] = [];
+      let group: StaveNote[] = [];
+      for (let index = beamShape.startIndex; index <= beamShape.endIndex; index += 1) {
+        const note = notes[index];
+        const event = plan.events[index];
+        if (!note || event?.isRest) {
+          if (group.length > 1) groups.push(group);
+          group = [];
+          continue;
+        }
+        group.push(note);
+      }
+      if (group.length > 1) groups.push(group);
+      return groups.map((beamNotes) => {
+        const beam = new Beam(beamNotes, false);
+        beam.setStyle({ fillStyle: color, strokeStyle: color });
+        beam.setContext(context);
+        return beam;
+      });
     });
 
   const ties = restSymbol ? [] : createVexFlowRhythmTies(notes, plan.events);

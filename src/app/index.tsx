@@ -230,6 +230,7 @@ export default function HomeScreen() {
         visible={activityPickerVisible}
         transparent
         animationType="fade"
+        supportedOrientations={['landscape-left', 'landscape-right']}
         onRequestClose={() => setActivityPickerVisible(false)}
       >
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.68)' }}>

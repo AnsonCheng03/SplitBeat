@@ -17,6 +17,8 @@ export interface NoteNotationEvent {
   beamCount?: number;
   /** Number to print above a tuplet group containing this event. */
   tupletNumber?: number;
+  /** Draw a VexFlow rest glyph instead of a pitched notehead. */
+  isRest?: boolean;
   /** Draw a tie from this note to the next written segment. */
   tieToNext?: boolean;
   /** Draw a tie into this note from the preceding written segment. */

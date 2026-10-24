@@ -41,8 +41,8 @@ export function createVexFlowRhythmNote(
 ): StaveNote {
   const value = vexFlowDuration(event.durationQuarter, event.beamCount ?? 0);
   const note = new StaveNote({
-    keys: ['e/4'],
-    duration: `${value.duration}${rest ? 'r' : ''}`,
+    keys: [rest || event.isRest ? 'r/4' : 'e/4'],
+    duration: `${value.duration}${rest || event.isRest ? 'r' : ''}`,
     dots: value.dots,
     clef: 'treble',
     stem_direction: Stem.UP,
@@ -53,7 +53,7 @@ export function createVexFlowRhythmNote(
   for (let dotIndex = 0; dotIndex < value.dots; dotIndex += 1) {
     Dot.buildAndAttach([note], { all: true });
   }
-  if (!rest && note.hasStem()) note.setStemLength(stemLength);
+  if (!rest && !event.isRest && note.hasStem()) note.setStemLength(stemLength);
   return note;
 }
 
@@ -64,7 +64,7 @@ export function createVexFlowRhythmTies(
 ): StaveTie[] {
   return notes.flatMap((note, index) => {
     const event = events[index];
-    if (!event) return [];
+    if (!event || event.isRest) return [];
     const nextTiedIndex = event.tieToNext
       ? events.findIndex((nextEvent, nextIndex) => nextIndex > index
         && nextEvent.tieFromPrevious

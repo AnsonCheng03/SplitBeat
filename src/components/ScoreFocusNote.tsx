@@ -24,13 +24,14 @@ export function ScoreFocusNote({
     ? measuredLayout.width
     : initialWidth;
   const plan = useMemo(() => {
-    if (!event || showsTieContinuationRest || width <= 0) return null;
+    if (!event || width <= 0) return null;
     const notationDurationQuarter = event.notationDurationQuarter ?? event.durationQuarter;
     const durationQuarter = Math.max(2, notationDurationQuarter * 2);
     return createBarNoteNotationPlan([{
       startQuarter: (durationQuarter - notationDurationQuarter) / 2,
       durationQuarter: notationDurationQuarter,
       tupletNumber: event.tupletNumber,
+      ...(event.isRest || showsTieContinuationRest ? { isRest: true } : {}),
     }], {
       durationQuarter,
       width,
@@ -46,7 +47,7 @@ export function ScoreFocusNote({
     >
       {plan ? (
         <NoteNotation plan={plan} color={color} accessibilityLabel={t('Next score note')} testID={`${testID}.notation`} />
-      ) : !event || showsTieContinuationRest ? (
+      ) : !event ? (
         <Text style={{ color, textAlign: 'center', fontSize: 16, fontWeight: '900', letterSpacing: 1.2 }}>REST</Text>
       ) : null}
     </View>

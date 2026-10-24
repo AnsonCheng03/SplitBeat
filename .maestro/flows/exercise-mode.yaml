@@ -12,19 +12,27 @@ appId: com.splitbeat.twohandrhythm
     id: home.activityPicker
 - tapOn:
     id: home.exercise
+- tapOn:
+    id: home.start
 - assertVisible:
     id: exercise.screen
 - tapOn:
     id: exercise.tab.bar
 - assertVisible: COMPOSE A SCORE
 - tapOn:
+    id: exercise.composer.mode.rest
+- tapOn:
     id: exercise.composer.symbol.whole
 - assertVisible:
     id: exercise.composer.timeline
 - tapOn:
-    id: exercise.composer.symbol.whole
-- tapOn:
     id: exercise.composer.hand.right
+- tapOn:
+    id: exercise.composer.mode.note
+- tapOn:
+    id: exercise.composer.symbol.whole
+- assertVisible:
+    id: exercise.composer.preview.1.leftNotation
 - tapOn:
     id: exercise.composer.symbol.whole
 - assertVisible: 2 bars

@@ -108,3 +108,13 @@ test('staff notation uses each tied segment duration instead of overflowing the 
     { startQuarter: 3, durationQuarter: 1, tieToNext: true },
   ]);
 });
+
+test('staff notation preserves explicit rests for library engraving', () => {
+  assert.deepEqual(scoreNotationEvents([
+    { startQuarter: 0, durationQuarter: 1, isRest: true },
+    { startQuarter: 1, durationQuarter: 1 },
+  ]), [
+    { startQuarter: 0, durationQuarter: 1, isRest: true },
+    { startQuarter: 1, durationQuarter: 1 },
+  ]);
+});
