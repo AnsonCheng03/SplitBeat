@@ -60,16 +60,19 @@ export default function PracticeScreen() {
     pauseExercise,
     resumeExercise,
     restartPausedExercise,
+    restartExerciseWithFeel,
     results,
   } = useRhythmSession();
   const activeSettings = sessionSettings ?? settings;
   const tapFeedbackEnabled = featureFlags.tapFeedback;
   const blurTargetRef = useRef<View>(null);
   const hasStartedExitRef = useRef(false);
+  const swingWarningDismissedRef = useRef(false);
   const [endingVisible, setEndingVisible] = useState(false);
   const [tutorialVisible, setTutorialVisible] = useState(true);
   const [starting, setStarting] = useState(false);
   const [pauseActionLoading, setPauseActionLoading] = useState(false);
+  const [earlySwingWarningVisible, setEarlySwingWarningVisible] = useState(false);
   const [quickSettingsOpen, setQuickSettingsOpen] = useState(false);
   const [bpmDraft, setBpmDraft] = useState(activeSettings.bpm);
   const [rewindBars, setRewindBars] = useState(1);
@@ -88,10 +91,23 @@ export default function PracticeScreen() {
     router.replace(lessonId ? { pathname: '/results', params: { lessonId } } : '/results');
   }, [lessonId, router]);
 
+  const shouldShowEarlySwingWarning = Boolean(
+    !tutorialVisible &&
+    snapshot?.phase === 'running' &&
+    snapshot.swingFeelMismatch?.likelyStraight &&
+    snapshot.swingFeelMismatch.latestBarIndex <= 3,
+  );
+
   useEffect(() => {
     if (!snapshot && !exercisePrepared) router.replace(lessonId ? '/learn' : '/setup');
     else if (!exercisePrepared && snapshot?.phase === 'finished' && results) showEnding();
   }, [exercisePrepared, lessonId, router, showEnding, snapshot, results]);
+
+  useEffect(() => {
+    if (shouldShowEarlySwingWarning && !swingWarningDismissedRef.current) {
+      setEarlySwingWarningVisible(true);
+    }
+  }, [shouldShowEarlySwingWarning]);
 
   const stop = () => {
     stopExercise();
@@ -122,6 +138,25 @@ export default function PracticeScreen() {
     } finally {
       setPauseActionLoading(false);
     }
+  };
+
+  const restartWithStraightFeel = async () => {
+    if (pauseActionLoading) return;
+    setPauseActionLoading(true);
+    try {
+      swingWarningDismissedRef.current = true;
+      setEarlySwingWarningVisible(false);
+      await restartExerciseWithFeel('straight');
+    } catch {
+      Alert.alert(t('Could not restart practice'), t('Try again, or continue at the current tempo.'));
+    } finally {
+      setPauseActionLoading(false);
+    }
+  };
+
+  const dismissEarlySwingWarning = () => {
+    swingWarningDismissedRef.current = true;
+    setEarlySwingWarningVisible(false);
   };
 
   const backHomeFromPause = () => {
@@ -610,6 +645,24 @@ export default function PracticeScreen() {
       </View>
       </BlurTargetView>
 
+        {earlySwingWarningVisible && snapshot?.phase === 'running' && snapshot.swingFeelMismatch?.likelyStraight && snapshot.swingFeelMismatch.latestBarIndex <= 3 ? (
+          <View pointerEvents="box-none" style={{ position: 'absolute', top: Math.max(insets.top + 52, 58), left: 0, right: 0, alignItems: 'center', paddingHorizontal: 16 }}>
+            <View testID="practice.swingFeel.earlyWarning" style={{ width: '100%', maxWidth: 520, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.accent }}>
+              <Text style={{ color: colors.text, fontSize: 13, lineHeight: 18, fontWeight: '800', textAlign: 'center' }}>
+                {t('Your taps are lining up with straight timing, while this exercise is set to swing.')}
+              </Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12, marginTop: 8 }}>
+                <Pressable testID="practice.swingFeel.restartStraight" accessibilityRole="button" disabled={pauseActionLoading} onPress={() => void restartWithStraightFeel()} style={{ minHeight: 38, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 10, backgroundColor: colors.accent, opacity: pauseActionLoading ? 0.5 : 1 }}>
+                  <Text style={{ color: colors.background, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 }}>{t('RESTART AS STRAIGHT')}</Text>
+                </Pressable>
+                <Pressable testID="practice.swingFeel.keepSwing" accessibilityRole="button" onPress={dismissEarlySwingWarning} style={{ minHeight: 38, justifyContent: 'center', paddingHorizontal: 12 }}>
+                  <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 }}>{t('KEEP PLAYING SWING')}</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        ) : null}
+
         {snapshot?.phase === 'paused' && quickSettingsOpen ? (
           <LivePracticeSettings
             settings={activeSettings}
@@ -663,6 +716,21 @@ export default function PracticeScreen() {
                 <Text style={{ color: colors.text, fontSize: compact ? 18 : 22, fontWeight: '900', letterSpacing: 1 }}>PAUSED</Text>
                 <Text style={{ color: colors.accent, fontSize: compact ? 13 : 16, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{bpmDraft} BPM</Text>
               </View>
+
+              {snapshot.swingFeelMismatch?.likelyStraight ? (
+                <View testID="practice.pause.swingFeelWarning" style={{ paddingHorizontal: 13, paddingVertical: 10, marginBottom: 7, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.accent }}>
+                  <Text style={{ color: colors.text, fontSize: 11, lineHeight: 16, fontWeight: '700' }}>
+                    {t('Your taps are lining up with straight timing, while this exercise is set to swing.')}
+                  </Text>
+                  {snapshot.swingFeelMismatch.latestBarIndex <= 3 ? (
+                    <Pressable testID="practice.pause.restartStraight" accessibilityRole="button" disabled={pauseActionLoading} onPress={() => void restartWithStraightFeel()} style={{ minHeight: 36, alignSelf: 'flex-start', justifyContent: 'center', marginTop: 5, paddingHorizontal: 10, borderRadius: 9, backgroundColor: colors.accent, opacity: pauseActionLoading ? 0.5 : 1 }}>
+                      <Text style={{ color: colors.background, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>{t('RESTART AS STRAIGHT')}</Text>
+                    </Pressable>
+                  ) : (
+                    <Text style={{ color: colors.muted, fontSize: 10, lineHeight: 14, marginTop: 3 }}>{t('You can count this session as straight on the results page.')}</Text>
+                  )}
+                </View>
+              ) : null}
 
               {snapshot.scoreMeasureCount !== undefined ? (
                 <View style={{ paddingVertical: compact ? 7 : 10, marginBottom: compact ? 8 : 12 }}>

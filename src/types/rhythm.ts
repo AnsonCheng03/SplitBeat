@@ -163,6 +163,14 @@ export interface MissedEvent {
 export interface ReplayExpectedEvent extends MissedEvent {
   /** Expected timestamp in the monotonic session clock, used to calculate clean streaks. */
   expectedTimeMs: number;
+  /** Note position within the bar when counted straight, retained for session-only rescoring. */
+  straightBeatInBar?: number;
+  /** Note position within the bar when counted with swing, retained for session-only rescoring. */
+  swingBeatInBar?: number;
+  /** Whether the event falls in the first two beats after a pattern change. */
+  isTransition?: boolean;
+  /** Pattern active when this event was expected. */
+  pattern?: ReplayPattern;
   /** Duration used to draw the expected rhythm in the replay timeline. */
   durationQuarter: number;
   matched: boolean;
@@ -180,6 +188,12 @@ export interface ReplayTap {
   barIndex: number;
   /** Actual click timestamp relative to session start, in milliseconds. */
   timestampMs: number;
+  /** Timestamp after the user's calibration offset, relative to the active session start. */
+  scoringTimestampMs?: number;
+  /** Pattern active when this tap occurred, used when rescoring extra taps. */
+  pattern?: ReplayPattern;
+  /** Whether this tap fell in the first two beats after a pattern change. */
+  isTransition?: boolean;
   /** Event accepted by scoring, when this click matched an expected note. */
   matchedEventId?: string;
   /** Raw click error against its matched note, before calibration correction. */
@@ -188,10 +202,21 @@ export interface ReplayTap {
   midiPitches?: number[];
 }
 
+export interface ReplayPattern {
+  leftSubdivision: Subdivision;
+  rightSubdivision: Subdivision;
+  leftRest: boolean;
+  rightRest: boolean;
+  leftMixture?: MixturePatternId;
+  rightMixture?: MixturePatternId;
+}
+
 export interface SessionResults {
   bpm: number;
   timeSignature: TimeSignature;
   feel: RhythmicFeel;
+  /** Timing window used during this run, needed to recalculate the recorded taps. */
+  goodWindowMs?: number;
   graceNotesEnabled: boolean;
   restBetweenChanges: boolean;
   trainingMode: TrainingMode;
@@ -236,6 +261,11 @@ export interface SessionSnapshot {
   rightStats: HandStats;
   countdown: number | 'START' | null;
   challengeMessage?: string;
+  swingFeelMismatch?: {
+    likelyStraight: boolean;
+    evidenceCount: number;
+    latestBarIndex: number;
+  };
   results?: SessionResults;
   scoreMeasure?: ScoreRhythmMeasure;
   scorePreviousMeasure?: ScoreRhythmMeasure;

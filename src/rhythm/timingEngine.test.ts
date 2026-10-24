@@ -250,6 +250,40 @@ test('swing stretches binary offbeats while triplets remain even', () => {
   assert.ok(Math.abs(subdivisionOffsetMs(1_000, 'triplet', 1, 'swing') - 1_000 / 3) < 0.001);
 });
 
+test('replay data retains straight and swung positions for each generated binary note', () => {
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, durationSeconds: 'endless', enabledSubdivisions: ['eighth'], feel: 'swing' },
+    sessionStartTime: 0,
+    random: () => 0,
+  });
+
+  const results = engine.getResults(800);
+  const offbeat = results.replayExpectedEvents?.find(
+    (event) => event.hand === 'left' && event.barIndex === 1 && Math.abs(event.beatInBar - 2 / 3) < 0.001,
+  );
+
+  assert.ok(offbeat);
+  assert.ok(Math.abs((offbeat.straightBeatInBar ?? 0) - 0.5) < 0.001);
+  assert.ok(Math.abs((offbeat.swingBeatInBar ?? 0) - 2 / 3) < 0.001);
+});
+
+test('straight eighth-note tapping is flagged during the first three swing bars', () => {
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, durationSeconds: 'endless', enabledSubdivisions: ['eighth'], feel: 'swing' },
+    sessionStartTime: 0,
+    random: () => 0,
+  });
+
+  for (let timestampMs = 0; timestampMs <= 2_500; timestampMs += 500) {
+    engine.tap('left', timestampMs);
+    engine.tap('right', timestampMs);
+  }
+
+  const snapshot = engine.advance(3_000);
+  assert.equal(snapshot.swingFeelMismatch?.likelyStraight, true);
+  assert.ok((snapshot.swingFeelMismatch?.latestBarIndex ?? 4) <= 3);
+});
+
 test('time signatures describe the right pulse, bar length, and quarter-note duration', () => {
   assert.equal(pulseQuarterNotes('6/8'), 1.5);
   assert.equal(pulseQuarterNotes('3/8'), 0.5);

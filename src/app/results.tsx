@@ -2,7 +2,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DimensionValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MetronomeAudio } from '@/audio/metronome';
@@ -10,6 +10,7 @@ import { createReplayAudioEvents } from '@/audio/replay';
 import { ReplayTimeline } from '@/components/ReplayTimeline';
 import { GameCenterChallengeCard } from '@/components/GameCenterChallengeCard';
 import { accuracyPercent } from '@/rhythm/scoring';
+import { analyzeSessionSwingFeel, recountSessionFeel } from '@/rhythm/swingFeel';
 import { LEARN_COURSE } from '@/rhythm/learnCourse';
 import { starsForAccuracy } from '@/rhythm/learnRating';
 import { getMixturePattern } from '@/rhythm/mixtures';
@@ -17,7 +18,7 @@ import { SUBDIVISION_LABELS, timeSignatureMetrics } from '@/rhythm/subdivisions'
 import { completeLearnLesson, recordLearnLessonResult } from '@/store/learnProgress';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
-import type { HandStats, MixturePatternId, MissedEvent, ReplayTap, SessionResults, Subdivision } from '@/types/rhythm';
+import type { HandStats, MixturePatternId, MissedEvent, ReplayTap, RhythmicFeel, SessionResults, Subdivision } from '@/types/rhythm';
 
 function percent(value: number) {
   return Math.round(value) + '%';
@@ -367,11 +368,21 @@ export default function ResultsScreen() {
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [lessonCompleted, setLessonCompleted] = useState(false);
   const [lessonRating, setLessonRating] = useState<Awaited<ReturnType<typeof recordLearnLessonResult>>>(null);
+  const [countAsFeel, setCountAsFeel] = useState<RhythmicFeel>(results?.feel ?? 'straight');
   const completionAttemptedRef = useRef<string | null>(null);
   const courseLesson = LEARN_COURSE.find((lesson) => lesson.id === lessonId);
   const lessonAccuracy = results ? sessionAccuracy(results) : 0;
-  const replayErrorBars = replayErrorBarGroups(results);
-  const extraTapCount = (results?.replayTaps ?? []).filter((tap) => !tap.matchedEventId).length;
+  const countedResults = useMemo(
+    () => results ? recountSessionFeel(results, countAsFeel) : null,
+    [countAsFeel, results],
+  );
+  const viewResults = countedResults ?? results!;
+  const swingFeelAnalysis = useMemo(
+    () => results ? analyzeSessionSwingFeel(results) : null,
+    [results],
+  );
+  const replayErrorBars = replayErrorBarGroups(viewResults);
+  const extraTapCount = (viewResults?.replayTaps ?? []).filter((tap) => !tap.matchedEventId).length;
   const replaySoundEnabled = (sessionSettings ?? settings).soundEnabled && featureFlags.soundEffects;
 
   const stopReplayAudio = useCallback(async (playbackId?: number) => {
@@ -471,20 +482,21 @@ export default function ResultsScreen() {
     );
   }
 
-  const overall = lessonAccuracy;
-  const weakest = weakestCombination(results);
-  const feedback = buildFeedback(results, weakest, t);
-  const displayedHands = results.trainingMode === 'single-hand' ? [results.singleHand] : ['left', 'right'] as const;
-  const combinations = [...results.combinations].sort(
+  const visibleOverall = sessionAccuracy(viewResults);
+  const overall = visibleOverall;
+  const weakest = weakestCombination(viewResults);
+  const feedback = buildFeedback(viewResults, weakest, t);
+  const displayedHands = viewResults.trainingMode === 'single-hand' ? [viewResults.singleHand] : ['left', 'right'] as const;
+  const combinations = [...viewResults.combinations].sort(
     (a, b) =>
-      (results.trainingMode === 'single-hand' ? accuracyPercent(a[results.singleHand]) : Math.min(accuracyPercent(a.left), accuracyPercent(a.right))) -
-      (results.trainingMode === 'single-hand' ? accuracyPercent(b[results.singleHand]) : Math.min(accuracyPercent(b.left), accuracyPercent(b.right))),
+      (viewResults.trainingMode === 'single-hand' ? accuracyPercent(a[viewResults.singleHand]) : Math.min(accuracyPercent(a.left), accuracyPercent(a.right))) -
+      (viewResults.trainingMode === 'single-hand' ? accuracyPercent(b[viewResults.singleHand]) : Math.min(accuracyPercent(b.left), accuracyPercent(b.right))),
   );
   const sessionOptions = [
-    t(results.feel === 'swing' ? 'Swing' : 'Straight'),
-    results.graceNotesEnabled ? t('GRACE PICKUPS') : null,
-    results.restBetweenChanges ? t('REST BEFORE CHANGES') : null,
-    t(results.trainingMode === 'single-hand' ? 'ONE HAND' : 'TWO HANDS'),
+    t(viewResults.feel === 'swing' ? 'Swing' : 'Straight'),
+    viewResults.graceNotesEnabled ? t('GRACE PICKUPS') : null,
+    viewResults.restBetweenChanges ? t('REST BEFORE CHANGES') : null,
+    t(viewResults.trainingMode === 'single-hand' ? 'ONE HAND' : 'TWO HANDS'),
   ].filter(Boolean).join(' · ');
 
   return (
@@ -494,9 +506,9 @@ export default function ResultsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-          <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.8 }}>{courseLesson ? lessonCompleted ? 'LESSON COMPLETE' : 'LESSON FINISHED' : results.source === 'score' ? 'SCORE SESSION COMPLETE' : 'SESSION COMPLETE'}</Text>
+          <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.8 }}>{courseLesson ? lessonCompleted ? 'LESSON COMPLETE' : 'LESSON FINISHED' : viewResults.source === 'score' ? 'SCORE SESSION COMPLETE' : 'SESSION COMPLETE'}</Text>
           <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 12, maxWidth: '68%', textAlign: 'right' }}>
-            {results.bpm} BPM · {results.timeSignature} · {results.source === 'score' ? results.scoreTitle : sessionOptions}
+            {viewResults.bpm} BPM · {viewResults.timeSignature} · {viewResults.source === 'score' ? viewResults.scoreTitle : sessionOptions}
           </Text>
         </View>
         <Text style={{ color: colors.text, fontSize: 32, fontWeight: '900', letterSpacing: -0.8 }}>{courseLesson ? courseLesson.title : 'Your timing.'}</Text>
@@ -506,8 +518,36 @@ export default function ResultsScreen() {
           </Text>
         ) : null}
 
+        {viewResults.source !== 'score' && viewResults.replayExpectedEvents?.length ? (
+          <View testID="results.feelCount" style={{ paddingHorizontal: 13, paddingVertical: 11, marginTop: 14, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: swingFeelAnalysis?.likelyStraight && results.feel === 'swing' ? colors.accent : colors.line }}>
+            {swingFeelAnalysis?.likelyStraight && results.feel === 'swing' ? (
+              <Text testID="results.swingFeelWarning" style={{ color: colors.text, fontSize: 12, lineHeight: 17, fontWeight: '800', marginBottom: 8 }}>
+                {t('This was set to swing, but your taps line up more closely with straight timing.')}
+              </Text>
+            ) : null}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 }}>{t('COUNT THIS SESSION AS')}</Text>
+                <Text style={{ color: colors.dim, fontSize: 10, lineHeight: 14, marginTop: 3 }}>{t('Recount these taps without playing again.')}</Text>
+              </View>
+              {(['straight', 'swing'] as const).map((feel) => (
+                <Pressable
+                  key={feel}
+                  testID={`results.countAs.${feel}`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: countAsFeel === feel }}
+                  onPress={() => setCountAsFeel(feel)}
+                  style={{ minWidth: 76, minHeight: 38, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, borderRadius: 10, backgroundColor: countAsFeel === feel ? colors.accent : colors.background, borderWidth: 1, borderColor: countAsFeel === feel ? colors.accent : colors.line }}
+                >
+                  <Text style={{ color: countAsFeel === feel ? colors.background : colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.5 }}>{t(feel === 'straight' ? 'Straight' : 'Swing').toUpperCase()}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ) : null}
+
         <View style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 20, padding: 20, marginTop: 17 }}>
-          <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>{courseLesson ? 'LESSON ACCURACY' : results.source === 'score' ? 'SCORE ACCURACY' : 'OVERALL ACCURACY'}</Text>
+          <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>{courseLesson ? 'LESSON ACCURACY' : viewResults.source === 'score' ? 'SCORE ACCURACY' : 'OVERALL ACCURACY'}</Text>
           <Text style={{ color: colors.text, fontSize: 58, lineHeight: 66, fontWeight: '900', marginTop: 4 }}>{percent(overall)}</Text>
           {courseLesson ? (
             <View testID="results.lessonRating" accessibilityLabel={t('{score} correct, {stars} out of 5 stars', { score: percent(overall), stars: starsForAccuracy(overall) })} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
@@ -533,21 +573,21 @@ export default function ResultsScreen() {
           {displayedHands.map((hand) => (
             <ScorePanel
               key={hand}
-              label={results.trainingMode === 'single-hand' ? 'ONE HAND' : `${hand.toUpperCase()} HAND`}
-              value={percent(accuracyPercent(results[hand]))}
-              detail={timingText(results[hand])}
-              accent={results.trainingMode === 'single-hand' ? colors.accent : hand === 'left' ? colors.left : colors.right}
+              label={viewResults.trainingMode === 'single-hand' ? 'ONE HAND' : `${hand.toUpperCase()} HAND`}
+              value={percent(accuracyPercent(viewResults[hand]))}
+              detail={timingText(viewResults[hand])}
+              accent={viewResults.trainingMode === 'single-hand' ? colors.accent : hand === 'left' ? colors.left : colors.right}
             />
           ))}
         </View>
-        {results.source === 'score' ? null : (
+        {viewResults.source === 'score' ? null : (
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-            <ScorePanel label="STEADY RHYTHM" value={results.stable.totalExpected ? percent(accuracyPercent(results.stable)) : '—'} detail="Outside switch window" />
-            <ScorePanel label="DURING SWITCHES" value={results.transition.totalExpected ? percent(accuracyPercent(results.transition)) : '—'} detail="First 2 beats after change" />
+            <ScorePanel label="STEADY RHYTHM" value={viewResults.stable.totalExpected ? percent(accuracyPercent(viewResults.stable)) : '—'} detail="Outside switch window" />
+            <ScorePanel label="DURING SWITCHES" value={viewResults.transition.totalExpected ? percent(accuracyPercent(viewResults.transition)) : '—'} detail="First 2 beats after change" />
           </View>
         )}
 
-        {featureFlags.gameCenter && results.challengeMode ? (
+        {featureFlags.gameCenter && viewResults.challengeMode ? (
           <GameCenterChallengeCard
             testID="results.gameCenter"
             challengeMode
@@ -559,14 +599,14 @@ export default function ResultsScreen() {
           <View style={{ marginTop: 22 }}>
             <DisclosureHeader
               testID="results.missedNotes"
-              title={`WRONG NOTES · ${results.missedEvents.length + extraTapCount}`}
+              title={`WRONG NOTES · ${viewResults.missedEvents.length + extraTapCount}`}
               expanded={showMissedNotes}
               onPress={() => setShowMissedNotes((expanded) => !expanded)}
             />
             {showMissedNotes ? (
               <View style={{ paddingTop: 12 }}>
                 <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18, marginBottom: 9 }}>
-                  {t('{missed} missed · {extra} extra. Both lower accuracy. Replay shows the expected notes beside your taps; leaving this page clears replay.', { missed: results.missedEvents.length, extra: extraTapCount })}
+                  {t('{missed} missed · {extra} extra. Both lower accuracy. Replay shows the expected notes beside your taps; leaving this page clears replay.', { missed: viewResults.missedEvents.length, extra: extraTapCount })}
                 </Text>
                 {!replaySoundEnabled && process.env.EXPO_PUBLIC_E2E_SILENT !== '1' ? (
                   <Text style={{ color: colors.muted, fontSize: 11, lineHeight: 16, marginBottom: 9 }}>
@@ -578,12 +618,12 @@ export default function ResultsScreen() {
                   const rightEvents = missedEvents.filter((event) => event.hand === 'right');
                   const leftExtraTaps = extraTaps.filter((tap) => tap.hand === 'left');
                   const rightExtraTaps = extraTaps.filter((tap) => tap.hand === 'right');
-                  const expectedEvents = results.replayExpectedEvents?.filter((event) => event.barIndex === barIndex) ?? [];
-                  const taps = results.replayTaps?.filter((tap) => tap.barIndex === barIndex) ?? [];
-                  const replayHands = results.trainingMode === 'single-hand'
-                    ? [results.singleHand]
+                  const expectedEvents = viewResults.replayExpectedEvents?.filter((event) => event.barIndex === barIndex) ?? [];
+                  const taps = viewResults.replayTaps?.filter((tap) => tap.barIndex === barIndex) ?? [];
+                  const replayHands = viewResults.trainingMode === 'single-hand'
+                    ? [viewResults.singleHand]
                     : ['left', 'right'] as const;
-                  const metrics = timeSignatureMetrics(results.bpm, results.timeSignature);
+                  const metrics = timeSignatureMetrics(viewResults.bpm, viewResults.timeSignature);
                   return (
                     <View key={barIndex} testID={`results.missedBar.${barIndex}`} style={{ paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.line }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -591,12 +631,12 @@ export default function ResultsScreen() {
                           <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>{t('BAR {bar}', { bar: barIndex })}</Text>
                           {leftEvents.length + leftExtraTaps.length > 0 ? (
                             <Text numberOfLines={2} style={{ color: colors.left, fontSize: 11, lineHeight: 16 }}>
-                              {replayErrorSummary(results.trainingMode === 'single-hand' ? 'ONE HAND' : 'LEFT', leftEvents, leftExtraTaps, t)}
+                              {replayErrorSummary(viewResults.trainingMode === 'single-hand' ? 'ONE HAND' : 'LEFT', leftEvents, leftExtraTaps, t)}
                             </Text>
                           ) : null}
                           {rightEvents.length + rightExtraTaps.length > 0 ? (
                             <Text numberOfLines={2} style={{ color: colors.right, fontSize: 11, lineHeight: 16 }}>
-                              {replayErrorSummary(results.trainingMode === 'single-hand' ? 'ONE HAND' : 'RIGHT', rightEvents, rightExtraTaps, t)}
+                              {replayErrorSummary(viewResults.trainingMode === 'single-hand' ? 'ONE HAND' : 'RIGHT', rightEvents, rightExtraTaps, t)}
                             </Text>
                           ) : null}
                         </View>
@@ -620,8 +660,8 @@ export default function ResultsScreen() {
                           taps={taps}
                           hands={replayHands}
                           beatsPerBar={metrics.beatsPerBar}
-                          bpm={results.bpm}
-                          timeSignature={results.timeSignature}
+                          bpm={viewResults.bpm}
+                          timeSignature={viewResults.timeSignature}
                           playbackId={replay.playbackId}
                           onPlaybackEnd={finishVisualReplay}
                         />
@@ -644,15 +684,15 @@ export default function ResultsScreen() {
           {showBreakdown ? (
             <View style={{ paddingTop: 16 }}>
               <Text testID="results.breakdown.details" style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4, marginBottom: 3 }}>
-                {results.trainingMode === 'single-hand' ? 'ONE-HAND TIMING' : 'HAND TIMING'}
+                {viewResults.trainingMode === 'single-hand' ? 'ONE-HAND TIMING' : 'HAND TIMING'}
               </Text>
               {displayedHands.map((hand) => {
-                const stats = results[hand];
+                const stats = viewResults[hand];
                 return (
                   <View key={hand} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: colors.line }}>
                     <View>
                       <Text style={{ color: hand === 'left' ? colors.left : colors.right, fontWeight: '800', fontSize: 12, letterSpacing: 1 }}>
-                        {results.trainingMode === 'single-hand' ? 'ONE HAND' : `${hand.toUpperCase()} HAND`}
+                        {viewResults.trainingMode === 'single-hand' ? 'ONE HAND' : `${hand.toUpperCase()} HAND`}
                       </Text>
                       <Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>{timingNote(stats)}</Text>
                     </View>
@@ -663,33 +703,33 @@ export default function ResultsScreen() {
                 );
               })}
 
-              {weakest && results.source !== 'score' ? (
+              {weakest && viewResults.source !== 'score' ? (
                 <View style={{ backgroundColor: colors.surface, borderColor: colors.line, borderWidth: 1, borderRadius: 18, padding: 17, marginTop: 22 }}>
-                  <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>{results.trainingMode === 'single-hand' ? 'MOST DIFFICULT PATTERN' : 'MOST DIFFICULT PAIR'}</Text>
+                  <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>{viewResults.trainingMode === 'single-hand' ? 'MOST DIFFICULT PATTERN' : 'MOST DIFFICULT PAIR'}</Text>
                   <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', marginTop: 13 }}>
-                    {results.trainingMode === 'single-hand'
-                      ? `ONE HAND · ${weakLabel(weakest[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision'], weakest[results.singleHand === 'left' ? 'leftRest' : 'rightRest'], weakest[results.singleHand === 'left' ? 'leftMixture' : 'rightMixture'])}`
+                    {viewResults.trainingMode === 'single-hand'
+                      ? `ONE HAND · ${weakLabel(weakest[viewResults.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision'], weakest[viewResults.singleHand === 'left' ? 'leftRest' : 'rightRest'], weakest[viewResults.singleHand === 'left' ? 'leftMixture' : 'rightMixture'])}`
                       : `Left: ${weakLabel(weakest.leftSubdivision, weakest.leftRest, weakest.leftMixture)}   ·   Right: ${weakLabel(weakest.rightSubdivision, weakest.rightRest, weakest.rightMixture)}`}
                   </Text>
                   <Text style={{ color: colors.accent, fontSize: 30, fontWeight: '900', marginTop: 5 }}>
-                    {results.trainingMode === 'single-hand' ? 'ONE HAND' : weakest.weakHand.toUpperCase()} {percent(weakest.accuracy)}
+                    {viewResults.trainingMode === 'single-hand' ? 'ONE HAND' : weakest.weakHand.toUpperCase()} {percent(weakest.accuracy)}
                   </Text>
                 </View>
               ) : null}
 
-              {combinations.length > 0 && results.source !== 'score' ? (
+              {combinations.length > 0 && viewResults.source !== 'score' ? (
                 <View style={{ marginTop: 22 }}>
-                  <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4, marginBottom: 5 }}>{results.trainingMode === 'single-hand' ? 'PATTERN BREAKDOWN' : 'PAIR BREAKDOWN'}</Text>
+                  <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4, marginBottom: 5 }}>{viewResults.trainingMode === 'single-hand' ? 'PATTERN BREAKDOWN' : 'PAIR BREAKDOWN'}</Text>
                   {combinations.map((combination) => (
                     <View key={`${combination.leftRest ? 'rest' : combination.leftMixture ?? combination.leftSubdivision}:${combination.rightRest ? 'rest' : combination.rightMixture ?? combination.rightSubdivision}`} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line }}>
                       <Text style={{ color: colors.muted, flex: 1, fontSize: 12 }}>
-                        {results.trainingMode === 'single-hand'
-                          ? `ONE HAND · ${weakLabel(combination[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision'], combination[results.singleHand === 'left' ? 'leftRest' : 'rightRest'], combination[results.singleHand === 'left' ? 'leftMixture' : 'rightMixture'])}`
+                        {viewResults.trainingMode === 'single-hand'
+                          ? `ONE HAND · ${weakLabel(combination[viewResults.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision'], combination[viewResults.singleHand === 'left' ? 'leftRest' : 'rightRest'], combination[viewResults.singleHand === 'left' ? 'leftMixture' : 'rightMixture'])}`
                           : `${weakLabel(combination.leftSubdivision, combination.leftRest, combination.leftMixture)} / ${weakLabel(combination.rightSubdivision, combination.rightRest, combination.rightMixture)}`}
                       </Text>
-                      {results.trainingMode === 'single-hand' ? (
+                      {viewResults.trainingMode === 'single-hand' ? (
                         <Text style={{ color: colors.accent, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>
-                          {percent(accuracyPercent(combination[results.singleHand]))}
+                          {percent(accuracyPercent(combination[viewResults.singleHand]))}
                         </Text>
                       ) : (
                         <>

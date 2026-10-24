@@ -232,6 +232,8 @@ Pattern changes take effect on the scheduled beat boundary without interrupting 
 
 Each hand has its own expected-event queue. A tap claims the nearest unmatched event within the selected timing range after applying that hand's calibration offset. Event times are calculated from the session origin and the selected meter, subdivision, and feel; timer callbacks and animations never increment the rhythm clock. Perfect and Great use 30% and 60% of the selected range. An unclaimed event becomes a miss after the adjusted window closes. Every unmatched tap, including a duplicate, a tap during a rest, or an out-of-window tap, is counted as an additional wrong event and lowers accuracy. Transition accuracy covers the first two metronome pulses after each generated pair change, including enabled grace pickups.
 
+Swing practice also checks captured binary offbeat taps against straight timing. A consistent straight feel detected in the first three bars offers a restart with straight timing; later detection is shown when pausing and on the results page. Results can recount the same session as straight or swing, including hit, miss, extra-tap, transition, and replay positions, without replaying the exercise. The alternate count is kept with the active results page and does not rewrite the saved session record.
+
 ## Known platform limits
 
 - Timing is based on the app's monotonic clock and the native audio hardware clock. Their start points are paired when the run begins, but output latency, device audio routing, and touch hardware latency still vary between devices.

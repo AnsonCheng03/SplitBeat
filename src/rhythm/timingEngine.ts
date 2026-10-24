@@ -10,6 +10,7 @@ import {
 } from '@/rhythm/subdivisions';
 import { accuracyPercent, emptyHandStats, finalizeHandStats } from '@/rhythm/scoring';
 import { longestCorrectNoteStreak } from '@/rhythm/challenge';
+import { analyzeSwingFeel } from '@/rhythm/swingFeel';
 import { createPracticeScoreMeasure } from '@/rhythm/practiceScore';
 import { expandMixturePattern } from '@/rhythm/mixtures';
 import type { ChallengeOutcome } from '@/rhythm/challenge';
@@ -25,6 +26,7 @@ import type {
   MissedEvent,
   ReplayExpectedEvent,
   ReplayTap,
+  ReplayPattern,
   ReferenceRhythmEvent,
   RhythmPatternPair,
   SessionResults,
@@ -36,6 +38,8 @@ import type {
 interface ExpectedEvent {
   id: string;
   expectedTimeMs: number;
+  straightExpectedTimeMs?: number;
+  swingExpectedTimeMs?: number;
   step: ExerciseStep;
   beatIndex: number;
   isGraceNote: boolean;
@@ -321,6 +325,16 @@ export class RhythmTimingEngine {
     const tapOffsetMs =
       hand === 'left' ? this.settings.leftTapOffsetMs : this.settings.rightTapOffsetMs;
     const calibratedTapTime = activeTapTime - tapOffsetMs;
+    replayTap.scoringTimestampMs = calibratedTapTime - this.sessionStartTime;
+    if (!this.importedScore) {
+      const activeBeatIndex = Math.max(
+        0,
+        Math.floor((calibratedTapTime - this.sessionStartTime) / this.beatMs + 1e-9),
+      );
+      const activeStep = this.getStep(Math.floor(activeBeatIndex / this.settings.changeIntervalBeats));
+      replayTap.pattern = this.replayPattern(activeStep);
+      replayTap.isTransition = activeStep.startBeat > 0 && activeBeatIndex < activeStep.startBeat + 2;
+    }
     this.generateThrough(calibratedTapTime + this.timingWindows.goodMs);
     this.settleDueEvents(activeTapTime);
     if (this.isRestAt(calibratedTapTime)) {
@@ -380,6 +394,7 @@ export class RhythmTimingEngine {
       bpm: this.settings.bpm,
       timeSignature: this.settings.timeSignature,
       feel: this.settings.feel,
+      goodWindowMs: this.settings.goodWindowMs,
       graceNotesEnabled: this.settings.graceNotesEnabled && !this.settings.restBetweenChanges,
       restBetweenChanges: this.settings.restBetweenChanges,
       trainingMode: this.settings.trainingMode,
@@ -439,6 +454,10 @@ export class RhythmTimingEngine {
         ? {
             left: this.graceLeadMs(previousStep, step, 'left'),
             right: this.graceLeadMs(previousStep, step, 'right'),
+            straightLeft: this.graceLeadMs(previousStep, step, 'left', 'straight'),
+            straightRight: this.graceLeadMs(previousStep, step, 'right', 'straight'),
+            swingLeft: this.graceLeadMs(previousStep, step, 'left', 'swing'),
+            swingRight: this.graceLeadMs(previousStep, step, 'right', 'swing'),
           }
         : null;
       const earliestEventTime = graceLeads
@@ -505,10 +524,13 @@ export class RhythmTimingEngine {
           for (let subdivisionIndex = 0; ; subdivisionIndex += 1) {
             const quarterIndex = Math.floor(subdivisionIndex / divisions);
             const noteIndex = subdivisionIndex % divisions;
-            const expectedTimeMs =
-              stepStartTime +
-              quarterIndex * this.quarterNoteMs +
-              subdivisionOffsetMs(this.quarterNoteMs, subdivision, noteIndex, this.settings.feel);
+            const straightExpectedTimeMs = stepStartTime + quarterIndex * this.quarterNoteMs +
+              subdivisionOffsetMs(this.quarterNoteMs, subdivision, noteIndex, 'straight');
+            const swingExpectedTimeMs = stepStartTime + quarterIndex * this.quarterNoteMs +
+              subdivisionOffsetMs(this.quarterNoteMs, subdivision, noteIndex, 'swing');
+            const expectedTimeMs = this.settings.feel === 'swing'
+              ? swingExpectedTimeMs
+              : straightExpectedTimeMs;
             if (expectedTimeMs >= stepEndTime) break;
             if (this.endTime !== null && expectedTimeMs >= this.endTime) continue;
             const beatOffset = Math.floor((expectedTimeMs - stepStartTime) / this.beatMs + 1e-9);
@@ -516,6 +538,8 @@ export class RhythmTimingEngine {
             this.events[hand].push({
               id: `${hand}:${step.id}:${subdivisionIndex}`,
               expectedTimeMs,
+              straightExpectedTimeMs,
+              swingExpectedTimeMs,
               step,
               beatIndex: Math.floor((expectedTimeMs - this.sessionStartTime) / this.beatMs + 1e-9),
               isGraceNote: false,
@@ -528,10 +552,14 @@ export class RhythmTimingEngine {
         const graceLead = graceLeads?.[hand];
         if (graceLead && step.startBeat > 0) {
           const expectedTimeMs = stepStartTime - graceLead;
+          const straightExpectedTimeMs = stepStartTime - (hand === 'left' ? graceLeads.straightLeft : graceLeads.straightRight);
+          const swingExpectedTimeMs = stepStartTime - (hand === 'left' ? graceLeads.swingLeft : graceLeads.swingRight);
           if (this.endTime === null || expectedTimeMs < this.endTime) {
             this.events[hand].push({
               id: `${hand}:${step.id}:grace`,
               expectedTimeMs,
+              straightExpectedTimeMs,
+              swingExpectedTimeMs,
               step,
               beatIndex: step.startBeat,
               isGraceNote: true,
@@ -590,7 +618,12 @@ export class RhythmTimingEngine {
     }
   }
 
-  private graceLeadMs(previousStep: ExerciseStep, upcomingStep: ExerciseStep, hand: Hand): number {
+  private graceLeadMs(
+    previousStep: ExerciseStep,
+    upcomingStep: ExerciseStep,
+    hand: Hand,
+    feel: ExerciseSettings['feel'] = this.settings.feel,
+  ): number {
     if ((hand === 'left' ? previousStep.leftMixture : previousStep.rightMixture) ||
       (hand === 'left' ? upcomingStep.leftMixture : upcomingStep.rightMixture)) return 0;
     const previousSubdivision = hand === 'left'
@@ -621,7 +654,7 @@ export class RhythmTimingEngine {
               this.quarterNoteMs,
               previousSubdivision,
               noteIndex,
-              this.settings.feel,
+              feel,
             );
           if (eventOffsetMs < previousDurationMs) {
             previousLastEventOffsetMs = eventOffsetMs;
@@ -804,6 +837,10 @@ export class RhythmTimingEngine {
       matched: grade !== null,
       reached,
       expectedTimeMs: event.expectedTimeMs,
+      straightBeatInBar: this.beatInBarFor(event.straightExpectedTimeMs ?? event.expectedTimeMs),
+      swingBeatInBar: this.beatInBarFor(event.swingExpectedTimeMs ?? event.expectedTimeMs),
+      isTransition: event.isGraceNote || (event.step.startBeat > 0 && event.beatIndex < event.step.startBeat + 2),
+      ...(!event.isScoreEvent ? { pattern: this.replayPattern(event.step) } : {}),
       ...(event.midiPitches ? { midiPitches: [...event.midiPitches] } : {}),
       ...(errorMs === null ? {} : { timingErrorMs: errorMs }),
     };
@@ -830,6 +867,13 @@ export class RhythmTimingEngine {
 
     const stepIndex = Math.max(0, Math.floor(beatIndex / this.settings.changeIntervalBeats));
     const step = this.getStep(stepIndex);
+    const tap = this.replayTaps[this.replayTaps.length - 1];
+    if (tap?.hand === hand) {
+      tap.pattern = this.replayPattern(step);
+      tap.isTransition = step.startBeat > 0
+        && beatIndex >= step.startBeat
+        && beatIndex < step.startBeat + 2;
+    }
     this.getCombinationStats(step)[hand].totalExpected += 1;
 
     const isTransition = step.startBeat > 0
@@ -837,6 +881,23 @@ export class RhythmTimingEngine {
       && beatIndex < step.startBeat + 2;
     const accuracyStats = isTransition ? this.transition : this.stable;
     accuracyStats.totalExpected += 1;
+  }
+
+  private beatInBarFor(timestampMs: number): number {
+    const beatPosition = (timestampMs - this.sessionStartTime) / this.beatMs;
+    const barOffset = Math.floor(beatPosition / this.beatsPerBar);
+    return beatPosition - barOffset * this.beatsPerBar;
+  }
+
+  private replayPattern(step: ExerciseStep): ReplayPattern {
+    return {
+      leftSubdivision: step.leftSubdivision,
+      rightSubdivision: step.rightSubdivision,
+      leftRest: step.leftRest,
+      rightRest: step.rightRest,
+      ...(step.leftMixture ? { leftMixture: step.leftMixture } : {}),
+      ...(step.rightMixture ? { rightMixture: step.rightMixture } : {}),
+    };
   }
 
   private getCombinationStats(step: ExerciseStep): MutableCombinationStats {
@@ -895,6 +956,20 @@ export class RhythmTimingEngine {
     const practiceScorePosition = !this.importedScore && this.settings.practiceDisplayMode === 'score'
       ? this.currentPracticeScorePosition(beatIndex)
       : undefined;
+    const shouldAnalyzeSwingFeel = this.settings.feel === 'swing' && !this.importedScore && (
+      beatIndex < this.beatsPerBar * 3 ||
+      this.finished ||
+      (this.pausedAt !== null && this.resumeAt === null)
+    );
+    const swingFeelMismatch = shouldAnalyzeSwingFeel
+      ? analyzeSwingFeel(
+          this.replayExpectedEvents,
+          this.replayTaps,
+          this.settings.bpm,
+          this.settings.timeSignature,
+          this.settings.goodWindowMs,
+        )
+      : undefined;
     const remaining = this.endTime === null
       ? null
       : Math.max(0, (this.endTime - Math.max(now, this.sessionStartTime)) / 1_000);
@@ -933,6 +1008,15 @@ export class RhythmTimingEngine {
             ? 'START'
             : null,
       ...(resumeCountIn ? { resumeCountIn: true } : {}),
+      ...(swingFeelMismatch?.likelyStraight
+        ? {
+            swingFeelMismatch: {
+              likelyStraight: true,
+              evidenceCount: swingFeelMismatch.evidenceCount,
+              latestBarIndex: swingFeelMismatch.latestBarIndex,
+            },
+          }
+        : {}),
       results: this.finished ? this.getResultsWithoutAdvance(now) : undefined,
       ...(scorePosition
         ? {
@@ -1077,6 +1161,7 @@ export class RhythmTimingEngine {
       bpm: this.settings.bpm,
       timeSignature: this.settings.timeSignature,
       feel: this.settings.feel,
+      goodWindowMs: this.settings.goodWindowMs,
       graceNotesEnabled: this.settings.graceNotesEnabled && !this.settings.restBetweenChanges,
       restBetweenChanges: this.settings.restBetweenChanges,
       trainingMode: this.settings.trainingMode,

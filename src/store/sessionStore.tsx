@@ -40,6 +40,7 @@ import type {
   ChallengeWrongBarStreak,
   SessionResults,
   SessionSnapshot,
+  RhythmicFeel,
   RhythmPatternPair,
   SoundPreset,
   Subdivision,
@@ -142,6 +143,7 @@ interface SessionContextValue {
   pauseExercise: () => void;
   resumeExercise: () => Promise<void>;
   restartPausedExercise: (barsBack: number, bpm: number) => Promise<void>;
+  restartExerciseWithFeel: (feel: RhythmicFeel) => Promise<void>;
   registerTap: (hand: Hand, timestamp: number) => TapFeedback | null;
   snapshot: SessionSnapshot | null;
   results: SessionResults | null;
@@ -731,6 +733,19 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     setExercisePrepared(false);
   }, [snapshot, startSession]);
 
+  const restartExerciseWithFeel = useCallback(async (feel: RhythmicFeel) => {
+    const options: ExercisePreparationOptions = {
+      ...lastOptionsRef.current,
+      settings: { ...lastOptionsRef.current.settings, ...sessionSettingsRef.current, feel },
+    };
+    const previousAudio = audioRef.current;
+    audioRef.current = null;
+    await previousAudio?.stop();
+    await startSession(lastScoreRef.current, options);
+    lastOptionsRef.current = options;
+    setExercisePrepared(false);
+  }, [startSession]);
+
   const prepareExercise = useCallback(async (
     score?: ImportedRhythmScore,
     options: ExercisePreparationOptions = {},
@@ -832,8 +847,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   );
 
   const value = useMemo(
-    () => ({ settings, featureFlags, featureFlagsLoaded, updateFeatureFlag, enableAllFeatures, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, discardReplayData }),
-    [settings, featureFlags, featureFlagsLoaded, updateFeatureFlag, enableAllFeatures, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, discardReplayData],
+    () => ({ settings, featureFlags, featureFlagsLoaded, updateFeatureFlag, enableAllFeatures, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, discardReplayData }),
+    [settings, featureFlags, featureFlagsLoaded, updateFeatureFlag, enableAllFeatures, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, discardReplayData],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
