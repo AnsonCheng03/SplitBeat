@@ -30,15 +30,15 @@ const E2E_SAMPLE_MUSICXML = `<score-partwise>
   <part id="P">
     <measure number="1">
       <attributes><divisions>24</divisions><staves>2</staves><time><beats>2</beats><beat-type>4</beat-type></time></attributes>
-      <note><duration>24</duration><staff>1</staff></note>
-      <note><duration>24</duration><staff>1</staff></note>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>24</duration><staff>1</staff></note>
+      <note><tie type="start"/><pitch><step>C</step><octave>4</octave></pitch><duration>24</duration><staff>1</staff><notations><tied type="start"/></notations></note>
       <backup><duration>48</duration></backup>
       <note><duration>24</duration><staff>2</staff></note>
       <note><duration>24</duration><staff>2</staff></note>
     </measure>
     <measure number="2">
-      <note><duration>24</duration><staff>1</staff></note>
-      <note><duration>24</duration><staff>1</staff></note>
+      <note><tie type="stop"/><pitch><step>C</step><octave>4</octave></pitch><duration>24</duration><staff>1</staff><notations><tied type="stop"/></notations></note>
+      <note><pitch><step>D</step><octave>4</octave></pitch><duration>24</duration><staff>1</staff></note>
       <backup><duration>48</duration></backup>
       <note><duration>24</duration><staff>2</staff></note>
       <note><duration>24</duration><staff>2</staff></note>

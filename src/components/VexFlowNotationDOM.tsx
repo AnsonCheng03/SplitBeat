@@ -4,7 +4,7 @@ import { useLayoutEffect, useRef } from 'react';
 import { Beam, Renderer, Stave } from 'vexflow';
 import type { NoteNotationPlan } from '@/rhythm/noteNotation';
 import { positionVexFlowNote } from '@/rhythm/vexFlowNotePlacement';
-import { createVexFlowRhythmNote } from '@/rhythm/vexFlowRhythmNote';
+import { createVexFlowRhythmNote, createVexFlowRhythmTies } from '@/rhythm/vexFlowRhythmNote';
 
 interface VexFlowNotationDOMProps {
   plan: NoteNotationPlan;
@@ -56,8 +56,14 @@ function drawNotation(container: HTMLDivElement, plan: NoteNotationPlan, color: 
       return beam;
     });
 
+  const ties = createVexFlowRhythmTies(notes, plan.events);
+
   notes.forEach((note) => note.draw());
   beams.forEach((beam) => beam?.draw());
+  ties.forEach((tie) => {
+    tie.setContext(context);
+    tie.draw();
+  });
 }
 
 export default function VexFlowNotationDOM({ plan, color, noteCenterY }: VexFlowNotationDOMProps) {

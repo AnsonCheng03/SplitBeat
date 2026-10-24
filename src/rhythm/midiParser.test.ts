@@ -69,6 +69,33 @@ test('maps two synchronized MIDI tracks to independent right- and left-hand part
   assert.deepEqual(score.measures[0]!.leftEvents[0]!.midiPitches, [48]);
 });
 
+test('ties sustained MIDI notes across bar lines without shortening their duration', () => {
+  const crossingNote = [
+    ...variableLength(1_680), 0x90, 60, 100,
+    ...variableLength(480), 0x80, 60, 0,
+  ];
+  const score = parseMidiRhythm(midiFile([[...conductorTrack, ...crossingNote]]));
+
+  assert.equal(score.measures.length, 2);
+  assert.deepEqual(score.measures[0]!.rightEvents[0], {
+    startQuarter: 3.5,
+    durationQuarter: 1,
+    notationDurationQuarter: 0.5,
+    midiPitches: [60],
+    tieToNext: true,
+  });
+  assert.deepEqual(score.measures[1]!.rightEvents[0], {
+    startQuarter: 0,
+    durationQuarter: 0.5,
+    notationDurationQuarter: 0.5,
+    midiPitches: [60],
+    tieFromPrevious: true,
+    isTieContinuation: true,
+    isCrossBarTieContinuation: true,
+  });
+  assert.deepEqual(score.warnings, []);
+});
+
 test('ignores conductor-only tracks when enforcing the one-or-two musical-track limit', () => {
   const score = parseMidiRhythm(
     midiFile([conductorTrack, noteTrack(60), noteTrack(64), [0, 0xff, 0x2f, 0]]),

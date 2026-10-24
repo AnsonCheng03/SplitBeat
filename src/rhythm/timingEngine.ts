@@ -176,14 +176,14 @@ export class RhythmTimingEngine {
     this.timedScoreEvents = options.importedScore
       ? options.importedScore.measures
           .flatMap((measure) => [
-            ...measure.leftEvents.filter((event) => !event.isRest).map((event) => ({
+            ...measure.leftEvents.filter((event) => !event.isRest && !event.isTieContinuation).map((event) => ({
               hand: 'left' as const,
               startQuarter: measure.startQuarter + event.startQuarter,
               durationQuarter: event.durationQuarter,
               ...(event.tupletNumber === undefined ? {} : { tupletNumber: event.tupletNumber }),
               ...(event.midiPitches ? { midiPitches: event.midiPitches } : {}),
             })),
-            ...measure.rightEvents.filter((event) => !event.isRest).map((event) => ({
+            ...measure.rightEvents.filter((event) => !event.isRest && !event.isTieContinuation).map((event) => ({
               hand: 'right' as const,
               startQuarter: measure.startQuarter + event.startQuarter,
               durationQuarter: event.durationQuarter,

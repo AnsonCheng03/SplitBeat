@@ -4,6 +4,7 @@ import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
 import { createBarNoteNotationPlan, type NoteNotationSize } from '@/rhythm/noteNotation';
+import { scoreNotationEvents } from '@/rhythm/scoreStaff';
 import type { ScoreRhythmEvent, ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
 import type { Hand } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -39,7 +40,7 @@ function RhythmTrack({
   const notationWidth = measuredLayout.estimate === initialNotationWidth && measuredLayout.width > 0
     ? measuredLayout.width
     : initialNotationWidth;
-  const noteEvents = useMemo(() => events.filter((event) => !event.isRest), [events]);
+  const noteEvents = useMemo(() => scoreNotationEvents(events), [events]);
   const restEvents = useMemo(() => events.filter((event) => event.isRest), [events]);
   const plan = useMemo(() => notationWidth > 0
     ? createBarNoteNotationPlan(noteEvents, {

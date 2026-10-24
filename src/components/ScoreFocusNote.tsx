@@ -18,23 +18,25 @@ export function ScoreFocusNote({
   testID?: string;
 }) {
   const { t } = useI18n();
+  const showsTieContinuationRest = event?.isCrossBarTieContinuation === true;
   const [measuredLayout, setMeasuredLayout] = useState({ estimate: initialWidth, width: 0 });
   const width = measuredLayout.estimate === initialWidth && measuredLayout.width > 0
     ? measuredLayout.width
     : initialWidth;
   const plan = useMemo(() => {
-    if (!event || width <= 0) return null;
-    const durationQuarter = Math.max(2, event.durationQuarter * 2);
+    if (!event || showsTieContinuationRest || width <= 0) return null;
+    const notationDurationQuarter = event.notationDurationQuarter ?? event.durationQuarter;
+    const durationQuarter = Math.max(2, notationDurationQuarter * 2);
     return createBarNoteNotationPlan([{
-      startQuarter: (durationQuarter - event.durationQuarter) / 2,
-      durationQuarter: event.durationQuarter,
+      startQuarter: (durationQuarter - notationDurationQuarter) / 2,
+      durationQuarter: notationDurationQuarter,
       tupletNumber: event.tupletNumber,
     }], {
       durationQuarter,
       width,
       size: 'full',
     });
-  }, [event, width]);
+  }, [event, showsTieContinuationRest, width]);
 
   return (
     <View
@@ -44,7 +46,7 @@ export function ScoreFocusNote({
     >
       {plan ? (
         <NoteNotation plan={plan} color={color} accessibilityLabel={t('Next score note')} testID={`${testID}.notation`} />
-      ) : !event ? (
+      ) : !event || showsTieContinuationRest ? (
         <Text style={{ color, textAlign: 'center', fontSize: 16, fontWeight: '900', letterSpacing: 1.2 }}>REST</Text>
       ) : null}
     </View>

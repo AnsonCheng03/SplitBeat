@@ -22,6 +22,7 @@ interface ScorePart {
 
 interface MutableScoreEvent extends ScoreRhythmEvent {
   absoluteStartQuarter: number;
+  startMeasureIndex: number;
   pitchKey: string;
 }
 
@@ -281,6 +282,61 @@ function noteEventMap(events: ScoreRhythmEvent[]): Map<number, ScoreRhythmEvent>
   return new Map(events.map((event) => [Number(event.startQuarter.toFixed(7)), event]));
 }
 
+function copyScoreEvent(event: ScoreRhythmEvent): ScoreRhythmEvent {
+  return {
+    startQuarter: event.startQuarter,
+    durationQuarter: event.durationQuarter,
+    ...(event.notationDurationQuarter === undefined ? {} : { notationDurationQuarter: event.notationDurationQuarter }),
+    ...(event.midiPitches === undefined ? {} : { midiPitches: [...event.midiPitches] }),
+    ...(event.tupletNumber === undefined ? {} : { tupletNumber: event.tupletNumber }),
+    ...(event.tieToNext ? { tieToNext: true } : {}),
+    ...(event.tieFromPrevious ? { tieFromPrevious: true } : {}),
+    ...(event.isTieContinuation ? { isTieContinuation: true } : {}),
+    ...(event.isCrossBarTieContinuation ? { isCrossBarTieContinuation: true } : {}),
+  };
+}
+
+function addTieContinuationEvent(
+  events: ScoreRhythmEvent[],
+  byOnset: Map<number, ScoreRhythmEvent>,
+  startQuarter: number,
+  durationQuarter: number,
+  tupleNumber: number | undefined,
+  midiPitch: number | undefined,
+  continuesTie: boolean,
+  crossesBar: boolean,
+): void {
+  const eventKey = Number(startQuarter.toFixed(7));
+  const existing = byOnset.get(eventKey);
+  if (existing) {
+    existing.durationQuarter = Math.max(existing.durationQuarter, durationQuarter);
+    existing.notationDurationQuarter = Math.max(existing.notationDurationQuarter ?? 0, durationQuarter);
+    existing.tieFromPrevious = true;
+    existing.tieToNext ||= continuesTie;
+    existing.tupletNumber ??= tupleNumber;
+    if (existing.isTieContinuation === undefined) {
+      existing.isTieContinuation = false;
+      existing.isCrossBarTieContinuation = false;
+    }
+    addMidiPitch(existing, midiPitch);
+    return;
+  }
+
+  const continuation: ScoreRhythmEvent = {
+    startQuarter,
+    durationQuarter,
+    notationDurationQuarter: durationQuarter,
+    tieFromPrevious: true,
+    ...(continuesTie ? { tieToNext: true } : {}),
+    isTieContinuation: true,
+    ...(crossesBar ? { isCrossBarTieContinuation: true } : {}),
+    ...(tupleNumber === undefined ? {} : { tupletNumber: tupleNumber }),
+  };
+  addMidiPitch(continuation, midiPitch);
+  events.push(continuation);
+  byOnset.set(eventKey, continuation);
+}
+
 function scanStaff(
   parts: ScorePart[],
   selection: StaffSelection,
@@ -350,6 +406,16 @@ function scanStaff(
             const endQuarter = scoreMeasureStart + startQuarter + durationQuarter;
             tiedEvent.durationQuarter = endQuarter - tiedEvent.absoluteStartQuarter;
             addMidiPitch(tiedEvent, noteMidiPitch);
+            addTieContinuationEvent(
+              events,
+              byOnset,
+              startQuarter,
+              durationQuarter,
+              noteTupletNumber,
+              noteMidiPitch,
+              ties.starts,
+              tiedEvent.startMeasureIndex !== measureIndex,
+            );
             if (!ties.starts) activeTies.delete(key);
           } else {
             const eventKey = Number(startQuarter.toFixed(7));
@@ -357,13 +423,28 @@ function scanStaff(
             if (existing) {
               existing.durationQuarter = Math.max(existing.durationQuarter, durationQuarter);
               existing.tupletNumber ??= noteTupletNumber;
+              existing.isTieContinuation = false;
+              existing.isCrossBarTieContinuation = false;
+              if (ties.starts) {
+                existing.tieToNext = true;
+                existing.notationDurationQuarter = Math.max(existing.notationDurationQuarter ?? 0, durationQuarter);
+              }
               addMidiPitch(existing, noteMidiPitch);
+              if (ties.starts && key) {
+                const mutableExisting = existing as MutableScoreEvent;
+                mutableExisting.absoluteStartQuarter ??= scoreMeasureStart + startQuarter;
+                mutableExisting.startMeasureIndex ??= measureIndex;
+                mutableExisting.pitchKey ||= key;
+                activeTies.set(key, mutableExisting);
+              }
             } else {
               const event: MutableScoreEvent = {
                 startQuarter,
                 durationQuarter,
+                ...(ties.starts ? { notationDurationQuarter: durationQuarter, tieToNext: true } : {}),
                 ...(noteTupletNumber === undefined ? {} : { tupletNumber: noteTupletNumber }),
                 absoluteStartQuarter: scoreMeasureStart + startQuarter,
+                startMeasureIndex: measureIndex,
                 pitchKey: key,
               };
               addMidiPitch(event, noteMidiPitch);
@@ -442,18 +523,8 @@ export function parseMusicXmlRhythm(xml: string): ImportedRhythmScore {
       index,
       startQuarter: leftMeasure.startQuarter,
       durationQuarter: leftMeasure.durationQuarter,
-      leftEvents: leftMeasure.leftEvents.map(({ startQuarter, durationQuarter, midiPitches, tupletNumber }) => ({
-        startQuarter,
-        durationQuarter,
-        ...(midiPitches === undefined ? {} : { midiPitches: [...midiPitches] }),
-        ...(tupletNumber === undefined ? {} : { tupletNumber }),
-      })),
-      rightEvents: rightMeasure.rightEvents.map(({ startQuarter, durationQuarter, midiPitches, tupletNumber }) => ({
-        startQuarter,
-        durationQuarter,
-        ...(midiPitches === undefined ? {} : { midiPitches: [...midiPitches] }),
-        ...(tupletNumber === undefined ? {} : { tupletNumber }),
-      })),
+      leftEvents: leftMeasure.leftEvents.map(copyScoreEvent),
+      rightEvents: rightMeasure.rightEvents.map(copyScoreEvent),
     };
   });
   const totalQuarterNotes = measures.reduce((total, measure) => total + measure.durationQuarter, 0);

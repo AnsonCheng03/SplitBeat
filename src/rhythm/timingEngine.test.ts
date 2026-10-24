@@ -1007,6 +1007,56 @@ test('score taps return imported pitch while visual replay records expected note
   })), [{ hand: 'left', timestampMs: 0, timingErrorMs: 0, midiPitches: [60] }]);
 });
 
+test('tied score continuations render in score data but do not create another expected tap', () => {
+  const start = 68_000;
+  const importedScore: ImportedRhythmScore = {
+    formatVersion: 1,
+    title: 'Tied bar line',
+    timeSignature: '4/4',
+    trackCount: 1,
+    bpm: 60,
+    totalQuarterNotes: 8,
+    warnings: [],
+    measures: [
+      {
+        index: 0,
+        startQuarter: 0,
+        durationQuarter: 4,
+        leftEvents: [],
+        rightEvents: [{
+          startQuarter: 3,
+          durationQuarter: 2,
+          notationDurationQuarter: 1,
+          midiPitches: [60],
+          tieToNext: true,
+        }],
+      },
+      {
+        index: 1,
+        startQuarter: 4,
+        durationQuarter: 4,
+        leftEvents: [],
+        rightEvents: [
+          {
+            startQuarter: 0,
+            durationQuarter: 1,
+            notationDurationQuarter: 1,
+            midiPitches: [60],
+            tieFromPrevious: true,
+            isTieContinuation: true,
+            isCrossBarTieContinuation: true,
+          },
+          { startQuarter: 1, durationQuarter: 1, midiPitches: [62] },
+        ],
+      },
+    ],
+  };
+  const engine = new RhythmTimingEngine({ settings, sessionStartTime: start, importedScore });
+  const results = engine.getResults(start + 9_000);
+
+  assert.deepEqual(results.replayExpectedEvents?.map(({ midiPitches }) => midiPitches), [[60], [62]]);
+});
+
 test('visual replay preserves actual tap positions including unmatched extra taps', () => {
   const start = 70_000;
   const engine = new RhythmTimingEngine({

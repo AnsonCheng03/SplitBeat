@@ -100,8 +100,20 @@ test('merges tied note durations without expecting a second tap', () => {
   const score = parseMusicXmlRhythm(xml);
   assert.equal(score.measures[0].rightEvents.length, 1);
   assert.equal(score.measures[0].rightEvents[0].durationQuarter, 2);
+  assert.equal(score.measures[0].rightEvents[0].notationDurationQuarter, 1);
+  assert.equal(score.measures[0].rightEvents[0].tieToNext, true);
   assert.deepEqual(score.measures[0].rightEvents[0].midiPitches, [60]);
-  assert.equal(score.measures[1].rightEvents[0].startQuarter, 1);
+  assert.deepEqual(score.measures[1].rightEvents[0], {
+    startQuarter: 0,
+    durationQuarter: 1,
+    notationDurationQuarter: 1,
+    midiPitches: [60],
+    tieFromPrevious: true,
+    isTieContinuation: true,
+    isCrossBarTieContinuation: true,
+  });
+  assert.equal(score.measures[1].rightEvents[1]!.startQuarter, 1);
+  assert.equal(score.measures[1].rightEvents[1]!.midiPitches?.[0], 62);
 });
 
 test('preserves MusicXML pitch alterations and chord pitches for score playback', () => {

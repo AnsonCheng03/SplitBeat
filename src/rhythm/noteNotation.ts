@@ -17,6 +17,10 @@ export interface NoteNotationEvent {
   beamCount?: number;
   /** Number to print above a tuplet group containing this event. */
   tupletNumber?: number;
+  /** Draw a tie from this note to the next written segment. */
+  tieToNext?: boolean;
+  /** Draw a tie into this note from the preceding written segment. */
+  tieFromPrevious?: boolean;
 }
 
 export interface NoteGlyphShape {
@@ -363,11 +367,13 @@ function buildNotationPlan(
     anchorWidth: metrics.anchorWidth,
     durationQuarter: metrics.durationQuarter,
     beamGroupQuarterNotes: metrics.beamGroupQuarterNotes,
-    events: notes.map(({ startQuarter, durationQuarter, beamCount, tupletNumber }) => ({
+    events: notes.map(({ startQuarter, durationQuarter, beamCount, tupletNumber, tieToNext, tieFromPrevious }) => ({
       startQuarter,
       durationQuarter,
       beamCount,
       ...(tupletNumber === undefined ? {} : { tupletNumber }),
+      ...(tieToNext ? { tieToNext: true } : {}),
+      ...(tieFromPrevious ? { tieFromPrevious: true } : {}),
     })),
     notes: glyphs,
     beams,

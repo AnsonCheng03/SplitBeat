@@ -1,7 +1,18 @@
 import type { Hand } from '@/types/rhythm';
 import type { ImportedRhythmScore, ScoreRhythmEvent, ScoreRhythmMeasure } from '@/types/importedScore';
+import type { NoteNotationEvent } from '@/rhythm/noteNotation';
 
 export type ScoreDisplayMode = 'focus' | 'staff';
+
+export function scoreNotationEvents(events: readonly ScoreRhythmEvent[]): NoteNotationEvent[] {
+  return events.filter((event) => !event.isRest).map((event) => ({
+    startQuarter: event.startQuarter,
+    durationQuarter: event.notationDurationQuarter ?? event.durationQuarter,
+    ...(event.tupletNumber === undefined ? {} : { tupletNumber: event.tupletNumber }),
+    ...(event.tieToNext ? { tieToNext: true } : {}),
+    ...(event.tieFromPrevious ? { tieFromPrevious: true } : {}),
+  }));
+}
 
 export function scoreFromMeasure(
   score: ImportedRhythmScore,

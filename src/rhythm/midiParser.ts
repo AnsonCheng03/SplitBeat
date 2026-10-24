@@ -172,33 +172,63 @@ function makeMeasureEvents(
   ticksPerQuarter: number,
   measureLengthQuarter: number,
   measureCount: number,
-  warnings: Set<string>,
 ): ScoreRhythmEvent[][] {
   const measures = Array.from({ length: measureCount }, () => new Map<number, ScoreRhythmEvent>());
   for (const note of notes) {
-    const startQuarter = note.startTick / ticksPerQuarter;
-    const measureIndex = Math.min(measureCount - 1, Math.floor(startQuarter / measureLengthQuarter + 1e-9));
-    const measureStartQuarter = measureIndex * measureLengthQuarter;
-    const measureOffset = startQuarter - measureStartQuarter;
-    const availableQuarter = Math.max(0, measureLengthQuarter - measureOffset);
-    const durationQuarter = Math.min((note.endTick - note.startTick) / ticksPerQuarter, availableQuarter);
-    if (durationQuarter <= 0) continue;
-    if ((note.endTick - note.startTick) / ticksPerQuarter > availableQuarter + 1e-7) {
-      warnings.add('A note crossing a bar line was shortened for the rhythm preview.');
-    }
-    const key = Number(measureOffset.toFixed(7));
-    const events = measures[measureIndex]!;
-    const existing = events.get(key);
-    if (existing) {
-      const pitches = existing.midiPitches ?? (existing.midiPitches = []);
-      if (!pitches.includes(note.pitch)) pitches.push(note.pitch);
-      existing.durationQuarter = Math.max(existing.durationQuarter, durationQuarter);
-    } else {
-      events.set(key, {
-        startQuarter: key,
-        durationQuarter,
-        midiPitches: [note.pitch],
-      });
+    const absoluteStartQuarter = note.startTick / ticksPerQuarter;
+    let absoluteSegmentStart = absoluteStartQuarter;
+    let remainingQuarter = (note.endTick - note.startTick) / ticksPerQuarter;
+    let isInitialSegment = true;
+
+    while (remainingQuarter > 1e-7) {
+      const measureIndex = Math.floor(absoluteSegmentStart / measureLengthQuarter + 1e-9);
+      if (measureIndex >= measureCount) break;
+      const measureStartQuarter = measureIndex * measureLengthQuarter;
+      const measureOffset = absoluteSegmentStart - measureStartQuarter;
+      const segmentDuration = Math.min(remainingQuarter, measureLengthQuarter - measureOffset);
+      if (segmentDuration <= 0) break;
+
+      const startsFollowingSegment = remainingQuarter > segmentDuration + 1e-7;
+      const key = Number(measureOffset.toFixed(7));
+      const events = measures[measureIndex]!;
+      const existing = events.get(key);
+      if (existing) {
+        const pitches = existing.midiPitches ?? (existing.midiPitches = []);
+        if (!pitches.includes(note.pitch)) pitches.push(note.pitch);
+        existing.durationQuarter = Math.max(existing.durationQuarter, isInitialSegment ? remainingQuarter : segmentDuration);
+        if (!isInitialSegment || startsFollowingSegment) {
+          existing.notationDurationQuarter = Math.max(existing.notationDurationQuarter ?? 0, segmentDuration);
+        }
+        if (!isInitialSegment) {
+          existing.tieFromPrevious = true;
+          if (existing.isTieContinuation === undefined) {
+            existing.isTieContinuation = false;
+            existing.isCrossBarTieContinuation = false;
+          }
+        }
+        if (startsFollowingSegment) existing.tieToNext = true;
+        if (isInitialSegment) {
+          existing.isTieContinuation = false;
+          existing.isCrossBarTieContinuation = false;
+        }
+      } else {
+        events.set(key, {
+          startQuarter: key,
+          durationQuarter: isInitialSegment ? remainingQuarter : segmentDuration,
+          ...(!isInitialSegment || startsFollowingSegment ? { notationDurationQuarter: segmentDuration } : {}),
+          midiPitches: [note.pitch],
+          ...(startsFollowingSegment ? { tieToNext: true } : {}),
+          ...(!isInitialSegment ? {
+            tieFromPrevious: true,
+            isTieContinuation: true,
+            isCrossBarTieContinuation: true,
+          } : {}),
+        });
+      }
+
+      remainingQuarter -= segmentDuration;
+      absoluteSegmentStart += segmentDuration;
+      isInitialSegment = false;
     }
   }
   return measures.map((events) => [...events.values()].sort((first, second) => first.startQuarter - second.startQuarter));
@@ -262,13 +292,11 @@ export function parseMidiRhythm(bytes: Uint8Array, title = 'Imported MIDI'): Imp
   if (measureCount > MAX_MIDI_MEASURES) {
     throw new Error(`This MIDI file is too long to preview (maximum ${MAX_MIDI_MEASURES} bars).`);
   }
-  const warnings = new Set<string>();
   const mappedTracks = musicalTracks.map((track) => makeMeasureEvents(
     track.notes,
     division,
     measureLengthQuarter,
     measureCount,
-    warnings,
   ));
   const tempoMicroseconds = Array.from(tempos)[0];
   const pulseQuarterNotes = denominator === 8 && numerator! >= 6 ? 1.5 : 4 / denominator!;
@@ -292,7 +320,7 @@ export function parseMidiRhythm(bytes: Uint8Array, title = 'Imported MIDI'): Imp
     bpm,
     measures,
     totalQuarterNotes: measureCount * measureLengthQuarter,
-    warnings: [...warnings],
+    warnings: [],
   };
 }
 

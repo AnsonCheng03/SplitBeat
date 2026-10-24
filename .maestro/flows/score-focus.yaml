@@ -54,6 +54,10 @@ appId: com.splitbeat.twohandrhythm
     id: practice.scoreFocusNote.right.notation
 - assertNotVisible:
     id: practice.scoreHand.right
+- extendedWaitUntil:
+    visible: "1 bar remaining"
+    timeout: 15000
+- assertVisible: REST
 - tapOn:
     id: practice.pause
 - assertVisible: PAUSED

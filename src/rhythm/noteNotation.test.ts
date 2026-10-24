@@ -120,6 +120,16 @@ test('engraving plans preserve sorted mixed note values and tuplet metadata', ()
   assert.equal(plan.events[1]?.tupletNumber, 3);
 });
 
+test('engraving plan keeps tie directions for notes entering and leaving a bar', () => {
+  const plan = createBarNoteNotationPlan([
+    { startQuarter: 3.5, durationQuarter: 0.5, tieToNext: true },
+    { startQuarter: 0, durationQuarter: 0.5, tieFromPrevious: true },
+  ], { durationQuarter: 4, width: 320 });
+
+  assert.equal(plan.events[0]?.tieFromPrevious, true);
+  assert.equal(plan.events[1]?.tieToNext, true);
+});
+
 test('bar note builder labels imported duplet, sextuplet, and mixed tuplet groups', () => {
   const plan = createBarNoteNotationPlan(
     [

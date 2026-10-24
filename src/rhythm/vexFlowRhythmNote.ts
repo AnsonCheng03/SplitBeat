@@ -1,4 +1,4 @@
-import { Dot, StaveNote, Stem } from 'vexflow';
+import { Dot, StaveNote, StaveTie, Stem } from 'vexflow';
 import type { NoteNotationEvent } from '@/rhythm/noteNotation';
 
 interface VexFlowRhythmNoteOptions {
@@ -54,4 +54,36 @@ export function createVexFlowRhythmNote(
   }
   if (note.hasStem()) note.setStemLength(stemLength);
   return note;
+}
+
+/** Creates full or bar-edge VexFlow ties between written segments. */
+export function createVexFlowRhythmTies(
+  notes: readonly StaveNote[],
+  events: readonly NoteNotationEvent[],
+): StaveTie[] {
+  return notes.flatMap((note, index) => {
+    const event = events[index];
+    if (!event) return [];
+    const nextTiedIndex = event.tieToNext
+      ? events.findIndex((nextEvent, nextIndex) => nextIndex > index
+        && nextEvent.tieFromPrevious
+        && Math.abs(event.startQuarter + event.durationQuarter - nextEvent.startQuarter) < 0.00001)
+      : -1;
+    const previousTiedIndex = event.tieFromPrevious
+      ? events.findIndex((previousEvent, previousIndex) => previousIndex < index
+        && previousEvent.tieToNext
+        && Math.abs(previousEvent.startQuarter + previousEvent.durationQuarter - event.startQuarter) < 0.00001)
+      : -1;
+    const ties: StaveTie[] = [];
+    if (event.tieToNext) {
+      ties.push(new StaveTie({
+        first_note: note,
+        ...(nextTiedIndex < 0 || !notes[nextTiedIndex] ? {} : { last_note: notes[nextTiedIndex] }),
+      }));
+    }
+    if (event.tieFromPrevious && previousTiedIndex < 0) {
+      ties.push(new StaveTie({ last_note: note }));
+    }
+    return ties;
+  });
 }

@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import { Dot, Stave, StaveNote, Stem } from 'vexflow';
 import { createBarNoteNotationPlan } from '@/rhythm/noteNotation';
 import { positionVexFlowNote } from '@/rhythm/vexFlowNotePlacement';
-import { createVexFlowRhythmNote } from '@/rhythm/vexFlowRhythmNote';
+import { createVexFlowRhythmNote, createVexFlowRhythmTies } from '@/rhythm/vexFlowRhythmNote';
 
 test('VexFlow note placement registers each note and centers its glyph', () => {
   const tripletCenters = [12, 36, 60] as const;
@@ -101,4 +101,36 @@ test('VexFlow rhythm-note factory engraves dotted and tuplet values through the 
   assert.equal(Dot.getDots(tripletEighth).length, 0);
   assert.ok(dottedEighth.hasStem());
   assert.ok(tripletEighth.hasStem());
+});
+
+test('VexFlow creates full ties and partial ties at bar edges', () => {
+  const first = createVexFlowRhythmNote(
+    { startQuarter: 0, durationQuarter: 0.5, tieToNext: true },
+    { color: '#ffffff', glyphScale: 24, stemLength: 20 },
+  );
+  const second = createVexFlowRhythmNote(
+    { startQuarter: 0.5, durationQuarter: 0.5, tieFromPrevious: true },
+    { color: '#ffffff', glyphScale: 24, stemLength: 20 },
+  );
+  const fullTie = createVexFlowRhythmTies([first, second], [
+    { startQuarter: 0, durationQuarter: 0.5, tieToNext: true },
+    { startQuarter: 0.5, durationQuarter: 0.5, tieFromPrevious: true },
+  ]);
+  assert.equal(fullTie.length, 1);
+  assert.equal(fullTie[0]!.getNotes().first_note, first);
+  assert.equal(fullTie[0]!.getNotes().last_note, second);
+  assert.equal(fullTie[0]!.isPartial(), false);
+
+  const outgoing = createVexFlowRhythmTies([first], [
+    { startQuarter: 3.5, durationQuarter: 0.5, tieToNext: true },
+  ]);
+  const incoming = createVexFlowRhythmTies([second], [
+    { startQuarter: 0, durationQuarter: 0.5, tieFromPrevious: true },
+  ]);
+  assert.equal(outgoing.length, 1);
+  assert.equal(outgoing[0]!.getNotes().first_note, first);
+  assert.equal(outgoing[0]!.getNotes().last_note, undefined);
+  assert.equal(incoming.length, 1);
+  assert.equal(incoming[0]!.getNotes().first_note, undefined);
+  assert.equal(incoming[0]!.getNotes().last_note, second);
 });
