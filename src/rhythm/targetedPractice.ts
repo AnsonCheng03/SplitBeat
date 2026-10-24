@@ -4,6 +4,7 @@ import type {
   CombinationStats,
   Hand,
   MixturePatternId,
+  ReplayPattern,
   RhythmPatternPair,
   Subdivision,
   TimeSignature,
@@ -28,18 +29,101 @@ export interface CombinationProgress {
   updatedAt: number;
 }
 
+export interface SavedPracticePair extends RhythmPatternPair {
+  leftRest: boolean;
+  rightRest: boolean;
+  id: string;
+  timeSignature: TimeSignature;
+  savedAt: number;
+}
+
 export type CombinationFilter = 'all' | 'weak' | 'mixtures' | 'rests';
 
 const WEAK_ACCURACY_LIMIT = 80;
 const BAR_DURATION_EPSILON = 0.00001;
 
 function combinationId(
-  pair: Pick<CombinationProgress, 'leftSubdivision' | 'rightSubdivision' | 'leftRest' | 'rightRest' | 'leftMixture' | 'rightMixture'>,
+  pair: Pick<RhythmPatternPair, 'leftSubdivision' | 'rightSubdivision' | 'leftRest' | 'rightRest' | 'leftMixture' | 'rightMixture'>,
   timeSignature: TimeSignature,
 ): string {
   const left = pair.leftRest ? 'rest' : pair.leftMixture ?? pair.leftSubdivision;
   const right = pair.rightRest ? 'rest' : pair.rightMixture ?? pair.rightSubdivision;
   return `${timeSignature}:${left}:${right}`;
+}
+
+export function savedPracticePairId(pair: RhythmPatternPair, timeSignature: TimeSignature): string {
+  return combinationId(pair, timeSignature);
+}
+
+export function replayPatternsForPractice(events: readonly { pattern?: ReplayPattern }[]): ReplayPattern[] {
+  const patterns = new Map<string, ReplayPattern>();
+  for (const event of events) {
+    if (event.pattern) patterns.set(JSON.stringify(event.pattern), event.pattern);
+  }
+  return [...patterns.values()];
+}
+
+export function savePracticePairsForLater(
+  existing: readonly SavedPracticePair[],
+  pairs: readonly RhythmPatternPair[],
+  timeSignature: TimeSignature,
+  savedAt: number,
+): SavedPracticePair[] {
+  const next = new Map(existing.map((pair) => [pair.id, pair]));
+  for (const pair of pairs) {
+    const leftRest = pair.leftRest === true;
+    const rightRest = pair.rightRest === true;
+    if (leftRest && rightRest) continue;
+    const savedPair: SavedPracticePair = {
+      id: savedPracticePairId(pair, timeSignature),
+      timeSignature,
+      leftSubdivision: pair.leftSubdivision,
+      rightSubdivision: pair.rightSubdivision,
+      leftRest,
+      rightRest,
+      ...(pair.leftMixture ? { leftMixture: pair.leftMixture } : {}),
+      ...(pair.rightMixture ? { rightMixture: pair.rightMixture } : {}),
+      savedAt,
+    };
+    next.set(savedPair.id, savedPair);
+  }
+  return [...next.values()].sort((first, second) => second.savedAt - first.savedAt).slice(0, 100);
+}
+
+export function removeSavedPracticePair(
+  existing: readonly SavedPracticePair[],
+  id: string,
+): SavedPracticePair[] {
+  return existing.filter((pair) => pair.id !== id);
+}
+
+function isSavedPracticePair(value: unknown): value is SavedPracticePair {
+  if (!value || typeof value !== 'object') return false;
+  const pair = value as Partial<SavedPracticePair>;
+  return typeof pair.id === 'string' &&
+    TIME_SIGNATURES.includes(pair.timeSignature as TimeSignature) &&
+    isSubdivision(pair.leftSubdivision) && isSubdivision(pair.rightSubdivision) &&
+    (pair.leftRest === undefined || typeof pair.leftRest === 'boolean') &&
+    (pair.rightRest === undefined || typeof pair.rightRest === 'boolean') &&
+    (pair.leftMixture === undefined || isMixture(pair.leftMixture)) &&
+    (pair.rightMixture === undefined || isMixture(pair.rightMixture)) &&
+    typeof pair.savedAt === 'number' && Number.isFinite(pair.savedAt) && pair.savedAt >= 0;
+}
+
+export function parseSavedPracticePairs(raw: string | null): SavedPracticePair[] {
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(isSavedPracticePair)
+      .map((pair) => ({ ...pair, leftRest: pair.leftRest === true, rightRest: pair.rightRest === true }))
+      .filter((pair) => !(pair.leftRest && pair.rightRest) && pair.id === savedPracticePairId(pair, pair.timeSignature))
+      .sort((first, second) => second.savedAt - first.savedAt)
+      .slice(0, 100);
+  } catch {
+    return [];
+  }
 }
 
 export function combinationAccuracy(progress: Pick<CombinationProgress, 'leftExpected' | 'leftHit' | 'rightExpected' | 'rightHit'>): number {

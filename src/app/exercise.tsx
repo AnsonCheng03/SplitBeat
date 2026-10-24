@@ -17,14 +17,14 @@ import {
   practicePairFromProgress,
   practicePairFromSelections,
 } from '@/rhythm/targetedPractice';
-import type { CombinationFilter, CombinationProgress } from '@/rhythm/targetedPractice';
+import type { CombinationFilter, CombinationProgress, SavedPracticePair } from '@/rhythm/targetedPractice';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import { SUBDIVISIONS } from '@/types/rhythm';
 import type { Hand, MixturePatternId, Subdivision } from '@/types/rhythm';
 
 type PatternSelection = { subdivision: Subdivision; mixture?: MixturePatternId; rest: boolean };
-type ExerciseTab = 'review' | 'pair' | 'bar';
+type ExerciseTab = 'review' | 'later' | 'pair' | 'bar';
 
 const filterOptions: { value: CombinationFilter; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -61,6 +61,9 @@ export default function ExerciseScreen() {
     settings,
     combinationProgress,
     combinationProgressLoaded,
+    savedPracticePairs,
+    savedPracticePairsLoaded,
+    removeSavedPracticePair,
     prepareExercise,
   } = useRhythmSession();
   const sectionTitle = { color: colors.muted, fontSize: 10, fontWeight: '900' as const, letterSpacing: 1.2 };
@@ -126,6 +129,23 @@ export default function ExerciseScreen() {
     patternPairWeights: [1],
   }));
 
+  const practiceSavedPair = (saved: SavedPracticePair) => {
+    const pair = practicePairFromSelections(
+      { subdivision: saved.leftSubdivision, mixture: saved.leftMixture, rest: saved.leftRest === true },
+      { subdivision: saved.rightSubdivision, mixture: saved.rightMixture, rest: saved.rightRest === true },
+    );
+    return launch(() => prepareExercise(undefined, {
+      settings: {
+        timeSignature: saved.timeSignature,
+        trainingMode: 'two-hand',
+        durationSeconds: settings.durationSeconds,
+        handRestsEnabled: pair.leftRest === true || pair.rightRest === true,
+      },
+      patternPairs: [pair],
+      patternPairWeights: [1],
+    }));
+  };
+
   const practiceSelectedPair = () => {
     if (leftSelection.rest && rightSelection.rest) {
       Alert.alert(t('Choose a rhythm'), t('At least one hand needs a note to practise.'));
@@ -183,6 +203,7 @@ export default function ExerciseScreen() {
 
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 17 }}>
           <ChoiceChip testID="exercise.tab.review" label="Review pairs" selected={activeTab === 'review'} onPress={() => setActiveTab('review')} />
+          <ChoiceChip testID="exercise.tab.later" label={t('Saved later')} selected={activeTab === 'later'} onPress={() => setActiveTab('later')} />
           <ChoiceChip testID="exercise.tab.pair" label="Choose a pair" selected={activeTab === 'pair'} onPress={() => setActiveTab('pair')} />
           <ChoiceChip testID="exercise.tab.bar" label="Type a bar" selected={activeTab === 'bar'} onPress={() => setActiveTab('bar')} />
         </View>
@@ -223,6 +244,33 @@ export default function ExerciseScreen() {
               </View>
             )}
           </>
+        ) : activeTab === 'later' ? (
+          <>
+            <Text style={sectionTitle}>{t('SAVED FROM YOUR RESULTS')}</Text>
+            <Text style={{ color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 5, marginBottom: 10 }}>
+              {t('Practice a saved bar pattern again, or remove it when you no longer need it.')}
+            </Text>
+            {savedPracticePairs.length > 0 ? (
+              <View style={{ gap: 8, marginBottom: 18 }}>
+                {savedPracticePairs.map((saved) => (
+                  <SavedPracticeTile
+                    key={saved.id}
+                    item={saved}
+                    onPractice={() => void practiceSavedPair(saved)}
+                    onRemove={() => removeSavedPracticePair(saved.id)}
+                    disabled={starting}
+                  />
+                ))}
+              </View>
+            ) : (
+              <View testID="exercise.saved.empty" style={{ paddingHorizontal: 16, paddingVertical: 13, marginBottom: 18, borderRadius: 13, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
+                <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>
+                  {savedPracticePairsLoaded ? t('No saved patterns yet.') : t('Loading saved patterns…')}
+                </Text>
+                <Text style={{ color: colors.muted, fontSize: 10, marginTop: 4 }}>{t('Save a missed bar from the result replay and it will appear here.')}</Text>
+              </View>
+            )}
+          </>
         ) : activeTab === 'pair' ? (
           <>
             <Text style={sectionTitle}>CHOOSE A RHYTHM FOR EACH HAND</Text>
@@ -258,6 +306,36 @@ export default function ExerciseScreen() {
         )}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function SavedPracticeTile({ item, onPractice, onRemove, disabled }: { item: SavedPracticePair; onPractice: () => void; onRemove: () => void; disabled: boolean }) {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const testKey = item.id.replace(/[^a-zA-Z0-9]/g, '_');
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'stretch', gap: 8 }}>
+      <Pressable
+        testID={`exercise.savedPair.${testKey}`}
+        accessibilityRole="button"
+        accessibilityLabel={t('Practice saved pattern: {pattern}, {meter}', { pattern: combinationTitle(item), meter: item.timeSignature })}
+        disabled={disabled}
+        onPress={onPractice}
+        style={({ pressed }) => ({ flex: 1, minHeight: 58, paddingHorizontal: 13, paddingVertical: 9, justifyContent: 'center', borderRadius: 12, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line, opacity: disabled ? 0.65 : 1 })}
+      >
+        <Text numberOfLines={1} style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>{combinationTitle(item)}</Text>
+        <Text style={{ color: colors.muted, fontSize: 10, marginTop: 4 }}>{item.timeSignature} · {t('from result replay')}</Text>
+      </Pressable>
+      <Pressable
+        testID={`exercise.savedPair.remove.${testKey}`}
+        accessibilityRole="button"
+        accessibilityLabel={t('Remove saved pattern {pattern}', { pattern: combinationTitle(item) })}
+        onPress={onRemove}
+        style={({ pressed }) => ({ minWidth: 74, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line })}
+      >
+        <Text style={{ color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 0.5 }}>{t('REMOVE')}</Text>
+      </Pressable>
+    </View>
   );
 }
 

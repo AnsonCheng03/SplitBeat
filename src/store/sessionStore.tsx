@@ -28,8 +28,14 @@ import {
   normalizeTapOffsetMs,
 } from '@/rhythm/timingCalibration';
 import { timeSignatureMetrics } from '@/rhythm/subdivisions';
-import { parseCombinationProgress, recordCombinationProgress } from '@/rhythm/targetedPractice';
-import type { CombinationProgress } from '@/rhythm/targetedPractice';
+import {
+  parseCombinationProgress,
+  parseSavedPracticePairs,
+  recordCombinationProgress,
+  removeSavedPracticePair as removeSavedPracticePairRecord,
+  savePracticePairsForLater as addPracticePairsForLater,
+} from '@/rhythm/targetedPractice';
+import type { CombinationProgress, SavedPracticePair } from '@/rhythm/targetedPractice';
 import { appendSessionRecord, createSessionRecord, parseSessionHistory } from '@/store/sessionHistory';
 import type { SessionRecord } from '@/store/sessionHistory';
 import { MIXTURE_NOTE_VALUES, MIXTURE_PATTERN_IDS, SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
@@ -46,11 +52,13 @@ import type {
   SoundPreset,
   Subdivision,
   TapFeedback,
+  TimeSignature,
 } from '@/types/rhythm';
 
 const SETTINGS_KEY = 'two-hand-rhythm-trainer.settings.v1';
 const SESSION_HISTORY_KEY = 'split-beat.session-history.v1';
 const COMBINATION_PROGRESS_KEY = 'split-beat.combination-progress.v1';
+const SAVED_PRACTICE_PAIRS_KEY = 'split-beat.saved-practice-pairs.v1';
 const COUNT_IN_BEATS = 3;
 const AUDIO_LEAD_IN_MS = 300;
 const FORCE_SILENT_E2E = process.env.EXPO_PUBLIC_E2E_SILENT === '1';
@@ -150,6 +158,10 @@ interface SessionContextValue {
   sessionHistoryLoaded: boolean;
   combinationProgress: CombinationProgress[];
   combinationProgressLoaded: boolean;
+  savedPracticePairs: SavedPracticePair[];
+  savedPracticePairsLoaded: boolean;
+  savePairsForLater: (pairs: readonly RhythmPatternPair[], timeSignature: TimeSignature) => void;
+  removeSavedPracticePair: (id: string) => void;
   discardReplayData: () => void;
 }
 
@@ -271,6 +283,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   const [sessionHistoryLoaded, setSessionHistoryLoaded] = useState(false);
   const [combinationProgress, setCombinationProgress] = useState<CombinationProgress[]>([]);
   const [combinationProgressLoaded, setCombinationProgressLoaded] = useState(false);
+  const [savedPracticePairs, setSavedPracticePairs] = useState<SavedPracticePair[]>([]);
+  const [savedPracticePairsLoaded, setSavedPracticePairsLoaded] = useState(false);
   const [audioStatus, setAudioStatus] = useState<AudioPreparationStatus>('loading');
   const engineRef = useRef<RhythmTimingEngine | null>(null);
   const audioRef = useRef<MetronomeAudio | null>(null);
@@ -316,6 +330,23 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       })
       .finally(() => {
         if (active) setCombinationProgressLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void AsyncStorage.getItem(SAVED_PRACTICE_PAIRS_KEY)
+      .then((raw) => {
+        if (active) setSavedPracticePairs(parseSavedPracticePairs(raw));
+      })
+      .catch(() => {
+        if (active) setSavedPracticePairs([]);
+      })
+      .finally(() => {
+        if (active) setSavedPracticePairsLoaded(true);
       });
     return () => {
       active = false;
@@ -431,6 +462,22 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
         ...(livePatch.goodWindowMs === undefined ? {} : { goodWindowMs: livePatch.goodWindowMs }),
       });
     }
+  }, []);
+
+  const savePairsForLater = useCallback((pairs: readonly RhythmPatternPair[], timeSignature: TimeSignature) => {
+    setSavedPracticePairs((current) => {
+      const next = addPracticePairsForLater(current, pairs, timeSignature, Date.now());
+      void AsyncStorage.setItem(SAVED_PRACTICE_PAIRS_KEY, JSON.stringify(next)).catch(() => undefined);
+      return next;
+    });
+  }, []);
+
+  const removeSavedPracticePair = useCallback((id: string) => {
+    setSavedPracticePairs((current) => {
+      const next = removeSavedPracticePairRecord(current, id);
+      void AsyncStorage.setItem(SAVED_PRACTICE_PAIRS_KEY, JSON.stringify(next)).catch(() => undefined);
+      return next;
+    });
   }, []);
 
   const stopTimers = useCallback(() => {
@@ -804,8 +851,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   );
 
   const value = useMemo(
-    () => ({ settings, featureFlags, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, discardReplayData }),
-    [settings, featureFlags, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, discardReplayData],
+    () => ({ settings, featureFlags, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, savedPracticePairs, savedPracticePairsLoaded, savePairsForLater, removeSavedPracticePair, discardReplayData }),
+    [settings, featureFlags, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, savedPracticePairs, savedPracticePairsLoaded, savePairsForLater, removeSavedPracticePair, discardReplayData],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

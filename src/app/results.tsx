@@ -15,10 +15,11 @@ import { LEARN_COURSE } from '@/rhythm/learnCourse';
 import { starsForAccuracy } from '@/rhythm/learnRating';
 import { getMixturePattern } from '@/rhythm/mixtures';
 import { SUBDIVISION_LABELS, timeSignatureMetrics } from '@/rhythm/subdivisions';
+import { replayPatternsForPractice } from '@/rhythm/targetedPractice';
 import { completeLearnLesson, recordLearnLessonResult } from '@/store/learnProgress';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
-import type { HandStats, MixturePatternId, MissedEvent, ReplayTap, RhythmicFeel, SessionResults, Subdivision } from '@/types/rhythm';
+import type { HandStats, MixturePatternId, MissedEvent, ReplayPattern, ReplayTap, RhythmicFeel, SessionResults, Subdivision } from '@/types/rhythm';
 
 function percent(value: number) {
   return Math.round(value) + '%';
@@ -356,7 +357,7 @@ function scoreDurationLabel(durationQuarter: number, tupletNumber?: number): str
 export default function ResultsScreen() {
   const { colors } = useTheme();
   const { t } = useI18n();
-  const { results, settings, sessionSettings, featureFlags, prepareRepeatExercise, discardReplayData } = useRhythmSession();
+  const { results, settings, sessionSettings, featureFlags, prepareRepeatExercise, savedPracticePairsLoaded, savePairsForLater, discardReplayData } = useRhythmSession();
   const router = useRouter();
   const { lessonId: rawLessonId } = useLocalSearchParams<{ lessonId?: string }>();
   const lessonId = Array.isArray(rawLessonId) ? rawLessonId[0] : rawLessonId;
@@ -365,6 +366,7 @@ export default function ResultsScreen() {
   const replayAudioRef = useRef<{ playbackId: number; audio: MetronomeAudio } | null>(null);
   const [startingAgain, setStartingAgain] = useState(false);
   const [showMissedNotes, setShowMissedNotes] = useState(false);
+  const [savedPracticeBars, setSavedPracticeBars] = useState<Set<number>>(() => new Set());
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [lessonCompleted, setLessonCompleted] = useState(false);
   const [lessonRating, setLessonRating] = useState<Awaited<ReturnType<typeof recordLearnLessonResult>>>(null);
@@ -469,6 +471,11 @@ export default function ResultsScreen() {
       setStartingAgain(false);
       Alert.alert(t('Audio could not start'), t('Check your device audio settings and try again.'));
     }
+  };
+
+  const saveBarForLater = (barIndex: number, patterns: readonly ReplayPattern[]) => {
+    savePairsForLater(patterns, viewResults.timeSignature);
+    setSavedPracticeBars((current) => new Set([...current, barIndex]));
   };
 
   if (!results) {
@@ -619,6 +626,8 @@ export default function ResultsScreen() {
                   const leftExtraTaps = extraTaps.filter((tap) => tap.hand === 'left');
                   const rightExtraTaps = extraTaps.filter((tap) => tap.hand === 'right');
                   const expectedEvents = viewResults.replayExpectedEvents?.filter((event) => event.barIndex === barIndex) ?? [];
+                  const barPatterns = replayPatternsForPractice(expectedEvents);
+                  const canSaveForLater = featureFlags.focusPractice && viewResults.trainingMode === 'two-hand' && viewResults.source !== 'score' && barPatterns.length > 0;
                   const taps = viewResults.replayTaps?.filter((tap) => tap.barIndex === barIndex) ?? [];
                   const replayHands = viewResults.trainingMode === 'single-hand'
                     ? [viewResults.singleHand]
@@ -651,6 +660,21 @@ export default function ResultsScreen() {
                             {replay?.barIndex === barIndex && replay.isStarting ? 'LOADING' : replay?.barIndex === barIndex && replay.isPlaying ? 'PLAYING' : 'REPLAY'}
                           </Text>
                         </Pressable>
+                        {canSaveForLater ? (
+                          <Pressable
+                            testID={`results.practiceLater.${barIndex}`}
+                            accessibilityRole="button"
+                            accessibilityState={{ disabled: savedPracticeBars.has(barIndex) || !savedPracticePairsLoaded }}
+                            accessibilityLabel={savedPracticeBars.has(barIndex) ? t('Bar {bar} saved for later practice', { bar: barIndex }) : t('Save bar {bar} for later practice', { bar: barIndex })}
+                            disabled={savedPracticeBars.has(barIndex) || !savedPracticePairsLoaded}
+                            onPress={() => saveBarForLater(barIndex, barPatterns)}
+                            style={({ pressed }) => ({ paddingHorizontal: 11, minHeight: 40, justifyContent: 'center', borderRadius: 11, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: savedPracticeBars.has(barIndex) ? colors.left : colors.line })}
+                          >
+                            <Text style={{ color: savedPracticeBars.has(barIndex) ? colors.left : colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.4 }}>
+                              {savedPracticeBars.has(barIndex) ? t('SAVED') : t('PRACTICE LATER')}
+                            </Text>
+                          </Pressable>
+                        ) : null}
                       </View>
                       {replay?.barIndex === barIndex && !replay.isStarting ? (
                         <ReplayTimeline

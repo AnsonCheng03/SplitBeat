@@ -23,3 +23,8 @@ test('translations interpolate named values in the translated phrase', () => {
   assert.equal(translate('zh-Hant', 'COMPLETE LESSON {number} FIRST', { number: 4 }), '請先完成第 4 堂');
   assert.equal(translate('en', 'Lesson {number}', { number: 12 }), 'Lesson 12');
 });
+
+test('saved result practice actions are localized and keep their bar number', () => {
+  assert.equal(translate('zh-Hant', 'Saved later'), '稍後練習');
+  assert.equal(translate('zh-Hant', 'Save bar {bar} for later practice', { bar: 3 }), '儲存第 3 小節以便稍後練習');
+});

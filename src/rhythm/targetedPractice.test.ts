@@ -8,8 +8,12 @@ import {
   createTypedBarScore,
   filterCombinationProgress,
   parseCombinationProgress,
+  parseSavedPracticePairs,
   parseTypedBar,
+  replayPatternsForPractice,
+  removeSavedPracticePair,
   recordCombinationProgress,
+  savePracticePairsForLater,
 } from '@/rhythm/targetedPractice';
 import type { CombinationStats } from '@/types/rhythm';
 
@@ -80,6 +84,40 @@ test('generated mixture patterns remain searchable after combination progress is
 test('combination progress storage ignores malformed entries and JSON', () => {
   assert.deepEqual(parseCombinationProgress('{broken'), []);
   assert.deepEqual(parseCombinationProgress(JSON.stringify([{ id: 'bad' }])), []);
+});
+
+test('saved replay patterns persist, deduplicate, and can be removed for later focused practice', () => {
+  const mixture = generateMixturePattern(['dottedEighth', 'sixteenth'], 4, false, () => 0.4);
+  assert.ok(mixture);
+  const pattern = {
+    leftSubdivision: 'quarter' as const,
+    rightSubdivision: 'eighth' as const,
+    leftRest: false,
+    rightRest: false,
+    rightMixture: mixture.id,
+  };
+  const saved = savePracticePairsForLater([], [pattern, pattern], '4/4', 1_000);
+  const restored = parseSavedPracticePairs(JSON.stringify(saved));
+
+  assert.equal(saved.length, 1);
+  assert.equal(restored.length, 1);
+  assert.equal(restored[0]?.rightMixture, mixture.id);
+  assert.equal(restored[0]?.timeSignature, '4/4');
+  assert.deepEqual(removeSavedPracticePair(restored, restored[0]!.id), []);
+  assert.deepEqual(parseSavedPracticePairs('{broken'), []);
+});
+
+test('result replay patterns can be saved once per distinct bar combination', () => {
+  const first = { leftSubdivision: 'quarter' as const, rightSubdivision: 'eighth' as const, leftRest: false, rightRest: false };
+  const second = { ...first, leftSubdivision: 'triplet' as const };
+  const patterns = replayPatternsForPractice([
+    { pattern: first },
+    { pattern: first },
+    { pattern: second },
+    {},
+  ]);
+
+  assert.deepEqual(patterns, [first, second]);
 });
 
 test('typed bar accepts mixed note values and rests when they fill 4/4', () => {
