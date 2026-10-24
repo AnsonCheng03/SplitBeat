@@ -2,26 +2,36 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createBarNoteNotationPlan, createNoteNotationPlan } from '@/rhythm/noteNotation';
+import { createBarNoteNotationPlan, createNoteNotationPlan, createSharedBarNoteAnchorInsets } from '@/rhythm/noteNotation';
 
 function assertNotationFits(plan: ReturnType<typeof createBarNoteNotationPlan>) {
   for (const note of plan.notes) {
     assert.ok(note.left >= 0, `${note.key} head starts inside the notation viewport`);
     assert.ok(note.left + note.headWidth <= plan.width, `${note.key} head ends inside the notation viewport`);
+    assert.ok(note.headTop >= 0, `${note.key} head starts inside the notation height`);
+    assert.ok(note.headTop + note.headHeight <= plan.height, `${note.key} head ends inside the notation height`);
     assert.ok(note.left + note.stemLeft >= 0, `${note.key} stem starts inside the notation viewport`);
     assert.ok(note.left + note.stemLeft + note.stemWidth <= plan.width, `${note.key} stem ends inside the notation viewport`);
+    assert.ok(note.stemTop >= 0, `${note.key} stem starts inside the notation height`);
+    assert.ok(note.stemTop + note.stemHeight <= plan.height, `${note.key} stem ends inside the notation height`);
   }
   for (const beam of plan.beams) {
     assert.ok(beam.left >= 0, `${beam.key} starts inside the notation viewport`);
     assert.ok(beam.left + beam.width <= plan.width, `${beam.key} ends inside the notation viewport`);
+    assert.ok(beam.top >= 0, `${beam.key} starts inside the notation height`);
+    assert.ok(beam.top + beam.height <= plan.height, `${beam.key} ends inside the notation height`);
   }
   for (const dot of plan.dots) {
     assert.ok(dot.left >= 0, `${dot.key} starts inside the notation viewport`);
     assert.ok(dot.left + dot.size <= plan.width, `${dot.key} ends inside the notation viewport`);
+    assert.ok(dot.top >= 0, `${dot.key} starts inside the notation height`);
+    assert.ok(dot.top + dot.size <= plan.height, `${dot.key} ends inside the notation height`);
   }
   for (const label of plan.tupletLabels) {
     assert.ok(label.left >= 0, `${label.key} starts inside the notation viewport`);
     assert.ok(label.left + label.width <= plan.width, `${label.key} ends inside the notation viewport`);
+    assert.ok(label.top >= 0, `${label.key} starts inside the notation height`);
+    assert.ok(label.top + label.fontSize + 2 <= plan.height, `${label.key} ends inside the notation height`);
   }
 }
 
@@ -205,6 +215,53 @@ test('mixed bar notation stays within bounds at dense and narrow layout widths',
     });
     assert.equal(plan.notes.length, mixedEvents.length);
     assertNotationFits(plan);
+  }
+});
+
+test('score hands share beat positions and keep dense notation inside each bar', () => {
+  const leftEvents = [0, 1, 2, 3].map((startQuarter) => ({ startQuarter, durationQuarter: 1 }));
+  const rightEvents = [
+    { startQuarter: 0, durationQuarter: 0.25 },
+    { startQuarter: 0.25, durationQuarter: 0.25 },
+    { startQuarter: 0.5, durationQuarter: 0.25 },
+    { startQuarter: 0.75, durationQuarter: 0.25 },
+    { startQuarter: 1, durationQuarter: 0.125 },
+    { startQuarter: 1.125, durationQuarter: 0.125 },
+    { startQuarter: 1.25, durationQuarter: 0.125 },
+    { startQuarter: 1.375, durationQuarter: 0.125 },
+    { startQuarter: 2, durationQuarter: 0.0625 },
+    { startQuarter: 2.0625, durationQuarter: 0.0625 },
+    { startQuarter: 2.125, durationQuarter: 0.0625 },
+    { startQuarter: 2.1875, durationQuarter: 0.0625 },
+    { startQuarter: 3, durationQuarter: 0.75 },
+  ];
+
+  for (const { width, size } of [
+    { width: 152, size: 'compact' as const },
+    { width: 304, size: 'full' as const },
+  ]) {
+    const options = { durationQuarter: 4, width, size };
+    const anchorInsets = createSharedBarNoteAnchorInsets([leftEvents, rightEvents], options);
+    const leftPlan = createBarNoteNotationPlan(leftEvents, { ...options, anchorInsets });
+    const rightPlan = createBarNoteNotationPlan(rightEvents, { ...options, anchorInsets });
+
+    assert.equal(leftPlan.anchorStartX, rightPlan.anchorStartX);
+    assert.equal(leftPlan.anchorWidth, rightPlan.anchorWidth);
+    assertNotationFits(leftPlan);
+    assertNotationFits(rightPlan);
+
+    for (const leftEvent of leftPlan.events) {
+      const matchingRightIndex = rightPlan.events.findIndex((event) => event.startQuarter === leftEvent.startQuarter);
+      const leftIndex = leftPlan.events.indexOf(leftEvent);
+      const leftNote = leftPlan.notes[leftIndex];
+      const rightNote = rightPlan.notes[matchingRightIndex];
+      if (matchingRightIndex < 0 || !leftNote || !rightNote) continue;
+      assert.equal(
+        leftNote.left + leftNote.headWidth / 2,
+        rightNote.left + rightNote.headWidth / 2,
+        `both hands align on beat position ${leftEvent.startQuarter}`,
+      );
+    }
   }
 });
 

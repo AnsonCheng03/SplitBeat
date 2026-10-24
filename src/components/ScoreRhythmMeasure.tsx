@@ -3,7 +3,7 @@ import { Animated, Easing, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
-import { createBarNoteNotationPlan, type NoteNotationSize } from '@/rhythm/noteNotation';
+import { createBarNoteNotationPlan, createSharedBarNoteAnchorInsets, type NoteNotationSize } from '@/rhythm/noteNotation';
 import { scoreNotationEvents } from '@/rhythm/scoreStaff';
 import type { ScoreRhythmEvent, ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
 import type { Hand } from '@/types/rhythm';
@@ -16,6 +16,7 @@ function scoreLaneHeight(size: NoteNotationSize): number {
 function RhythmTrack({
   label,
   events,
+  alignmentEventGroups,
   durationQuarter,
   color,
   size,
@@ -28,6 +29,7 @@ function RhythmTrack({
 }: {
   label: string;
   events: ScoreRhythmEvent[];
+  alignmentEventGroups?: readonly (readonly ScoreRhythmEvent[])[];
   durationQuarter: number;
   color: string;
   size: NoteNotationSize;
@@ -46,6 +48,17 @@ function RhythmTrack({
     ? measuredLayout.width
     : initialNotationWidth;
   const notationEvents = useMemo(() => scoreNotationEvents(events), [events]);
+  const alignedNotationEventGroups = useMemo(
+    () => alignmentEventGroups?.map(scoreNotationEvents) ?? [notationEvents],
+    [alignmentEventGroups, notationEvents],
+  );
+  const anchorInsets = useMemo(() => notationWidth > 0
+    ? createSharedBarNoteAnchorInsets(alignedNotationEventGroups, {
+      durationQuarter,
+      width: notationWidth,
+      size,
+    })
+    : undefined, [alignedNotationEventGroups, durationQuarter, notationWidth, size]);
   const noteCount = useMemo(() => events.filter((event) => !event.isRest).length, [events]);
   const plan = useMemo(() => notationWidth > 0
     ? createBarNoteNotationPlan(notationEvents, {
@@ -53,8 +66,9 @@ function RhythmTrack({
       width: notationWidth,
       size,
       beamGroupQuarterNotes,
+      anchorInsets,
     })
-    : null, [beamGroupQuarterNotes, durationQuarter, notationEvents, notationWidth, size]);
+    : null, [anchorInsets, beamGroupQuarterNotes, durationQuarter, notationEvents, notationWidth, size]);
 
   return (
     <View style={{ height: laneHeight, flexDirection: 'row', alignItems: 'center', gap: minimal ? 0 : 10 }}>
@@ -148,6 +162,10 @@ export function ScoreRhythmMeasure({
 }) {
   const { colors } = useTheme();
   const size: NoteNotationSize = compact ? 'compact' : 'full';
+  const alignmentEventGroups = useMemo(
+    () => [measure.leftEvents, measure.rightEvents],
+    [measure.leftEvents, measure.rightEvents],
+  );
 
   return (
     <View testID={testIdPrefix} style={{ position: 'relative', paddingHorizontal: compact ? 4 : 12, paddingVertical: compact ? 3 : 7, gap: compact ? 2 : 4 }}>
@@ -163,6 +181,7 @@ export function ScoreRhythmMeasure({
         <RhythmTrack
           label="LEFT"
           events={measure.leftEvents}
+          alignmentEventGroups={alignmentEventGroups}
           durationQuarter={measure.durationQuarter}
           color={visibleHand ? focusedColor ?? colors.left : colors.left}
           size={size}
@@ -178,6 +197,7 @@ export function ScoreRhythmMeasure({
         <RhythmTrack
           label="RIGHT"
           events={measure.rightEvents}
+          alignmentEventGroups={alignmentEventGroups}
           durationQuarter={measure.durationQuarter}
           color={visibleHand ? focusedColor ?? colors.right : colors.right}
           size={size}
@@ -248,6 +268,10 @@ function ScoreBarPanel({
   initialNotationWidth: number;
 }) {
   const { colors } = useTheme();
+  const alignmentEventGroups = useMemo(
+    () => [bar.measure.leftEvents, bar.measure.rightEvents],
+    [bar.measure.leftEvents, bar.measure.rightEvents],
+  );
   return (
     <View
       testID={`practice.scoreMeasure.bar.${bar.sequence}`}
@@ -263,6 +287,7 @@ function ScoreBarPanel({
       {(!visibleHand || visibleHand === 'left') ? <RhythmTrack
         label="LEFT"
         events={bar.measure.leftEvents}
+        alignmentEventGroups={alignmentEventGroups}
         durationQuarter={bar.measure.durationQuarter}
         color={visibleHand ? focusedColor ?? colors.left : colors.left}
         size={size}
@@ -275,6 +300,7 @@ function ScoreBarPanel({
       {(!visibleHand || visibleHand === 'right') ? <RhythmTrack
         label="RIGHT"
         events={bar.measure.rightEvents}
+        alignmentEventGroups={alignmentEventGroups}
         durationQuarter={bar.measure.durationQuarter}
         color={visibleHand ? focusedColor ?? colors.right : colors.right}
         size={size}

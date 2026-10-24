@@ -81,6 +81,13 @@ export interface BarNoteNotationOptions {
   size?: NoteNotationSize;
   /** Beam groups stop at this many quarter notes (normally one beat). */
   beamGroupQuarterNotes?: number;
+  /** Shared horizontal padding keeps both hands' beat positions aligned. */
+  anchorInsets?: NoteNotationAnchorInsets;
+}
+
+export interface NoteNotationAnchorInsets {
+  left: number;
+  right: number;
 }
 
 interface NoteNotationMetrics {
@@ -113,6 +120,62 @@ interface PositionedNote extends NoteNotationEvent {
 const EPSILON = 0.000001;
 const BEAM_SLOPE = -Math.tan((3 * Math.PI) / 180);
 const MINI_SLOT_WIDTHS: Record<number, number> = { 1: 15, 2: 15, 3: 12, 4: 11, 8: 8, 16: 6 };
+
+function calculateBarNoteAnchorInsets(
+  events: readonly NoteNotationEvent[],
+  { durationQuarter, width, size = 'full' }: Pick<BarNoteNotationOptions, 'durationQuarter' | 'width' | 'size'>,
+): NoteNotationAnchorInsets {
+  const shortestNote = events.length > 0
+    ? Math.min(...events.map((event) => event.durationQuarter))
+    : durationQuarter;
+  const noteSpacing = width * shortestNote / durationQuarter;
+  const sizeMaximum = size === 'mini' ? 6.4 : size === 'compact' ? 10.5 : 16;
+  const headWidth = Math.max(size === 'mini' ? 3.5 : 5, Math.min(sizeMaximum, noteSpacing * 0.62));
+  const left = Math.min(width / 2, headWidth / 2 + 2);
+  const hasFlags = events.some((event) => (event.beamCount ?? inferredBeamCount(event.durationQuarter)) > 0);
+  const dotSize = Math.max(2, headWidth * 0.66 * 0.24);
+  const flagWidth = Math.max(size === 'mini' ? 5 : 7, headWidth * 0.9);
+  const flagOverhang = hasFlags ? headWidth / 2 + Math.max(12, flagWidth * 1.5) + 4 : 0;
+  const dotOverhang = events.some((event) => isDottedValue(event.durationQuarter))
+    ? headWidth / 2 + dotSize * 1.7 + 3
+    : 0;
+
+  return {
+    left,
+    right: Math.min(width / 2, Math.max(headWidth / 2 + 2, flagOverhang, dotOverhang)),
+  };
+}
+
+/**
+ * Find a common note-anchor range for multiple hand lanes in one bar.
+ * Each lane keeps enough room for its own largest head, flag, or dot while
+ * shared anchors make matching beat positions land at the same x coordinate.
+ */
+export function createSharedBarNoteAnchorInsets(
+  eventGroups: readonly (readonly NoteNotationEvent[])[],
+  options: Pick<BarNoteNotationOptions, 'durationQuarter' | 'width' | 'size'>,
+): NoteNotationAnchorInsets {
+  if (!Number.isFinite(options.durationQuarter) || options.durationQuarter <= 0) {
+    throw new RangeError('A bar must have a positive duration.');
+  }
+  if (!Number.isFinite(options.width) || options.width <= 0) {
+    throw new RangeError('A bar must have a positive layout width.');
+  }
+
+  const insets = eventGroups.map((events) => {
+    events.forEach((event, index) => {
+      if (!Number.isFinite(event.durationQuarter) || event.durationQuarter <= 0) {
+        throw new RangeError(`Note ${index + 1} must have a positive duration.`);
+      }
+    });
+    return calculateBarNoteAnchorInsets(events, options);
+  });
+
+  return {
+    left: Math.max(0, ...insets.map(({ left }) => left)),
+    right: Math.max(0, ...insets.map(({ right }) => right)),
+  };
+}
 
 function beamGroupSize(count: number, beamIndex: number): number {
   if (beamIndex === 0 || count === 4 || count === 2) return count;
@@ -280,7 +343,7 @@ function buildNotationPlan(
         startIndex: firstIndex,
         endIndex: lastIndex,
         left,
-        top: middleY - beamHeight / 2,
+        top: Math.max(0, Math.min(metrics.height - beamHeight, middleY - beamHeight / 2)),
         width: Math.max(beamHeight, right - left),
         height: beamHeight,
         rotationDegrees: -3,
@@ -290,12 +353,16 @@ function buildNotationPlan(
 
   const headWidth = metrics.headWidth;
   const headHeight = metrics.headHeight;
-  const headTop = metrics.height - 5 - headHeight / 2;
+  const noteCenterY = Math.max(
+    headHeight / 2,
+    Math.min(metrics.height - headHeight / 2, metrics.noteBaselineY ?? metrics.height - 5),
+  );
+  const headTop = noteCenterY - headHeight / 2;
   const glyphs: NoteGlyphShape[] = notes.map((note, index) => {
     const stemCenterX = note.anchorX + headWidth * 0.3;
     const referenceX = primaryBeamStartX[index] ?? stemCenterX;
-    const stemTop = metrics.beamTop + beamHeight + BEAM_SLOPE * (stemCenterX - referenceX);
     const stemBottom = headTop + headHeight * 0.48;
+    const stemTop = Math.max(0, Math.min(stemBottom, metrics.beamTop + beamHeight + BEAM_SLOPE * (stemCenterX - referenceX)));
 
     return {
       key: `note-${note.sourceIndex}`,
@@ -381,7 +448,7 @@ function buildNotationPlan(
     beams,
     dots,
     tupletLabels,
-    noteBaselineY: metrics.noteBaselineY,
+    noteBaselineY: metrics.noteBaselineY === null ? null : noteCenterY,
   };
 }
 
@@ -429,14 +496,15 @@ export function createBarNoteNotationPlan(
   const beamGap = beamHeight + (size === 'mini' ? 1 : size === 'compact' ? 1.2 : 1.8);
   const beamTop = size === 'mini' ? 3 : size === 'compact' ? 4 : 5;
   const flagWidth = Math.max(size === 'mini' ? 5 : 7, headWidth * 0.9);
-  const leftInset = Math.min(options.width / 2, headWidth / 2 + 2);
-  const hasFlags = events.some((event) => (event.beamCount ?? inferredBeamCount(event.durationQuarter)) > 0);
-  const dotSize = Math.max(2, headHeight * 0.24);
-  const flagOverhang = hasFlags ? headWidth / 2 + Math.max(12, flagWidth * 1.5) + 4 : 0;
-  const dotOverhang = events.some((event) => isDottedValue(event.durationQuarter))
-    ? headWidth / 2 + dotSize * 1.7 + 3
-    : 0;
-  const rightInset = Math.min(options.width / 2, Math.max(headWidth / 2 + 2, flagOverhang, dotOverhang));
+  const ownInsets = calculateBarNoteAnchorInsets(events, options);
+  if (options.anchorInsets && (
+    !Number.isFinite(options.anchorInsets.left) || options.anchorInsets.left < 0 ||
+    !Number.isFinite(options.anchorInsets.right) || options.anchorInsets.right < 0
+  )) {
+    throw new RangeError('Shared note-anchor insets must be finite and non-negative.');
+  }
+  const leftInset = Math.max(ownInsets.left, options.anchorInsets?.left ?? 0);
+  const rightInset = Math.max(ownInsets.right, options.anchorInsets?.right ?? 0);
   const usableWidth = Math.max(0, options.width - leftInset - rightInset);
   const orderedEvents = Array.from(events)
     .map((event, originalIndex) => ({ event, originalIndex }))
