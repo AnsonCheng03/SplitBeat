@@ -218,6 +218,9 @@ export class RhythmTimingEngine {
     this.getStep = createExerciseStepGenerator({
       enabledSubdivisions: options.settings.enabledSubdivisions,
       enabledMixtures: options.settings.enabledMixtures,
+      mixtureNoteValues: options.settings.mixtureNoteValues,
+      mixtureRestsEnabled: options.settings.mixtureRestsEnabled,
+      barDurationQuarterNotes: metrics.beatsPerBar * pulseQuarterNotes(options.settings.timeSignature),
       changeIntervalBeats: options.settings.changeIntervalBeats,
       patternPairs: options.patternPairs,
       patternPairWeights: options.patternPairWeights,

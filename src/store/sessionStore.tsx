@@ -21,6 +21,7 @@ import {
 } from '@/rhythm/challenge';
 import { scoreFromMeasure } from '@/rhythm/scoreStaff';
 import { getSessionDurationSeconds, RhythmTimingEngine } from '@/rhythm/timingEngine';
+import { legacyMixturesIncludeRests, mixtureNoteValuesFromLegacyIds } from '@/rhythm/mixtures';
 import {
   DEFAULT_GOOD_WINDOW_MS,
   normalizeGoodWindowMs,
@@ -31,7 +32,7 @@ import { parseCombinationProgress, recordCombinationProgress } from '@/rhythm/ta
 import type { CombinationProgress } from '@/rhythm/targetedPractice';
 import { appendSessionRecord, createSessionRecord, parseSessionHistory } from '@/store/sessionHistory';
 import type { SessionRecord } from '@/store/sessionHistory';
-import { MIXTURE_PATTERN_IDS, SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
+import { MIXTURE_NOTE_VALUES, MIXTURE_PATTERN_IDS, SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
 import type { ImportedRhythmScore } from '@/types/importedScore';
 import type {
   ExerciseSettings,
@@ -100,6 +101,8 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   handRestsEnabled: false,
   enabledSubdivisions: ['quarter', 'eighth', 'triplet', 'sixteenth'],
   enabledMixtures: [],
+  mixtureNoteValues: [],
+  mixtureRestsEnabled: false,
   feel: 'straight',
   graceNotesEnabled: false,
   trainingMode: 'two-hand',
@@ -165,9 +168,12 @@ function restoreSettings(raw: string | null): ExerciseSettings {
       : DEFAULT_SETTINGS.enabledSubdivisions;
     const validSubdivisions =
       enabledSubdivisions.length >= 2 ? enabledSubdivisions : DEFAULT_SETTINGS.enabledSubdivisions;
-    const enabledMixtures = Array.isArray(parsed.enabledMixtures)
+    const legacyEnabledMixtures = Array.isArray(parsed.enabledMixtures)
       ? MIXTURE_PATTERN_IDS.filter((item) => parsed.enabledMixtures?.includes(item))
       : DEFAULT_SETTINGS.enabledMixtures;
+    const mixtureNoteValues = Array.isArray(parsed.mixtureNoteValues)
+      ? MIXTURE_NOTE_VALUES.filter((item) => parsed.mixtureNoteValues?.includes(item))
+      : mixtureNoteValuesFromLegacyIds(legacyEnabledMixtures);
     const durationSeconds = [30, 60, 120, 'endless'].includes(
       parsed.durationSeconds as number | 'endless',
     )
@@ -195,7 +201,9 @@ function restoreSettings(raw: string | null): ExerciseSettings {
       restBetweenChanges: parsed.restBetweenChanges === true,
       handRestsEnabled: parsed.handRestsEnabled === true,
       enabledSubdivisions: validSubdivisions as Subdivision[],
-      enabledMixtures: [...enabledMixtures],
+      enabledMixtures: [],
+      mixtureNoteValues: [...mixtureNoteValues],
+      mixtureRestsEnabled: parsed.mixtureRestsEnabled === true || legacyMixturesIncludeRests(legacyEnabledMixtures),
       feel: parsed.feel === 'swing' ? 'swing' : 'straight',
       graceNotesEnabled:
         typeof parsed.graceNotesEnabled === 'boolean'

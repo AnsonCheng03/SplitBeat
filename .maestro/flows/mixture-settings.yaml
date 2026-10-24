@@ -22,24 +22,26 @@ appId: com.splitbeat.twohandrhythm
     id: settings.rhythm.screen
 - scrollUntilVisible:
     element:
-      id: setup.mixture.dottedQuaverSemiquaver
+      id: setup.mixture.note.dottedEighth
     direction: DOWN
-- tapOn:
-    id: setup.mixture.dottedQuaverSemiquaver
-- scrollUntilVisible:
-    element:
-      id: setup.mixture.semiquaverTwoDemisemiquavers
-    direction: DOWN
-- tapOn:
-    id: setup.mixture.semiquaverTwoDemisemiquavers
-- scrollUntilVisible:
-    element:
-      id: setup.mixture.semiquaverDemisemiquaverRestDemisemiquaver
-    direction: DOWN
-- tapOn:
-    id: setup.mixture.semiquaverDemisemiquaverRestDemisemiquaver
 - assertVisible:
-    id: setup.mixture.dottedQuaverSemiquaver
+    id: setup.mixture.note.dottedEighth
+- tapOn:
+    id: setup.mixture.note.dottedEighth
+- scrollUntilVisible:
+    element:
+      id: setup.mixture.note.sixteenth
+    direction: DOWN
+- tapOn:
+    id: setup.mixture.note.sixteenth
+- scrollUntilVisible:
+    element:
+      id: setup.mixture.includeRests
+    direction: DOWN
+- tapOn:
+    id: setup.mixture.includeRests
+- assertVisible:
+    id: setup.mixture.note.sixteenth
 - scrollUntilVisible:
     element:
       id: settings.rhythm.back

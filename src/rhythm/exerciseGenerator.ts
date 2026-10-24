@@ -1,9 +1,14 @@
 import { SUBDIVISIONS } from '@/types/rhythm';
-import type { ExerciseStep, MixturePatternId, RhythmPatternPair, Subdivision } from '@/types/rhythm';
+import { generateMixturePattern } from '@/rhythm/mixtures';
+import type { ExerciseStep, MixtureNoteValue, MixturePatternId, RhythmPatternPair, Subdivision } from '@/types/rhythm';
 
 export interface ExerciseGeneratorOptions {
   enabledSubdivisions: Subdivision[];
+  /** Legacy, fixed mixture presets loaded from older settings. */
   enabledMixtures?: MixturePatternId[];
+  mixtureNoteValues?: MixtureNoteValue[];
+  mixtureRestsEnabled?: boolean;
+  barDurationQuarterNotes?: number;
   changeIntervalBeats: number;
   patternPairs?: readonly RhythmPatternPair[];
   patternPairWeights?: readonly number[];
@@ -80,12 +85,21 @@ export function createExerciseStepGenerator(options: ExerciseGeneratorOptions) {
   return (stepIndex: number): ExerciseStep => {
     while (steps.length <= stepIndex) {
       const previous = steps.at(-1);
+      const generatedMixtures = options.patternPairs?.length || !options.mixtureNoteValues?.length
+        ? []
+        : Array.from({ length: 4 }, () => generateMixturePattern(
+            options.mixtureNoteValues ?? [],
+            options.barDurationQuarterNotes ?? 4,
+            options.mixtureRestsEnabled === true,
+            random,
+          )).flatMap((mixture) => mixture ? [mixture.id] : []);
       const candidates: WeightedPattern[] = options.patternPairs?.length
         ? weightedPatterns(options.patternPairs, options.patternPairWeights)
         : (() => {
             const handChoices: { subdivision: Subdivision; mixtureId?: MixturePatternId }[] = [
               ...allowed.map((subdivision) => ({ subdivision })),
-              ...allowedMixtures.map((mixtureId) => ({ subdivision: 'quarter' as const, mixtureId })),
+              ...[...new Set([...allowedMixtures, ...generatedMixtures])]
+                .map((mixtureId) => ({ subdivision: 'quarter' as const, mixtureId })),
             ];
             return handChoices.flatMap((left) =>
               handChoices.map((right) => ({

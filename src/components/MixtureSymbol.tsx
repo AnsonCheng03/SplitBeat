@@ -21,7 +21,9 @@ export function MixtureSymbol({
   const { t } = useI18n();
   const pattern = getMixturePattern(mixtureId);
   const size: NoteNotationSize = compact ? 'compact' : 'full';
-  const notationWidth = compact ? 58 : 82;
+  const notationWidth = compact
+    ? Math.min(112, Math.max(58, pattern.atoms.length * 7))
+    : Math.min(220, Math.max(82, pattern.atoms.length * 12));
   const noteEvents = useMemo(() => {
     return pattern.atoms.flatMap((atom, index) => atom.kind === 'note'
       ? [{

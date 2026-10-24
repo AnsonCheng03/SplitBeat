@@ -1,4 +1,4 @@
-import { patternLabelForHand } from '@/rhythm/mixtures';
+import { isMixturePatternId, patternLabelForHand } from '@/rhythm/mixtures';
 import type { ImportedRhythmScore, ScoreRhythmEvent } from '@/types/importedScore';
 import type {
   CombinationStats,
@@ -9,7 +9,7 @@ import type {
   TimeSignature,
   TrainingMode,
 } from '@/types/rhythm';
-import { MIXTURE_PATTERN_IDS, SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
+import { SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
 
 export interface CombinationProgress {
   id: string;
@@ -116,7 +116,7 @@ function isSubdivision(value: unknown): value is Subdivision {
 }
 
 function isMixture(value: unknown): value is MixturePatternId {
-  return typeof value === 'string' && MIXTURE_PATTERN_IDS.includes(value as MixturePatternId);
+  return isMixturePatternId(value);
 }
 
 function isCombinationProgress(value: unknown): value is CombinationProgress {

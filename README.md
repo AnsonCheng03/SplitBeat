@@ -75,7 +75,7 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 
 Quarter, eighth/quaver, sixteenth/semiquaver, 32nd/demisemiquaver, and 64th/hemidemisemiquaver values are evenly spaced on a quarter-note grid. Tuplets are grouped across one metronome beat, whose length follows the time signature: duplets (2) through nonuplets (9), including triplets, are supported. For example, a duplet in 6/8 divides its dotted-quarter pulse into two equal notes; a triplet in 2/2 divides its half-note pulse into three. Tuplet symbols show their group number, and imported MusicXML tuplet marks are carried into the bar preview. The default enables quarter, eighth, triplet, and sixteenth; faster values and other tuplets can be enabled in Rhythm & meter settings.
 
-The **Mixture** section in Rhythm & meter lets either hand receive mixed note values inside one pattern: dotted quaver + semiquaver, semiquaver + two demisemiquavers, or semiquaver + demisemiquaver rest + demisemiquaver. The half-beat figures repeat to fill each 4/4 beat. Mixture note onsets and rests are included in timing, scoring, replay, and generated score notation. Mixtures are off by default.
+The **Mixture** section in Rhythm & meter lets you choose note values and optionally rests. Split Beat generates a fresh mixed pattern for either hand at each change. It excludes note values longer than the current bar and keeps the full generated pattern at or below one bar; shorter patterns repeat until the next change. Generated notes and rests are included in timing, scoring, replay, and score notation. Mixtures are off until at least two note values are selected, or one value is selected with rests enabled. Existing saved mixture presets are migrated to their note-value choices.
 
 Choose 2/4, 3/4, 4/4, 5/4, 7/4, 2/2, 3/8, 6/8, 9/8, or 12/8 in Rhythm & meter settings. BPM follows the meter's written beat: denominator-note beats in simple meters, dotted-quarter pulses in 6/8, 9/8, and 12/8. For example, 6/8 at 60 BPM has two metronome pulses per bar, while quarter-note events are spaced about 667 ms apart. Pattern changes and the count-in use those same metronome pulses.
 
@@ -191,7 +191,7 @@ The feature-flags flow checks the feature list and its **Enable All** action. It
 npm run e2e:features -- --device DEVICE_ID
 ~~~
 
-The Rhythm & meter settings flow checks that the three Mixture choices can be enabled:
+The Rhythm & meter settings flow checks that mixture note values and rests can be selected:
 
 ~~~sh
 E2E_MAESTRO_FLOW=mixture-settings.yaml npm run e2e:maestro -- --device DEVICE_ID

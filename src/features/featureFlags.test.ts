@@ -18,6 +18,8 @@ const settings: ExerciseSettings = {
   handRestsEnabled: true,
   enabledSubdivisions: ['quarter', 'eighth', 'triplet'],
   enabledMixtures: ['dottedQuaverSemiquaver'],
+  mixtureNoteValues: ['dottedEighth', 'sixteenth'],
+  mixtureRestsEnabled: true,
   feel: 'swing',
   graceNotesEnabled: true,
   trainingMode: 'single-hand',
@@ -79,6 +81,8 @@ test('disabled feature groups are removed from effective session settings', () =
   assert.equal(result.feel, 'straight');
   assert.deepEqual(result.enabledSubdivisions, ['quarter', 'eighth']);
   assert.deepEqual(result.enabledMixtures, []);
+  assert.deepEqual(result.mixtureNoteValues, []);
+  assert.equal(result.mixtureRestsEnabled, false);
   assert.equal(result.restBetweenChanges, false);
   assert.equal(result.handRestsEnabled, false);
   assert.equal(result.graceNotesEnabled, false);

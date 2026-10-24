@@ -28,7 +28,23 @@ export const MIXTURE_PATTERN_IDS = [
   'semiquaverTwoDemisemiquavers',
   'semiquaverDemisemiquaverRestDemisemiquaver',
 ] as const;
-export type MixturePatternId = (typeof MIXTURE_PATTERN_IDS)[number];
+export type LegacyMixturePatternId = (typeof MIXTURE_PATTERN_IDS)[number];
+export type MixturePatternId = LegacyMixturePatternId | `mix1-${string}`;
+export const MIXTURE_NOTE_VALUES = [
+  'whole',
+  'dottedHalf',
+  'half',
+  'dottedQuarter',
+  'quarter',
+  'dottedEighth',
+  'eighth',
+  'dottedSixteenth',
+  'sixteenth',
+  'dottedThirtySecond',
+  'thirtySecond',
+  'sixtyFourth',
+] as const;
+export type MixtureNoteValue = (typeof MIXTURE_NOTE_VALUES)[number];
 export const TIME_SIGNATURES = [
   '2/4',
   '3/4',
@@ -94,6 +110,10 @@ export interface ExerciseSettings {
   handRestsEnabled: boolean;
   enabledSubdivisions: Subdivision[];
   enabledMixtures: MixturePatternId[];
+  /** Note values the automatic mixture generator can combine. */
+  mixtureNoteValues?: MixtureNoteValue[];
+  /** Whether generated mixtures may contain rests. */
+  mixtureRestsEnabled?: boolean;
   feel: RhythmicFeel;
   graceNotesEnabled: boolean;
   trainingMode: TrainingMode;

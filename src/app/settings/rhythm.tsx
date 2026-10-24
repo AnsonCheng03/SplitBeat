@@ -7,12 +7,13 @@ import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsPage } from '@/components/SettingsPage';
 import { SettingsToggleRow } from '@/components/SettingsToggleRow';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
-import { MIXTURE_PATTERNS } from '@/rhythm/mixtures';
+import { mixtureNoteOptionsForBar } from '@/rhythm/mixtures';
+import { barDurationQuarterNotes } from '@/rhythm/targetedPractice';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import { BASIC_SUBDIVISIONS } from '@/features/featureFlags';
 import { SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
-import type { ExerciseSettings, Subdivision, TimeSignature } from '@/types/rhythm';
+import type { ExerciseSettings, MixtureNoteValue, Subdivision, TimeSignature } from '@/types/rhythm';
 
 const intervals: { label: string; value: ExerciseSettings['changeIntervalBeats'] }[] = [
   { label: '8 beats', value: 8 },
@@ -42,13 +43,22 @@ export default function RhythmSettingsScreen() {
     updateSettings({ enabledSubdivisions: next });
   };
 
-  const toggleMixture = (mixtureId: (typeof MIXTURE_PATTERNS)[number]['id']) => {
-    const enabled = settings.enabledMixtures.includes(mixtureId);
+  const toggleMixtureNoteValue = (noteValue: MixtureNoteValue) => {
+    const noteValues = settings.mixtureNoteValues ?? [];
+    const enabled = noteValues.includes(noteValue);
     updateSettings({
-      enabledMixtures: enabled
-        ? settings.enabledMixtures.filter((item) => item !== mixtureId)
-        : [...settings.enabledMixtures, mixtureId],
+      mixtureNoteValues: enabled
+        ? noteValues.filter((item) => item !== noteValue)
+        : [...noteValues, noteValue],
     });
+  };
+
+  const updateTimeSignature = (timeSignature: TimeSignature) => {
+    const barLength = barDurationQuarterNotes(timeSignature);
+    const mixtureNoteValues = (settings.mixtureNoteValues ?? []).filter((value) =>
+      mixtureNoteOptionsForBar(barLength).some((option) => option.value === value),
+    );
+    updateSettings({ timeSignature, mixtureNoteValues });
   };
 
   return (
@@ -70,7 +80,7 @@ export default function RhythmSettingsScreen() {
                 accessibilityRole="radio"
                 accessibilityState={{ selected }}
                 accessibilityLabel={t('{signature} time', { signature: timeSignature })}
-                onPress={() => updateSettings({ timeSignature })}
+                onPress={() => updateTimeSignature(timeSignature)}
                 style={{
                   flexGrow: 1,
                   flexBasis: '17%',
@@ -156,23 +166,22 @@ export default function RhythmSettingsScreen() {
 
       {featureFlags.mixtures ? <Section title="MIXTURE">
         <Text style={helperText}>
-          Choose mixed note groups to use for either hand. The shorter half-beat patterns repeat to fill a 4/4 beat.
+          Choose note values that Split Beat may combine for either hand. It generates a fresh pattern for each change and keeps the pattern within one bar.
         </Text>
-        <View style={{ gap: 8, marginTop: 10 }}>
-          {MIXTURE_PATTERNS.map((mixture) => {
-            const selected = settings.enabledMixtures.includes(mixture.id);
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+          {mixtureNoteOptionsForBar(barDurationQuarterNotes(settings.timeSignature)).map((option) => {
+            const selected = (settings.mixtureNoteValues ?? []).includes(option.value);
             return (
               <Pressable
-                key={mixture.id}
-                testID={`setup.mixture.${mixture.id}`}
+                key={option.value}
+                testID={`setup.mixture.note.${option.value}`}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: selected }}
-                accessibilityLabel={`${t(mixture.label)}. ${t(mixture.detail)}`}
-                onPress={() => toggleMixture(mixture.id)}
+                accessibilityLabel={t(option.label)}
+                onPress={() => toggleMixtureNoteValue(option.value)}
                 style={{
-                  minHeight: 56,
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
+                  minHeight: 40,
+                  paddingHorizontal: 12,
                   borderRadius: 12,
                   justifyContent: 'center',
                   backgroundColor: selected ? colors.leftSurface : colors.surface,
@@ -181,15 +190,22 @@ export default function RhythmSettingsScreen() {
                 }}
               >
                 <Text style={{ color: selected ? colors.left : colors.text, fontSize: 13, fontWeight: '800' }}>
-                  {mixture.label}
-                </Text>
-                <Text style={{ color: colors.muted, fontSize: 11, marginTop: 3 }}>
-                  {mixture.detail}
+                  {t(option.label)}
                 </Text>
               </Pressable>
             );
           })}
         </View>
+        <SettingsToggleRow
+          testID="setup.mixture.includeRests"
+          label="Include rests"
+          description="Rests may be mixed with the selected note values."
+          value={settings.mixtureRestsEnabled === true}
+          onChange={(mixtureRestsEnabled) => updateSettings({ mixtureRestsEnabled })}
+        />
+        <Text style={helperText}>
+          Select two or more note values, or one value with rests enabled. Longer values than the current bar are not offered.
+        </Text>
       </Section> : null}
 
       {featureFlags.restsAndGrace ? <Section title="EXTRA">

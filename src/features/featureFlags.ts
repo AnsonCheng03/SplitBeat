@@ -101,6 +101,8 @@ export function applyFeatureFlagsToSettings(
     feel: flags.rhythmExtensions ? settings.feel : 'straight',
     enabledSubdivisions: safeSubdivisions,
     enabledMixtures: flags.mixtures ? settings.enabledMixtures : [],
+    mixtureNoteValues: flags.mixtures ? settings.mixtureNoteValues ?? [] : [],
+    mixtureRestsEnabled: flags.mixtures && settings.mixtureRestsEnabled === true,
     graceNotesEnabled: flags.restsAndGrace && settings.graceNotesEnabled,
     restBetweenChanges: flags.restsAndGrace && settings.restBetweenChanges,
     handRestsEnabled: flags.restsAndGrace && settings.handRestsEnabled,

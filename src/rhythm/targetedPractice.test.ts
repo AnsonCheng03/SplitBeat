@@ -2,6 +2,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { generateMixturePattern } from '@/rhythm/mixtures';
 import {
   combinationAccuracy,
   createTypedBarScore,
@@ -62,6 +63,18 @@ test('combination filters search labels and isolate weak, mixture, and rest pair
   assert.equal(filterCombinationProgress(records, 'rests').length, 1);
   assert.equal(filterCombinationProgress(records, 'all', 'Dotted quaver').length, 1);
   assert.equal(filterCombinationProgress(records, 'all', '6/8').length, 0);
+});
+
+test('generated mixture patterns remain searchable after combination progress is saved', () => {
+  const mixture = generateMixturePattern(['dottedEighth', 'sixteenth'], 4, false, () => 0.4);
+  assert.ok(mixture);
+  const saved = recordCombinationProgress([], [combination({ leftMixture: mixture.id })], '4/4', 1_000);
+  const restored = parseCombinationProgress(JSON.stringify(saved));
+
+  assert.equal(restored.length, 1);
+  assert.equal(restored[0]?.leftMixture, mixture.id);
+  assert.equal(filterCombinationProgress(restored, 'mixtures').length, 1);
+  assert.equal(filterCombinationProgress(restored, 'all', 'Dotted eighth').length, 1);
 });
 
 test('combination progress storage ignores malformed entries and JSON', () => {

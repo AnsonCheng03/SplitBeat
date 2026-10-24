@@ -4,12 +4,14 @@ import { Alert, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MIXTURE_PATTERNS, patternLabelForHand } from '@/rhythm/mixtures';
+import { generateMixturePattern, patternLabelForHand } from '@/rhythm/mixtures';
+import type { MixturePattern } from '@/rhythm/mixtures';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import {
   combinationAccuracy,
   combinationHandAccuracy,
   combinationTitle,
+  barDurationQuarterNotes,
   createTypedBarScore,
   filterCombinationProgress,
   practicePairFromProgress,
@@ -78,6 +80,27 @@ export default function ExerciseScreen() {
     () => filterCombinationProgress(combinationProgress, filter, query),
     [combinationProgress, filter, query],
   );
+
+  const mixtureExamples = useMemo(() => {
+    const values = settings.mixtureNoteValues ?? [];
+    if (values.length === 0) return [];
+
+    const barLength = barDurationQuarterNotes(settings.timeSignature);
+    const examples: MixturePattern[] = [];
+    const seen = new Set<string>();
+    for (let seed = 1; seed <= 24 && examples.length < 4; seed += 1) {
+      const pattern = generateMixturePattern(
+        values,
+        barLength,
+        settings.mixtureRestsEnabled === true,
+      );
+      if (pattern && !seen.has(pattern.id)) {
+        examples.push(pattern);
+        seen.add(pattern.id);
+      }
+    }
+    return examples;
+  }, [settings.mixtureNoteValues, settings.mixtureRestsEnabled, settings.timeSignature]);
 
   const launch = async (prepare: () => Promise<void>) => {
     if (starting) return;
@@ -204,8 +227,8 @@ export default function ExerciseScreen() {
           <>
             <Text style={sectionTitle}>CHOOSE A RHYTHM FOR EACH HAND</Text>
             <View style={{ flexDirection: 'row', alignItems: 'stretch', gap: 12, marginTop: 9 }}>
-              <PatternPicker hand="left" selection={leftSelection} onChange={setLeftSelection} />
-              <PatternPicker hand="right" selection={rightSelection} onChange={setRightSelection} />
+              <PatternPicker hand="left" selection={leftSelection} mixtures={mixtureExamples} onChange={setLeftSelection} />
+              <PatternPicker hand="right" selection={rightSelection} mixtures={mixtureExamples} onChange={setRightSelection} />
             </View>
             <PrimaryButton testID="exercise.practicePair" title={starting ? 'PREPARING…' : 'PRACTICE THIS PAIR'} onPress={() => void practiceSelectedPair()} disabled={starting} />
           </>
@@ -268,12 +291,12 @@ function CombinationTile({ record, onPress }: { record: CombinationProgress; onP
   );
 }
 
-function PatternPicker({ hand, selection, onChange }: { hand: Hand; selection: PatternSelection; onChange: (selection: PatternSelection) => void }) {
+function PatternPicker({ hand, selection, mixtures, onChange }: { hand: Hand; selection: PatternSelection; mixtures: readonly MixturePattern[]; onChange: (selection: PatternSelection) => void }) {
   const { colors } = useTheme();
   const color = hand === 'left' ? colors.left : colors.right;
   const options: { key: string; label: string; subdivision: Subdivision; mixture?: MixturePatternId; rest: boolean }[] = [
     ...SUBDIVISIONS.map((subdivision) => ({ key: subdivision, label: subdivisionShortLabels[subdivision] ?? SUBDIVISION_LABELS[subdivision], subdivision, rest: false })),
-    ...MIXTURE_PATTERNS.map((mixture) => ({ key: mixture.id, label: mixture.label, subdivision: 'quarter' as const, mixture: mixture.id, rest: false })),
+    ...mixtures.map((mixture) => ({ key: mixture.id, label: mixture.label, subdivision: 'quarter' as const, mixture: mixture.id, rest: false })),
     { key: 'rest', label: 'Rest', subdivision: 'quarter', rest: true },
   ];
   const isSelected = (option: (typeof options)[number]) =>
