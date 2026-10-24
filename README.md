@@ -51,14 +51,14 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 
 ## Architecture
 
-- `src/app/` contains the mode-select home, guided course, session setup, separate rhythm/audio/timing settings pages, practice, score import, results, and records routes.
-- `src/rhythm/` contains subdivision math, selectable mixed note/rest patterns, non-repeating pair generation with optional independent hand rests, conversion of generated patterns into pitch-free score bars, the authored 20-lesson course, tap matching, scoring, and per-hand challenge streak rules.
+- `src/app/` contains the mode-select home, guided course, focused exercise and typed-bar editor, session setup, separate rhythm/audio/timing settings pages, practice, score import, results, and records routes.
+- `src/rhythm/` contains subdivision math, selectable mixed note/rest patterns, non-repeating pair generation with optional independent hand rests, typed-bar validation and combination accuracy aggregation, conversion of generated patterns into pitch-free score bars, the authored 20-lesson course, tap matching, scoring, and per-hand challenge streak rules.
 - `src/rhythm/noteNotation.ts` builds repeated subdivision symbols and mixed-duration bar notation with beat-aware beams and flags.
 - `src/rhythm/musicXmlParser.ts` and `src/rhythm/midiParser.ts` convert MusicXML and Standard MIDI files into one- or two-hand rhythm tracks.
 - `src/rhythm/scoreTemplates.ts` contains short built-in public-domain melody practice arrangements; `src/rhythm/importedScoreLibrary.ts` validates and indexes recent and saved score data.
 - `src/rhythm/timingCalibration.ts` normalizes per-hand timing calibration and the selectable scoring window.
 - src/audio/ synthesizes selectable metronome and hand click tones, then schedules metronome clicks on the native audio clock.
-- src/store/ owns session state, prepares the audio context and offline click sounds at app startup, and persists exercise settings, course progress, and summary-only session history locally. Expected note positions and actual tap timestamps stay in the active result screen for visual replay only.
+- src/store/ owns session state, prepares the audio context and offline click sounds at app startup, and persists exercise settings, course progress, combination accuracy, and summary-only session history locally. Expected note positions and actual tap timestamps stay in the active result screen for visual replay only.
 - `src/components/` contains reusable symbols, settings controls, beat indicators, start buttons, and large touch zones. Noteheads, stems, flags, and beams are engraved by VexFlow in an offline Expo DOM view; the native rhythm planner supplies note times and beam groups.
 - `expo-build-properties` enables the iOS scene lifecycle required by iOS 27 and builds React Native from source, avoiding a missing prebuilt framework when launching the iPad simulator.
 - The metronome synthesizes output and never records audio. A version-pinned postinstall patch disables the audio library's unused iOS microphone permission methods; the app does not request microphone access.
@@ -72,6 +72,12 @@ The **Mixture** section in Rhythm & meter lets either hand receive mixed note va
 Choose 2/4, 3/4, 4/4, 5/4, 7/4, 2/2, 3/8, 6/8, 9/8, or 12/8 in Rhythm & meter settings. BPM follows the meter's written beat: denominator-note beats in simple meters, dotted-quarter pulses in 6/8, 9/8, and 12/8. For example, 6/8 at 60 BPM has two metronome pulses per bar, while quarter-note events are spaced about 667 ms apart. Pattern changes and the count-in use those same metronome pulses.
 
 Timed sessions treat the selected length as a minimum and finish at the next bar line, so both hands complete the final bar instead of stopping in the middle of it. The same rule applies to imported scores.
+
+## Focused practice and typed bars
+
+Choose **Focus practice** on the home screen to open the **Review pairs**, **Choose a pair**, and **Type a bar** tabs. Review finds combinations from completed two-hand generated-practice sessions; search or filter them by note name, meter, weakness, mixture, or rest, and tap any pair to practise it by itself. Combination accuracy is cumulative across sessions and includes each hand's expected and correct events, rests, mixtures, and meter. The list sorts the lowest accuracy first; **Needs work** filters below 80%. These records are stored locally on the device. Single-hand and imported-score sessions do not add generated-pattern combinations.
+
+The same page lets the player select a rhythm for each hand or type a custom one-bar score. Values are space or comma separated: `w` whole, `h` half, `q` quarter, `dq` dotted quarter, `e` eighth, `de` dotted eighth, `16` sixteenth, `d16` dotted sixteenth, `32` demisemiquaver, `d32` dotted 32nd, and `64` hemidemisemiquaver. Prefix a value with `r` for a rest, such as `rq`, `re`, or `r16`. Each active hand must fill exactly one bar in the selected meter; either hand may rest for the whole bar as long as the other plays. The entered score is played once, with rests shown in notation but never counted as expected taps.
 
 Choose Straight or Swing feel in Rhythm & meter settings. Swing moves binary offbeats toward a 2:1 long-short ratio within each quarter note; quarter notes and all tuplets keep their regular timing. Sixteenth, 32nd, and 64th notes use the same long-short eighth-note grid. Optionally enable Grace note pickups: the engine adds one extra expected tap for each hand just before every pattern change. Or enable Rest before each change: both hands stay silent for the last beat before the next pattern while the metronome continues. The rest takes precedence over grace pickups. These settings are saved with the other local preferences.
 
@@ -163,6 +169,13 @@ The Rhythm & meter settings flow checks that the three Mixture choices can be en
 
 ~~~sh
 E2E_MAESTRO_FLOW=mixture-settings.yaml npm run e2e:maestro -- --device DEVICE_ID
+~~~
+
+The focused-practice flow checks the custom bar editor and its silent score-practice path:
+
+~~~sh
+npm run e2e:ios
+npm run e2e:exercise -- --device DEVICE_ID
 ~~~
 
 The MusicXML import flow has a separate Maestro test:

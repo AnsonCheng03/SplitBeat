@@ -128,27 +128,50 @@ export default function HomeScreen() {
         </View>
 
         <View style={{ width: '100%', maxWidth: 960, alignSelf: 'center', gap: 10, paddingBottom: 2 }}>
-          <Pressable
-            testID="home.importScore"
-            accessibilityRole="button"
-            accessibilityLabel="Train from a score"
-            onPress={() => router.push('/import-score')}
-            hitSlop={8}
-            style={({ pressed }) => ({
-              alignSelf: 'flex-start',
-              minHeight: 48,
-              paddingHorizontal: 16,
-              justifyContent: 'center',
-              borderRadius: 13,
-              backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-              borderWidth: 1,
-              borderColor: colors.line,
-            })}
-          >
-            <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '900', letterSpacing: 0.8 }}>
-              TRAIN FROM A SCORE  ›
-            </Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', gap: 9 }}>
+            <Pressable
+              testID="home.exercise"
+              accessibilityRole="button"
+              accessibilityLabel="Review combinations and create a rhythm to practise"
+              onPress={() => router.push('/exercise')}
+              hitSlop={8}
+              style={({ pressed }) => ({
+                flex: 1,
+                minHeight: 46,
+                paddingHorizontal: 15,
+                justifyContent: 'center',
+                borderRadius: 13,
+                backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
+                borderWidth: 1,
+                borderColor: colors.line,
+              })}
+            >
+              <Text style={{ color: colors.left, fontSize: 11, fontWeight: '900', letterSpacing: 0.8 }}>
+                FOCUS PRACTICE  ›
+              </Text>
+            </Pressable>
+            <Pressable
+              testID="home.importScore"
+              accessibilityRole="button"
+              accessibilityLabel="Train from a score"
+              onPress={() => router.push('/import-score')}
+              hitSlop={8}
+              style={({ pressed }) => ({
+                flex: 1,
+                minHeight: 46,
+                paddingHorizontal: 15,
+                justifyContent: 'center',
+                borderRadius: 13,
+                backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
+                borderWidth: 1,
+                borderColor: colors.line,
+              })}
+            >
+              <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '900', letterSpacing: 0.8 }}>
+                TRAIN FROM A SCORE  ›
+              </Text>
+            </Pressable>
+          </View>
           <AudioStartButton
             testID="home.start"
             variant="wide"

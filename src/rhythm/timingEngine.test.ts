@@ -1022,3 +1022,33 @@ test('pausing freezes the rhythm clock and excludes the pause from session durat
     ['left', true],
   ]);
 });
+
+test('typed score rests remain visible notation but do not create expected taps', () => {
+  const score: ImportedRhythmScore = {
+    formatVersion: 1,
+    title: 'A bar with rests',
+    timeSignature: '4/4',
+    trackCount: 1,
+    bpm: 60,
+    totalQuarterNotes: 4,
+    warnings: [],
+    measures: [{
+      index: 0,
+      startQuarter: 0,
+      durationQuarter: 4,
+      leftEvents: [
+        { startQuarter: 0, durationQuarter: 1 },
+        { startQuarter: 1, durationQuarter: 1, isRest: true },
+        { startQuarter: 2, durationQuarter: 1 },
+        { startQuarter: 3, durationQuarter: 1, isRest: true },
+      ],
+      rightEvents: [],
+    }],
+  };
+  const engine = new RhythmTimingEngine({ settings, sessionStartTime: 0, importedScore: score });
+  const results = engine.advance(5_000).results;
+
+  assert.equal(results?.left.totalExpected, 2);
+  assert.equal(results?.left.miss, 2);
+  assert.equal(results?.replayExpectedEvents?.length, 2);
+});

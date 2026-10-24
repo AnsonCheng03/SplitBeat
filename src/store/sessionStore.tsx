@@ -20,6 +20,8 @@ import {
   normalizeTapOffsetMs,
 } from '@/rhythm/timingCalibration';
 import { timeSignatureMetrics } from '@/rhythm/subdivisions';
+import { parseCombinationProgress, recordCombinationProgress } from '@/rhythm/targetedPractice';
+import type { CombinationProgress } from '@/rhythm/targetedPractice';
 import { appendSessionRecord, createSessionRecord, parseSessionHistory } from '@/store/sessionHistory';
 import type { SessionRecord } from '@/store/sessionHistory';
 import { MIXTURE_PATTERN_IDS, SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
@@ -38,6 +40,7 @@ import type {
 
 const SETTINGS_KEY = 'two-hand-rhythm-trainer.settings.v1';
 const SESSION_HISTORY_KEY = 'split-beat.session-history.v1';
+const COMBINATION_PROGRESS_KEY = 'split-beat.combination-progress.v1';
 const COUNT_IN_BEATS = 3;
 const AUDIO_LEAD_IN_MS = 300;
 const FORCE_SILENT_E2E = process.env.EXPO_PUBLIC_E2E_SILENT === '1';
@@ -99,6 +102,8 @@ interface SessionContextValue {
   results: SessionResults | null;
   sessionHistory: SessionRecord[];
   sessionHistoryLoaded: boolean;
+  combinationProgress: CombinationProgress[];
+  combinationProgressLoaded: boolean;
   discardReplayData: () => void;
 }
 
@@ -203,6 +208,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   const [results, setResults] = useState<SessionResults | null>(null);
   const [sessionHistory, setSessionHistory] = useState<SessionRecord[]>([]);
   const [sessionHistoryLoaded, setSessionHistoryLoaded] = useState(false);
+  const [combinationProgress, setCombinationProgress] = useState<CombinationProgress[]>([]);
+  const [combinationProgressLoaded, setCombinationProgressLoaded] = useState(false);
   const [audioStatus, setAudioStatus] = useState<AudioPreparationStatus>('loading');
   const engineRef = useRef<RhythmTimingEngine | null>(null);
   const audioRef = useRef<MetronomeAudio | null>(null);
@@ -229,6 +236,23 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       })
       .finally(() => {
         if (active) setSessionHistoryLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void AsyncStorage.getItem(COMBINATION_PROGRESS_KEY)
+      .then((raw) => {
+        if (active) setCombinationProgress(parseCombinationProgress(raw));
+      })
+      .catch(() => {
+        if (active) setCombinationProgress([]);
+      })
+      .finally(() => {
+        if (active) setCombinationProgressLoaded(true);
       });
     return () => {
       active = false;
@@ -338,6 +362,19 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     setSessionHistory((current) => {
       const next = appendSessionRecord(current, record);
       void AsyncStorage.setItem(SESSION_HISTORY_KEY, JSON.stringify(next)).catch(() => undefined);
+      return next;
+    });
+    if (completedResults.trainingMode !== 'two-hand') return;
+    setCombinationProgress((current) => {
+      const next = recordCombinationProgress(
+        current,
+        completedResults.combinations,
+        completedResults.timeSignature,
+        Date.now(),
+      );
+      if (next !== current) {
+        void AsyncStorage.setItem(COMBINATION_PROGRESS_KEY, JSON.stringify(next)).catch(() => undefined);
+      }
       return next;
     });
   }, []);
@@ -627,8 +664,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   );
 
   const value = useMemo(
-    () => ({ settings, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, discardReplayData }),
-    [settings, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, discardReplayData],
+    () => ({ settings, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, discardReplayData }),
+    [settings, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, discardReplayData],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
