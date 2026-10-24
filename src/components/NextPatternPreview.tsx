@@ -54,25 +54,12 @@ function HandPreview({ hand, subdivision, mixtureId, rest, timeSignature, compac
         {label}
       </Text>
       {rest ? (
-        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} compact scale={compact ? 0.65 : 0.78} rest />
+        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} compact scale={compact ? 0.85 : 1} rest />
       ) : mixtureId ? (
-        <MixtureSymbol mixtureId={mixtureId} color={color} compact scale={compact ? 0.65 : 0.78} />
+        <MixtureSymbol mixtureId={mixtureId} color={color} compact scale={compact ? 0.85 : 1} />
       ) : (
-        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} compact scale={compact ? 0.65 : 0.78} />
+        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} compact scale={compact ? 0.85 : 1} />
       )}
-      <Text
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        style={{
-          color: colors.text,
-          fontSize: compact ? 11 : 13,
-          lineHeight: compact ? 14 : 17,
-          fontWeight: '800',
-          flexShrink: 1,
-        }}
-      >
-        {patternLabelForHand(subdivision, rest, mixtureId)}
-      </Text>
     </View>
   );
 }
