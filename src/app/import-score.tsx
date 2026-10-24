@@ -21,7 +21,7 @@ import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import { parseMusicXmlRhythm } from '@/rhythm/musicXmlParser';
 import { useRhythmSession } from '@/store/sessionStore';
 import { loadImportedScoreLibrary, saveImportedScoreLibrary } from '@/store/importedScoreLibrary';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 import type { ImportedRhythmScore } from '@/types/importedScore';
 
 const E2E_SAMPLE_MUSICXML = `<score-partwise>
@@ -68,6 +68,7 @@ function TemplateFilterChip({
   accessibilityLabel: string;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
   return (
     <Pressable
       testID={testID}
@@ -91,6 +92,7 @@ function TemplateFilterChip({
 }
 
 export default function ImportScoreScreen() {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();

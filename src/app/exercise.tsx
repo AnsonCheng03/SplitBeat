@@ -17,7 +17,7 @@ import {
 } from '@/rhythm/targetedPractice';
 import type { CombinationFilter, CombinationProgress } from '@/rhythm/targetedPractice';
 import { useRhythmSession } from '@/store/sessionStore';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 import { SUBDIVISIONS } from '@/types/rhythm';
 import type { Hand, MixturePatternId, Subdivision } from '@/types/rhythm';
 
@@ -51,6 +51,7 @@ function noteSelectionLabel(selection: PatternSelection): string {
 }
 
 export default function ExerciseScreen() {
+  const { colors } = useTheme();
   const router = useRouter();
   const { t } = useI18n();
   const {
@@ -60,6 +61,7 @@ export default function ExerciseScreen() {
     combinationProgressLoaded,
     prepareExercise,
   } = useRhythmSession();
+  const sectionTitle = { color: colors.muted, fontSize: 10, fontWeight: '900' as const, letterSpacing: 1.2 };
   useEffect(() => {
     if (!featureFlags.focusPractice) router.replace('/');
   }, [featureFlags.focusPractice, router]);
@@ -237,6 +239,7 @@ export default function ExerciseScreen() {
 }
 
 function CombinationTile({ record, onPress }: { record: CombinationProgress; onPress: () => void }) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const accuracy = combinationAccuracy(record);
   const leftAccuracy = combinationHandAccuracy(record, 'left');
@@ -266,6 +269,7 @@ function CombinationTile({ record, onPress }: { record: CombinationProgress; onP
 }
 
 function PatternPicker({ hand, selection, onChange }: { hand: Hand; selection: PatternSelection; onChange: (selection: PatternSelection) => void }) {
+  const { colors } = useTheme();
   const color = hand === 'left' ? colors.left : colors.right;
   const options: { key: string; label: string; subdivision: Subdivision; mixture?: MixturePatternId; rest: boolean }[] = [
     ...SUBDIVISIONS.map((subdivision) => ({ key: subdivision, label: subdivisionShortLabels[subdivision] ?? SUBDIVISION_LABELS[subdivision], subdivision, rest: false })),
@@ -295,6 +299,7 @@ function PatternPicker({ hand, selection, onChange }: { hand: Hand; selection: P
 }
 
 function BarInput({ label, color, value, onChangeText, testID }: { label: string; color: string; value: string; onChangeText: (value: string) => void; testID: string }) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   return (
     <View style={{ flex: 1, minWidth: 0, padding: 11, borderRadius: 13, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
@@ -315,20 +320,21 @@ function BarInput({ label, color, value, onChangeText, testID }: { label: string
   );
 }
 
-function ChoiceChip({ testID, label, selected, selectedColor = colors.accent, onPress }: { testID?: string; label: string; selected: boolean; selectedColor?: string; onPress: () => void }) {
+function ChoiceChip({ testID, label, selected, selectedColor, onPress }: { testID?: string; label: string; selected: boolean; selectedColor?: string; onPress: () => void }) {
+  const { colors } = useTheme();
+  const chipColor = selectedColor ?? colors.accent;
   return (
-    <Pressable testID={testID} accessibilityRole="button" accessibilityState={{ selected }} onPress={onPress} style={{ minHeight: 30, paddingHorizontal: 9, alignItems: 'center', justifyContent: 'center', borderRadius: 9, backgroundColor: selected ? `${selectedColor}24` : colors.background, borderWidth: 1, borderColor: selected ? selectedColor : colors.line }}>
-      <Text numberOfLines={1} style={{ color: selected ? selectedColor : colors.muted, fontSize: 9, fontWeight: '800' }}>{label}</Text>
+    <Pressable testID={testID} accessibilityRole="button" accessibilityState={{ selected }} onPress={onPress} style={{ minHeight: 30, paddingHorizontal: 9, alignItems: 'center', justifyContent: 'center', borderRadius: 9, backgroundColor: selected ? `${chipColor}24` : colors.background, borderWidth: 1, borderColor: selected ? chipColor : colors.line }}>
+      <Text numberOfLines={1} style={{ color: selected ? chipColor : colors.muted, fontSize: 9, fontWeight: '800' }}>{label}</Text>
     </Pressable>
   );
 }
 
 function PrimaryButton({ testID, title, onPress, disabled }: { testID: string; title: string; onPress: () => void; disabled: boolean }) {
+  const { colors } = useTheme();
   return (
     <Pressable testID={testID} accessibilityRole="button" onPress={onPress} disabled={disabled} style={({ pressed }) => ({ minHeight: 44, alignItems: 'center', justifyContent: 'center', marginTop: 9, borderRadius: 12, backgroundColor: pressed || disabled ? colors.surfaceRaised : colors.left, opacity: disabled ? 0.65 : 1 })}>
       <Text style={{ color: disabled ? colors.muted : colors.background, fontSize: 11, fontWeight: '900', letterSpacing: 1 }}>{title}</Text>
     </Pressable>
   );
 }
-
-const sectionTitle = { color: colors.muted, fontSize: 10, fontWeight: '900' as const, letterSpacing: 1.2 };

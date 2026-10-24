@@ -6,7 +6,7 @@ import { RhythmSymbol } from '@/components/RhythmSymbol';
 import { MixtureSymbol } from '@/components/MixtureSymbol';
 import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
 import { patternLabelForHand } from '@/rhythm/mixtures';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 import type { ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
 import type { ExerciseStep, Hand, MixturePatternId, Subdivision, TimeSignature } from '@/types/rhythm';
 
@@ -42,6 +42,7 @@ interface HandPreviewProps {
 }
 
 function HandPreview({ hand, subdivision, mixtureId, rest, timeSignature, compact, label = 'NEXT', colorOverride }: HandPreviewProps) {
+  const { colors } = useTheme();
   const color = colorOverride ?? (hand === 'left' ? colors.left : colors.right);
 
   return (
@@ -95,6 +96,7 @@ export function NextPatternPreview({
   beamGroupQuarterNotes = 1,
   focusedHand,
 }: NextPatternPreviewProps) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const [slideProgress] = useState(() => new Animated.Value(0));
   const previewId = scoreMeasure

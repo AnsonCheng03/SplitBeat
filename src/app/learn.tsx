@@ -20,7 +20,7 @@ import { requiresLearnCourseUnlock } from '@/rhythm/learnCourseAccess';
 import { useLearnCoursePurchase } from '@/hooks/useLearnCoursePurchase';
 import { readLearnProgress, readLearnRatings } from '@/store/learnProgress';
 import { useRhythmSession } from '@/store/sessionStore';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 import type { LearnLesson } from '@/rhythm/learnCourse';
 
 function LessonTile({
@@ -40,6 +40,7 @@ function LessonTile({
   rating?: { bestAccuracy: number; attempts: number };
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const disabled = locked && !paywalled;
   const stars = rating ? starsForAccuracy(rating.bestAccuracy) : 0;
@@ -109,6 +110,7 @@ function LessonTile({
 }
 
 function PatternPreview({ lesson }: { lesson: LearnLesson }) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const weights = lesson.handSubdivisionWeights;
   if (weights) {
@@ -192,6 +194,7 @@ function PatternNote({
   color: string;
   timeSignature: LearnLesson['timeSignature'];
 }) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const displayName = t(SUBDIVISION_LABELS[subdivision]).replace(' (', '\n(');
   return (
@@ -214,6 +217,7 @@ function PatternNoteOptions({
   color: string;
   timeSignature: LearnLesson['timeSignature'];
 }) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const names = [
     ...options.subdivisions.map((subdivision) => t(SUBDIVISION_LABELS[subdivision])),
@@ -238,6 +242,7 @@ function PatternNoteOptions({
 }
 
 export default function LearnScreen() {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();

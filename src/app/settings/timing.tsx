@@ -11,13 +11,14 @@ import {
   MIN_GOOD_WINDOW_MS,
 } from '@/rhythm/timingCalibration';
 import { useRhythmSession } from '@/store/sessionStore';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 function signedMilliseconds(value: number): string {
   return `${value > 0 ? '+' : ''}${value} ms`;
 }
 
 export default function TimingSettingsScreen() {
+  const { colors } = useTheme();
   const { settings, featureFlags, updateSettings } = useRhythmSession();
   const router = useRouter();
   useEffect(() => {
@@ -123,6 +124,7 @@ function SettingSlider({
   onChange: (value: number) => void;
   endpoints?: [string, string];
 }) {
+  const { colors } = useTheme();
   return (
     <View style={{ marginTop: 20 }}>
       <Text style={{ color: colors.text, fontSize: 12, fontWeight: '900', letterSpacing: 0.4 }}>

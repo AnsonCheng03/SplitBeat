@@ -1,0 +1,49 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: LANDSCAPE_LEFT
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
+- tapOn:
+    id: home.setup
+- assertVisible:
+    id: setup.screen
+- scrollUntilVisible:
+    element:
+      id: setup.card.appearance
+    direction: DOWN
+- tapOn:
+    id: setup.card.appearance
+- assertVisible:
+    id: settings.appearance.screen
+- tapOn:
+    id: settings.appearance.lightMode
+- tapOn:
+    id: settings.appearance.back
+- assertVisible:
+    id: setup.screen
+- tapOn:
+    id: setup.home
+- assertVisible:
+    id: home.screen
+- tapOn:
+    id: home.display.score
+- tapOn:
+    id: home.start
+- extendedWaitUntil:
+    visible:
+      id: practice.screen
+    timeout: 15000
+- tapOn:
+    id: practice.tutorial
+- extendedWaitUntil:
+    visible:
+      id: practice.scoreMeasure.viewport
+    timeout: 10000
+- assertVisible:
+    id: practice.scoreBackground
+- assertVisible:
+    id: practice.scoreMeasure.bar.0

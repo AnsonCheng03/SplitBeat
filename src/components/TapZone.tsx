@@ -7,7 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { getTapResultFlash, shouldFlashOnTap } from '@/rhythm/flashSource';
 import type { FlashSource, Hand, TapFeedback } from '@/types/rhythm';
 import type { TapResultFlash } from '@/rhythm/flashSource';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 interface TapZoneProps {
   hand: Hand;
@@ -53,6 +53,7 @@ export function TapZone({
   accessibilityLabelOverride,
   style,
 }: TapZoneProps) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const [pressed, setPressed] = useState(false);
   const [missed, setMissed] = useState(false);
@@ -65,9 +66,9 @@ export function TapZone({
   const previousBeatFlashToken = useRef(beatFlashToken);
   const isLeft = hand === 'left';
   const accent = singleHand ? colors.accent : isLeft ? colors.left : colors.right;
-  const restingBackground = singleHand ? '#0E201F' : isLeft ? colors.leftSurface : colors.rightSurface;
-  const pressedBackground = singleHand ? '#183A35' : isLeft ? '#1D483D' : '#382B56';
-  const restingBorder = singleHand ? '#183D38' : isLeft ? '#1A4037' : '#302747';
+  const restingBackground = singleHand ? colors.singleHandSurface : isLeft ? colors.leftSurface : colors.rightSurface;
+  const pressedBackground = singleHand ? colors.singleHandPressed : isLeft ? colors.leftPressed : colors.rightPressed;
+  const restingBorder = singleHand ? colors.singleHandBorder : isLeft ? colors.leftBorder : colors.rightBorder;
 
   const clearTapResult = useCallback(() => {
     if (resultResetTimer.current) clearTimeout(resultResetTimer.current);

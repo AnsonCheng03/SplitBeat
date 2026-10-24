@@ -1,6 +1,6 @@
 import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 export function SettingsChoiceRow<T extends string | number>({
   options,
@@ -13,6 +13,7 @@ export function SettingsChoiceRow<T extends string | number>({
   onChange: (value: T) => void;
   testIDPrefix?: string;
 }) {
+  const { colors } = useTheme();
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
       {options.map((option) => {

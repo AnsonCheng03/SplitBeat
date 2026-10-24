@@ -4,7 +4,7 @@ import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsPage } from '@/components/SettingsPage';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { LanguagePreference } from '@/i18n/translation';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 const LANGUAGE_OPTIONS: readonly { label: string; value: LanguagePreference }[] = [
   { label: 'System default', value: 'system' },
@@ -13,6 +13,7 @@ const LANGUAGE_OPTIONS: readonly { label: string; value: LanguagePreference }[] 
 ];
 
 export default function LanguageSettingsScreen() {
+  const { colors } = useTheme();
   const { preference, setLanguage, t } = useI18n();
 
   return (

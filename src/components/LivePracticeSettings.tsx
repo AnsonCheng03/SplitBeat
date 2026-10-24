@@ -10,7 +10,7 @@ import { PracticeOverlayBackdrop } from '@/components/PracticeOverlayBackdrop';
 import { TimingCalibration } from '@/components/TimingCalibration';
 import { DEFAULT_GOOD_WINDOW_MS } from '@/rhythm/timingCalibration';
 import type { FeatureFlags } from '@/features/featureFlags';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 import type { ExerciseSettings, FlashSource, SoundPreset } from '@/types/rhythm';
 
 const FLASH_SOURCE_OPTIONS: readonly { label: string; value: FlashSource }[] = [
@@ -33,6 +33,7 @@ export function LivePracticeSettings({
   onBack: () => void;
   compact: boolean;
 }) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const contentStyle: ViewStyle = {
@@ -204,6 +205,7 @@ export function LivePracticeSettings({
 }
 
 function SectionTitle({ title, compact }: { title: string; compact: boolean }) {
+  const { colors } = useTheme();
   return (
     <Text style={{ color: colors.dim, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 1.2, marginTop: compact ? 14 : 18, marginBottom: 2 }}>
       {title}
@@ -222,6 +224,7 @@ function SoundChoice({
   value: SoundPreset;
   onChange: (value: SoundPreset) => void;
 }) {
+  const { colors } = useTheme();
   return (
     <View style={{ marginTop: 13 }}>
       <Text style={{ color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 0.8, marginBottom: 7 }}>{title}</Text>
@@ -241,6 +244,7 @@ function FlashChoice({
   value: FlashSource;
   onChange: (value: FlashSource) => void;
 }) {
+  const { colors } = useTheme();
   return (
     <View style={{ marginTop: 12 }}>
       <Text style={{ color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 0.8, marginBottom: 7 }}>{title}</Text>

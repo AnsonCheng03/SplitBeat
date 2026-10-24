@@ -5,10 +5,11 @@ import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsPage } from '@/components/SettingsPage';
 import { SettingsToggleRow } from '@/components/SettingsToggleRow';
 import { useRhythmSession } from '@/store/sessionStore';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 import type { SoundPreset } from '@/types/rhythm';
 
 export default function AudioSettingsScreen() {
+  const { colors } = useTheme();
   const { settings, featureFlags, updateSettings } = useRhythmSession();
 
   return (
@@ -120,6 +121,7 @@ function FlashSourceChoice({
   value: 'tap' | 'beat';
   onChange: (value: 'tap' | 'beat') => void;
 }) {
+  const { colors } = useTheme();
   return (
     <View style={{ marginTop: 23 }}>
       <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6, marginBottom: 10 }}>
@@ -146,6 +148,7 @@ function SoundChoice({
   value: SoundPreset;
   onChange: (value: SoundPreset) => void;
 }) {
+  const { colors } = useTheme();
   return (
     <View style={{ marginTop: 23 }}>
       <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6, marginBottom: 10 }}>

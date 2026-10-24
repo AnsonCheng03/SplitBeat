@@ -1,6 +1,6 @@
 
 import { Text } from '@/i18n/LocalizedText';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 interface CountdownProps {
   value: number | 'START' | null;
@@ -8,6 +8,7 @@ interface CountdownProps {
 }
 
 export function Countdown({ value, compact = false }: CountdownProps) {
+  const { colors } = useTheme();
   if (value === null) return null;
   return (
     <Text

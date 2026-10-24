@@ -1,6 +1,6 @@
 import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 export function SettingsToggleRow({
   label,
@@ -17,6 +17,7 @@ export function SettingsToggleRow({
   disabled?: boolean;
   testID?: string;
 }) {
+  const { colors } = useTheme();
   return (
     <Pressable
       testID={testID}

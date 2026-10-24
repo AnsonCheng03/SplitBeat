@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import type { Hand, TrainingMode } from '@/types/rhythm';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 interface AccuracyDisplayProps {
   left: number;
@@ -12,6 +12,7 @@ interface AccuracyDisplayProps {
 }
 
 export function AccuracyDisplay({ left, right, trainingMode = 'two-hand', singleHand = 'left', compact = false }: AccuracyDisplayProps) {
+  const { colors } = useTheme();
   if (trainingMode === 'single-hand') {
     const isLeft = singleHand === 'left';
     return (

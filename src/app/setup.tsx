@@ -9,7 +9,7 @@ import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsPage } from '@/components/SettingsPage';
 import { useRhythmSession } from '@/store/sessionStore';
 import type { DurationOption } from '@/types/rhythm';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 const durations: { label: string; value: DurationOption }[] = [
   { label: '30 sec', value: 30 },
@@ -19,6 +19,7 @@ const durations: { label: string; value: DurationOption }[] = [
 ];
 
 export default function SetupScreen() {
+  const { colors } = useTheme();
   const { settings, updateSettings, audioStatus, prepareExercise } = useRhythmSession();
   const { t } = useI18n();
   const [starting, setStarting] = useState(false);

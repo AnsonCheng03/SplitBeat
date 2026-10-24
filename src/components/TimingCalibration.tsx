@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MetronomeAudio } from '@/audio/metronome';
 import { calibrationOffsetFromErrors, CALIBRATION_TAPS_PER_HAND } from '@/rhythm/timingCalibration';
 import { timeSignatureMetrics } from '@/rhythm/subdivisions';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 import type { Hand, SoundPreset, TimeSignature } from '@/types/rhythm';
 
 interface TimingCalibrationProps {
@@ -42,6 +42,7 @@ export function TimingCalibration({
   soundEnabled,
   onCalibrate,
 }: TimingCalibrationProps) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const [visible, setVisible] = useState(false);
   const [phase, setPhase] = useState<'ready' | 'running' | 'complete' | 'error'>('ready');

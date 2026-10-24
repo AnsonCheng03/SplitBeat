@@ -4,7 +4,7 @@ import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRhythmSession } from '@/store/sessionStore';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 import type { SessionRecord } from '@/store/sessionHistory';
 
 function formatCompletedAt(timestamp: number, locale: 'en' | 'zh-Hant'): string {
@@ -15,6 +15,7 @@ function formatCompletedAt(timestamp: number, locale: 'en' | 'zh-Hant'): string 
 }
 
 function RecordRow({ record }: { record: SessionRecord }) {
+  const { colors } = useTheme();
   const { locale, t } = useI18n();
   const primaryHand = record.trainingMode === 'single-hand' ? record.singleHand : 'left';
   const primaryAccuracy = primaryHand === 'left' ? record.leftAccuracy : record.rightAccuracy;
@@ -54,6 +55,7 @@ function RecordRow({ record }: { record: SessionRecord }) {
 }
 
 export default function RecordsScreen() {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const { sessionHistory, sessionHistoryLoaded } = useRhythmSession();
   const router = useRouter();

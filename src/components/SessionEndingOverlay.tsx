@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Animated, Easing, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 const ENDING_DURATION_MS = 2400;
 
@@ -23,6 +23,7 @@ export function SessionEndingOverlay({
   isLesson,
   onComplete,
 }: SessionEndingOverlayProps) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const [entrance] = useState(() => new Animated.Value(0));
   const [progress] = useState(() => new Animated.Value(0));

@@ -10,7 +10,7 @@ import {
   submitLongestStreak,
 } from '../../modules/splitbeat-game-center/src';
 import type { GameCenterStatus } from '../../modules/splitbeat-game-center/src';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 interface GameCenterChallengeCardProps {
   challengeMode?: boolean;
@@ -23,6 +23,7 @@ export function GameCenterChallengeCard({
   longestCorrectStreak,
   testID = 'gameCenter.challenge',
 }: GameCenterChallengeCardProps) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const [status, setStatus] = useState<GameCenterStatus>(getGameCenterStatus);
   const [message, setMessage] = useState('');

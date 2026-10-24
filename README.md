@@ -19,6 +19,8 @@ Once the development client is installed, start Metro with npm start. Expo Go do
 
 The interface supports English and Traditional Chinese. **Settings → Language** can follow the device language or use either language explicitly; the selection is saved on the device. System language detection treats Chinese device locales as Traditional Chinese and uses English for other locales. New interface copy should use English source strings with a matching entry in `src/i18n/translation.ts`; untranslated copy remains readable in English. Rhythm calculations, imported score data, and user-created titles are not translated. Run `npm run e2e:language -- --device DEVICE_ID` for the silent language-settings flow.
 
+**Settings → Appearance** switches the app between the original dark palette and the light practice palette. The choice is stored on-device and applies across practice, score views, setup, results, and settings. Score-note mode keeps the top toolbar and notation on one full-bleed surface, while the safe-area-aware controls stay inset. BPM remains adjustable from the pause menu.
+
 ### iOS simulator on Xcode 27
 
 Xcode 27 replaced the standalone `Simulator.app` with Device Hub, at `/Applications/Xcode.app/Contents/Applications/DeviceHub.app`. The iOS simulator runtime and devices are still available through Xcode and `simctl`; this project uses Expo's Xcode-aware launcher. If a tool reports that `Simulator.app` is missing, open Device Hub and run the project through `npm run ios` or `npm run e2e:ios` instead of reinstalling Xcode:
@@ -55,7 +57,8 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 
 ## Architecture
 
-- `src/app/` contains the mode-select home, guided course, focused exercise and typed-bar editor, session setup, separate rhythm/audio/timing settings pages, practice, score import, results, and records routes.
+- `src/app/` contains the mode-select home, guided course, focused exercise and typed-bar editor, session setup, separate rhythm/audio/appearance/timing settings pages, practice, score import, results, and records routes.
+- `src/theme/ThemeProvider.tsx` loads and saves the appearance choice and provides the active palette to screens and components; `src/theme.ts` defines dark and light tokens.
 - `src/i18n/` resolves the device language, saves the user's language preference locally, and translates interface copy while leaving imported and user-created score names intact.
 - `src/rhythm/` contains subdivision math, selectable mixed note/rest patterns, non-repeating pair generation with optional independent hand rests, typed-bar validation and combination accuracy aggregation, conversion of generated patterns into pitch-free score bars, the authored 20-lesson course, tap matching, scoring, and note- or bar-based challenge rules.
 - `src/rhythm/noteNotation.ts` calculates positions for repeated subdivisions and mixed-duration bars, including beat-aware beam groups and safe bar-edge spacing.
@@ -174,6 +177,12 @@ The audio settings flow checks independent left/right flash sources, optional di
 
 ~~~sh
 E2E_MAESTRO_FLOW=flash-source.yaml npm run e2e:maestro -- --device DEVICE_ID
+~~~
+
+The appearance flow checks the Light mode control and navigation back to session settings:
+
+~~~sh
+E2E_MAESTRO_FLOW=appearance-settings.yaml npm run e2e:maestro -- --device DEVICE_ID
 ~~~
 
 The feature-flags flow checks the feature list and its **Enable All** action. It does not start a practice session or play audio:

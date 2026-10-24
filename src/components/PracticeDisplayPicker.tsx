@@ -1,7 +1,7 @@
 import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import type { PracticeDisplayMode } from '@/types/rhythm';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 export function PracticeDisplayPicker({
   value,
@@ -12,6 +12,7 @@ export function PracticeDisplayPicker({
   onChange: (value: PracticeDisplayMode) => void;
   testIDPrefix: string;
 }) {
+  const { colors } = useTheme();
   const options: { label: string; value: PracticeDisplayMode }[] = [
     { label: 'Rhythm symbols', value: 'rhythm' },
     { label: 'Score notes', value: 'score' },

@@ -16,7 +16,7 @@ import { getMixturePattern } from '@/rhythm/mixtures';
 import { SUBDIVISION_LABELS, timeSignatureMetrics } from '@/rhythm/subdivisions';
 import { completeLearnLesson, recordLearnLessonResult } from '@/store/learnProgress';
 import { useRhythmSession } from '@/store/sessionStore';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 import type { HandStats, MixturePatternId, MissedEvent, ReplayTap, SessionResults, Subdivision } from '@/types/rhythm';
 
 function percent(value: number) {
@@ -197,6 +197,7 @@ function ScorePanel({
   detail?: string;
   accent?: string;
 }) {
+  const { colors } = useTheme();
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 16, padding: 15 }}>
       <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1 }}>{label}</Text>
@@ -217,6 +218,7 @@ function DisclosureHeader({
   onPress: () => void;
   testID: string;
 }) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   return (
     <Pressable
@@ -311,6 +313,7 @@ function scoreDurationLabel(durationQuarter: number, tupletNumber?: number): str
 }
 
 export default function ResultsScreen() {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const { results, settings, sessionSettings, featureFlags, prepareRepeatExercise, discardReplayData } = useRhythmSession();
   const router = useRouter();

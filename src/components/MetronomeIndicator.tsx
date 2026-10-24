@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 interface MetronomeIndicatorProps {
   beatInBar: number;
@@ -19,6 +19,7 @@ export function MetronomeIndicator({
   isPaused = false,
   compact = false,
 }: MetronomeIndicatorProps) {
+  const { colors } = useTheme();
   return (
     <View style={{ alignItems: 'center', gap: compact ? 6 : 9 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: compact ? 10 : 13 }}>

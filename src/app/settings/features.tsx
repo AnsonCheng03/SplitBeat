@@ -6,9 +6,10 @@ import { SettingsToggleRow } from '@/components/SettingsToggleRow';
 import { FEATURE_GROUPS } from '@/features/featureFlags';
 import type { FeatureFlagId } from '@/features/featureFlags';
 import { useRhythmSession } from '@/store/sessionStore';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 export default function FeatureSettingsScreen() {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const { featureFlags, featureFlagsLoaded, updateFeatureFlag, enableAllFeatures } = useRhythmSession();
   const enabledCount = Object.values(featureFlags).filter(Boolean).length;

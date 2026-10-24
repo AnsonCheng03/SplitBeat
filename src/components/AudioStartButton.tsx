@@ -3,7 +3,7 @@ import { Animated, Easing, Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { AudioPreparationStatus } from '@/store/sessionStore';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 interface AudioStartButtonProps {
   status: AudioPreparationStatus;
@@ -28,6 +28,7 @@ export function AudioStartButton({
   title,
   subtitle,
 }: AudioStartButtonProps) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const [rotation] = useState(() => new Animated.Value(0));
 

@@ -6,7 +6,7 @@ import { NoteNotation } from '@/components/NoteNotation';
 import { createBarNoteNotationPlan, type NoteNotationSize } from '@/rhythm/noteNotation';
 import type { ScoreRhythmEvent, ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
 import type { Hand } from '@/types/rhythm';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 function RhythmTrack({
   label,
@@ -33,6 +33,7 @@ function RhythmTrack({
   initialNotationWidth?: number;
   testIdPrefix?: string;
 }) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const [measuredLayout, setMeasuredLayout] = useState({ estimate: initialNotationWidth, width: 0 });
   const notationWidth = measuredLayout.estimate === initialNotationWidth && measuredLayout.width > 0
@@ -109,6 +110,7 @@ function RhythmTrack({
 }
 
 function MeasureBarLine({ testID, inset = 0 }: { testID?: string; inset?: number }) {
+  const { colors } = useTheme();
   return (
     <View
       testID={testID}
@@ -155,6 +157,7 @@ export function ScoreRhythmMeasure({
   showHandLabels?: boolean;
   initialNotationWidth?: number;
 }) {
+  const { colors } = useTheme();
   const size: NoteNotationSize = compact ? 'compact' : 'full';
 
   return (
@@ -255,6 +258,7 @@ function ScoreBarPanel({
   showStaffLines: boolean;
   initialNotationWidth: number;
 }) {
+  const { colors } = useTheme();
   return (
     <View
       testID={`practice.scoreMeasure.bar.${bar.sequence}`}
@@ -312,6 +316,7 @@ export function ScrollingScoreRhythm({
   showStaffLines = false,
   initialViewportWidth = 0,
 }: ScrollingScoreRhythmProps) {
+  const { colors } = useTheme();
   const [measuredViewportWidth, setMeasuredViewportWidth] = useState(0);
   const viewportWidth = measuredViewportWidth || initialViewportWidth;
   const size: NoteNotationSize = compact ? 'compact' : 'full';

@@ -7,9 +7,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AudioStartButton } from '@/components/AudioStartButton';
 import { PracticeDisplayPicker } from '@/components/PracticeDisplayPicker';
 import { useRhythmSession } from '@/store/sessionStore';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
   const { settings, featureFlags, updateSettings, audioStatus, prepareAudio, prepareExercise } = useRhythmSession();
   const { t } = useI18n();
   const [starting, setStarting] = useState(false);
@@ -228,6 +229,7 @@ function ModeChoice({
   title: string;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
   const selectedColor = mode === 'single-hand' ? colors.accent : colors.left;
 
   return (
@@ -259,6 +261,7 @@ function ModeChoice({
 }
 
 function ModeMark({ mode }: { mode: 'two-hand' | 'single-hand' }) {
+  const { colors } = useTheme();
   if (mode === 'single-hand') {
     return (
       <View style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center' }}>

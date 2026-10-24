@@ -23,7 +23,7 @@ import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import { patternLabelForHand } from '@/rhythm/mixtures';
 import { useRhythmSession } from '@/store/sessionStore';
 import type { Hand, TapFeedback } from '@/types/rhythm';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 function formatTimeRemaining(seconds: number, t: (source: string, values?: Record<string, string | number>) => string): string {
   const roundedSeconds = Math.max(0, Math.ceil(seconds));
@@ -33,6 +33,7 @@ function formatTimeRemaining(seconds: number, t: (source: string, values?: Recor
 }
 
 export default function PracticeScreen() {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -168,6 +169,8 @@ export default function PracticeScreen() {
     : undefined;
   const displayScoreMeasure = importedScoreMeasure ?? practiceScoreMeasure;
   const isScoreDisplay = Boolean(displayScoreMeasure);
+  const scoreDisplayTop = Math.max(insets.top, 8) + (compact ? 46 : 58);
+  const scoreDisplayHeight = Math.min(180, Math.max(110, height * 0.25));
   const showNextPattern = Boolean(!isScoreDisplay && snapshot?.nextStep);
   const previewTop = Math.max(insets.top, 8) + (compact ? 46 : 58);
   const previewHeight = isScoreDisplay
@@ -215,8 +218,8 @@ export default function PracticeScreen() {
     : undefined;
   const rhythmDisplayStyle = isScoreDisplay
     ? {
-        top: Math.max(insets.top, 8) + (compact ? 46 : 58),
-        height: Math.min(180, Math.max(110, height * 0.25)),
+        top: scoreDisplayTop,
+        height: scoreDisplayHeight,
       }
     : { top: -insets.top, bottom: -insets.bottom };
 
@@ -302,6 +305,14 @@ export default function PracticeScreen() {
             </>
           )}
         </View>
+
+        {!tutorialVisible && isScoreDisplay && snapshot ? (
+          <View
+            testID="practice.scoreBackground"
+            pointerEvents="none"
+            style={{ position: 'absolute', top: 0, left: -insets.left, right: -insets.right, height: scoreDisplayTop + scoreDisplayHeight, backgroundColor: colors.surface }}
+          />
+        ) : null}
 
         {!tutorialVisible && showNextPattern && snapshot ? (
           <NextPatternPreview

@@ -7,7 +7,7 @@ import { NoteNotation } from '@/components/NoteNotation';
 import { createBarNoteNotationPlan } from '@/rhythm/noteNotation';
 import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import type { ReplayExpectedEvent, ReplayTap, Hand, TimeSignature } from '@/types/rhythm';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 interface ReplayTimelineProps {
   barIndex: number;
@@ -21,9 +21,6 @@ interface ReplayTimelineProps {
   onPlaybackEnd: (barIndex: number, playbackId: number) => void;
 }
 
-const TIMING_MISS = colors.danger;
-const TIMING_CORRECT = '#4DE0B2';
-
 export function ReplayTimeline({
   barIndex,
   expectedEvents,
@@ -35,6 +32,7 @@ export function ReplayTimeline({
   playbackId,
   onPlaybackEnd,
 }: ReplayTimelineProps) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const [timelineWidth, setTimelineWidth] = useState(0);
   const [playhead] = useState(() => new Animated.Value(0));
@@ -145,6 +143,7 @@ function ReplayHandLane({
   barIndex: number;
   isLastLane: boolean;
 }) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const [trackWidth, setTrackWidth] = useState(0);
   const orderedEvents = useMemo(() => [...events].sort((first, second) =>
@@ -266,6 +265,7 @@ function ReplayStatusBadge({
   accessibilityLabel?: string;
   style?: ViewStyle;
 }) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const label = accessibilityLabel ?? t(status === 'correct' ? 'Correct' : 'Missed / extra');
   return (
@@ -282,7 +282,7 @@ function ReplayStatusBadge({
         borderRadius: size / 2,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: status === 'correct' ? TIMING_CORRECT : TIMING_MISS,
+        backgroundColor: status === 'correct' ? colors.left : colors.danger,
         borderWidth: 1,
         borderColor: colors.background,
       }, style]}
@@ -303,6 +303,7 @@ function BeatGuides({
   anchorStartX: number;
   anchorWidth: number;
 }) {
+  const { colors } = useTheme();
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: anchorStartX, width: anchorWidth, top: 0, bottom: 0, flexDirection: 'row', justifyContent: 'space-between' }}>
       {Array.from({ length: beatsPerBar + 1 }, (_, beat) => (

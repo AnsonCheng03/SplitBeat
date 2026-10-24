@@ -9,7 +9,7 @@ import { SettingsToggleRow } from '@/components/SettingsToggleRow';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import { MIXTURE_PATTERNS } from '@/rhythm/mixtures';
 import { useRhythmSession } from '@/store/sessionStore';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 import { BASIC_SUBDIVISIONS } from '@/features/featureFlags';
 import { SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
 import type { ExerciseSettings, Subdivision, TimeSignature } from '@/types/rhythm';
@@ -22,8 +22,10 @@ const intervals: { label: string; value: ExerciseSettings['changeIntervalBeats']
 ];
 
 export default function RhythmSettingsScreen() {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const { settings, featureFlags, updateSettings } = useRhythmSession();
+  const helperText = { color: colors.dim, fontSize: 12, lineHeight: 17, marginTop: 8 };
   const visibleSubdivisions = featureFlags.rhythmExtensions
     ? SUBDIVISIONS
     : SUBDIVISIONS.filter((subdivision) => BASIC_SUBDIVISIONS.includes(subdivision as (typeof BASIC_SUBDIVISIONS)[number]));
@@ -284,6 +286,7 @@ export default function RhythmSettingsScreen() {
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
+  const { colors } = useTheme();
   return (
     <View style={{ marginTop: 22 }}>
       <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6, marginBottom: 10 }}>
@@ -293,5 +296,3 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
     </View>
   );
 }
-
-const helperText = { color: colors.dim, fontSize: 12, lineHeight: 17, marginTop: 8 };
