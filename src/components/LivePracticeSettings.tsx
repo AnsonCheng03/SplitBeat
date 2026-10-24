@@ -1,10 +1,12 @@
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View, type ViewStyle } from 'react-native';
+import type { RefObject } from 'react';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SOUND_OPTIONS } from '@/audio/soundPresets';
 import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsToggleRow } from '@/components/SettingsToggleRow';
+import { PracticeOverlayBackdrop } from '@/components/PracticeOverlayBackdrop';
 import { TimingCalibration } from '@/components/TimingCalibration';
 import { DEFAULT_GOOD_WINDOW_MS } from '@/rhythm/timingCalibration';
 import type { FeatureFlags } from '@/features/featureFlags';
@@ -19,37 +21,33 @@ const FLASH_SOURCE_OPTIONS: readonly { label: string; value: FlashSource }[] = [
 export function LivePracticeSettings({
   settings,
   featureFlags,
+  blurTarget,
   onSettingsChange,
   onBack,
   compact,
 }: {
   settings: ExerciseSettings;
   featureFlags: FeatureFlags;
+  blurTarget: RefObject<View | null>;
   onSettingsChange: (patch: Partial<ExerciseSettings>) => void;
   onBack: () => void;
   compact: boolean;
 }) {
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
+  const contentStyle: ViewStyle = {
+    paddingTop: Math.max(10, insets.top + 8),
+    paddingBottom: Math.max(10, insets.bottom + 8),
+    paddingHorizontal: Math.max(14, insets.left + 14, insets.right + 14),
+  };
 
   return (
-    <View
+    <PracticeOverlayBackdrop
       testID="practice.liveSettings"
-      style={{
-        position: 'absolute',
-        top: 0,
-        bottom: 0,
-        left: 0,
-        right: 0,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(7, 10, 14, 0.9)',
-        paddingTop: Math.max(10, insets.top + 8),
-        paddingBottom: Math.max(10, insets.bottom + 8),
-        paddingHorizontal: Math.max(14, insets.left + 14, insets.right + 14),
-      }}
+      blurTarget={blurTarget}
+      contentStyle={contentStyle}
     >
-      <View style={{ width: '100%', maxWidth: 760, maxHeight: '100%', flex: 1, padding: compact ? 12 : 18, borderRadius: 20, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface }}>
+      <View style={{ width: '100%', maxWidth: 820, maxHeight: '100%', flex: 1, paddingHorizontal: compact ? 8 : 18, paddingVertical: compact ? 4 : 12 }}>
         <View style={{ minHeight: compact ? 38 : 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: compact ? 4 : 10 }}>
           <Pressable
             testID="practice.liveSettings.back"
@@ -169,7 +167,7 @@ export function LivePracticeSettings({
               <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 7 }}>
                 Calibration runs while this session is paused. Its offsets and timing range will apply when you continue.
               </Text>
-              <View style={{ marginTop: 12, padding: compact ? 10 : 14, borderRadius: 14, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.line }}>
+              <View style={{ marginTop: 12 }}>
                 <TimingCalibration
                   bpm={settings.bpm}
                   timeSignature={settings.timeSignature}
@@ -201,7 +199,7 @@ export function LivePracticeSettings({
           <Text style={{ color: colors.background, fontSize: 12, fontWeight: '900', letterSpacing: 1 }}>DONE</Text>
         </Pressable>
       </View>
-    </View>
+    </PracticeOverlayBackdrop>
   );
 }
 

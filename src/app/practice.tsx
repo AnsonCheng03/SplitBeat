@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Slider from '@react-native-community/slider';
+import { BlurTargetView } from 'expo-blur';
 import { Alert, Pressable, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -11,6 +12,7 @@ import { LivePracticeSettings } from '@/components/LivePracticeSettings';
 import { MixtureSymbol } from '@/components/MixtureSymbol';
 import { MetronomeIndicator } from '@/components/MetronomeIndicator';
 import { NextPatternPreview } from '@/components/NextPatternPreview';
+import { PracticeOverlayBackdrop } from '@/components/PracticeOverlayBackdrop';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
 import { ScoreFocusNote } from '@/components/ScoreFocusNote';
 import { ScrollingScoreRhythm } from '@/components/ScoreRhythmMeasure';
@@ -59,6 +61,7 @@ export default function PracticeScreen() {
   } = useRhythmSession();
   const activeSettings = sessionSettings ?? settings;
   const tapFeedbackEnabled = featureFlags.tapFeedback;
+  const blurTargetRef = useRef<View>(null);
   const hasNavigatedToResultsRef = useRef(false);
   const [tutorialVisible, setTutorialVisible] = useState(true);
   const [starting, setStarting] = useState(false);
@@ -223,6 +226,7 @@ export default function PracticeScreen() {
   return (
     <View testID="practice.screen" style={{ flex: 1, backgroundColor: colors.background }}>
       {featureFlags.externalKeyboard ? <HardwareKeyboardInput onTap={handleKeyboardTap} /> : null}
+      <BlurTargetView ref={blurTargetRef} collapsable={false} style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
         <View
           pointerEvents="box-none"
@@ -536,11 +540,14 @@ export default function PracticeScreen() {
             </View>
           </Pressable>
         ) : null}
+      </View>
+      </BlurTargetView>
 
         {snapshot?.phase === 'paused' && quickSettingsOpen ? (
           <LivePracticeSettings
             settings={activeSettings}
             featureFlags={featureFlags}
+            blurTarget={blurTargetRef}
             onSettingsChange={updateSettings}
             onBack={() => setQuickSettingsOpen(false)}
             compact={compact}
@@ -548,8 +555,12 @@ export default function PracticeScreen() {
         ) : null}
 
         {snapshot?.phase === 'paused' && snapshot.challengeMessage && !quickSettingsOpen ? (
-          <View testID="practice.challengePause" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(7, 10, 14, 0.72)', paddingHorizontal: 24 }}>
-            <View style={{ width: '100%', maxWidth: 460, alignItems: 'center', padding: compact ? 18 : 26, borderRadius: 20, borderWidth: 1, borderColor: colors.accent, backgroundColor: colors.surface }}>
+          <PracticeOverlayBackdrop
+            testID="practice.challengePause"
+            blurTarget={blurTargetRef}
+            contentStyle={{ paddingHorizontal: Math.max(24, insets.left + 24, insets.right + 24), paddingVertical: Math.max(12, insets.top + 8, insets.bottom + 8) }}
+          >
+            <View style={{ width: '100%', maxWidth: 460, alignItems: 'center', paddingHorizontal: compact ? 8 : 16 }}>
               <Text style={{ color: colors.accent, fontSize: compact ? 12 : 14, fontWeight: '900', letterSpacing: 1.6 }}>
                 CHALLENGE PAUSE
               </Text>
@@ -560,7 +571,7 @@ export default function PracticeScreen() {
                 testID="practice.challengeLiveSettings"
                 accessibilityRole="button"
                 onPress={() => setQuickSettingsOpen(true)}
-                style={{ minHeight: 42, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', marginTop: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.line }}
+                style={{ minHeight: 46, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', marginTop: 14 }}
               >
                 <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '900', letterSpacing: 0.8 }}>LIVE SETTINGS</Text>
               </Pressable>
@@ -571,19 +582,23 @@ export default function PracticeScreen() {
                 <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '900', letterSpacing: 1 }}>END SESSION</Text>
               </Pressable>
             </View>
-          </View>
+          </PracticeOverlayBackdrop>
         ) : null}
 
         {snapshot?.phase === 'paused' && !snapshot.challengeMessage && !quickSettingsOpen ? (
-          <View testID="practice.pauseMenu" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(7, 10, 14, 0.84)', paddingHorizontal: Math.max(16, insets.left + 16, insets.right + 16), paddingVertical: Math.max(10, insets.top + 8, insets.bottom + 8) }}>
-            <View style={{ width: '100%', maxWidth: 700, padding: compact ? 14 : 20, borderRadius: 20, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface }}>
+          <PracticeOverlayBackdrop
+            testID="practice.pauseMenu"
+            blurTarget={blurTargetRef}
+            contentStyle={{ paddingHorizontal: Math.max(16, insets.left + 16, insets.right + 16), paddingVertical: Math.max(10, insets.top + 8, insets.bottom + 8) }}
+          >
+            <View style={{ width: '100%', maxWidth: 700, paddingHorizontal: compact ? 8 : 20, paddingVertical: compact ? 4 : 10 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: compact ? 8 : 12 }}>
                 <Text style={{ color: colors.text, fontSize: compact ? 18 : 22, fontWeight: '900', letterSpacing: 1 }}>PAUSED</Text>
                 <Text style={{ color: colors.accent, fontSize: compact ? 13 : 16, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{bpmDraft} BPM</Text>
               </View>
 
               {snapshot.scoreMeasureCount !== undefined ? (
-                <View style={{ padding: compact ? 9 : 12, borderRadius: 14, backgroundColor: colors.background, marginBottom: compact ? 8 : 12 }}>
+                <View style={{ paddingVertical: compact ? 7 : 10, marginBottom: compact ? 8 : 12 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Text style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 1.2 }}>REWIND SCORE</Text>
                     <Text style={{ color: colors.dim, fontSize: compact ? 9 : 10 }}>{maxRewindBars} {maxRewindBars === 1 ? 'BAR' : 'BARS'} AVAILABLE</Text>
@@ -626,7 +641,7 @@ export default function PracticeScreen() {
                 </View>
               ) : null}
 
-              <View style={{ padding: compact ? 9 : 12, borderRadius: 14, backgroundColor: colors.background }}>
+              <View style={{ paddingVertical: compact ? 7 : 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Text style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 1.2 }}>TEMPO</Text>
                   <Text style={{ color: colors.text, fontSize: compact ? 15 : 18, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{bpmDraft} BPM</Text>
@@ -682,7 +697,7 @@ export default function PracticeScreen() {
                   testID="practice.pause.liveSettings"
                   accessibilityRole="button"
                   onPress={() => setQuickSettingsOpen(true)}
-                  style={{ flex: 1, minHeight: compact ? 42 : 50, borderRadius: 13, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' }}
+                  style={{ flex: 1, minHeight: compact ? 42 : 50, alignItems: 'center', justifyContent: 'center' }}
                 >
                   <Text style={{ color: colors.text, fontSize: compact ? 10 : 12, fontWeight: '900', letterSpacing: 0.8 }}>LIVE SETTINGS</Text>
                 </Pressable>
@@ -696,9 +711,8 @@ export default function PracticeScreen() {
                 </Pressable>
               </View>
             </View>
-          </View>
+          </PracticeOverlayBackdrop>
         ) : null}
-      </View>
     </View>
   );
 }
