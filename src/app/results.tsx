@@ -593,6 +593,19 @@ export default function ResultsScreen() {
             <Text accessibilityElementsHidden style={{ color: colors.left, fontSize: 24, lineHeight: 28, fontWeight: '500' }}>›</Text>
           </Pressable>
         </Link>
+        <Pressable
+          testID="results.home"
+          accessibilityRole="button"
+          accessibilityLabel="Back home"
+          onPress={() => {
+            discardReplayData();
+            router.replace('/');
+          }}
+          style={({ pressed }) => ({ flexDirection: 'row', backgroundColor: pressed ? colors.surface : colors.surfaceRaised, minHeight: 56, paddingHorizontal: 18, borderRadius: 15, alignItems: 'center', justifyContent: 'space-between', marginTop: 10, marginBottom: 14, borderWidth: 1, borderColor: colors.line })}
+        >
+          <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>BACK HOME</Text>
+          <Text accessibilityElementsHidden style={{ color: colors.muted, fontSize: 24, lineHeight: 28, fontWeight: '500' }}>›</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
