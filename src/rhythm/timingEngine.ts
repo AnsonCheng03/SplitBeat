@@ -227,7 +227,7 @@ export class RhythmTimingEngine {
   pause(now: number): void {
     if (this.finished || this.pausedAt !== null) return;
     this.advance(now);
-    this.pausedAt = now;
+    if (!this.finished) this.pausedAt = now;
   }
 
   resume(now: number): void {

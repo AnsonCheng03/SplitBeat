@@ -55,7 +55,11 @@ appId: com.splitbeat.twohandrhythm
 - assertNotVisible:
     id: practice.scoreHand.right
 - tapOn:
-    id: practice.end
+    id: practice.pause
+- assertVisible:
+    id: practice.pauseMenu
+- tapOn:
+    id: practice.pause.finish
 - extendedWaitUntil:
     visible:
       id: results.screen

@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Slider from '@react-native-community/slider';
 import { Alert, Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Countdown } from '@/components/Countdown';
@@ -43,13 +44,18 @@ export default function PracticeScreen() {
     startPreparedExercise,
     registerTap,
     stopExercise,
+    pauseExercise,
     resumeExercise,
+    restartPausedExercise,
     results,
   } = useRhythmSession();
   const activeSettings = sessionSettings ?? settings;
   const hasNavigatedToResultsRef = useRef(false);
   const [tutorialVisible, setTutorialVisible] = useState(true);
   const [starting, setStarting] = useState(false);
+  const [pauseActionLoading, setPauseActionLoading] = useState(false);
+  const [bpmDraft, setBpmDraft] = useState(activeSettings.bpm);
+  const [rewindBars, setRewindBars] = useState(1);
   const [keyboardTapTokens, setKeyboardTapTokens] = useState<Record<Hand, { token: number; feedback: TapFeedback | null }>>({
     left: { token: 0, feedback: null },
     right: { token: 0, feedback: null },
@@ -69,6 +75,39 @@ export default function PracticeScreen() {
   const stop = () => {
     stopExercise();
     navigateToResults();
+  };
+
+  const openPauseMenu = () => {
+    if (!snapshot || snapshot.phase === 'paused' || snapshot.phase === 'finished') return;
+    setBpmDraft(snapshot.bpm);
+    setRewindBars(1);
+    pauseExercise();
+  };
+
+  const continueFromPause = async () => {
+    try {
+      await resumeExercise();
+    } catch {
+      Alert.alert('Could not resume audio', 'Check your device audio settings and try again.');
+    }
+  };
+
+  const restartFromPause = async (barsBack: number) => {
+    if (pauseActionLoading) return;
+    setPauseActionLoading(true);
+    try {
+      await restartPausedExercise(barsBack, bpmDraft);
+    } catch {
+      Alert.alert('Could not restart practice', 'Try again, or continue at the current tempo.');
+    } finally {
+      setPauseActionLoading(false);
+    }
+  };
+
+  const backHomeFromPause = () => {
+    hasNavigatedToResultsRef.current = true;
+    stopExercise();
+    router.replace('/');
   };
 
   const beginExercise = async () => {
@@ -116,6 +155,7 @@ export default function PracticeScreen() {
   const scoreMeasure = snapshot?.scoreMeasure;
   const scoreQuarterInMeasure = snapshot?.scoreQuarterInMeasure ?? 0;
   const scoreSequence = snapshot?.scoreMeasureSequence ?? 0;
+  const maxRewindBars = Math.max(0, snapshot?.scoreMeasure?.index ?? 0);
   const scoreBarsRemaining = snapshot?.scoreMeasureCount === undefined
     ? undefined
     : snapshot.phase === 'finished'
@@ -332,9 +372,16 @@ export default function PracticeScreen() {
         ) : null}
 
         <View pointerEvents="box-none" style={{ position: 'absolute', top: insets.top, left: 0, right: 0, minHeight: compact ? 42 : 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: Math.max(compact ? 13 : 22, insets.left + 12), paddingRight: Math.max(compact ? 13 : 22, insets.right + 12) }}>
-          <Pressable testID="practice.end" onPress={stop} hitSlop={12}>
+          <Pressable
+            testID="practice.pause"
+            accessibilityRole="button"
+            accessibilityLabel="Pause practice"
+            disabled={!snapshot || snapshot.phase === 'paused' || snapshot.phase === 'finished'}
+            onPress={openPauseMenu}
+            hitSlop={12}
+          >
             <Text style={{ color: colors.muted, fontSize: compact ? 11 : 12, fontWeight: '800', letterSpacing: 1 }}>
-              ‹  END
+              Ⅱ  PAUSE
             </Text>
           </Pressable>
           <View testID="practice.beatCounter" style={{ alignItems: 'center', justifyContent: 'center', minWidth: 90, minHeight: 38 }}>
@@ -435,7 +482,7 @@ export default function PracticeScreen() {
           </Pressable>
         ) : null}
 
-        {snapshot?.phase === 'paused' ? (
+        {snapshot?.phase === 'paused' && snapshot.challengeMessage ? (
           <View testID="practice.challengePause" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(7, 10, 14, 0.72)', paddingHorizontal: 24 }}>
             <View style={{ width: '100%', maxWidth: 460, alignItems: 'center', padding: compact ? 18 : 26, borderRadius: 20, borderWidth: 1, borderColor: colors.accent, backgroundColor: colors.surface }}>
               <Text style={{ color: colors.accent, fontSize: compact ? 12 : 14, fontWeight: '900', letterSpacing: 1.6 }}>
@@ -450,6 +497,121 @@ export default function PracticeScreen() {
               <Pressable testID="practice.challengeEnd" accessibilityRole="button" onPress={stop} style={{ minHeight: 44, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center', marginTop: 4 }}>
                 <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '900', letterSpacing: 1 }}>END SESSION</Text>
               </Pressable>
+            </View>
+          </View>
+        ) : null}
+
+        {snapshot?.phase === 'paused' && !snapshot.challengeMessage ? (
+          <View testID="practice.pauseMenu" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(7, 10, 14, 0.84)', paddingHorizontal: Math.max(16, insets.left + 16, insets.right + 16), paddingVertical: Math.max(10, insets.top + 8, insets.bottom + 8) }}>
+            <View style={{ width: '100%', maxWidth: 700, padding: compact ? 14 : 20, borderRadius: 20, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: compact ? 8 : 12 }}>
+                <Text style={{ color: colors.text, fontSize: compact ? 18 : 22, fontWeight: '900', letterSpacing: 1 }}>PAUSED</Text>
+                <Text style={{ color: colors.accent, fontSize: compact ? 13 : 16, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{bpmDraft} BPM</Text>
+              </View>
+
+              {snapshot.scoreMeasureCount !== undefined ? (
+                <View style={{ padding: compact ? 9 : 12, borderRadius: 14, backgroundColor: colors.background, marginBottom: compact ? 8 : 12 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 1.2 }}>REWIND SCORE</Text>
+                    <Text style={{ color: colors.dim, fontSize: compact ? 9 : 10 }}>{maxRewindBars} {maxRewindBars === 1 ? 'BAR' : 'BARS'} AVAILABLE</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: compact ? 6 : 9 }}>
+                    <Pressable
+                      testID="practice.pause.rewindMinus"
+                      accessibilityRole="button"
+                      accessibilityLabel="Rewind one fewer bar"
+                      disabled={maxRewindBars === 0 || rewindBars <= 1}
+                      onPress={() => setRewindBars((current) => Math.max(1, current - 1))}
+                      style={{ width: 40, height: compact ? 34 : 40, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: maxRewindBars === 0 || rewindBars <= 1 ? 0.4 : 1 }}
+                    >
+                      <Text style={{ color: colors.text, fontSize: 22, fontWeight: '700' }}>−</Text>
+                    </Pressable>
+                    <Text testID="practice.pause.rewindCount" style={{ minWidth: 84, color: colors.text, fontSize: compact ? 12 : 14, fontWeight: '900', textAlign: 'center' }}>
+                      {rewindBars} {rewindBars === 1 ? 'BAR' : 'BARS'} BACK
+                    </Text>
+                    <Pressable
+                      testID="practice.pause.rewindPlus"
+                      accessibilityRole="button"
+                      accessibilityLabel="Rewind one more bar"
+                      disabled={maxRewindBars === 0 || rewindBars >= maxRewindBars}
+                      onPress={() => setRewindBars((current) => Math.min(maxRewindBars, current + 1))}
+                      style={{ width: 40, height: compact ? 34 : 40, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: maxRewindBars === 0 || rewindBars >= maxRewindBars ? 0.4 : 1 }}
+                    >
+                      <Text style={{ color: colors.text, fontSize: 22, fontWeight: '700' }}>+</Text>
+                    </Pressable>
+                    <Pressable
+                      testID="practice.pause.rewind"
+                      accessibilityRole="button"
+                      disabled={maxRewindBars === 0 || pauseActionLoading}
+                      onPress={() => void restartFromPause(rewindBars)}
+                      style={{ flex: 1, minHeight: compact ? 36 : 42, borderRadius: 11, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', opacity: maxRewindBars === 0 || pauseActionLoading ? 0.4 : 1 }}
+                    >
+                      <Text style={{ color: colors.background, fontSize: compact ? 10 : 11, fontWeight: '900', letterSpacing: 0.8 }}>REWIND</Text>
+                    </Pressable>
+                  </View>
+                  <Text style={{ color: colors.dim, fontSize: compact ? 8 : 9, marginTop: 5 }}>Rewind starts a fresh run from the selected bar.</Text>
+                </View>
+              ) : null}
+
+              <View style={{ padding: compact ? 9 : 12, borderRadius: 14, backgroundColor: colors.background }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 1.2 }}>TEMPO</Text>
+                  <Text style={{ color: colors.text, fontSize: compact ? 15 : 18, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{bpmDraft} BPM</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: compact ? 2 : 5 }}>
+                  <Pressable testID="practice.pause.bpmMinus" accessibilityRole="button" accessibilityLabel="Decrease tempo" disabled={bpmDraft <= 40} onPress={() => setBpmDraft((current) => Math.max(40, current - 1))} style={{ width: 36, height: 34, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: bpmDraft <= 40 ? 0.4 : 1 }}>
+                    <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>−</Text>
+                  </Pressable>
+                  <Slider
+                    testID="practice.pause.bpmSlider"
+                    accessibilityLabel="Practice tempo"
+                    style={{ flex: 1, height: 34 }}
+                    minimumValue={40}
+                    maximumValue={200}
+                    step={1}
+                    value={bpmDraft}
+                    minimumTrackTintColor={colors.accent}
+                    maximumTrackTintColor={colors.line}
+                    thumbTintColor={colors.text}
+                    onValueChange={setBpmDraft}
+                  />
+                  <Pressable testID="practice.pause.bpmPlus" accessibilityRole="button" accessibilityLabel="Increase tempo" disabled={bpmDraft >= 200} onPress={() => setBpmDraft((current) => Math.min(200, current + 1))} style={{ width: 36, height: 34, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: bpmDraft >= 200 ? 0.4 : 1 }}>
+                    <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>+</Text>
+                  </Pressable>
+                </View>
+                <Text style={{ color: colors.dim, fontSize: compact ? 8 : 9, marginTop: 2 }}>
+                  Applying a tempo starts play over, or restarts a score from this bar.
+                </Text>
+                {bpmDraft !== snapshot.bpm ? (
+                  <Pressable
+                    testID="practice.pause.applyBpm"
+                    accessibilityRole="button"
+                    disabled={pauseActionLoading}
+                    onPress={() => void restartFromPause(0)}
+                    style={{ alignSelf: 'flex-end', minHeight: compact ? 34 : 40, justifyContent: 'center', paddingHorizontal: 15, marginTop: 5, borderRadius: 10, backgroundColor: colors.accent, opacity: pauseActionLoading ? 0.5 : 1 }}
+                  >
+                    <Text style={{ color: colors.background, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 0.8 }}>APPLY BPM</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+
+              <Pressable
+                testID="practice.pause.continue"
+                accessibilityRole="button"
+                disabled={pauseActionLoading}
+                onPress={() => void continueFromPause()}
+                style={{ minHeight: compact ? 42 : 50, borderRadius: 13, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginTop: compact ? 8 : 12, opacity: pauseActionLoading ? 0.5 : 1 }}
+              >
+                <Text style={{ color: colors.background, fontSize: compact ? 11 : 13, fontWeight: '900', letterSpacing: 1 }}>CONTINUE</Text>
+              </Pressable>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: compact ? 2 : 5 }}>
+                <Pressable testID="practice.pause.finish" accessibilityRole="button" onPress={stop} style={{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 8 }}>
+                  <Text style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 0.8 }}>END SESSION</Text>
+                </Pressable>
+                <Pressable testID="practice.pause.home" accessibilityRole="button" onPress={backHomeFromPause} style={{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 8 }}>
+                  <Text style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 0.8 }}>BACK HOME</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
         ) : null}

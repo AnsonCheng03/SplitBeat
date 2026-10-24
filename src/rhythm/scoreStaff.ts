@@ -1,7 +1,24 @@
 import type { Hand } from '@/types/rhythm';
-import type { ScoreRhythmEvent, ScoreRhythmMeasure } from '@/types/importedScore';
+import type { ImportedRhythmScore, ScoreRhythmEvent, ScoreRhythmMeasure } from '@/types/importedScore';
 
 export type ScoreDisplayMode = 'focus' | 'staff';
+
+export function scoreFromMeasure(
+  score: ImportedRhythmScore,
+  startMeasureIndex: number,
+): ImportedRhythmScore {
+  const firstMeasure = score.measures[startMeasureIndex];
+  if (!firstMeasure) throw new RangeError('Choose a bar that exists in this score.');
+
+  return {
+    ...score,
+    measures: score.measures.slice(startMeasureIndex).map((measure) => ({
+      ...measure,
+      startQuarter: measure.startQuarter - firstMeasure.startQuarter,
+    })),
+    totalQuarterNotes: Math.max(0, score.totalQuarterNotes - firstMeasure.startQuarter),
+  };
+}
 
 export function findNextScoreEvent(
   measure: ScoreRhythmMeasure,

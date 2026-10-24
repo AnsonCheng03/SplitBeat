@@ -75,7 +75,7 @@ Choose Straight or Swing feel in Rhythm & meter settings. Swing moves binary off
 
 New sessions default to a slower 60 BPM. In Rhythm & meter settings, **Independent hand rests** optionally lets generated two-hand practice rest one hand for a pattern while the other continues playing. Rests are shown in the current and upcoming pattern, create no expected taps for the resting hand, and still treat a tap on that resting hand as an error. This setting is off by default and does not alter authored Learn lessons or imported scores.
 
-The home screen offers Two hands and One hand modes. One-hand practice has no left/right selector: either hand can tap anywhere across the full screen, and results are labeled One hand. Two-hand practice uses full-height left/right tap zones with large, centered rhythm notation. Tap zones and the note canvas extend edge-to-edge behind safe-area insets, while End and the beat indicator stay inset. A short pre-session tutorial explains the tap area; tapping anywhere starts the count-in. During practice, the screen keeps End, the beat indicator, the current notes, a clear beat-change countdown, and a compact next-pattern strip. Score practice offers a one-note view or a moving rhythm score. The moving score keeps both colored hand lanes visible together, places the notes above the tap zones without pitch lines, and slides forward after each bar completes.
+The home screen offers Two hands and One hand modes. One-hand practice has no left/right selector: either hand can tap anywhere across the full screen, and results are labeled One hand. Two-hand practice uses full-height left/right tap zones with large, centered rhythm notation. Tap zones and the note canvas extend edge-to-edge behind safe-area insets, while Pause and the beat indicator stay inset. A short pre-session tutorial explains the tap area; tapping anywhere starts the count-in. During practice, the screen keeps Pause, the beat indicator, the current notes, a clear beat-change countdown, and a compact next-pattern strip. The pause menu can resume or end the session, return home, change tempo, and rewind score practice by a selected number of bars. Applying a tempo change starts play over or resumes score practice from the current bar; rewinding starts a fresh run from the selected earlier bar. Score practice offers a one-note view or a moving rhythm score. The moving score keeps both colored hand lanes visible together, places the notes above the tap zones without pitch lines, and slides forward after each bar completes.
 
 Rhythm & meter settings can add a challenge response. Set it to pause or end the session after any off-beat tap or missed note, or after two, three, or five consecutive missed notes on one hand. Correct notes reset only that hand's miss streak. Paused sessions stop the audio clock and freeze the exercise clock; Continue resumes on the same beat, and End Session opens the current results.
 
@@ -126,11 +126,12 @@ npm run e2e:maestro -- --device DEVICE_ID
 
 For Android, use `npm run e2e:android`, then run `npm run e2e:maestro -- --device DEVICE_ID`. Maestro must be installed and the target device must be available.
 
-The home mode selection and start action have a separate flow:
+The home mode selection and start action have a separate flow. The pause flow checks tempo adjustment, continue, and return home:
 
 ~~~sh
 npm run e2e:ios
 npm run e2e:direct-start -- --device DEVICE_ID
+E2E_MAESTRO_FLOW=practice-pause.yaml npm run e2e:maestro -- --device DEVICE_ID
 ~~~
 
 The challenge flow checks that an off-beat tap pauses silently, then resumes on the same exercise:

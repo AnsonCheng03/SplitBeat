@@ -15,7 +15,7 @@ import {
 } from '@/rhythm/subdivisions';
 import { matchTap } from '@/rhythm/tapMatcher';
 import { getExerciseStartTime, getSessionDurationSeconds, RhythmTimingEngine } from '@/rhythm/timingEngine';
-import { findNextScoreEvent } from '@/rhythm/scoreStaff';
+import { findNextScoreEvent, scoreFromMeasure } from '@/rhythm/scoreStaff';
 import type { ExerciseSettings } from '@/types/rhythm';
 import type { ImportedRhythmScore } from '@/types/importedScore';
 
@@ -101,6 +101,33 @@ test('one-note score display does not wrap after the final note', () => {
   assert.equal(findNextScoreEvent(finalMeasure, undefined, 'left', 0)?.startQuarter, 0);
   assert.equal(findNextScoreEvent(finalMeasure, undefined, 'left', 1), undefined);
   assert.equal(findNextScoreEvent(finalMeasure, undefined, 'right', 1)?.startQuarter, 2);
+});
+
+test('score rewind starts at the chosen bar and keeps original bar numbering', () => {
+  const score: ImportedRhythmScore = {
+    formatVersion: 1,
+    title: 'Three bars',
+    timeSignature: '4/4',
+    trackCount: 2,
+    bpm: 80,
+    totalQuarterNotes: 12,
+    warnings: [],
+    measures: [0, 1, 2].map((index) => ({
+      index,
+      startQuarter: index * 4,
+      durationQuarter: 4,
+      leftEvents: [{ startQuarter: 0, durationQuarter: 1 }],
+      rightEvents: [],
+    })),
+  };
+
+  const rewound = scoreFromMeasure(score, 1);
+  assert.equal(rewound.measures.length, 2);
+  assert.equal(rewound.measures[0].index, 1);
+  assert.equal(rewound.measures[0].startQuarter, 0);
+  assert.equal(rewound.measures[1].startQuarter, 4);
+  assert.equal(rewound.totalQuarterNotes, 8);
+  assert.throws(() => scoreFromMeasure(score, 3), RangeError);
 });
 
 test('reference playback events use the same mixed left and right pattern timestamps', () => {

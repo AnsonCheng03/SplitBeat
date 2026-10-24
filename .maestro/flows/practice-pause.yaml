@@ -1,0 +1,72 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: LANDSCAPE_LEFT
+- launchApp:
+    clearState: true
+- runFlow:
+    when:
+      visible:
+        text: Two-Hand Rhythm Trainer
+    commands:
+      - tapOn: Two-Hand Rhythm Trainer
+- runFlow:
+    when:
+      visible:
+        text: Open
+    commands:
+      - tapOn: Open
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
+- tapOn:
+    id: home.start
+- extendedWaitUntil:
+    visible:
+      id: practice.tutorial
+    timeout: 15000
+- tapOn:
+    id: practice.tutorial
+- extendedWaitUntil:
+    visible:
+      id: practice.rhythmDisplay
+    timeout: 10000
+- tapOn:
+    id: practice.pause
+- assertVisible:
+    id: practice.pauseMenu
+- assertVisible:
+    id: practice.pause.continue
+- assertVisible:
+    id: practice.pause.bpmSlider
+- tapOn:
+    id: practice.pause.bpmPlus
+- assertVisible:
+    id: practice.pause.applyBpm
+- tapOn:
+    id: practice.pause.applyBpm
+- assertNotVisible:
+    id: practice.pauseMenu
+- extendedWaitUntil:
+    visible:
+      id: practice.rhythmDisplay
+    timeout: 10000
+- tapOn:
+    id: practice.pause
+- assertVisible:
+    id: practice.pauseMenu
+- tapOn:
+    id: practice.pause.continue
+- assertNotVisible:
+    id: practice.pauseMenu
+- tapOn:
+    id: practice.pause
+- assertVisible:
+    id: practice.pauseMenu
+- tapOn:
+    id: practice.pause.home
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
