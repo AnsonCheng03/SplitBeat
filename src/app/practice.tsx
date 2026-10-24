@@ -180,7 +180,7 @@ export default function PracticeScreen() {
   const handleKeyboardTap = useCallback(
     (hand: Hand, timestamp: number) => {
       const scoringHand = activeSettings.trainingMode === 'single-hand' ? activeSettings.singleHand : hand;
-      const feedback = registerTap(scoringHand, timestamp);
+      const feedback = registerTap(scoringHand, timestamp, 'keyboard');
       setKeyboardTapTokens((current) => ({
         ...current,
         [scoringHand]: { token: current[scoringHand].token + 1, feedback },

@@ -63,6 +63,7 @@ export type Hand = 'left' | 'right';
 export type TrainingMode = 'two-hand' | 'single-hand';
 export type PracticeDisplayMode = 'rhythm' | 'score';
 export type TapFeedback = 'hit' | 'miss' | 'ignored';
+export type TapInputSource = 'touch' | 'keyboard';
 export type SoundPreset = 'wood' | 'beep' | 'bell' | 'soft';
 export type FlashSource = 'tap' | 'beat';
 export type RhythmicFeel = 'straight' | 'swing';
@@ -205,6 +206,8 @@ export interface ReplayExpectedEvent extends MissedEvent {
 export interface ReplayTap {
   id: string;
   hand: Hand;
+  /** Physical or hardware keyboard input that produced this tap. */
+  inputSource?: TapInputSource;
   barIndex: number;
   /** Actual click timestamp relative to session start, in milliseconds. */
   timestampMs: number;
@@ -255,8 +258,17 @@ export interface SessionResults {
   /** In-memory replay data; deliberately omitted from saved session history. */
   replayExpectedEvents?: ReplayExpectedEvent[];
   replayTaps?: ReplayTap[];
+  /** Settings captured when the exercise began, for diagnostics and replay context. */
+  initialSettings?: ExerciseSettings;
+  /** Live settings changed during the exercise, ordered by elapsed session time. */
+  settingChanges?: SessionSettingChange[];
   source?: 'score';
   scoreTitle?: string;
+}
+
+export interface SessionSettingChange {
+  elapsedMs: number;
+  changes: Partial<ExerciseSettings>;
 }
 
 export interface SessionSnapshot {

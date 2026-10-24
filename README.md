@@ -66,7 +66,7 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 - `src/rhythm/scoreTemplates.ts` contains built-in practice arrangements with Pop, Classical, and Traditional categories plus combinable difficulty and hand-count tags; `src/rhythm/importedScoreLibrary.ts` validates and indexes recent and saved score data.
 - `src/rhythm/timingCalibration.ts` normalizes per-hand timing calibration and the selectable scoring window.
 - `src/audio/` synthesizes selectable metronome and hand clicks, a generated beat-synced accompaniment, and session cues; it schedules all sounds on the native audio clock.
-- src/store/ owns session state, prepares the audio context and offline click sounds at app startup, and persists exercise settings, course progress, combination accuracy, and summary-only session history locally. Expected note positions and actual tap timestamps stay in the active result screen for visual replay only.
+- `src/store/` owns session state, prepares the audio context and offline click sounds at app startup, and persists exercise settings, course progress, combination accuracy, and summary-only session history locally. Expected notes and actual tap timestamps remain in the active result screen for visual replay; shaking on the results page reveals an optional JSON diagnostics export.
 - `src/components/` contains reusable symbols, settings controls, beat indicators, start buttons, and large touch zones. Every displayed rhythm note uses VexFlow's engraved notehead, stem, flag, beam, and dot glyphs in an offline Expo DOM view; the native planner supplies note positions and overlay metadata. The renderer reserves bar-edge space for flags and dots so the final notes stay visible.
 - `expo-build-properties` enables the iOS scene lifecycle required by iOS 27 and builds React Native from source, avoiding a missing prebuilt framework when launching the iPad simulator.
 - The metronome synthesizes output and never records audio. A version-pinned postinstall patch disables the audio library's unused iOS microphone permission methods; the app does not request microphone access.
@@ -122,6 +122,8 @@ The internal `ImportedRhythmScore` JSON stores each measure's start and duration
 ## Session records and missed-note replay
 
 The home screen's **My Records** page keeps the 100 most recent summary records on the device, including date, meter, tempo, mode, and overall/hand accuracy. Missed notes and extra taps are listed by bar on the result page. Replay shows the expected notes and recorded taps on the same beat timeline, with a moving playhead; missed and extra taps are highlighted. When sound is enabled, the expected notes play softly and recorded taps play with the selected hand sound. Imported score replays retain and sound the matched pitches. Replay timing is scheduled from the native audio clock, and the display follows the same bar duration. Replay details are removed when the result page loses focus, and are never stored in session history. Automated E2E builds keep replay audio silent.
+
+Shake the device on the results page to reveal **Export session log**. The JSON contains the start and final settings, live setting changes, feature flags, generated expected events, raw touch or keyboard tap times, and scoring details, plus app and OS versions. It is written to the temporary cache and opened in the native share sheet; nothing is sent until the user chooses a destination. The export is session-only and is not added to local history.
 
 ## Challenge streak leaderboard
 

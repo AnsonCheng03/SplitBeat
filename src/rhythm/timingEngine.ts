@@ -30,9 +30,11 @@ import type {
   ReferenceRhythmEvent,
   RhythmPatternPair,
   SessionResults,
+  SessionSettingChange,
   SessionSnapshot,
   Subdivision,
   TapFeedback,
+  TapInputSource,
 } from '@/types/rhythm';
 
 interface ExpectedEvent {
@@ -159,6 +161,8 @@ export class RhythmTimingEngine {
   private readonly missedEvents: MissedEvent[] = [];
   private readonly replayExpectedEvents: ReplayExpectedEvent[] = [];
   private readonly replayTaps: ReplayTap[] = [];
+  private readonly initialSettings: ExerciseSettings;
+  private readonly settingChanges: SessionSettingChange[] = [];
   private readonly stable = createMutableAccuracyStats();
   private readonly transition = createMutableAccuracyStats();
   private nextStepToGenerate = 0;
@@ -176,6 +180,12 @@ export class RhythmTimingEngine {
 
   constructor(options: TimingEngineOptions) {
     this.settings = options.settings;
+    this.initialSettings = {
+      ...options.settings,
+      enabledSubdivisions: [...options.settings.enabledSubdivisions],
+      enabledMixtures: [...options.settings.enabledMixtures],
+      mixtureNoteValues: [...(options.settings.mixtureNoteValues ?? [])],
+    };
     this.importedScore = options.importedScore;
     this.timedScoreEvents = options.importedScore
       ? options.importedScore.measures
@@ -242,6 +252,13 @@ export class RhythmTimingEngine {
       this.settleWindowMsByHand.left,
       this.settleWindowMsByHand.right,
     );
+  }
+
+  recordSettingsChange(now: number, changes: Partial<ExerciseSettings>): void {
+    this.settingChanges.push({
+      elapsedMs: Math.max(0, this.toActiveTime(now) - this.sessionStartTime),
+      changes: { ...changes },
+    });
   }
 
   advance(now: number): SessionSnapshot {
@@ -313,7 +330,7 @@ export class RhythmTimingEngine {
     return this.tapWithDetails(hand, actualTapTime).feedback;
   }
 
-  tapWithDetails(hand: Hand, actualTapTime: number): TapResult {
+  tapWithDetails(hand: Hand, actualTapTime: number, inputSource: TapInputSource = 'touch'): TapResult {
     this.completeResumeCountIn(actualTapTime);
     if (this.finished || this.pausedAt !== null) return { feedback: 'ignored' };
     if (this.settings.trainingMode === 'single-hand' && hand !== this.settings.singleHand) {
@@ -323,7 +340,7 @@ export class RhythmTimingEngine {
     const activeTapTime = this.toActiveTime(actualTapTime);
     if (this.endTime !== null && activeTapTime >= this.endTime) return { feedback: 'ignored' };
 
-    const replayTap = this.recordReplayTap(hand, activeTapTime);
+    const replayTap = this.recordReplayTap(hand, activeTapTime, inputSource);
 
     const tapOffsetMs =
       hand === 'left' ? this.settings.leftTapOffsetMs : this.settings.rightTapOffsetMs;
@@ -433,6 +450,8 @@ export class RhythmTimingEngine {
       replayTaps: [...this.replayTaps].sort(
         (firstTap, secondTap) => firstTap.timestampMs - secondTap.timestampMs,
       ),
+      initialSettings: this.initialSettings,
+      settingChanges: [...this.settingChanges],
       ...(this.importedScore
         ? { source: 'score' as const, scoreTitle: this.importedScore.title }
         : {}),
@@ -726,12 +745,13 @@ export class RhythmTimingEngine {
     );
   }
 
-  private recordReplayTap(hand: Hand, timestamp: number): ReplayTap {
+  private recordReplayTap(hand: Hand, timestamp: number, inputSource: TapInputSource): ReplayTap {
     const timestampMs = Math.max(0, timestamp - this.sessionStartTime);
     const barDurationMs = this.beatsPerBar * this.beatMs;
     const tap: ReplayTap = {
       id: `tap-${this.nextReplayTapId}`,
       hand,
+      inputSource,
       barIndex: Math.floor(timestampMs / barDurationMs) + 1,
       timestampMs,
     };
@@ -1195,6 +1215,8 @@ export class RhythmTimingEngine {
       replayTaps: [...this.replayTaps].sort(
         (firstTap, secondTap) => firstTap.timestampMs - secondTap.timestampMs,
       ),
+      initialSettings: this.initialSettings,
+      settingChanges: [...this.settingChanges],
       ...(this.importedScore
         ? { source: 'score' as const, scoreTitle: this.importedScore.title }
         : {}),

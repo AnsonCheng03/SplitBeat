@@ -52,6 +52,7 @@ import type {
   SoundPreset,
   Subdivision,
   TapFeedback,
+  TapInputSource,
   TimeSignature,
 } from '@/types/rhythm';
 
@@ -151,7 +152,7 @@ interface SessionContextValue {
   resumeExercise: () => Promise<void>;
   restartPausedExercise: (barsBack: number, bpm: number) => Promise<void>;
   restartExerciseWithFeel: (feel: RhythmicFeel) => Promise<void>;
-  registerTap: (hand: Hand, timestamp: number) => TapFeedback | null;
+  registerTap: (hand: Hand, timestamp: number, inputSource?: TapInputSource) => TapFeedback | null;
   snapshot: SessionSnapshot | null;
   results: SessionResults | null;
   sessionHistory: SessionRecord[];
@@ -456,6 +457,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     if (engineRef.current && Object.keys(livePatch).length > 0) {
       sessionSettingsRef.current = { ...sessionSettingsRef.current, ...livePatch };
       setSessionSettings((current) => current ? { ...current, ...livePatch } : current);
+      engineRef.current.recordSettingsChange(monotonicNow(), livePatch);
       engineRef.current.updateTimingCalibration({
         ...(livePatch.leftTapOffsetMs === undefined ? {} : { leftTapOffsetMs: livePatch.leftTapOffsetMs }),
         ...(livePatch.rightTapOffsetMs === undefined ? {} : { rightTapOffsetMs: livePatch.rightTapOffsetMs }),
@@ -785,10 +787,10 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     setExercisePrepared(false);
   }, [exercisePrepared, startSession]);
 
-  const registerTap = useCallback((hand: Hand, timestamp: number): TapFeedback | null => {
+  const registerTap = useCallback((hand: Hand, timestamp: number, inputSource: 'touch' | 'keyboard' = 'touch'): TapFeedback | null => {
     const engine = engineRef.current;
     if (!engine) return null;
-    const tapResult = engine.tapWithDetails(hand, timestamp);
+    const tapResult = engine.tapWithDetails(hand, timestamp, inputSource);
     if (challengePausedRef.current && !engine.isPaused()) {
       challengeStreaksRef.current = createChallengeStreaks();
       challengeWrongBarIndexesRef.current.clear();
