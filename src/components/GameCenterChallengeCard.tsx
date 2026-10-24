@@ -1,0 +1,148 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Platform, Pressable, Text, View } from 'react-native';
+import {
+  authenticateGameCenter,
+  getGameCenterStatus,
+  showGameCenterLeaderboard,
+  subscribeToGameCenterStatus,
+  submitLongestStreak,
+} from '../../modules/splitbeat-game-center/src';
+import type { GameCenterStatus } from '../../modules/splitbeat-game-center/src';
+import { colors } from '@/theme';
+
+interface GameCenterChallengeCardProps {
+  challengeMode?: boolean;
+  longestCorrectStreak?: number;
+  testID?: string;
+}
+
+export function GameCenterChallengeCard({
+  challengeMode = false,
+  longestCorrectStreak,
+  testID = 'gameCenter.challenge',
+}: GameCenterChallengeCardProps) {
+  const [status, setStatus] = useState<GameCenterStatus>(getGameCenterStatus);
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [scoreStatus, setScoreStatus] = useState<'idle' | 'submitted' | 'failed'>('idle');
+  const submittedRef = useRef(false);
+  const hasScore = challengeMode && typeof longestCorrectStreak === 'number';
+
+  const updateStatus = useCallback((nextStatus: GameCenterStatus) => {
+    setStatus(nextStatus);
+    if (nextStatus.error) setMessage(nextStatus.error);
+  }, []);
+
+  useEffect(() => {
+    const subscription = subscribeToGameCenterStatus(updateStatus);
+    return () => subscription?.remove();
+  }, [updateStatus]);
+
+  const submitScore = useCallback(async () => {
+    if (!hasScore || longestCorrectStreak === undefined || submitting) return;
+    submittedRef.current = true;
+    setSubmitting(true);
+    setScoreStatus('idle');
+    setMessage('Sending your clean streak to Game Center…');
+    try {
+      await submitLongestStreak(longestCorrectStreak);
+      setScoreStatus('submitted');
+      setMessage('Challenge score submitted. Game Center keeps your best streak.');
+    } catch (error) {
+      setScoreStatus('failed');
+      setMessage(error instanceof Error ? error.message : 'Could not submit this score.');
+    } finally {
+      setSubmitting(false);
+    }
+  }, [hasScore, longestCorrectStreak, submitting]);
+
+  useEffect(() => {
+    if (!hasScore || !status.available || !status.authenticated || submittedRef.current) return;
+    void submitScore();
+  }, [hasScore, status.available, status.authenticated, submitScore]);
+
+  const openLeaderboard = () => {
+    try {
+      showGameCenterLeaderboard();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not open Game Center.');
+    }
+  };
+
+  const signIn = () => {
+    setMessage('Waiting for Game Center…');
+    authenticateGameCenter();
+  };
+
+  const handleAction = () => {
+    if (!status.authenticated) {
+      signIn();
+    } else if (hasScore && scoreStatus !== 'submitted') {
+      void submitScore();
+    } else {
+      openLeaderboard();
+    }
+  };
+
+  const actionLabel = !status.authenticated
+    ? 'SIGN IN TO GAME CENTER'
+    : scoreStatus === 'failed'
+      ? 'RETRY SCORE'
+      : scoreStatus === 'submitted' || !hasScore
+        ? 'VIEW LEADERBOARD'
+        : 'SUBMIT SCORE';
+
+  return (
+    <View
+      testID={testID}
+      style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 17, padding: 16, marginTop: 14 }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.7 }}>GAME CENTER</Text>
+          <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: 5 }}>
+            {hasScore
+              ? `Longest clean run · ${longestCorrectStreak} notes`
+              : 'Leaderboard · Longest clean run'}
+          </Text>
+        </View>
+        {status.authenticated ? (
+          <Text numberOfLines={1} style={{ color: colors.left, maxWidth: '38%', fontSize: 11, fontWeight: '800' }}>
+            {status.playerAlias || 'SIGNED IN'}
+          </Text>
+        ) : null}
+      </View>
+
+      <Text style={{ color: colors.dim, fontSize: 11, lineHeight: 16, marginTop: 8 }}>
+        {Platform.OS !== 'ios'
+          ? 'Game Center is available on iOS. Your best clean streak is saved in My Records on this device.'
+          : hasScore
+            ? status.authenticated
+              ? 'A correct note adds one. A missed note or off-beat tap resets the run.'
+              : 'Sign in to send this challenge score. Your local record is saved either way.'
+            : 'Challenge scores count consecutive correct notes across both hands. A miss or extra tap breaks the run.'}
+      </Text>
+
+      {status.available ? (
+        <Pressable
+          testID={`${testID}.action`}
+          accessibilityRole="button"
+          accessibilityLabel={status.authenticated ? 'View Game Center leaderboard' : 'Sign in to Game Center'}
+          disabled={submitting}
+          onPress={handleAction}
+          style={({ pressed }) => ({ minHeight: 44, alignSelf: 'flex-start', justifyContent: 'center', paddingHorizontal: 14, marginTop: 13, borderRadius: 12, backgroundColor: pressed ? colors.surfaceRaised : colors.background, borderWidth: 1, borderColor: colors.line, opacity: submitting ? 0.6 : 1 })}
+        >
+          <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '900', letterSpacing: 0.7 }}>
+            {submitting ? 'SUBMITTING…' : actionLabel}
+          </Text>
+        </Pressable>
+      ) : null}
+
+      {message ? (
+        <Text accessibilityLiveRegion="polite" style={{ color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 9 }}>
+          {message}
+        </Text>
+      ) : null}
+    </View>
+  );
+}

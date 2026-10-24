@@ -26,6 +26,11 @@ appId: com.splitbeat.twohandrhythm
     visible:
       id: learn.screen
     timeout: 15000
+- assertVisible:
+    id: learn.restore
+- scrollUntilVisible:
+    element: { id: learn.start }
+    direction: DOWN
 - extendedWaitUntil:
     visible:
       id: learn.start
@@ -44,20 +49,20 @@ appId: com.splitbeat.twohandrhythm
     id: learn.lesson.triplet-spacing
 - assertVisible:
     id: learn.purchase.offer
-- swipe:
-    start: 25%, 80%
-    end: 25%, 35%
-    duration: 400
+- scrollUntilVisible:
+    element: { id: learn.purchase }
+    direction: DOWN
 - assertVisible:
     id: learn.purchase
-- assertVisible:
-    id: learn.restore
 - swipe:
     start: 85%, 35%
     end: 85%, 80%
     duration: 400
 - tapOn:
     id: learn.lesson.steady-pulse
+- scrollUntilVisible:
+    element: { id: learn.start }
+    direction: UP
 - tapOn:
     id: learn.start
 - extendedWaitUntil:

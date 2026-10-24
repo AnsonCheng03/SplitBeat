@@ -37,6 +37,8 @@ const results: SessionResults = {
   },
   stable: { totalExpected: 20, totalHit: 17 },
   transition: { totalExpected: 0, totalHit: 0 },
+  longestCorrectStreak: 12,
+  challengeMode: false,
   combinations: [],
   durationSeconds: 30,
   missedEvents: [{
@@ -69,4 +71,11 @@ test('session history parsing tolerates corrupt entries and newest-first append 
     { ...record, completedAt: 5678 },
   ]);
   assert.deepEqual(parseSessionHistory('{bad json'), []);
+});
+
+test('older saved session records remain readable without clean streak values', () => {
+  const { longestCorrectStreak: _ignored, ...olderRecord } = createSessionRecord('older', 1234, results);
+  assert.deepEqual(parseSessionHistory(JSON.stringify([olderRecord])), [
+    { ...olderRecord, longestCorrectStreak: 0 },
+  ]);
 });

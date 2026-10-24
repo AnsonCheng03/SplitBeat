@@ -7,6 +7,7 @@ import {
   tupletCount,
 } from '@/rhythm/subdivisions';
 import { accuracyPercent, emptyHandStats, finalizeHandStats } from '@/rhythm/scoring';
+import { longestCorrectNoteStreak } from '@/rhythm/challenge';
 import type { ChallengeOutcome } from '@/rhythm/challenge';
 import { matchTap, timingWindowsForGoodWindow } from '@/rhythm/tapMatcher';
 import type { TimingWindows } from '@/rhythm/tapMatcher';
@@ -306,6 +307,12 @@ export class RhythmTimingEngine {
       right: this.readHandStats('right'),
       stable: toAccuracyStats(this.stable),
       transition: toAccuracyStats(this.transition),
+      longestCorrectStreak: longestCorrectNoteStreak(
+        this.replayExpectedEvents,
+        this.replayTaps,
+        this.sessionStartTime,
+      ),
+      challengeMode: this.settings.challengeAction !== 'off' && !this.importedScore,
       combinations: Array.from(this.combinations.values(), (combination) => ({
         leftSubdivision: combination.leftSubdivision,
         rightSubdivision: combination.rightSubdivision,
@@ -601,6 +608,7 @@ export class RhythmTimingEngine {
         : { tupletNumber: event.tupletNumber }),
       isScoreEvent: event.isScoreEvent,
       matched: grade !== null,
+      expectedTimeMs: event.expectedTimeMs,
       ...(errorMs === null ? {} : { timingErrorMs: errorMs }),
     };
     this.replayExpectedEvents.push(replayEvent);
@@ -803,6 +811,12 @@ export class RhythmTimingEngine {
       right: this.readHandStats('right'),
       stable: toAccuracyStats(this.stable),
       transition: toAccuracyStats(this.transition),
+      longestCorrectStreak: longestCorrectNoteStreak(
+        this.replayExpectedEvents,
+        this.replayTaps,
+        this.sessionStartTime,
+      ),
+      challengeMode: this.settings.challengeAction !== 'off' && !this.importedScore,
       combinations: Array.from(this.combinations.values(), (combination) => ({
         leftSubdivision: combination.leftSubdivision,
         rightSubdivision: combination.rightSubdivision,

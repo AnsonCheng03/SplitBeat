@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DimensionValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ReplayTimeline } from '@/components/ReplayTimeline';
+import { GameCenterChallengeCard } from '@/components/GameCenterChallengeCard';
 import { accuracyPercent } from '@/rhythm/scoring';
 import { LEARN_COURSE } from '@/rhythm/learnCourse';
 import { SUBDIVISION_LABELS, timeSignatureMetrics } from '@/rhythm/subdivisions';
@@ -364,6 +365,14 @@ export default function ResultsScreen() {
             <ScorePanel label="DURING SWITCHES" value={results.transition.totalExpected ? percent(accuracyPercent(results.transition)) : '—'} detail="First 2 beats after change" />
           </View>
         )}
+
+        {results.challengeMode ? (
+          <GameCenterChallengeCard
+            testID="results.gameCenter"
+            challengeMode
+            longestCorrectStreak={results.longestCorrectStreak}
+          />
+        ) : null}
 
         {missedBars.length > 0 ? (
           <View style={{ marginTop: 22 }}>

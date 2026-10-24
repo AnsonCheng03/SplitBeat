@@ -2,7 +2,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { applyChallengeOutcomes, createChallengeStreaks, createWrongTapTrigger } from '@/rhythm/challenge';
+import { applyChallengeOutcomes, createChallengeStreaks, createWrongTapTrigger, longestCorrectNoteStreak } from '@/rhythm/challenge';
 
 test('challenge tracks consecutive misses separately for each hand', () => {
   const first = applyChallengeOutcomes(createChallengeStreaks(), [
@@ -43,4 +43,31 @@ test('any-error mode can trigger immediately on an off-beat tap', () => {
     missStreak: 1,
     reason: 'wrong-tap',
   });
+});
+
+test('longest clean streak spans hands and resets at a missed or extra note', () => {
+  const sessionStartTime = 5_000;
+  const expectedEvents = [
+    { hand: 'left' as const, expectedTimeMs: 5_000, matched: true },
+    { hand: 'right' as const, expectedTimeMs: 5_000, matched: true },
+    { hand: 'right' as const, expectedTimeMs: 5_500, matched: true },
+    { hand: 'left' as const, expectedTimeMs: 6_000, matched: false },
+    { hand: 'right' as const, expectedTimeMs: 6_000, matched: true },
+    { hand: 'right' as const, expectedTimeMs: 6_500, matched: true },
+    { hand: 'right' as const, expectedTimeMs: 7_000, matched: true },
+  ];
+
+  assert.equal(longestCorrectNoteStreak(expectedEvents, [], sessionStartTime), 3);
+  assert.equal(
+    longestCorrectNoteStreak(
+      [
+        { hand: 'left' as const, expectedTimeMs: 5_000, matched: true },
+        { hand: 'right' as const, expectedTimeMs: 5_500, matched: true },
+        { hand: 'right' as const, expectedTimeMs: 6_000, matched: true },
+      ],
+      [{ timestampMs: 750 }],
+      sessionStartTime,
+    ),
+    2,
+  );
 });

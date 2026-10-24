@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { GameCenterChallengeCard } from '@/components/GameCenterChallengeCard';
 import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsPage } from '@/components/SettingsPage';
 import { SettingsToggleRow } from '@/components/SettingsToggleRow';
@@ -183,6 +184,7 @@ export default function RhythmSettingsScreen() {
         <Text style={helperText}>
           Any error reacts to an off-beat tap or missed note. Consecutive misses count separately for each hand; a correct note resets that hand’s streak. A pause can be resumed from the practice screen.
         </Text>
+        <GameCenterChallengeCard testID="setup.challenge.gameCenter" />
       </Section>
     </SettingsPage>
   );

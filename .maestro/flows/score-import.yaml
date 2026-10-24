@@ -34,6 +34,9 @@ appId: com.splitbeat.twohandrhythm
     id: scoreImport.summary
 - assertVisible: E2E Two Bar Score
 - assertVisible: 2 left-hand notes · 2 right-hand notes
+- scrollUntilVisible:
+    element: { id: scoreImport.duration.30 }
+    direction: DOWN
 - tapOn:
     id: scoreImport.duration.30
 - scrollUntilVisible:

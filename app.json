@@ -51,7 +51,10 @@
       "config": {
         "usesNonExemptEncryption": false
       },
-      "bundleIdentifier": "com.splitbeat.twohandrhythm"
+      "bundleIdentifier": "com.splitbeat.twohandrhythm",
+      "entitlements": {
+        "com.apple.developer.game-center": true
+      }
     },
     "android": {
       "package": "com.splitbeat.twohandrhythm",

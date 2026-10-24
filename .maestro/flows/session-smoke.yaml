@@ -146,6 +146,9 @@ appId: com.splitbeat.twohandrhythm
     id: setup.toggle.sound
 - assertNotVisible:
     text: Sound on. Tap to mute.
+- scrollUntilVisible:
+    element: { id: setup.sound.metronome.bell }
+    direction: DOWN
 - assertVisible:
     id: setup.sound.metronome.bell
 - tapOn:

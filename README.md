@@ -15,6 +15,17 @@ npx expo run:android
 
 Once the development client is installed, start Metro with npm start. Expo Go does not include react-native-audio-api.
 
+### iOS simulator on Xcode 27
+
+Xcode 27 replaced the standalone `Simulator.app` with Device Hub, at `/Applications/Xcode.app/Contents/Applications/DeviceHub.app`. The iOS simulator runtime and devices are still available through Xcode and `simctl`; this project uses Expo's Xcode-aware launcher. If a tool reports that `Simulator.app` is missing, open Device Hub and run the project through `npm run ios` or `npm run e2e:ios` instead of reinstalling Xcode:
+
+~~~sh
+open -a /Applications/Xcode.app/Contents/Applications/DeviceHub.app
+xcrun simctl list devices available
+~~~
+
+The E2E iOS script sets `EXPO_PUBLIC_E2E_SILENT=1` so simulator checks do not produce sound.
+
 An iOS build can also be offered on Apple silicon Macs as an iPhone/iPad app. This project does not add a macOS or Mac Catalyst target; Mac App Store availability is controlled in App Store Connect.
 
 ## iOS release and TestFlight
@@ -87,6 +98,12 @@ The internal `ImportedRhythmScore` JSON stores each measure's start and duration
 ## Session records and missed-note replay
 
 The home screen's **My Records** page keeps the 100 most recent summary records on the device, including date, meter, tempo, mode, and overall/hand accuracy. Missed notes are listed by bar on the result page. Visual replay shows the expected note values and the recorded taps on the same beat timeline, with a moving playhead; missed and extra taps are highlighted. Replay details are removed when the result page loses focus, and are never stored in session history. Replay is visual and silent.
+
+## Challenge streak leaderboard
+
+When the mistake response is set to **Pause** or **End session**, Split Beat treats the session as a challenge. The score is the longest clean run of expected notes across the active hand or hands; each expected note adds one, while a missed note or off-beat/extra tap resets the run. Completed challenge runs are submitted to Game Center on iOS. A local clean-streak best is also included in **My Records**, so the metric remains available offline and on Android. The Game Center card lets players sign in and open the board.
+
+The iOS target includes the Game Center entitlement. Before leaderboard submissions work for a released build, enable Game Center for the app in App Store Connect and create a classic leaderboard using identifier `com.splitbeat.twohandrhythm.longest-correct-streak`, integer score format, and **Best Score** submission. This metadata is managed by Apple and cannot be created by the app build itself. The leaderboard currently combines meters, tempos, and subdivisions, so it compares longest streak counts rather than normalized difficulty.
 
 ## External keyboard play
 

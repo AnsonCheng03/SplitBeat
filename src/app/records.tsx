@@ -42,6 +42,7 @@ function RecordRow({ record }: { record: SessionRecord }) {
         {record.trainingMode === 'two-hand' ? (
           <Text style={{ color: colors.right, fontSize: 11, fontWeight: '800' }}>R {Math.round(record.rightAccuracy)}%</Text>
         ) : null}
+        <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '800' }}>CLEAN RUN {record.longestCorrectStreak}</Text>
         <Text style={{ color: colors.muted, fontSize: 11 }}>{record.bpm} BPM · {record.timeSignature}</Text>
         <Text style={{ color: colors.dim, fontSize: 11 }}>{Math.round(record.durationSeconds)} sec</Text>
       </View>
@@ -55,6 +56,10 @@ export default function RecordsScreen() {
   const bestRecord = sessionHistory.reduce<SessionRecord | null>(
     (best, record) => !best || record.overallAccuracy > best.overallAccuracy ? record : best,
     null,
+  );
+  const bestStreak = sessionHistory.reduce(
+    (best, record) => Math.max(best, record.longestCorrectStreak),
+    0,
   );
 
   return (
@@ -97,6 +102,10 @@ export default function RecordsScreen() {
               <View style={{ flex: 1, borderRadius: 15, padding: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
                 <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 0.7 }}>BEST ACCURACY</Text>
                 <Text testID="records.best" style={{ color: colors.accent, fontSize: 24, fontWeight: '900', marginTop: 4 }}>{Math.round(bestRecord?.overallAccuracy ?? 0)}%</Text>
+              </View>
+              <View style={{ flex: 1, borderRadius: 15, padding: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
+                <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 0.7 }}>BEST CLEAN RUN</Text>
+                <Text testID="records.bestStreak" style={{ color: colors.accent, fontSize: 24, fontWeight: '900', marginTop: 4 }}>{bestStreak}</Text>
               </View>
             </View>
             <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', marginBottom: 10 }}>RECENT SESSIONS</Text>

@@ -529,6 +529,23 @@ test('session engine scores simultaneous hands and counts later missed notes', (
   assert.ok(snapshot.rightStats.totalExpected > snapshot.rightStats.totalHit);
 });
 
+test('challenge results expose the longest combined clean streak', () => {
+  const start = 11_000;
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, challengeAction: 'stop' },
+    sessionStartTime: start,
+    patternPairs: [{ leftSubdivision: 'quarter', rightSubdivision: 'quarter' }],
+  });
+  engine.tap('left', start);
+  engine.tap('right', start);
+  engine.tap('left', start + 1_000);
+  engine.tap('right', start + 1_000);
+
+  const results = engine.getResults(start + 1_101);
+  assert.equal(results.challengeMode, true);
+  assert.equal(results.longestCorrectStreak, 4);
+});
+
 test('the first two beats after a pair change are scored as transition events', () => {
   const start = 50_000;
   const engine = new RhythmTimingEngine({ settings, sessionStartTime: start, random: () => 0 });

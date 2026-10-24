@@ -133,6 +133,8 @@ export interface MissedEvent {
 }
 
 export interface ReplayExpectedEvent extends MissedEvent {
+  /** Expected timestamp in the monotonic session clock, used to calculate clean streaks. */
+  expectedTimeMs: number;
   /** Duration used to draw the expected rhythm in the replay timeline. */
   durationQuarter: number;
   matched: boolean;
@@ -164,6 +166,10 @@ export interface SessionResults {
   right: HandStats;
   stable: AccuracyStats;
   transition: AccuracyStats;
+  /** Longest run of correct expected notes without a miss or off-beat tap. */
+  longestCorrectStreak: number;
+  /** True when this was a pattern challenge session eligible for Game Center. */
+  challengeMode: boolean;
   combinations: CombinationStats[];
   durationSeconds: number;
   missedEvents: MissedEvent[];

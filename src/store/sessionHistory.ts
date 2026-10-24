@@ -13,6 +13,7 @@ export interface SessionRecord {
   overallAccuracy: number;
   leftAccuracy: number;
   rightAccuracy: number;
+  longestCorrectStreak: number;
 }
 
 const MAX_SESSION_RECORDS = 100;
@@ -41,6 +42,7 @@ export function createSessionRecord(
     overallAccuracy: accuracy(totalExpected, totalHit),
     leftAccuracy: accuracy(results.left.totalExpected, results.left.totalHit),
     rightAccuracy: accuracy(results.right.totalExpected, results.right.totalHit),
+    longestCorrectStreak: results.longestCorrectStreak,
   };
 }
 
@@ -58,7 +60,8 @@ function isSessionRecord(value: unknown): value is SessionRecord {
     (record.scoreTitle === undefined || typeof record.scoreTitle === 'string') &&
     typeof record.overallAccuracy === 'number' &&
     typeof record.leftAccuracy === 'number' &&
-    typeof record.rightAccuracy === 'number';
+    typeof record.rightAccuracy === 'number' &&
+    (record.longestCorrectStreak === undefined || Number.isInteger(record.longestCorrectStreak));
 }
 
 export function parseSessionHistory(raw: string | null): SessionRecord[] {
@@ -66,7 +69,10 @@ export function parseSessionHistory(raw: string | null): SessionRecord[] {
   try {
     const parsed: unknown = JSON.parse(raw);
     return Array.isArray(parsed)
-      ? parsed.filter(isSessionRecord).slice(0, MAX_SESSION_RECORDS)
+      ? parsed
+          .filter(isSessionRecord)
+          .map((record) => ({ ...record, longestCorrectStreak: record.longestCorrectStreak ?? 0 }))
+          .slice(0, MAX_SESSION_RECORDS)
       : [];
   } catch {
     return [];

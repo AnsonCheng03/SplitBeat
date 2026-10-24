@@ -38,6 +38,11 @@ appId: com.splitbeat.twohandrhythm
     id: setup.challenge.misses.1
 - tapOn:
     id: setup.challenge.action.pause
+- scrollUntilVisible:
+    element: { id: setup.challenge.gameCenter }
+    direction: DOWN
+- assertVisible:
+    id: setup.challenge.gameCenter
 - tapOn:
     id: settings.rhythm.back
 - tapOn:
@@ -59,15 +64,14 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: practice.challengeResume
 - tapOn:
-    id: practice.challengeResume
-- extendedWaitUntil:
-    visible:
-      id: practice.nextPattern.countdown
-    timeout: 7000
-- tapOn:
     id: practice.challengeEnd
 - extendedWaitUntil:
     visible:
       id: results.screen
     timeout: 15000
 - assertVisible: SESSION COMPLETE
+- scrollUntilVisible:
+    element: { id: results.gameCenter }
+    direction: DOWN
+- assertVisible:
+    id: results.gameCenter

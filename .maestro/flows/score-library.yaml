@@ -32,10 +32,14 @@ appId: com.splitbeat.twohandrhythm
     id: scoreImport.summary
 - tapOn:
     id: scoreImport.save
-- assertVisible: SAVED ✓
+- assertVisible: Remove score from saved scores
+- scrollUntilVisible:
+    element: { id: scoreImport.library }
+    direction: DOWN
 - tapOn:
     id: scoreImport.library
 - assertVisible: MY SAVED SCORES
-- tapOn: Jingle Bells · Easy Duet
+- tapOn:
+    id: scoreImport.saved.*
 - assertVisible:
     id: scoreImport.summary
