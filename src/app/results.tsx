@@ -547,7 +547,7 @@ export default function ResultsScreen() {
           accessibilityState={{ disabled: startingAgain }}
           disabled={startingAgain}
           onPress={() => void startAgain()}
-          style={({ pressed }) => ({ backgroundColor: pressed ? '#A8EADB' : colors.left, minHeight: 58, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginTop: 27, opacity: startingAgain ? 0.72 : 1 })}
+          style={({ pressed }) => ({ backgroundColor: pressed ? '#A8EADB' : colors.left, minHeight: 64, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginTop: 30, opacity: startingAgain ? 0.72 : 1 })}
         >
           <Text style={{ color: colors.background, fontSize: 15, fontWeight: '900', letterSpacing: 0.8 }}>
             {startingAgain ? 'PREPARING…' : 'START AGAIN'}
@@ -562,7 +562,7 @@ export default function ResultsScreen() {
               discardReplayData();
               router.replace({ pathname: '/learn', params: { lessonId } });
             }}
-            style={({ pressed }) => ({ backgroundColor: pressed ? colors.surfaceRaised : colors.surface, minHeight: 50, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginTop: 9, borderWidth: 1, borderColor: colors.line })}
+            style={({ pressed }) => ({ backgroundColor: pressed ? colors.surfaceRaised : colors.surface, minHeight: 60, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginTop: 14, borderWidth: 1, borderColor: colors.line })}
           >
             <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '900', letterSpacing: 0.7 }}>
               {courseLesson.number === LEARN_COURSE.length ? 'VIEW COURSE' : 'CONTINUE LEARNING'}
@@ -575,7 +575,7 @@ export default function ResultsScreen() {
             accessibilityRole="button"
             accessibilityLabel="Change settings"
             onPress={discardReplayData}
-            style={({ pressed }) => ({ flexDirection: 'row', backgroundColor: pressed ? colors.surface : colors.surfaceRaised, minHeight: 56, paddingHorizontal: 18, borderRadius: 15, alignItems: 'center', justifyContent: 'space-between', marginTop: 10, borderWidth: 1, borderColor: colors.line })}
+            style={({ pressed }) => ({ flexDirection: 'row', backgroundColor: pressed ? colors.surface : colors.surfaceRaised, minHeight: 62, paddingHorizontal: 24, borderRadius: 15, alignItems: 'center', justifyContent: 'space-between', marginTop: 14, borderWidth: 1, borderColor: colors.line })}
           >
             <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>CHANGE SETTINGS</Text>
             <Text accessibilityElementsHidden style={{ color: colors.muted, fontSize: 24, lineHeight: 28, fontWeight: '500' }}>›</Text>
@@ -587,7 +587,7 @@ export default function ResultsScreen() {
             accessibilityRole="button"
             accessibilityLabel="View my record"
             onPress={discardReplayData}
-            style={({ pressed }) => ({ flexDirection: 'row', backgroundColor: pressed ? colors.surface : colors.surfaceRaised, minHeight: 56, paddingHorizontal: 18, borderRadius: 15, alignItems: 'center', justifyContent: 'space-between', marginTop: 10, borderWidth: 1, borderColor: colors.line })}
+            style={({ pressed }) => ({ flexDirection: 'row', backgroundColor: pressed ? colors.surface : colors.surfaceRaised, minHeight: 62, paddingHorizontal: 24, borderRadius: 15, alignItems: 'center', justifyContent: 'space-between', marginTop: 14, borderWidth: 1, borderColor: colors.line })}
           >
             <Text style={{ color: colors.left, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>VIEW MY RECORD</Text>
             <Text accessibilityElementsHidden style={{ color: colors.left, fontSize: 24, lineHeight: 28, fontWeight: '500' }}>›</Text>
@@ -601,7 +601,7 @@ export default function ResultsScreen() {
             discardReplayData();
             router.replace('/');
           }}
-          style={({ pressed }) => ({ flexDirection: 'row', backgroundColor: pressed ? colors.surface : colors.surfaceRaised, minHeight: 56, paddingHorizontal: 18, borderRadius: 15, alignItems: 'center', justifyContent: 'space-between', marginTop: 10, marginBottom: 14, borderWidth: 1, borderColor: colors.line })}
+          style={({ pressed }) => ({ flexDirection: 'row', backgroundColor: pressed ? colors.surface : colors.surfaceRaised, minHeight: 62, paddingHorizontal: 24, borderRadius: 15, alignItems: 'center', justifyContent: 'space-between', marginTop: 14, marginBottom: 18, borderWidth: 1, borderColor: colors.line })}
         >
           <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>BACK HOME</Text>
           <Text accessibilityElementsHidden style={{ color: colors.muted, fontSize: 24, lineHeight: 28, fontWeight: '500' }}>›</Text>
