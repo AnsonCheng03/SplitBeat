@@ -35,6 +35,24 @@ test('VexFlow note placement registers each note and centers its glyph', () => {
   }
 });
 
+test('VexFlow noteheads stay on the intended baseline inside the notation viewport', () => {
+  const noteCenterY = 39;
+  const lineSpacing = 6;
+  const note = createVexFlowRhythmNote(
+    { startQuarter: 0, durationQuarter: 0.5 },
+    { color: '#07866C', glyphScale: 24, stemLength: 24 },
+  );
+  note.setStave(new Stave(0, noteCenterY - lineSpacing * 4, 100, {
+    spacing_between_lines_px: lineSpacing,
+    space_above_staff_ln: 0,
+    space_below_staff_ln: 0,
+    line_config: Array.from({ length: 5 }, () => ({ visible: false })),
+  }));
+
+  assert.equal(note.noteHeads[0]?.getY(), noteCenterY);
+  assert.ok((note.noteHeads[0]?.getY() ?? Infinity) < 44, 'notehead stays inside the 44px notation viewport');
+});
+
 test('VexFlow keeps mixed bar noteheads inside the viewport, including the final flagged note', () => {
   const events = [
     { startQuarter: 0, durationQuarter: 0.75 },

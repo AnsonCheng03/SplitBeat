@@ -22,6 +22,8 @@ function drawNotation(container: HTMLDivElement, plan: NoteNotationPlan, color: 
   const lineSpacing = plan.noteBaselineY === null ? 3 : 6;
   const stave = new Stave(0, noteCenterY - lineSpacing * 4, plan.width, {
     spacing_between_lines_px: lineSpacing,
+    space_above_staff_ln: 0,
+    space_below_staff_ln: 0,
     line_config: Array.from({ length: 5 }, () => ({ visible: false })),
   });
   const targetHeadWidth = plan.notes[0]?.headWidth ?? 8;
