@@ -1,5 +1,7 @@
 import { Link, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DimensionValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -77,36 +79,40 @@ function weakestCombination(results: SessionResults) {
     .sort((a, b) => a.accuracy - b.accuracy || b.sampleSize - a.sampleSize)[0];
 }
 
-function buildFeedback(results: SessionResults, weak?: ReturnType<typeof weakestCombination>) {
+function buildFeedback(
+  results: SessionResults,
+  weak: ReturnType<typeof weakestCombination> | undefined,
+  t: (source: string, values?: Record<string, string | number>) => string,
+) {
   if (results.source === 'score') {
     if (results.trainingMode === 'single-hand') {
       const stats = results[results.singleHand];
       return [
-        results.scoreTitle ? `You trained from “${results.scoreTitle}”.` : 'You trained from an imported score.',
+        results.scoreTitle ? t('You trained from “{title}”.', { title: results.scoreTitle }) : t('You trained from an imported score.'),
         Math.abs(stats.averageSignedErrorMs) > 15
-          ? `Your taps tend to ${stats.averageSignedErrorMs > 0 ? 'play late' : 'rush'}.`
-          : 'Your one-hand timing stayed steady through the score.',
+          ? t('Your taps tend to {timing}.', { timing: t(stats.averageSignedErrorMs > 0 ? 'play late' : 'rush') })
+          : t('Your one-hand timing stayed steady through the score.'),
       ];
     }
     const weakerHand = accuracyPercent(results.left) <= accuracyPercent(results.right) ? 'left' : 'right';
     const weakerAccuracy = Math.min(accuracyPercent(results.left), accuracyPercent(results.right));
     return [
-      results.scoreTitle ? `You trained from “${results.scoreTitle}”.` : 'You trained from an imported score.',
+      results.scoreTitle ? t('You trained from “{title}”.', { title: results.scoreTitle }) : t('You trained from an imported score.'),
       weakerAccuracy < 80
-        ? `Give the ${weakerHand} hand a few focused passes, then bring both hands back together.`
-        : 'Your score rhythm stayed steady. Try a faster tempo or a narrower timing window next time.',
+        ? t('Give the {hand} hand a few focused passes, then bring both hands back together.', { hand: t(weakerHand) })
+        : t('Your score rhythm stayed steady. Try a faster tempo or a narrower timing window next time.'),
     ];
   }
   const messages: string[] = [];
   if (results.trainingMode === 'single-hand') {
     const average = results[results.singleHand].averageSignedErrorMs;
-    if (average < -15) messages.push('Your taps tend to rush.');
-    if (average > 15) messages.push('Your taps tend to play late.');
+    if (average < -15) messages.push(t('Your taps tend to rush.'));
+    if (average > 15) messages.push(t('Your taps tend to play late.'));
   } else {
     for (const hand of ['left', 'right'] as const) {
       const average = results[hand].averageSignedErrorMs;
-      if (average < -15) messages.push(`Your ${hand} hand tends to rush.`);
-      if (average > 15) messages.push(`Your ${hand} hand tends to play late.`);
+      if (average < -15) messages.push(t('Your {hand} hand tends to {timing}.', { hand: t(hand), timing: t('rush') }));
+      if (average > 15) messages.push(t('Your {hand} hand tends to {timing}.', { hand: t(hand), timing: t('play late') }));
     }
   }
 
@@ -131,9 +137,9 @@ function buildFeedback(results: SessionResults, weak?: ReturnType<typeof weakest
       sixtyFourth: '64th-note subdivisions',
     };
     if (results.trainingMode === 'single-hand') {
-      messages.push(affectedMixture
-        ? `Your one-hand ${getMixturePattern(affectedMixture).label.toLowerCase()} need extra practice.`
-        : `Your one-hand ${affectedPattern[affectedSubdivision]} need extra practice.`);
+      messages.push(t('Your one-hand {pattern} need extra practice.', {
+        pattern: t(affectedMixture ? getMixturePattern(affectedMixture).label.toLowerCase() : affectedPattern[affectedSubdivision]),
+      }));
     } else {
       const otherHandName = weak.weakHand === 'left' ? 'right' : 'left';
       const otherSubdivision = weak.weakHand === 'left' ? weak.rightSubdivision : weak.leftSubdivision;
@@ -160,22 +166,24 @@ function buildFeedback(results: SessionResults, weak?: ReturnType<typeof weakest
       const otherPatternName = otherMixture
         ? getMixturePattern(otherMixture).label.toLowerCase()
         : playedPattern[otherSubdivision];
-      const verb = affectedMixture || affectedSubdivision === 'quarter' ? 'is' : 'are';
-      messages.push(
-        'Your ' + handName.toLowerCase() + '-hand ' + affectedPatternName + ' ' + verb +
-        ' less steady when your ' + otherHandName + ' hand ' + (otherHandRests ? 'rests' : `plays ${otherPatternName}`) + '.',
-      );
+      messages.push(t('Your {hand}-hand {pattern} {verb} less steady when your {otherHand} hand {action}.', {
+        hand: t(handName.toLowerCase()),
+        pattern: t(affectedPatternName),
+        verb: t(affectedMixture || affectedSubdivision === 'quarter' ? 'is' : 'are'),
+        otherHand: t(otherHandName),
+        action: otherHandRests ? t('rests') : t('plays {pattern}', { pattern: t(otherPatternName) }),
+      }));
     }
   }
 
   const stableAccuracy = accuracyPercent(results.stable);
   const transitionAccuracy = accuracyPercent(results.transition);
   if (results.transition.totalExpected > 0 && stableAccuracy - transitionAccuracy >= 10) {
-    messages.push('Your steady timing is strong; give subdivision changes a little more practice.');
+    messages.push(t('Your steady timing is strong; give subdivision changes a little more practice.'));
   }
   return messages.length > 0
     ? messages
-    : ['Your timing stayed balanced. Try a faster tempo or shorter change interval next time.'];
+    : [t('Your timing stayed balanced. Try a faster tempo or shorter change interval next time.')];
 }
 
 function ScorePanel({
@@ -209,11 +217,12 @@ function DisclosureHeader({
   onPress: () => void;
   testID: string;
 }) {
+  const { t } = useI18n();
   return (
     <Pressable
       testID={testID}
       accessibilityRole="button"
-      accessibilityLabel={`${title}, ${expanded ? 'hide' : 'show'} details`}
+      accessibilityLabel={t('{title}, {action} details', { title: t(title), action: t(expanded ? 'Hide' : 'Show') })}
       accessibilityState={{ expanded }}
       onPress={onPress}
       style={({ pressed }) => ({
@@ -263,7 +272,7 @@ function replayErrorBarGroups(results: SessionResults | null): ReplayErrorGroup[
   return Array.from(groups.values()).sort((first, second) => first.barIndex - second.barIndex);
 }
 
-function missedPosition(event: MissedEvent): string {
+function missedPosition(event: MissedEvent, t: (source: string, values?: Record<string, string | number>) => string): string {
   const beat = Math.floor(event.beatInBar) + 1;
   const fraction = event.beatInBar - Math.floor(event.beatInBar);
   const offset = fraction < 0.005 ? '' : ` + ${fraction.toFixed(2)}`;
@@ -272,17 +281,22 @@ function missedPosition(event: MissedEvent): string {
     : event.durationQuarter === undefined
       ? 'score note'
       : scoreDurationLabel(event.durationQuarter, event.tupletNumber);
-  return `beat ${beat}${offset} · ${rhythm}`;
+  return t('beat {beat}{offset} · {rhythm}', { beat, offset, rhythm: t(rhythm) });
 }
 
-function replayErrorSummary(label: string, missedEvents: readonly MissedEvent[], extraTaps: readonly ReplayTap[]) {
+function replayErrorSummary(
+  label: string,
+  missedEvents: readonly MissedEvent[],
+  extraTaps: readonly ReplayTap[],
+  t: (source: string, values?: Record<string, string | number>) => string,
+) {
   const counts = [
-    ...(missedEvents.length ? [`${missedEvents.length} missed`] : []),
-    ...(extraTaps.length ? [`${extraTaps.length} extra`] : []),
+    ...(missedEvents.length ? [t('{count} missed', { count: missedEvents.length })] : []),
+    ...(extraTaps.length ? [t('{count} extra', { count: extraTaps.length })] : []),
   ];
-  const positions = missedEvents.slice(0, 4).map(missedPosition).join(', ');
-  const moreMisses = missedEvents.length > 4 ? `, +${missedEvents.length - 4}` : '';
-  return `${label} · ${counts.join(' · ')}${positions ? ` · ${positions}${moreMisses}` : ''}`;
+  const positions = missedEvents.slice(0, 4).map((event) => missedPosition(event, t)).join(', ');
+  const moreMisses = missedEvents.length > 4 ? t(', +{count}', { count: missedEvents.length - 4 }) : '';
+  return `${t(label)} · ${counts.join(' · ')}${positions ? ` · ${positions}${moreMisses}` : ''}`;
 }
 
 function scoreDurationLabel(durationQuarter: number, tupletNumber?: number): string {
@@ -297,6 +311,7 @@ function scoreDurationLabel(durationQuarter: number, tupletNumber?: number): str
 }
 
 export default function ResultsScreen() {
+  const { t } = useI18n();
   const { results, settings, sessionSettings, featureFlags, prepareRepeatExercise, discardReplayData } = useRhythmSession();
   const router = useRouter();
   const { lessonId: rawLessonId } = useLocalSearchParams<{ lessonId?: string }>();
@@ -377,9 +392,9 @@ export default function ResultsScreen() {
       await stopReplayAudio(playbackId);
       if (playbackId !== replaySequenceRef.current) return;
       setReplay({ barIndex, playbackId, isPlaying: true, isStarting: false });
-      Alert.alert('Replay sound unavailable', 'The visual replay will continue. Check your device audio and try again.');
+      Alert.alert(t('Replay sound unavailable'), t('The visual replay will continue. Check your device audio and try again.'));
     }
-  }, [replaySoundEnabled, results, settings.leftHandSound, settings.metronomeSound, settings.rightHandSound, stopReplayAudio]);
+  }, [replaySoundEnabled, results, settings.leftHandSound, settings.metronomeSound, settings.rightHandSound, stopReplayAudio, t]);
 
   const finishVisualReplay = useCallback((barIndex: number, playbackId: number) => {
     setReplay((current) => current?.barIndex === barIndex && current.playbackId === playbackId
@@ -398,16 +413,16 @@ export default function ResultsScreen() {
       router.replace(lessonId ? { pathname: '/practice', params: { lessonId } } : '/practice');
     } catch {
       setStartingAgain(false);
-      Alert.alert('Audio could not start', 'Check your device audio settings and try again.');
+      Alert.alert(t('Audio could not start'), t('Check your device audio settings and try again.'));
     }
   };
 
   if (!results) {
     return (
       <SafeAreaView testID="results.screen" style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
-        <Text style={{ color: colors.muted }}>No session results yet.</Text>
+        <Text style={{ color: colors.muted }}>{t('No session results yet.')}</Text>
         <Pressable onPress={() => router.replace('/setup')} style={{ padding: 16 }}>
-          <Text style={{ color: colors.left, fontWeight: '800' }}>SET UP A SESSION</Text>
+          <Text style={{ color: colors.left, fontWeight: '800' }}>{t('SET UP A SESSION')}</Text>
         </Pressable>
       </SafeAreaView>
     );
@@ -415,7 +430,7 @@ export default function ResultsScreen() {
 
   const overall = lessonAccuracy;
   const weakest = weakestCombination(results);
-  const feedback = buildFeedback(results, weakest);
+  const feedback = buildFeedback(results, weakest, t);
   const displayedHands = results.trainingMode === 'single-hand' ? [results.singleHand] : ['left', 'right'] as const;
   const combinations = [...results.combinations].sort(
     (a, b) =>
@@ -423,10 +438,10 @@ export default function ResultsScreen() {
       (results.trainingMode === 'single-hand' ? accuracyPercent(b[results.singleHand]) : Math.min(accuracyPercent(b.left), accuracyPercent(b.right))),
   );
   const sessionOptions = [
-    results.feel === 'swing' ? 'SWING' : 'STRAIGHT',
-    results.graceNotesEnabled ? 'GRACE PICKUPS' : null,
-    results.restBetweenChanges ? 'REST BEFORE CHANGES' : null,
-    results.trainingMode === 'single-hand' ? 'ONE HAND' : 'TWO HANDS',
+    t(results.feel === 'swing' ? 'Swing' : 'Straight'),
+    results.graceNotesEnabled ? t('GRACE PICKUPS') : null,
+    results.restBetweenChanges ? t('REST BEFORE CHANGES') : null,
+    t(results.trainingMode === 'single-hand' ? 'ONE HAND' : 'TWO HANDS'),
   ].filter(Boolean).join(' · ');
 
   return (
@@ -452,12 +467,12 @@ export default function ResultsScreen() {
           <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>{courseLesson ? 'LESSON ACCURACY' : results.source === 'score' ? 'SCORE ACCURACY' : 'OVERALL ACCURACY'}</Text>
           <Text style={{ color: colors.text, fontSize: 58, lineHeight: 66, fontWeight: '900', marginTop: 4 }}>{percent(overall)}</Text>
           {courseLesson ? (
-            <View testID="results.lessonRating" accessibilityLabel={`${percent(overall)} correct, ${starsForAccuracy(overall)} out of 5 stars`} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
+            <View testID="results.lessonRating" accessibilityLabel={t('{score} correct, {stars} out of 5 stars', { score: percent(overall), stars: starsForAccuracy(overall) })} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
               <Text testID="results.lessonStars" style={{ color: colors.accent, fontSize: 19, fontWeight: '900', letterSpacing: 1.4 }}>
                 {'★'.repeat(starsForAccuracy(overall))}{'☆'.repeat(5 - starsForAccuracy(overall))}
               </Text>
               <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.7 }}>
-                {starsForAccuracy(overall)} / 5 STARS
+                {t('{count} / 5 STARS', { count: starsForAccuracy(overall) })}
               </Text>
             </View>
           ) : null}
@@ -508,7 +523,7 @@ export default function ResultsScreen() {
             {showMissedNotes ? (
               <View style={{ paddingTop: 12 }}>
                 <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18, marginBottom: 9 }}>
-                  {results.missedEvents.length} missed · {extraTapCount} extra. Both lower accuracy. Replay shows the expected notes beside your taps; leaving this page clears replay.
+                  {t('{missed} missed · {extra} extra. Both lower accuracy. Replay shows the expected notes beside your taps; leaving this page clears replay.', { missed: results.missedEvents.length, extra: extraTapCount })}
                 </Text>
                 {!replaySoundEnabled && process.env.EXPO_PUBLIC_E2E_SILENT !== '1' ? (
                   <Text style={{ color: colors.muted, fontSize: 11, lineHeight: 16, marginBottom: 9 }}>
@@ -530,22 +545,22 @@ export default function ResultsScreen() {
                     <View key={barIndex} testID={`results.missedBar.${barIndex}`} style={{ paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.line }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                         <View style={{ flex: 1, gap: 4 }}>
-                          <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>BAR {barIndex}</Text>
+                          <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>{t('BAR {bar}', { bar: barIndex })}</Text>
                           {leftEvents.length + leftExtraTaps.length > 0 ? (
                             <Text numberOfLines={2} style={{ color: colors.left, fontSize: 11, lineHeight: 16 }}>
-                              {replayErrorSummary(results.trainingMode === 'single-hand' ? 'ONE HAND' : 'LEFT', leftEvents, leftExtraTaps)}
+                              {replayErrorSummary(results.trainingMode === 'single-hand' ? 'ONE HAND' : 'LEFT', leftEvents, leftExtraTaps, t)}
                             </Text>
                           ) : null}
                           {rightEvents.length + rightExtraTaps.length > 0 ? (
                             <Text numberOfLines={2} style={{ color: colors.right, fontSize: 11, lineHeight: 16 }}>
-                              {replayErrorSummary(results.trainingMode === 'single-hand' ? 'ONE HAND' : 'RIGHT', rightEvents, rightExtraTaps)}
+                              {replayErrorSummary(results.trainingMode === 'single-hand' ? 'ONE HAND' : 'RIGHT', rightEvents, rightExtraTaps, t)}
                             </Text>
                           ) : null}
                         </View>
                         <Pressable
                           testID={`results.replayBar.${barIndex}`}
                           accessibilityRole="button"
-                          accessibilityLabel={`Play replay with sound for bar ${barIndex}`}
+                          accessibilityLabel={t('Play replay with sound for bar {bar}', { bar: barIndex })}
                           onPress={() => void replayBar(barIndex, expectedEvents, taps, metrics.beatsPerBar)}
                           style={({ pressed }) => ({ paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', borderRadius: 11, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: replay?.barIndex === barIndex && replay.isPlaying ? colors.accent : colors.line })}
                         >
@@ -660,7 +675,7 @@ export default function ResultsScreen() {
         <Pressable
           testID="results.startAgain"
           accessibilityRole="button"
-          accessibilityLabel="Start the same exercise again"
+          accessibilityLabel={t('Start the same exercise again')}
           accessibilityState={{ disabled: startingAgain }}
           disabled={startingAgain}
           onPress={() => void startAgain()}
@@ -674,7 +689,7 @@ export default function ResultsScreen() {
           <Pressable
             testID="results.continueLearning"
             accessibilityRole="button"
-            accessibilityLabel="Continue the guided course"
+            accessibilityLabel={t('Continue the guided course')}
             onPress={() => {
               discardReplayData();
               router.replace({ pathname: '/learn', params: { lessonId } });
@@ -690,11 +705,11 @@ export default function ResultsScreen() {
           <Pressable
             testID="results.settings"
             accessibilityRole="button"
-            accessibilityLabel="Change settings"
+            accessibilityLabel={t('Change settings')}
             onPress={discardReplayData}
             style={({ pressed }) => ({ flexDirection: 'row', backgroundColor: pressed ? colors.surface : colors.surfaceRaised, minHeight: 62, paddingHorizontal: 24, borderRadius: 15, alignItems: 'center', justifyContent: 'space-between', marginTop: 14, borderWidth: 1, borderColor: colors.line })}
           >
-            <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>CHANGE SETTINGS</Text>
+          <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>{t('CHANGE SETTINGS')}</Text>
             <Text accessibilityElementsHidden style={{ color: colors.muted, fontSize: 24, lineHeight: 28, fontWeight: '500' }}>›</Text>
           </Pressable>
         </Link>
@@ -702,25 +717,25 @@ export default function ResultsScreen() {
           <Pressable
             testID="results.records"
             accessibilityRole="button"
-            accessibilityLabel="View my record"
+            accessibilityLabel={t('View my record')}
             onPress={discardReplayData}
             style={({ pressed }) => ({ flexDirection: 'row', backgroundColor: pressed ? colors.surface : colors.surfaceRaised, minHeight: 62, paddingHorizontal: 24, borderRadius: 15, alignItems: 'center', justifyContent: 'space-between', marginTop: 14, borderWidth: 1, borderColor: colors.line })}
           >
-            <Text style={{ color: colors.left, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>VIEW MY RECORD</Text>
+            <Text style={{ color: colors.left, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>{t('VIEW MY RECORD')}</Text>
             <Text accessibilityElementsHidden style={{ color: colors.left, fontSize: 24, lineHeight: 28, fontWeight: '500' }}>›</Text>
           </Pressable>
         </Link> : null}
         <Pressable
           testID="results.home"
           accessibilityRole="button"
-          accessibilityLabel="Back home"
+          accessibilityLabel={t('Back home')}
           onPress={() => {
             discardReplayData();
             router.replace('/');
           }}
           style={({ pressed }) => ({ flexDirection: 'row', backgroundColor: pressed ? colors.surface : colors.surfaceRaised, minHeight: 62, paddingHorizontal: 24, borderRadius: 15, alignItems: 'center', justifyContent: 'space-between', marginTop: 14, marginBottom: 18, borderWidth: 1, borderColor: colors.line })}
         >
-          <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>BACK HOME</Text>
+          <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>{t('BACK HOME')}</Text>
           <Text accessibilityElementsHidden style={{ color: colors.muted, fontSize: 24, lineHeight: 28, fontWeight: '500' }}>›</Text>
         </Pressable>
       </ScrollView>

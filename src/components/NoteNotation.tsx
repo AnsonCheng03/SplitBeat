@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
 import type { NoteNotationPlan } from '@/rhythm/noteNotation';
 import { NativeRhythmGlyphs } from '@/components/NativeRhythmGlyphs';
 import VexFlowNotationDOM from '@/components/VexFlowNotationDOM';

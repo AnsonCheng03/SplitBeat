@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Animated, Easing, Text, View } from 'react-native';
+import { Animated, Easing, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
 import { createBarNoteNotationPlan } from '@/rhythm/noteNotation';
 import { pulseQuarterNotes } from '@/rhythm/subdivisions';
@@ -31,6 +33,7 @@ export function ReplayTimeline({
   playbackId,
   onPlaybackEnd,
 }: ReplayTimelineProps) {
+  const { t } = useI18n();
   const [timelineWidth, setTimelineWidth] = useState(0);
   const [playhead] = useState(() => new Animated.Value(0));
   const beatQuarterNotes = pulseQuarterNotes(timeSignature);
@@ -55,12 +58,12 @@ export function ReplayTimeline({
   return (
     <View
       testID={`results.replayTimeline.${barIndex}`}
-      accessibilityLabel={`Visual replay for bar ${barIndex}, showing expected notes and your recorded taps`}
+      accessibilityLabel={t('Visual replay for bar {bar}, showing expected notes and your recorded taps', { bar: barIndex })}
       onLayout={({ nativeEvent }) => setTimelineWidth(nativeEvent.layout.width)}
       style={{ position: 'relative', marginTop: 9, padding: 12, overflow: 'hidden', borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}
     >
       <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.1, marginBottom: 10 }}>
-        BAR {barIndex} · EXPECTED NOTES AND YOUR TAPS
+        {t('BAR {bar} · EXPECTED NOTES AND YOUR TAPS', { bar: barIndex })}
       </Text>
 
       {hands.map((hand) => {
@@ -136,6 +139,7 @@ function ReplayHandLane({
   barIndex: number;
   isLastLane: boolean;
 }) {
+  const { t } = useI18n();
   const [trackWidth, setTrackWidth] = useState(0);
   const plan = useMemo(() => trackWidth > 0 && events.length > 0
     ? createBarNoteNotationPlan(
@@ -159,7 +163,7 @@ function ReplayHandLane({
   return (
     <View style={{ marginBottom: isLastLane ? 0 : 13 }}>
       <Text style={{ color: accent, fontSize: 10, fontWeight: '900', letterSpacing: 1.1, marginBottom: 3 }}>
-        {hand.toUpperCase()} · EXPECTED
+        {t('{hand} · EXPECTED', { hand: t(hand === 'left' ? 'LEFT' : 'RIGHT') })}
       </Text>
       <View
         onLayout={({ nativeEvent }) => setTrackWidth(nativeEvent.layout.width)}
@@ -171,7 +175,7 @@ function ReplayHandLane({
             plan={plan}
             color={accent}
             testID={`results.replayExpected.${barIndex}.${hand}`}
-            accessibilityLabel={`${hand} hand expected rhythm, ${events.length} notes`}
+            accessibilityLabel={t('{hand} hand expected rhythm, {count} notes', { hand: t(hand), count: events.length })}
           />
         ) : events.length === 0 ? (
           <Text style={{ color: colors.muted, fontSize: 11, textAlign: 'center', fontWeight: '700' }}>REST</Text>
@@ -179,7 +183,7 @@ function ReplayHandLane({
         {events.filter((event) => !event.matched).map((event) => (
           <View
             key={event.id}
-            accessibilityLabel={`${hand} expected note was missed`}
+            accessibilityLabel={t('{hand} expected note was missed', { hand: t(hand) })}
             testID={`results.replayMissedNote.${event.id}`}
             pointerEvents="none"
             style={{ position: 'absolute', left: anchorStartX + anchorWidth * event.beatInBar / beatsPerBar, bottom: 1, width: 7, height: 7, marginLeft: -3.5, borderRadius: 4, backgroundColor: TIMING_MISS, borderWidth: 1, borderColor: colors.background }}
@@ -200,13 +204,21 @@ function ReplayHandLane({
           const matched = Boolean(tap.matchedEventId);
           const error = tap.timingErrorMs;
           const timingLabel = error === undefined
-            ? ', extra tap'
-            : `, ${error > 0 ? '+' : ''}${Math.round(error)} milliseconds ${error > 0 ? 'late' : error < 0 ? 'early' : 'on time'}`;
+            ? t(', extra tap')
+            : t(', {timing} by {error} milliseconds', {
+              error: Math.round(Math.abs(error)),
+              timing: t(error > 0 ? 'late' : error < 0 ? 'early' : 'on time'),
+            });
           return (
             <View
               key={tap.id}
               testID={`results.replayTap.${tap.id}`}
-              accessibilityLabel={`${hand} hand tap at ${Math.round(elapsedInBarMs)} milliseconds into bar ${barIndex}${timingLabel}`}
+              accessibilityLabel={t('{hand} hand tap at {time} milliseconds into bar {bar}{timing}', {
+                hand: t(hand),
+                time: Math.round(elapsedInBarMs),
+                bar: barIndex,
+                timing: timingLabel,
+              })}
               style={{ position: 'absolute', left: anchorStartX + anchorWidth * position, width: 9, height: 9, marginLeft: -4.5, borderRadius: 5, backgroundColor: matched ? accent : TIMING_MISS, borderWidth: 1, borderColor: colors.background }}
             />
           );

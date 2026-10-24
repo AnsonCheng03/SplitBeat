@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import {
   authenticateGameCenter,
   getGameCenterStatus,
@@ -21,6 +23,7 @@ export function GameCenterChallengeCard({
   longestCorrectStreak,
   testID = 'gameCenter.challenge',
 }: GameCenterChallengeCardProps) {
+  const { t } = useI18n();
   const [status, setStatus] = useState<GameCenterStatus>(getGameCenterStatus);
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -30,8 +33,8 @@ export function GameCenterChallengeCard({
 
   const updateStatus = useCallback((nextStatus: GameCenterStatus) => {
     setStatus(nextStatus);
-    if (nextStatus.error) setMessage(nextStatus.error);
-  }, []);
+    if (nextStatus.error) setMessage(t(nextStatus.error));
+  }, [t]);
 
   useEffect(() => {
     const subscription = subscribeToGameCenterStatus(updateStatus);
@@ -43,18 +46,18 @@ export function GameCenterChallengeCard({
     submittedRef.current = true;
     setSubmitting(true);
     setScoreStatus('idle');
-    setMessage('Sending your clean streak to Game Center…');
+    setMessage(t('Sending your clean streak to Game Center…'));
     try {
       await submitLongestStreak(longestCorrectStreak);
       setScoreStatus('submitted');
-      setMessage('Challenge score submitted. Game Center keeps your best streak.');
+      setMessage(t('Challenge score submitted. Game Center keeps your best streak.'));
     } catch (error) {
       setScoreStatus('failed');
-      setMessage(error instanceof Error ? error.message : 'Could not submit this score.');
+      setMessage(t(error instanceof Error ? error.message : 'Could not submit this score.'));
     } finally {
       setSubmitting(false);
     }
-  }, [hasScore, longestCorrectStreak, submitting]);
+  }, [hasScore, longestCorrectStreak, submitting, t]);
 
   useEffect(() => {
     if (!hasScore || !status.available || !status.authenticated || submittedRef.current) return;
@@ -65,12 +68,12 @@ export function GameCenterChallengeCard({
     try {
       showGameCenterLeaderboard();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Could not open Game Center.');
+      setMessage(t(error instanceof Error ? error.message : 'Could not open Game Center.'));
     }
   };
 
   const signIn = () => {
-    setMessage('Waiting for Game Center…');
+    setMessage(t('Waiting for Game Center…'));
     authenticateGameCenter();
   };
 
@@ -102,8 +105,8 @@ export function GameCenterChallengeCard({
           <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.7 }}>GAME CENTER</Text>
           <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: 5 }}>
             {hasScore
-              ? `Longest clean run · ${longestCorrectStreak} notes`
-              : 'Leaderboard · Longest clean run'}
+              ? t('Longest clean run · {count} notes', { count: longestCorrectStreak ?? 0 })
+              : t('Leaderboard · Longest clean run')}
           </Text>
         </View>
         {status.authenticated ? (
@@ -127,7 +130,7 @@ export function GameCenterChallengeCard({
         <Pressable
           testID={`${testID}.action`}
           accessibilityRole="button"
-          accessibilityLabel={status.authenticated ? 'View Game Center leaderboard' : 'Sign in to Game Center'}
+          accessibilityLabel={t(status.authenticated ? 'View Game Center leaderboard' : 'Sign in to Game Center')}
           disabled={submitting}
           onPress={handleAction}
           style={({ pressed }) => ({ minHeight: 44, alignSelf: 'flex-start', justifyContent: 'center', paddingHorizontal: 14, marginTop: 13, borderRadius: 12, backgroundColor: pressed ? colors.surfaceRaised : colors.background, borderWidth: 1, borderColor: colors.line, opacity: submitting ? 0.6 : 1 })}

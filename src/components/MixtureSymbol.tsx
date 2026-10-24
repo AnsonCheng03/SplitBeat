@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
 import { createBarNoteNotationPlan, type NoteNotationSize } from '@/rhythm/noteNotation';
 import { getMixturePattern } from '@/rhythm/mixtures';
@@ -16,6 +18,7 @@ export function MixtureSymbol({
   compact?: boolean;
   scale?: number;
 }) {
+  const { t } = useI18n();
   const pattern = getMixturePattern(mixtureId);
   const size: NoteNotationSize = compact ? 'compact' : 'full';
   const notationWidth = compact ? 58 : 82;
@@ -39,7 +42,7 @@ export function MixtureSymbol({
   return (
     <View style={{ width: plan.width * scale, height: plan.height * scale, alignItems: 'center', justifyContent: 'center' }}>
       <View style={{ width: plan.width, height: plan.height, transform: [{ scale }], alignItems: 'center', justifyContent: 'center' }}>
-        <NoteNotation plan={plan} color={color} accessibilityLabel={pattern.label} useNativeGlyphs />
+        <NoteNotation plan={plan} color={color} accessibilityLabel={t(pattern.label)} useNativeGlyphs />
         {pattern.atoms.map((atom, index) => atom.kind === 'rest' ? (
           <Text
             key={`${mixtureId}.rest.${index}`}

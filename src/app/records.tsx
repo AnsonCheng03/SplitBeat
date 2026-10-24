@@ -1,18 +1,21 @@
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
 import type { SessionRecord } from '@/store/sessionHistory';
 
-function formatCompletedAt(timestamp: number): string {
-  return new Intl.DateTimeFormat(undefined, {
+function formatCompletedAt(timestamp: number, locale: 'en' | 'zh-Hant'): string {
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(timestamp));
 }
 
 function RecordRow({ record }: { record: SessionRecord }) {
+  const { locale, t } = useI18n();
   const primaryHand = record.trainingMode === 'single-hand' ? record.singleHand : 'left';
   const primaryAccuracy = primaryHand === 'left' ? record.leftAccuracy : record.rightAccuracy;
   const sessionName = record.source === 'score'
@@ -28,8 +31,8 @@ function RecordRow({ record }: { record: SessionRecord }) {
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <View style={{ flex: 1 }}>
-          <Text numberOfLines={1} style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>{sessionName}</Text>
-          <Text style={{ color: colors.muted, fontSize: 11, marginTop: 4 }}>{formatCompletedAt(record.completedAt)}</Text>
+          <Text raw={record.source === 'score'} numberOfLines={1} style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>{sessionName}</Text>
+          <Text style={{ color: colors.muted, fontSize: 11, marginTop: 4 }}>{formatCompletedAt(record.completedAt, locale)}</Text>
         </View>
         <Text style={{ color: colors.accent, fontSize: 24, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
           {Math.round(record.overallAccuracy)}%
@@ -42,15 +45,16 @@ function RecordRow({ record }: { record: SessionRecord }) {
         {record.trainingMode === 'two-hand' ? (
           <Text style={{ color: colors.right, fontSize: 11, fontWeight: '800' }}>R {Math.round(record.rightAccuracy)}%</Text>
         ) : null}
-        <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '800' }}>CLEAN RUN {record.longestCorrectStreak}</Text>
+        <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '800' }}>{t('CLEAN RUN {count}', { count: record.longestCorrectStreak })}</Text>
         <Text style={{ color: colors.muted, fontSize: 11 }}>{record.bpm} BPM · {record.timeSignature}</Text>
-        <Text style={{ color: colors.dim, fontSize: 11 }}>{Math.round(record.durationSeconds)} sec</Text>
+        <Text style={{ color: colors.dim, fontSize: 11 }}>{t('{seconds} sec', { seconds: Math.round(record.durationSeconds) })}</Text>
       </View>
     </View>
   );
 }
 
 export default function RecordsScreen() {
+  const { t } = useI18n();
   const { sessionHistory, sessionHistoryLoaded } = useRhythmSession();
   const router = useRouter();
   const bestRecord = sessionHistory.reduce<SessionRecord | null>(
@@ -69,7 +73,7 @@ export default function RecordsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <Pressable testID="records.home" accessibilityRole="button" accessibilityLabel="Return home" onPress={() => router.replace('/')} hitSlop={8} style={{ minHeight: 44, justifyContent: 'center' }}>
+          <Pressable testID="records.home" accessibilityRole="button" accessibilityLabel={t('Return home')} onPress={() => router.replace('/')} hitSlop={8} style={{ minHeight: 44, justifyContent: 'center' }}>
             <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '800', letterSpacing: 0.7 }}>‹  HOME</Text>
           </Pressable>
           <Text style={{ color: colors.dim, fontSize: 10, fontWeight: '900', letterSpacing: 1.4 }}>ON THIS DEVICE</Text>

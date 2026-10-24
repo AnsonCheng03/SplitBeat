@@ -1,6 +1,8 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FullBleedSafeArea } from '@/components/FullBleedSafeArea';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
@@ -38,13 +40,29 @@ function LessonTile({
   rating?: { bestAccuracy: number; attempts: number };
   onPress: () => void;
 }) {
+  const { t } = useI18n();
   const disabled = locked && !paywalled;
   const stars = rating ? starsForAccuracy(rating.bestAccuracy) : 0;
+  const lessonStatus = completed
+    ? t(', complete')
+    : paywalled
+      ? t(', paid course, tap to unlock')
+      : locked
+        ? t(', locked')
+        : '';
+  const lessonRating = rating
+    ? t(', best {accuracy} percent, {stars} of 5 stars', { accuracy: Math.round(rating.bestAccuracy), stars })
+    : '';
   return (
     <Pressable
       testID={`learn.lesson.${lesson.id}`}
       accessibilityRole="button"
-      accessibilityLabel={`Lesson ${lesson.number}, ${lesson.title}${completed ? ', complete' : paywalled ? ', paid course, tap to unlock' : locked ? ', locked' : ''}${rating ? `, best ${Math.round(rating.bestAccuracy)} percent, ${stars} of 5 stars` : ''}`}
+      accessibilityLabel={t('Lesson {number}, {title}{status}{rating}', {
+        number: lesson.number,
+        title: t(lesson.title),
+        status: lessonStatus,
+        rating: lessonRating,
+      })}
       accessibilityState={{ selected, disabled }}
       disabled={disabled}
       onPress={onPress}
@@ -65,7 +83,7 @@ function LessonTile({
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text style={{ color: colors.dim, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 }}>
-          {String(lesson.number).padStart(2, '0')} · {lesson.level}
+          {String(lesson.number).padStart(2, '0')} · {t(lesson.level)}
         </Text>
         <Text style={{ color: completed ? colors.left : disabled ? colors.dim : colors.accent, fontSize: 11, fontWeight: '900' }}>
           {completed ? '✓' : paywalled ? 'PRO' : locked ? 'LOCKED' : '›'}
@@ -91,6 +109,7 @@ function LessonTile({
 }
 
 function PatternPreview({ lesson }: { lesson: LearnLesson }) {
+  const { t } = useI18n();
   const weights = lesson.handSubdivisionWeights;
   if (weights) {
     const distribution = Object.entries(weights)
@@ -108,7 +127,7 @@ function PatternPreview({ lesson }: { lesson: LearnLesson }) {
             >
               <RhythmSymbol subdivision={subdivision} color={colors.accent} mini timeSignature={lesson.timeSignature} />
               <Text style={{ color: colors.text, fontSize: 8, fontWeight: '800' }}>
-                {Math.round(weight)}% {SUBDIVISION_LABELS[subdivision]}
+                {Math.round(weight)}% {t(SUBDIVISION_LABELS[subdivision])}
               </Text>
             </View>
           ))}
@@ -173,7 +192,8 @@ function PatternNote({
   color: string;
   timeSignature: LearnLesson['timeSignature'];
 }) {
-  const displayName = SUBDIVISION_LABELS[subdivision].replace(' (', '\n(');
+  const { t } = useI18n();
+  const displayName = t(SUBDIVISION_LABELS[subdivision]).replace(' (', '\n(');
   return (
     <View style={{ flex: 1, minWidth: 0, minHeight: 92, alignItems: 'center', justifyContent: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 11, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
       <Text style={{ alignSelf: 'stretch', color, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>{label}</Text>
@@ -194,9 +214,10 @@ function PatternNoteOptions({
   color: string;
   timeSignature: LearnLesson['timeSignature'];
 }) {
+  const { t } = useI18n();
   const names = [
-    ...options.subdivisions.map((subdivision) => SUBDIVISION_LABELS[subdivision]),
-    ...(options.includesRest ? ['Rest'] : []),
+    ...options.subdivisions.map((subdivision) => t(SUBDIVISION_LABELS[subdivision])),
+    ...(options.includesRest ? [t('Rest')] : []),
   ];
   return (
     <View style={{ flex: 1, minWidth: 0, minHeight: 82, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 11, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
@@ -217,6 +238,7 @@ function PatternNoteOptions({
 }
 
 export default function LearnScreen() {
+  const { t } = useI18n();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -280,7 +302,7 @@ export default function LearnScreen() {
       });
       router.replace({ pathname: '/practice', params: { lessonId: selectedLesson.id } });
     } catch {
-      Alert.alert('Audio could not start', 'Check your device audio settings and try again.');
+      Alert.alert(t('Audio could not start'), t('Check your device audio settings and try again.'));
     } finally {
       setStarting(false);
     }
@@ -336,12 +358,12 @@ export default function LearnScreen() {
             <View style={{ width: `${lessonProgressPercent(completedLessonIds)}%`, height: 5, borderRadius: 4, backgroundColor: colors.left }} />
           </View>
           <Text testID="learn.progress.stars" style={{ color: colors.muted, fontSize: 9, fontWeight: '800', marginTop: 6 }}>
-            {totalLearnStars(lessonRatings)} / {LEARN_COURSE.length * 5} course stars earned
+              {totalLearnStars(lessonRatings)} / {LEARN_COURSE.length * 5} {t('course stars earned')}
           </Text>
           <Pressable
             testID="learn.restore"
             accessibilityRole="button"
-            accessibilityLabel="Restore Learn course purchase"
+            accessibilityLabel={t('Restore Learn course purchase')}
             accessibilityState={{ disabled: !purchase.connected || purchase.isRestoring }}
             disabled={!purchase.connected || purchase.isRestoring}
             onPress={() => void purchase.restoreFullCourse()}
@@ -355,13 +377,13 @@ export default function LearnScreen() {
 
         <View style={{ marginTop: compact ? 14 : 23 }}>
           <Text style={{ color: colors.dim, fontSize: 9, fontWeight: '900', letterSpacing: 1.2 }}>
-            LESSON {String(selectedLesson.number).padStart(2, '0')} · {selectedLesson.level}
+            {t('LESSON {number} · {level}', { number: String(selectedLesson.number).padStart(2, '0'), level: t(selectedLesson.level) })}
           </Text>
           <Text testID="learn.selected.title" style={{ color: colors.text, fontSize: compact ? 18 : 22, fontWeight: '900', marginTop: 5 }}>
             {selectedLesson.title}
           </Text>
           <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '800', marginTop: 3 }}>
-            {selectedLesson.skill} · {selectedLesson.timeSignature}
+            {t(selectedLesson.skill)} · {selectedLesson.timeSignature}
           </Text>
           <Text numberOfLines={compact ? 2 : 3} style={{ color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 7 }}>
             {selectedLesson.instruction}
@@ -372,11 +394,11 @@ export default function LearnScreen() {
         {requiresPurchase ? (
           <View testID="learn.purchase.offer" style={{ marginTop: 14, paddingHorizontal: 11, paddingVertical: 9, borderRadius: 12, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.line }}>
             <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.9 }}>FULL COURSE · ONE-TIME UNLOCK</Text>
-            <Text style={{ color: colors.muted, fontSize: 10, lineHeight: 14, marginTop: 4 }}>Try the first 3 lessons free, then unlock all {LEARN_COURSE.length} lessons with one purchase.</Text>
+            <Text style={{ color: colors.muted, fontSize: 10, lineHeight: 14, marginTop: 4 }}>{t('Try the first 3 lessons free, then unlock all {count} lessons with one purchase.', { count: LEARN_COURSE.length })}</Text>
           </View>
         ) : lessonSequenceLocked ? (
           <Text style={{ color: colors.muted, fontSize: 10, lineHeight: 14, marginTop: 12 }}>
-            Complete Lesson {String(selectedLesson.number - 1).padStart(2, '0')} first to open this lesson.
+            {t('Complete Lesson {number} first to open this lesson.', { number: String(selectedLesson.number - 1).padStart(2, '0') })}
           </Text>
         ) : null}
 
@@ -385,7 +407,7 @@ export default function LearnScreen() {
           <Pressable
             testID="learn.purchase"
             accessibilityRole="button"
-            accessibilityLabel="Unlock the full Learn course"
+            accessibilityLabel={t('Unlock the full Learn course')}
             accessibilityState={{ disabled: !purchase.connected || !purchase.unlockProduct || purchase.isPurchasing || !purchase.entitlementLoaded }}
             disabled={!purchase.connected || !purchase.unlockProduct || purchase.isPurchasing || !purchase.entitlementLoaded}
             onPress={() => void purchase.buyFullCourse()}
@@ -393,7 +415,7 @@ export default function LearnScreen() {
           >
             <View>
               <Text style={{ color: colors.background, fontSize: 12, fontWeight: '900', letterSpacing: 0.4 }}>
-                {!purchase.entitlementLoaded ? 'CHECKING ACCESS…' : !purchase.connected ? 'CONNECTING TO STORE…' : !purchase.productLookupFinished ? 'LOADING OFFER…' : purchase.isPurchasing ? 'PURCHASING…' : purchase.unlockProduct ? `UNLOCK FULL COURSE · ${purchase.unlockProduct.displayPrice}` : 'OFFER UNAVAILABLE'}
+                {!purchase.entitlementLoaded ? 'CHECKING ACCESS…' : !purchase.connected ? 'CONNECTING TO STORE…' : !purchase.productLookupFinished ? 'LOADING OFFER…' : purchase.isPurchasing ? 'PURCHASING…' : purchase.unlockProduct ? t('UNLOCK FULL COURSE · {price}', { price: purchase.unlockProduct.displayPrice }) : 'OFFER UNAVAILABLE'}
               </Text>
               <Text style={{ color: colors.background, fontSize: 10, fontWeight: '700', marginTop: 2 }}>
                 One-time purchase · 3 lessons free
@@ -405,7 +427,7 @@ export default function LearnScreen() {
           <Pressable
             testID="learn.start"
             accessibilityRole="button"
-            accessibilityLabel={`Start lesson ${selectedLesson.number}: ${selectedLesson.title}`}
+            accessibilityLabel={t('Start lesson {number}: {title}', { number: selectedLesson.number, title: t(selectedLesson.title) })}
             accessibilityState={{ disabled: starting || !progressLoaded || lessonSequenceLocked || audioStatus === 'loading' }}
             disabled={starting || !progressLoaded || lessonSequenceLocked || audioStatus === 'loading'}
             onPress={() => void startLesson()}
@@ -413,10 +435,10 @@ export default function LearnScreen() {
           >
             <View>
               <Text style={{ color: colors.background, fontSize: 13, fontWeight: '900', letterSpacing: 0.5 }}>
-                {lessonSequenceLocked ? `COMPLETE LESSON ${String(selectedLesson.number - 1).padStart(2, '0')} FIRST` : starting ? 'PREPARING…' : !progressLoaded ? 'LOADING COURSE…' : audioStatus === 'loading' ? 'PREPARING AUDIO…' : audioStatus === 'error' ? 'RETRY AUDIO & START' : 'START LESSON'}
+                {lessonSequenceLocked ? t('COMPLETE LESSON {number} FIRST', { number: String(selectedLesson.number - 1).padStart(2, '0') }) : starting ? 'PREPARING…' : !progressLoaded ? 'LOADING COURSE…' : audioStatus === 'loading' ? 'PREPARING AUDIO…' : audioStatus === 'error' ? 'RETRY AUDIO & START' : 'START LESSON'}
               </Text>
               <Text style={{ color: '#18352C', fontSize: 10, fontWeight: '700', marginTop: 2 }}>
-                {selectedLesson.bpm} BPM · about 30 seconds
+                {t('{bpm} BPM · about 30 seconds', { bpm: selectedLesson.bpm })}
               </Text>
             </View>
             <Text style={{ color: colors.background, fontSize: 22, fontWeight: '700' }}>›</Text>
@@ -444,7 +466,7 @@ export default function LearnScreen() {
           <Pressable
             testID="learn.purchase.retry"
             accessibilityRole="button"
-            accessibilityLabel={purchase.connected ? 'Reload course offer from the store' : 'Retry app store connection'}
+            accessibilityLabel={t(purchase.connected ? 'Reload course offer from the store' : 'Retry app store connection')}
             disabled={purchase.isRetryingStore}
             onPress={() => void purchase.retryStoreConnection()}
             style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', paddingHorizontal: 8, opacity: purchase.isRetryingStore ? 0.55 : pressed ? 0.7 : 1 })}

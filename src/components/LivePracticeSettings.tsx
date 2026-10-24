@@ -1,4 +1,6 @@
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SOUND_OPTIONS } from '@/audio/soundPresets';
 import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
@@ -27,6 +29,7 @@ export function LivePracticeSettings({
   onBack: () => void;
   compact: boolean;
 }) {
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
 
   return (
@@ -51,7 +54,7 @@ export function LivePracticeSettings({
           <Pressable
             testID="practice.liveSettings.back"
             accessibilityRole="button"
-            accessibilityLabel="Back to pause menu"
+            accessibilityLabel={t('Back to pause menu')}
             onPress={onBack}
             style={{ minHeight: 40, justifyContent: 'center', paddingRight: 14 }}
           >

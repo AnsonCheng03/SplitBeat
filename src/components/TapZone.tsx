@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Text, View } from 'react-native';
+import { Animated, Easing, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import type { StyleProp, ViewStyle } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { getTapResultFlash, shouldFlashOnTap } from '@/rhythm/flashSource';
@@ -51,6 +53,7 @@ export function TapZone({
   accessibilityLabelOverride,
   style,
 }: TapZoneProps) {
+  const { t } = useI18n();
   const [pressed, setPressed] = useState(false);
   const [missed, setMissed] = useState(false);
   const [tapResultColor, setTapResultColor] = useState<TapResultFlash | null>(null);
@@ -151,17 +154,23 @@ export function TapZone({
     const feedback = onTap(hand, timestamp);
     showFeedback(feedback);
   };
+  const accessibleHand = t(hand);
+  const accessibleLabel = accessibilityLabelOverride
+    ? t(accessibilityLabelOverride)
+    : missed && !minimal
+      ? t('OFF BEAT')
+      : !enabled
+        ? t('{hand} hand tap zone, inactive in single hand mode', { hand: accessibleHand })
+        : minimal
+          ? t('{hand} hand tap zone', { hand: accessibleHand })
+          : t('{hand} hand tap zone, keyboard keys {keys}', { hand: accessibleHand, keys: KEYBOARD_KEYS_BY_HAND[hand] });
 
   return (
     <View
       testID={testID ?? `practice.tap.${hand}`}
       accessibilityRole="button"
       accessibilityState={{ disabled: !enabled }}
-      accessibilityLabel={accessibilityLabelOverride ?? (minimal
-        ? `${hand} hand tap zone${enabled ? '' : ', inactive in single hand mode'}`
-        : missed
-          ? 'OFF BEAT'
-          : `${hand} hand tap zone${enabled ? `, keyboard keys ${KEYBOARD_KEYS_BY_HAND[hand]}` : ', inactive in single hand mode'}`)}
+      accessibilityLabel={accessibleLabel}
       onTouchStart={handleTouch}
       collapsable={false}
       style={[

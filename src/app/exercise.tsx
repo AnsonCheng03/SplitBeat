@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MIXTURE_PATTERNS, patternLabelForHand } from '@/rhythm/mixtures';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
@@ -50,6 +52,7 @@ function noteSelectionLabel(selection: PatternSelection): string {
 
 export default function ExerciseScreen() {
   const router = useRouter();
+  const { t } = useI18n();
   const {
     featureFlags,
     settings,
@@ -81,7 +84,7 @@ export default function ExerciseScreen() {
       await prepare();
       router.replace('/practice');
     } catch {
-      Alert.alert('Could not prepare practice', 'Check your audio setup and try again.');
+      Alert.alert(t('Could not prepare practice'), t('Check your audio setup and try again.'));
     } finally {
       setStarting(false);
     }
@@ -100,7 +103,7 @@ export default function ExerciseScreen() {
 
   const practiceSelectedPair = () => {
     if (leftSelection.rest && rightSelection.rest) {
-      Alert.alert('Choose a rhythm', 'At least one hand needs a note to practise.');
+      Alert.alert(t('Choose a rhythm'), t('At least one hand needs a note to practise.'));
       return;
     }
     const pair = practicePairFromSelections(leftSelection, rightSelection);
@@ -124,7 +127,7 @@ export default function ExerciseScreen() {
       settings.singleHand,
     );
     if (!result.ok) {
-      Alert.alert('Check the bar', result.error);
+      Alert.alert(t('Check the bar'), t(result.error));
       return;
     }
     return launch(() => prepareExercise(result.score));
@@ -165,10 +168,10 @@ export default function ExerciseScreen() {
               <Text style={sectionTitle}>YOUR COMBINATIONS</Text>
               <TextInput
                 testID="exercise.search"
-                accessibilityLabel="Search rhythm combinations"
+                accessibilityLabel={t('Search rhythm combinations')}
                 value={query}
                 onChangeText={setQuery}
-                placeholder="Search notes or meter"
+                placeholder={t('Search notes or meter')}
                 placeholderTextColor={colors.dim}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -234,6 +237,7 @@ export default function ExerciseScreen() {
 }
 
 function CombinationTile({ record, onPress }: { record: CombinationProgress; onPress: () => void }) {
+  const { t } = useI18n();
   const accuracy = combinationAccuracy(record);
   const leftAccuracy = combinationHandAccuracy(record, 'left');
   const rightAccuracy = combinationHandAccuracy(record, 'right');
@@ -243,7 +247,10 @@ function CombinationTile({ record, onPress }: { record: CombinationProgress; onP
     <Pressable
       testID={`exercise.pair.${record.id}`}
       accessibilityRole="button"
-      accessibilityLabel={`Practice ${combinationTitle(record)}, ${Math.round(accuracy)} percent correct`}
+      accessibilityLabel={t('Practice {combination}, {accuracy} percent correct', {
+        combination: t(combinationTitle(record)),
+        accuracy: Math.round(accuracy),
+      })}
       onPress={onPress}
       style={({ pressed }) => ({ flexGrow: 1, flexBasis: '31%', minWidth: 235, minHeight: 76, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 13, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line, opacity: pressed ? 0.84 : 1 })}
     >
@@ -288,12 +295,13 @@ function PatternPicker({ hand, selection, onChange }: { hand: Hand; selection: P
 }
 
 function BarInput({ label, color, value, onChangeText, testID }: { label: string; color: string; value: string; onChangeText: (value: string) => void; testID: string }) {
+  const { t } = useI18n();
   return (
     <View style={{ flex: 1, minWidth: 0, padding: 11, borderRadius: 13, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
       <Text style={{ color, fontSize: 9, fontWeight: '900', letterSpacing: 1 }}>{label}</Text>
       <TextInput
         testID={testID}
-        accessibilityLabel={`${label.toLowerCase()} bar notes`}
+        accessibilityLabel={t('{hand} bar notes', { hand: t(label.toLowerCase()) })}
         value={value}
         onChangeText={onChangeText}
         autoCapitalize="none"

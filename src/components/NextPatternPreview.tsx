@@ -1,5 +1,7 @@
 import { useLayoutEffect, useState } from 'react';
-import { Animated, Easing, Text, View } from 'react-native';
+import { Animated, Easing, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
 import { MixtureSymbol } from '@/components/MixtureSymbol';
 import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
@@ -93,6 +95,7 @@ export function NextPatternPreview({
   beamGroupQuarterNotes = 1,
   focusedHand,
 }: NextPatternPreviewProps) {
+  const { t } = useI18n();
   const [slideProgress] = useState(() => new Animated.Value(0));
   const previewId = scoreMeasure
     ? `score:${scoreMeasureSequence ?? scoreMeasure.index}`
@@ -115,23 +118,36 @@ export function NextPatternPreview({
   if (!step && !scoreMeasure) return null;
 
   const isScorePreview = Boolean(scoreMeasure);
-  const title = isScorePreview ? 'NEXT BAR' : 'UP NEXT';
+  const title = t(isScorePreview ? 'NEXT BAR' : 'UP NEXT');
   const countdown = isScorePreview ? scoreBeatsUntilChange ?? beatsUntilChange : beatsUntilChange;
-  const countdownLabel = countdown === 1 ? 'BEAT' : 'BEATS';
+  const countdownLabel = t(countdown === 1 ? 'BEAT' : 'BEATS');
   const changeDetail = restBeforeChange
-    ? ', with a rest before the change'
+    ? t(' · rest before the change')
     : graceNotesEnabled
-      ? ', with a grace note pickup before the change'
+      ? t(' · grace note pickup before the change')
       : '';
   const accessibleDescription = scoreMeasure
-    ? `Next score bar ${scoreMeasureNumber ?? scoreMeasure.index + 1}. Starts in ${countdown} ${countdownLabel.toLowerCase()}.`
+    ? t('Next score bar {bar}. Starts in {count} {unit}.', {
+      bar: scoreMeasureNumber ?? scoreMeasure.index + 1,
+      count: countdown,
+      unit: t(countdown === 1 ? 'beat' : 'beats'),
+    })
     : step
       ? focusedHand
-        ? `Next pattern. Changes in ${countdown} ${countdownLabel.toLowerCase()}. One hand: ${patternLabelForHand(focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision, focusedHand === 'left' ? step.leftRest : step.rightRest, focusedHand === 'left' ? step.leftMixture : step.rightMixture)}` + changeDetail
-        : `Next pattern. Changes in ${countdown} ${countdownLabel.toLowerCase()}. ` +
-        `Left hand: ${patternLabelForHand(step.leftSubdivision, step.leftRest, step.leftMixture)}. ` +
-        `Right hand: ${patternLabelForHand(step.rightSubdivision, step.rightRest, step.rightMixture)}` + changeDetail
-      : 'Upcoming pattern';
+        ? t('Next pattern. Changes in {count} {unit}. One hand: {pattern}{detail}', {
+          count: countdown,
+          unit: t(countdown === 1 ? 'beat' : 'beats'),
+          pattern: t(patternLabelForHand(focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision, focusedHand === 'left' ? step.leftRest : step.rightRest, focusedHand === 'left' ? step.leftMixture : step.rightMixture)),
+          detail: changeDetail,
+        })
+        : t('Next pattern. Changes in {count} {unit}. Left hand: {left}. Right hand: {right}{detail}', {
+          count: countdown,
+          unit: t(countdown === 1 ? 'beat' : 'beats'),
+          left: t(patternLabelForHand(step.leftSubdivision, step.leftRest, step.leftMixture)),
+          right: t(patternLabelForHand(step.rightSubdivision, step.rightRest, step.rightMixture)),
+          detail: changeDetail,
+        })
+      : t('Upcoming pattern');
 
   return (
     <Animated.View

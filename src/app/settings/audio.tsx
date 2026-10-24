@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
 import { SOUND_OPTIONS } from '@/audio/soundPresets';
 import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsPage } from '@/components/SettingsPage';
@@ -60,7 +61,7 @@ export default function AudioSettingsScreen() {
         Correct taps flash teal; off-beat taps flash red. Turn this off for less visual feedback.
       </Text> : null}
       {featureFlags.shownRhythmPlayback ? <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
-        The shown left and right patterns play automatically using each hand&apos;s selected sound. Keep this off to practice from the visual rhythm alone.
+            The shown left and right patterns play automatically using each hand’s selected sound. Keep this off to practice from the visual rhythm alone.
       </Text> : null}
       {featureFlags.backgroundMusic || featureFlags.sessionCues ? <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
         The accompaniment is synthesized on your device and follows your tempo and meter. A short pickup leads into beat one; change cues mark pattern boundaries. Sound effects must be on to hear either option.

@@ -1,4 +1,5 @@
-import { Text } from 'react-native';
+
+import { Text } from '@/i18n/LocalizedText';
 import { colors } from '@/theme';
 
 interface CountdownProps {

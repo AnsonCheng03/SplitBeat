@@ -1,7 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Slider from '@react-native-community/slider';
-import { Alert, Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Pressable, useWindowDimensions, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Countdown } from '@/components/Countdown';
 import { HardwareKeyboardInput } from '@/components/HardwareKeyboardInput';
@@ -20,14 +22,15 @@ import { useRhythmSession } from '@/store/sessionStore';
 import type { Hand, TapFeedback } from '@/types/rhythm';
 import { colors } from '@/theme';
 
-function formatTimeRemaining(seconds: number): string {
+function formatTimeRemaining(seconds: number, t: (source: string, values?: Record<string, string | number>) => string): string {
   const roundedSeconds = Math.max(0, Math.ceil(seconds));
   const minutes = Math.floor(roundedSeconds / 60);
   const remainingSeconds = String(roundedSeconds % 60).padStart(2, '0');
-  return `${minutes}:${remainingSeconds} LEFT`;
+  return t('{time} LEFT', { time: `${minutes}:${remainingSeconds}` });
 }
 
 export default function PracticeScreen() {
+  const { t } = useI18n();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const compact = height < 520;
@@ -95,7 +98,7 @@ export default function PracticeScreen() {
     try {
       await resumeExercise();
     } catch {
-      Alert.alert('Could not resume audio', 'Check your device audio settings and try again.');
+      Alert.alert(t('Could not resume audio'), t('Check your device audio settings and try again.'));
     }
   };
 
@@ -105,7 +108,7 @@ export default function PracticeScreen() {
     try {
       await restartPausedExercise(barsBack, bpmDraft);
     } catch {
-      Alert.alert('Could not restart practice', 'Try again, or continue at the current tempo.');
+      Alert.alert(t('Could not restart practice'), t('Try again, or continue at the current tempo.'));
     } finally {
       setPauseActionLoading(false);
     }
@@ -124,7 +127,7 @@ export default function PracticeScreen() {
       await startPreparedExercise();
       setTutorialVisible(false);
     } catch {
-      Alert.alert('Audio could not start', 'Check your device audio settings and try again.');
+      Alert.alert(t('Audio could not start'), t('Check your device audio settings and try again.'));
     } finally {
       setStarting(false);
     }
@@ -190,9 +193,9 @@ export default function PracticeScreen() {
       ? 0
       : Math.max(0, snapshot.scoreMeasureCount - scoreSequence);
   const remainingLabel = scoreBarsRemaining !== undefined
-    ? `${scoreBarsRemaining} ${scoreBarsRemaining === 1 ? 'BAR' : 'BARS'} LEFT`
+    ? t('{count} {unit} LEFT', { count: scoreBarsRemaining, unit: t(scoreBarsRemaining === 1 ? 'BAR' : 'BARS') })
     : snapshot?.secondsRemaining !== null && snapshot?.secondsRemaining !== undefined
-      ? formatTimeRemaining(snapshot.secondsRemaining)
+      ? formatTimeRemaining(snapshot.secondsRemaining, t)
       : snapshot
         ? 'ENDLESS'
         : '';
@@ -213,7 +216,7 @@ export default function PracticeScreen() {
     try {
       await resumeExercise();
     } catch {
-      Alert.alert('Could not resume audio', 'Check your device audio settings and try again.');
+      Alert.alert(t('Could not resume audio'), t('Check your device audio settings and try again.'));
     }
   };
 
@@ -424,7 +427,7 @@ export default function PracticeScreen() {
           <Pressable
             testID="practice.pause"
             accessibilityRole="button"
-            accessibilityLabel="Pause practice"
+            accessibilityLabel={t('Pause practice')}
             disabled={!snapshot || snapshot.phase === 'paused' || snapshot.phase === 'finished' || snapshot.resumeCountIn}
             onPress={openPauseMenu}
             hitSlop={12}
@@ -455,8 +458,8 @@ export default function PracticeScreen() {
               <Text
                 testID={scoreBarsRemaining === undefined ? 'practice.timeRemaining' : 'practice.barsRemaining'}
                 accessibilityLabel={scoreBarsRemaining === undefined
-                  ? remainingLabel === 'ENDLESS' ? 'Endless session' : `${remainingLabel.replace(' LEFT', '')} remaining`
-                  : `${scoreBarsRemaining} ${scoreBarsRemaining === 1 ? 'bar' : 'bars'} remaining`}
+                  ? remainingLabel === 'ENDLESS' ? t('Endless session') : t('{time} remaining', { time: remainingLabel.replace(' LEFT', '') })
+                  : t('{count} {unit} remaining', { count: scoreBarsRemaining, unit: t(scoreBarsRemaining === 1 ? 'bar' : 'bars') })}
                 numberOfLines={1}
                 style={{ color: colors.accent, fontSize: compact ? 8 : 10, lineHeight: compact ? 11 : 13, fontWeight: '900', letterSpacing: 0.8 }}
               >
@@ -482,9 +485,9 @@ export default function PracticeScreen() {
           <Pressable
             testID="practice.tutorial"
             accessibilityRole="button"
-            accessibilityLabel={activeSettings.trainingMode === 'single-hand'
+            accessibilityLabel={t(activeSettings.trainingMode === 'single-hand'
               ? 'Tap anywhere to start. Use either hand to tap anywhere during the exercise.'
-              : 'Tap anywhere to start. Use your left hand on the left half and your right hand on the right half.'}
+              : 'Tap anywhere to start. Use your left hand on the left half and your right hand on the right half.')}
             disabled={starting}
             onPress={() => void beginExercise()}
             style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(7, 10, 14, 0.62)' }}
@@ -589,7 +592,7 @@ export default function PracticeScreen() {
                     <Pressable
                       testID="practice.pause.rewindMinus"
                       accessibilityRole="button"
-                      accessibilityLabel="Rewind one fewer bar"
+                      accessibilityLabel={t('Rewind one fewer bar')}
                       disabled={maxRewindBars === 0 || rewindBars <= 1}
                       onPress={() => setRewindBars((current) => Math.max(1, current - 1))}
                       style={{ width: 40, height: compact ? 34 : 40, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: maxRewindBars === 0 || rewindBars <= 1 ? 0.4 : 1 }}
@@ -602,7 +605,7 @@ export default function PracticeScreen() {
                     <Pressable
                       testID="practice.pause.rewindPlus"
                       accessibilityRole="button"
-                      accessibilityLabel="Rewind one more bar"
+                      accessibilityLabel={t('Rewind one more bar')}
                       disabled={maxRewindBars === 0 || rewindBars >= maxRewindBars}
                       onPress={() => setRewindBars((current) => Math.min(maxRewindBars, current + 1))}
                       style={{ width: 40, height: compact ? 34 : 40, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: maxRewindBars === 0 || rewindBars >= maxRewindBars ? 0.4 : 1 }}
@@ -629,12 +632,12 @@ export default function PracticeScreen() {
                   <Text style={{ color: colors.text, fontSize: compact ? 15 : 18, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{bpmDraft} BPM</Text>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: compact ? 2 : 5 }}>
-                  <Pressable testID="practice.pause.bpmMinus" accessibilityRole="button" accessibilityLabel="Decrease tempo" disabled={bpmDraft <= 40} onPress={() => setBpmDraft((current) => Math.max(40, current - 1))} style={{ width: 36, height: 34, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: bpmDraft <= 40 ? 0.4 : 1 }}>
+                  <Pressable testID="practice.pause.bpmMinus" accessibilityRole="button" accessibilityLabel={t('Decrease tempo')} disabled={bpmDraft <= 40} onPress={() => setBpmDraft((current) => Math.max(40, current - 1))} style={{ width: 36, height: 34, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: bpmDraft <= 40 ? 0.4 : 1 }}>
                     <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>−</Text>
                   </Pressable>
                   <Slider
                     testID="practice.pause.bpmSlider"
-                    accessibilityLabel="Practice tempo"
+                    accessibilityLabel={t('Practice tempo')}
                     style={{ flex: 1, height: 34 }}
                     minimumValue={40}
                     maximumValue={200}
@@ -645,7 +648,7 @@ export default function PracticeScreen() {
                     thumbTintColor={colors.text}
                     onValueChange={setBpmDraft}
                   />
-                  <Pressable testID="practice.pause.bpmPlus" accessibilityRole="button" accessibilityLabel="Increase tempo" disabled={bpmDraft >= 200} onPress={() => setBpmDraft((current) => Math.min(200, current + 1))} style={{ width: 36, height: 34, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: bpmDraft >= 200 ? 0.4 : 1 }}>
+                  <Pressable testID="practice.pause.bpmPlus" accessibilityRole="button" accessibilityLabel={t('Increase tempo')} disabled={bpmDraft >= 200} onPress={() => setBpmDraft((current) => Math.min(200, current + 1))} style={{ width: 36, height: 34, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: bpmDraft >= 200 ? 0.4 : 1 }}>
                     <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>+</Text>
                   </Pressable>
                 </View>

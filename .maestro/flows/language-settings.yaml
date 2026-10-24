@@ -1,0 +1,30 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: LANDSCAPE_LEFT
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+- assertVisible:
+    id: home.screen
+- tapOn:
+    id: home.setup
+- assertVisible:
+    id: setup.screen
+- tapOn:
+    id: setup.card.language
+- assertVisible:
+    id: settings.language.screen
+- tapOn:
+    id: settings.language.choice.zh-Hant
+- assertVisible: 語言
+- assertVisible: 選擇 Split Beat 的顯示語言。
+- tapOn:
+    id: settings.language.choice.en
+- assertVisible: Choose the language used throughout Split Beat.
+- tapOn:
+    id: settings.language.back
+- assertVisible:
+    id: setup.screen
+- tapOn:
+    id: setup.home
+- assertVisible: Choose a mode

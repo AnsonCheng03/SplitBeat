@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Animated, Easing, Pressable, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import type { AudioPreparationStatus } from '@/store/sessionStore';
 import { colors } from '@/theme';
 
@@ -26,6 +28,7 @@ export function AudioStartButton({
   title,
   subtitle,
 }: AudioStartButtonProps) {
+  const { t } = useI18n();
   const [rotation] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
@@ -58,7 +61,7 @@ export function AudioStartButton({
       <Pressable
         testID={testID}
         accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
+        accessibilityLabel={t(accessibilityLabel)}
         accessibilityState={{ disabled }}
         disabled={disabled}
         onPress={onPress}
@@ -134,7 +137,7 @@ export function AudioStartButton({
     <Pressable
       testID={testID}
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
+      accessibilityLabel={t(accessibilityLabel)}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}

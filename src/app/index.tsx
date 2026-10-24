@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AudioStartButton } from '@/components/AudioStartButton';
 import { PracticeDisplayPicker } from '@/components/PracticeDisplayPicker';
@@ -9,6 +11,7 @@ import { colors } from '@/theme';
 
 export default function HomeScreen() {
   const { settings, featureFlags, updateSettings, audioStatus, prepareAudio, prepareExercise } = useRhythmSession();
+  const { t } = useI18n();
   const [starting, setStarting] = useState(false);
   const router = useRouter();
   const buttonStatus = starting ? 'loading' : audioStatus;
@@ -24,7 +27,7 @@ export default function HomeScreen() {
       await prepareExercise();
       router.replace('/practice');
     } catch {
-      Alert.alert('Audio could not start', 'Check your device audio settings and try again.');
+      Alert.alert(t('Audio could not start'), t('Check your device audio settings and try again.'));
     } finally {
       setStarting(false);
     }
@@ -45,7 +48,7 @@ export default function HomeScreen() {
             {featureFlags.sessionRecords ? <Pressable
               testID="home.records"
               accessibilityRole="button"
-              accessibilityLabel="View training records"
+              accessibilityLabel={t('View training records')}
               onPress={() => router.push('/records')}
               hitSlop={10}
               style={({ pressed }) => ({
@@ -65,7 +68,7 @@ export default function HomeScreen() {
             <Pressable
               testID="home.setup"
               accessibilityRole="button"
-              accessibilityLabel="Settings"
+              accessibilityLabel={t('Settings')}
               onPress={() => router.push('/setup')}
               hitSlop={10}
               style={({ pressed }) => ({
@@ -93,7 +96,7 @@ export default function HomeScreen() {
             {featureFlags.learnCourse ? <Pressable
               testID="home.learn"
               accessibilityRole="button"
-              accessibilityLabel="Open the guided rhythm course"
+              accessibilityLabel={t('Open the guided rhythm course')}
               onPress={() => router.push('/learn')}
               hitSlop={8}
               style={({ pressed }) => ({ minHeight: 40, justifyContent: 'center', paddingHorizontal: 13, borderRadius: 12, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line })}
@@ -132,7 +135,7 @@ export default function HomeScreen() {
             {featureFlags.focusPractice ? <Pressable
               testID="home.exercise"
               accessibilityRole="button"
-              accessibilityLabel="Review combinations and create a rhythm to practise"
+              accessibilityLabel={t('Review combinations and create a rhythm to practise')}
               onPress={() => router.push('/exercise')}
               hitSlop={8}
               style={({ pressed }) => ({
@@ -153,7 +156,7 @@ export default function HomeScreen() {
             {featureFlags.scoreImport ? <Pressable
               testID="home.importScore"
               accessibilityRole="button"
-              accessibilityLabel="Train from a score"
+              accessibilityLabel={t('Train from a score')}
               onPress={() => router.push('/import-score')}
               hitSlop={8}
               style={({ pressed }) => ({
@@ -181,10 +184,10 @@ export default function HomeScreen() {
             subtitleTestID="home.audioStatus"
             accessibilityLabel={
               audioStatus === 'ready'
-                ? `Start ${settings.trainingMode === 'single-hand' ? 'one hand' : 'two hand'} practice`
+                ? t('Start {mode} practice', { mode: t(settings.trainingMode === 'single-hand' ? 'one hand' : 'two hand') })
                 : audioStatus === 'error'
-                  ? 'Retry audio setup'
-                  : 'Loading audio engine'
+                  ? t('Retry audio setup')
+                  : t('Loading audio engine')
             }
             title={
               starting
@@ -197,7 +200,10 @@ export default function HomeScreen() {
             }
             subtitle={
               audioStatus === 'ready'
-                ? `AUDIO READY · ${settings.bpm} BPM · ${featureFlags.oneHandMode && settings.trainingMode === 'single-hand' ? 'ONE HAND' : 'TWO HANDS'}`
+                ? t('AUDIO READY · {bpm} BPM · {mode}', {
+                  bpm: settings.bpm,
+                  mode: t(featureFlags.oneHandMode && settings.trainingMode === 'single-hand' ? 'ONE HAND' : 'TWO HANDS'),
+                })
                 : audioStatus === 'error'
                   ? 'TAP TO PREPARE THE METRONOME AGAIN'
                   : 'PREPARING THE METRONOME'

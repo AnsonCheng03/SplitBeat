@@ -1,19 +1,22 @@
 import type { ReactNode } from 'react';
 import { Link } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FullBleedSafeArea } from '@/components/FullBleedSafeArea';
 import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
 
-export type SettingsSection = 'session' | 'rhythm' | 'audio' | 'timing' | 'features';
+export type SettingsSection = 'session' | 'rhythm' | 'audio' | 'timing' | 'features' | 'language';
 
-const sections: { id: SettingsSection; label: string; href: '/setup' | '/settings/rhythm' | '/settings/audio' | '/settings/timing' | '/settings/features'; testID?: string }[] = [
+const sections: { id: SettingsSection; label: string; href: '/setup' | '/settings/rhythm' | '/settings/audio' | '/settings/timing' | '/settings/features' | '/settings/language'; testID?: string }[] = [
   { id: 'session', label: 'Pace & length', href: '/setup' },
   { id: 'rhythm', label: 'Rhythm & meter', href: '/settings/rhythm', testID: 'setup.card.rhythm' },
   { id: 'audio', label: 'Sounds', href: '/settings/audio', testID: 'setup.card.audio' },
   { id: 'timing', label: 'Timing', href: '/settings/timing', testID: 'setup.card.timing' },
   { id: 'features', label: 'Features', href: '/settings/features', testID: 'setup.card.features' },
+  { id: 'language', label: 'Language', href: '/settings/language', testID: 'setup.card.language' },
 ];
 
 export function SettingsPage({
@@ -35,6 +38,7 @@ export function SettingsPage({
 }) {
   const insets = useSafeAreaInsets();
   const { featureFlags } = useRhythmSession();
+  const { t } = useI18n();
 
   return (
     <FullBleedSafeArea
@@ -69,13 +73,13 @@ export function SettingsPage({
         <Link href={section === 'session' ? '/' : '/setup'} asChild>
           <Pressable testID={backTestID} hitSlop={10} style={{ minHeight: 42, justifyContent: 'center', marginBottom: 20 }}>
             <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '800', letterSpacing: 0.6 }}>
-              ‹  {section === 'session' ? 'HOME' : 'SETUP'}
+              ‹  {t(section === 'session' ? 'HOME' : 'SETUP')}
             </Text>
           </Pressable>
         </Link>
 
         <Text style={{ color: colors.dim, fontSize: 10, fontWeight: '900', letterSpacing: 1.5, marginBottom: 10, paddingHorizontal: 8 }}>
-          SETTINGS
+          {t('SETTINGS')}
         </Text>
 
         <View style={{ gap: 5 }}>
@@ -98,7 +102,7 @@ export function SettingsPage({
                   })}
                 >
                   <Text style={{ color: selected ? colors.text : colors.muted, fontSize: 13, fontWeight: selected ? '800' : '600' }}>
-                    {item.label}
+                    {t(item.label)}
                   </Text>
                 </Pressable>
               </Link>
@@ -108,7 +112,7 @@ export function SettingsPage({
 
         <View style={{ flex: 1 }} />
         <Text style={{ color: colors.dim, fontSize: 10, fontWeight: '800', letterSpacing: 1.1, paddingHorizontal: 8 }}>
-          BEEP BEEP BEAT - RHYTHM COACH
+          {t('BEEP BEEP BEAT - RHYTHM COACH')}
         </Text>
       </View>
 

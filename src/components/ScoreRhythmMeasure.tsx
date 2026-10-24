@@ -1,5 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Text, View } from 'react-native';
+import { Animated, Easing, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
 import { createBarNoteNotationPlan, type NoteNotationSize } from '@/rhythm/noteNotation';
 import type { ScoreRhythmEvent, ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
@@ -31,6 +33,7 @@ function RhythmTrack({
   initialNotationWidth?: number;
   testIdPrefix?: string;
 }) {
+  const { t } = useI18n();
   const [measuredLayout, setMeasuredLayout] = useState({ estimate: initialNotationWidth, width: 0 });
   const notationWidth = measuredLayout.estimate === initialNotationWidth && measuredLayout.width > 0
     ? measuredLayout.width
@@ -70,7 +73,11 @@ function RhythmTrack({
                 staffLineColor={colors.dim}
                 useNativeGlyphs
                 testID={`${testIdPrefix}.${label.toLowerCase()}Notation`}
-                accessibilityLabel={`${label.toLowerCase()} bar with ${noteEvents.length} notes and ${restEvents.length} rests`}
+                accessibilityLabel={t('{hand} bar with {notes} notes and {rests} rests', {
+                  hand: t(label.toLowerCase()),
+                  notes: noteEvents.length,
+                  rests: restEvents.length,
+                })}
               />
             ) : null}
             {restEvents.map((event, index) => (

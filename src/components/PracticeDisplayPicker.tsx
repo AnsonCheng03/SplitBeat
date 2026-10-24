@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
 import type { PracticeDisplayMode } from '@/types/rhythm';
 import { colors } from '@/theme';
 

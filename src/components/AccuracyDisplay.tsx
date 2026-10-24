@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
 import type { Hand, TrainingMode } from '@/types/rhythm';
 import { colors } from '@/theme';
 

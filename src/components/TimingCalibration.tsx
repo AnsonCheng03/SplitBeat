@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, SafeAreaView, Text, View } from 'react-native';
+import { Modal, Pressable, SafeAreaView, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { MetronomeAudio } from '@/audio/metronome';
 import { calibrationOffsetFromErrors, CALIBRATION_TAPS_PER_HAND } from '@/rhythm/timingCalibration';
 import { timeSignatureMetrics } from '@/rhythm/subdivisions';
@@ -39,6 +41,7 @@ export function TimingCalibration({
   soundEnabled,
   onCalibrate,
 }: TimingCalibrationProps) {
+  const { t } = useI18n();
   const [visible, setVisible] = useState(false);
   const [phase, setPhase] = useState<'ready' | 'running' | 'complete' | 'error'>('ready');
   const [starting, setStarting] = useState(false);
@@ -188,7 +191,7 @@ export function TimingCalibration({
         key={hand}
         testID={`calibration.tap.${hand}`}
         accessibilityRole="button"
-        accessibilityLabel={`Calibrate ${hand} hand timing`}
+        accessibilityLabel={t('Calibrate {hand} hand timing', { hand: t(hand === 'left' ? 'left' : 'right') })}
         onTouchStart={() => handleTap(hand, monotonicNow())}
         collapsable={false}
         style={{
@@ -251,7 +254,7 @@ export function TimingCalibration({
               <Pressable
                 testID="calibration.close"
                 accessibilityRole="button"
-                accessibilityLabel="Close timing calibration"
+                accessibilityLabel={t('Close timing calibration')}
                 onPress={close}
                 style={{ minWidth: 76, minHeight: 44, justifyContent: 'center' }}
               >

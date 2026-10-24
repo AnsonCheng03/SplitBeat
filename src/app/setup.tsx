@@ -1,7 +1,9 @@
 import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { AudioStartButton } from '@/components/AudioStartButton';
 import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsPage } from '@/components/SettingsPage';
@@ -18,6 +20,7 @@ const durations: { label: string; value: DurationOption }[] = [
 
 export default function SetupScreen() {
   const { settings, updateSettings, audioStatus, prepareExercise } = useRhythmSession();
+  const { t } = useI18n();
   const [starting, setStarting] = useState(false);
   const router = useRouter();
 
@@ -28,7 +31,7 @@ export default function SetupScreen() {
       await prepareExercise();
       router.replace('/practice');
     } catch {
-      Alert.alert('Audio could not start', 'Check your device audio settings and try again.');
+      Alert.alert(t('Audio could not start'), t('Check your device audio settings and try again.'));
     } finally {
       setStarting(false);
     }
@@ -74,7 +77,7 @@ export default function SetupScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 }}>
             <Pressable
               testID="setup.tempo.decrease"
-              accessibilityLabel="Decrease tempo"
+              accessibilityLabel={t('Decrease tempo')}
               onPress={() => updateSettings({ bpm: Math.max(40, settings.bpm - 1) })}
               style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}
             >
@@ -94,7 +97,7 @@ export default function SetupScreen() {
             />
             <Pressable
               testID="setup.tempo.increase"
-              accessibilityLabel="Increase tempo"
+              accessibilityLabel={t('Increase tempo')}
               onPress={() => updateSettings({ bpm: Math.min(200, settings.bpm + 1) })}
               style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}
             >

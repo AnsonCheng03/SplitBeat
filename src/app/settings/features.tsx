@@ -1,4 +1,6 @@
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { SettingsPage } from '@/components/SettingsPage';
 import { SettingsToggleRow } from '@/components/SettingsToggleRow';
 import { FEATURE_GROUPS } from '@/features/featureFlags';
@@ -7,6 +9,7 @@ import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
 
 export default function FeatureSettingsScreen() {
+  const { t } = useI18n();
   const { featureFlags, featureFlagsLoaded, updateFeatureFlag, enableAllFeatures } = useRhythmSession();
   const enabledCount = Object.values(featureFlags).filter(Boolean).length;
   const totalCount = Object.keys(featureFlags).length;
@@ -23,7 +26,7 @@ export default function FeatureSettingsScreen() {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
           <View style={{ flex: 1 }}>
             <Text testID="settings.features.enabledCount" style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>
-              {featureFlagsLoaded ? `${enabledCount} of ${totalCount} enabled` : 'Loading feature settings…'}
+              {featureFlagsLoaded ? t('{count} of {total} enabled', { count: enabledCount, total: totalCount }) : t('Loading feature settings…')}
             </Text>
             <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: 4 }}>
               Turning a feature off hides its controls and prevents it from being used in a session.
@@ -44,7 +47,7 @@ export default function FeatureSettingsScreen() {
       {FEATURE_GROUPS.map((group) => (
         <View key={group.title} style={{ marginTop: 23 }}>
           <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6, marginBottom: 6 }}>
-            {group.title.toUpperCase()}
+            {t(group.title)}
           </Text>
           <View style={{ borderTopWidth: 1, borderTopColor: colors.line }}>
             {group.features.map((feature) => (

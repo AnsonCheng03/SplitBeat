@@ -1,7 +1,8 @@
 import Slider from '@react-native-community/slider';
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
 import { SettingsPage } from '@/components/SettingsPage';
 import { TimingCalibration } from '@/components/TimingCalibration';
 import {

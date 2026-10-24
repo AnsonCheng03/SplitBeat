@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { GameCenterChallengeCard } from '@/components/GameCenterChallengeCard';
 import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsPage } from '@/components/SettingsPage';
@@ -20,6 +22,7 @@ const intervals: { label: string; value: ExerciseSettings['changeIntervalBeats']
 ];
 
 export default function RhythmSettingsScreen() {
+  const { t } = useI18n();
   const { settings, featureFlags, updateSettings } = useRhythmSession();
   const visibleSubdivisions = featureFlags.rhythmExtensions
     ? SUBDIVISIONS
@@ -64,7 +67,7 @@ export default function RhythmSettingsScreen() {
                 testID={'setup.timeSignature.' + timeSignature.replace('/', '-')}
                 accessibilityRole="radio"
                 accessibilityState={{ selected }}
-                accessibilityLabel={timeSignature + ' time'}
+                accessibilityLabel={t('{signature} time', { signature: timeSignature })}
                 onPress={() => updateSettings({ timeSignature })}
                 style={{
                   flexGrow: 1,
@@ -162,7 +165,7 @@ export default function RhythmSettingsScreen() {
                 testID={`setup.mixture.${mixture.id}`}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: selected }}
-                accessibilityLabel={`${mixture.label}. ${mixture.detail}`}
+                accessibilityLabel={`${t(mixture.label)}. ${t(mixture.detail)}`}
                 onPress={() => toggleMixture(mixture.id)}
                 style={{
                   minHeight: 56,

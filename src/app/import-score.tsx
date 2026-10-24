@@ -1,6 +1,8 @@
 import { Link, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
+import { Text } from '@/i18n/LocalizedText';
+import { useI18n } from '@/i18n/I18nProvider';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -44,6 +46,7 @@ function currentTimestamp(): number {
 }
 
 export default function ImportScoreScreen() {
+  const { t } = useI18n();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -93,7 +96,7 @@ export default function ImportScoreScreen() {
     setLibrary(nextLibrary);
     setCurrentEntryId(entry.id);
     await saveImportedScoreLibrary(nextLibrary).catch(() => {
-      Alert.alert('Could not save score history', 'The score is ready to practise, but this device could not save it to your recent imports.');
+      Alert.alert(t('Could not save score history'), t('The score is ready to practise, but this device could not save it to your recent imports.'));
     });
   };
 
@@ -115,8 +118,8 @@ export default function ImportScoreScreen() {
     } catch (error) {
       setScore(null);
       Alert.alert(
-        'Could not read this score',
-        error instanceof Error ? error.message : 'Choose a valid partwise MusicXML score.',
+        t('Could not read this score'),
+        t(error instanceof Error ? error.message : 'Choose a valid partwise MusicXML score.'),
       );
     }
   };
@@ -156,8 +159,8 @@ export default function ImportScoreScreen() {
       }
     } catch (error) {
       Alert.alert(
-        'Could not import this score',
-        error instanceof Error ? error.message : 'Choose a MIDI or uncompressed MusicXML file.',
+        t('Could not import this score'),
+        t(error instanceof Error ? error.message : 'Choose a MIDI or uncompressed MusicXML file.'),
       );
     } finally {
       setImporting(false);
@@ -177,7 +180,7 @@ export default function ImportScoreScreen() {
     libraryRef.current = updated;
     setLibrary(updated);
     void saveImportedScoreLibrary(updated).catch(() => {
-      Alert.alert('Could not update score history', 'This score is still ready to practise.');
+      Alert.alert(t('Could not update score history'), t('This score is still ready to practise.'));
     });
   };
 
@@ -188,10 +191,10 @@ export default function ImportScoreScreen() {
       libraryRef.current = next;
       setLibrary(next);
       void saveImportedScoreLibrary(next).catch(() => {
-        Alert.alert('Could not save score', 'Check available storage and try again.');
+        Alert.alert(t('Could not save score'), t('Check available storage and try again.'));
       });
     } catch (error) {
-      Alert.alert('Score library is full', error instanceof Error ? error.message : 'Remove a saved score and try again.');
+      Alert.alert(t('Score library is full'), t(error instanceof Error ? error.message : 'Remove a saved score and try again.'));
     }
   };
 
@@ -204,7 +207,7 @@ export default function ImportScoreScreen() {
   const start = async () => {
     if (!score || starting) return;
     if (score.trackCount === 1 && !featureFlags.oneHandMode) {
-      Alert.alert('One-hand practice is disabled', 'Enable One-hand practice in Settings → Features to play a single-track score.');
+      Alert.alert(t('One-hand practice is disabled'), t('Enable One-hand practice in Settings → Features to play a single-track score.'));
       return;
     }
     setStarting(true);
@@ -217,7 +220,7 @@ export default function ImportScoreScreen() {
       });
       router.replace({ pathname: '/practice', params: { scoreDisplayMode: featureFlags.scoreNotation ? scoreDisplayMode : 'focus' } });
     } catch {
-      Alert.alert('Audio could not start', 'Check your device audio settings and try again.');
+      Alert.alert(t('Audio could not start'), t('Check your device audio settings and try again.'));
       setStarting(false);
     }
   };
@@ -228,13 +231,26 @@ export default function ImportScoreScreen() {
   const currentEntry = library.find((entry) => entry.id === currentEntryId);
   const savedScores = library.filter((entry) => entry.saved);
   const recentScores = library.filter((entry) => !entry.saved);
+  const scoreTrackDescription = t(score?.trackCount === 1 ? '1 track · one hand' : '2 tracks · two hands');
+  const scoreMeasureDescription = score
+    ? t('{count} {unit}', { count: score.measures.length, unit: t(score.measures.length === 1 ? 'bar' : 'bars') })
+    : '';
+  const scoreTempoDescription = score?.bpm ? `${score.bpm} BPM` : t('uses your saved tempo');
+  const scoreNoteDescription = score
+    ? score.trackCount === 1
+      ? t('{count} notes · one-hand mode', { count: score.measures.reduce((count, measure) => count + measure.leftEvents.length + measure.rightEvents.length, 0) })
+      : t('{left} left-hand notes · {right} right-hand notes', {
+        left: score.measures.reduce((count, measure) => count + measure.leftEvents.length, 0),
+        right: score.measures.reduce((count, measure) => count + measure.rightEvents.length, 0),
+      })
+    : '';
 
   return (
     <SafeAreaView testID="scoreImport.screen" style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 9, paddingBottom: 24, maxWidth: 850, width: '100%', alignSelf: 'center' }} keyboardShouldPersistTaps="handled">
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <Link href="/" asChild>
-            <Pressable accessibilityRole="button" accessibilityLabel="Go back" hitSlop={8} style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ color: colors.muted, fontSize: 13, fontWeight: '800' }}>‹  BACK</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('Go back')} hitSlop={8} style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ color: colors.muted, fontSize: 13, fontWeight: '800' }}>‹  BACK</Text></Pressable>
           </Link>
           <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1.7 }}>SCORE TRAINING</Text>
         </View>
@@ -274,7 +290,7 @@ export default function ImportScoreScreen() {
                     onPress={() => selectTemplate(template.id)}
                     style={({ pressed }) => ({ flex: 1, minHeight: 60, justifyContent: 'center', paddingHorizontal: 11, borderRadius: 12, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line })}
                   >
-                    <Text numberOfLines={1} style={{ color: colors.text, fontSize: 12, fontWeight: '900' }}>{template.title}</Text>
+                    <Text raw numberOfLines={1} style={{ color: colors.text, fontSize: 12, fontWeight: '900' }}>{template.title}</Text>
                     <Text numberOfLines={1} style={{ color: colors.dim, fontSize: 9, marginTop: 4 }}>{template.subtitle}</Text>
                   </Pressable>
                 ))}
@@ -294,8 +310,8 @@ export default function ImportScoreScreen() {
                   style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 11, marginBottom: 5, borderRadius: 10, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line })}
                 >
                   <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text numberOfLines={1} style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>{entry.score.title}</Text>
-                    <Text numberOfLines={1} style={{ color: colors.dim, fontSize: 9, marginTop: 2 }}>{entry.score.trackCount === 1 ? 'One hand' : 'Two hands'} · {entry.fileName}</Text>
+                    <Text raw numberOfLines={1} style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>{entry.score.title}</Text>
+                    <Text style={{ color: colors.dim, fontSize: 9, marginTop: 2 }}>{t(entry.score.trackCount === 1 ? 'One hand' : 'Two hands')} · <Text raw>{entry.fileName}</Text></Text>
                   </View>
                   <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900', marginLeft: 9 }}>OPEN ›</Text>
                 </Pressable>
@@ -311,7 +327,7 @@ export default function ImportScoreScreen() {
                     onPress={() => loadLibraryEntry(entry)}
                     style={({ pressed }) => ({ minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 11, marginBottom: 4, borderRadius: 10, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line })}
                   >
-                    <Text numberOfLines={1} style={{ flex: 1, color: colors.text, fontSize: 10, fontWeight: '800' }}>{entry.score.title} <Text style={{ color: colors.dim, fontWeight: '500' }}>· {entry.fileName}</Text></Text>
+                    <Text raw numberOfLines={1} style={{ flex: 1, color: colors.text, fontSize: 10, fontWeight: '800' }}>{entry.score.title} <Text style={{ color: colors.dim, fontWeight: '500' }}>· {entry.fileName}</Text></Text>
                     <Text style={{ color: colors.dim, fontSize: 9, fontWeight: '900', marginLeft: 8 }}>OPEN ›</Text>
                   </Pressable>
                 ))}
@@ -321,13 +337,13 @@ export default function ImportScoreScreen() {
         ) : (
           <>
             <View style={{ paddingHorizontal: 2, paddingTop: 2, paddingBottom: 8 }}>
-              <Text style={{ color: colors.text, fontSize: 19, fontWeight: '900' }}>{score.title}</Text>
+              <Text raw style={{ color: colors.text, fontSize: 19, fontWeight: '900' }}>{score.title}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 3 }}>
-                <Text numberOfLines={1} style={{ flex: 1, color: colors.dim, fontSize: 10 }}>{scoreFileName}</Text>
+                <Text raw numberOfLines={1} style={{ flex: 1, color: colors.dim, fontSize: 10 }}>{scoreFileName}</Text>
                 {featureFlags.savedScoreLibrary ? <Pressable
                   testID="scoreImport.save"
                   accessibilityRole="button"
-                  accessibilityLabel={currentEntry?.saved ? 'Remove score from saved scores' : 'Save this score'}
+                  accessibilityLabel={t(currentEntry?.saved ? 'Remove score from saved scores' : 'Save this score')}
                   disabled={!currentEntry}
                   onPress={() => saveCurrentScore(!currentEntry?.saved)}
                   style={({ pressed }) => ({ minHeight: 34, justifyContent: 'center', paddingHorizontal: 10, marginLeft: 8, borderRadius: 9, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: currentEntry?.saved ? colors.accent : colors.line, opacity: currentEntry ? 1 : 0.6 })}
@@ -337,13 +353,14 @@ export default function ImportScoreScreen() {
               </View>
               <Text style={{ color: colors.dim, fontSize: 9, marginTop: 4 }}>{scoreSource.toUpperCase()} · {featureFlags.savedScoreLibrary ? 'STORED ON THIS DEVICE' : 'SESSION ONLY'}</Text>
               <Text testID="scoreImport.summary" style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>
-                {score.trackCount === 1 ? '1 track · one hand' : '2 tracks · two hands'} · {score.measures.length} {score.measures.length === 1 ? 'bar' : 'bars'} · {score.timeSignature} · {score.bpm ? `${score.bpm} BPM` : 'uses your saved tempo'}
+                {t('{tracks} · {measures} · {meter} · {tempo}', {
+                  tracks: scoreTrackDescription,
+                  measures: scoreMeasureDescription,
+                  meter: score.timeSignature,
+                  tempo: scoreTempoDescription,
+                })}
               </Text>
-              <Text style={{ color: colors.dim, fontSize: 11, marginTop: 3 }}>
-                {score.trackCount === 1
-                  ? `${score.measures.reduce((count, measure) => count + measure.leftEvents.length + measure.rightEvents.length, 0)} notes · one-hand mode`
-                  : `${score.measures.reduce((count, measure) => count + measure.leftEvents.length, 0)} left-hand notes · ${score.measures.reduce((count, measure) => count + measure.rightEvents.length, 0)} right-hand notes`}
-              </Text>
+              <Text style={{ color: colors.dim, fontSize: 11, marginTop: 3 }}>{scoreNoteDescription}</Text>
             </View>
             {score.warnings.map((warning) => (
               <Text key={warning} style={{ color: colors.accent, fontSize: 11, lineHeight: 15, marginBottom: 6 }}>{warning}</Text>
@@ -353,7 +370,7 @@ export default function ImportScoreScreen() {
                 testID="scoreImport.previousMeasure"
                 disabled={previewMeasureIndex === 0}
                 onPress={() => setPreviewMeasureIndex((index) => Math.max(0, index - 1))}
-                accessibilityLabel="Previous score measure"
+                accessibilityLabel={t('Previous score measure')}
                 style={{ width: 36, alignItems: 'center', justifyContent: 'center', opacity: previewMeasureIndex === 0 ? 0.35 : 1 }}
               >
                 <Text style={{ color: colors.text, fontSize: 26 }}>‹</Text>
@@ -372,7 +389,7 @@ export default function ImportScoreScreen() {
                 testID="scoreImport.nextMeasure"
                 disabled={previewMeasureIndex >= score.measures.length - 1}
                 onPress={() => setPreviewMeasureIndex((index) => Math.min(score.measures.length - 1, index + 1))}
-                accessibilityLabel="Next score measure"
+                accessibilityLabel={t('Next score measure')}
                 style={{ width: 36, alignItems: 'center', justifyContent: 'center', opacity: previewMeasureIndex >= score.measures.length - 1 ? 0.35 : 1 }}
               >
                 <Text style={{ color: colors.text, fontSize: 26 }}>›</Text>

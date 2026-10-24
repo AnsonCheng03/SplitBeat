@@ -15,6 +15,10 @@ npx expo run:android
 
 Once the development client is installed, start Metro with npm start. Expo Go does not include react-native-audio-api.
 
+## Languages
+
+The interface supports English and Traditional Chinese. **Settings → Language** can follow the device language or use either language explicitly; the selection is saved on the device. System language detection treats Chinese device locales as Traditional Chinese and uses English for other locales. New interface copy should use English source strings with a matching entry in `src/i18n/translation.ts`; untranslated copy remains readable in English. Rhythm calculations, imported score data, and user-created titles are not translated. Run `npm run e2e:language -- --device DEVICE_ID` for the silent language-settings flow.
+
 ### iOS simulator on Xcode 27
 
 Xcode 27 replaced the standalone `Simulator.app` with Device Hub, at `/Applications/Xcode.app/Contents/Applications/DeviceHub.app`. The iOS simulator runtime and devices are still available through Xcode and `simctl`; this project uses Expo's Xcode-aware launcher. If a tool reports that `Simulator.app` is missing, open Device Hub and run the project through `npm run ios` or `npm run e2e:ios` instead of reinstalling Xcode:
@@ -52,6 +56,7 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 ## Architecture
 
 - `src/app/` contains the mode-select home, guided course, focused exercise and typed-bar editor, session setup, separate rhythm/audio/timing settings pages, practice, score import, results, and records routes.
+- `src/i18n/` resolves the device language, saves the user's language preference locally, and translates interface copy while leaving imported and user-created score names intact.
 - `src/rhythm/` contains subdivision math, selectable mixed note/rest patterns, non-repeating pair generation with optional independent hand rests, typed-bar validation and combination accuracy aggregation, conversion of generated patterns into pitch-free score bars, the authored 20-lesson course, tap matching, scoring, and per-hand challenge streak rules.
 - `src/rhythm/noteNotation.ts` builds repeated subdivision symbols and mixed-duration bar notation with beat-aware beams and flags.
 - `src/rhythm/musicXmlParser.ts` and `src/rhythm/midiParser.ts` convert MusicXML and Standard MIDI files into one- or two-hand rhythm tracks.
