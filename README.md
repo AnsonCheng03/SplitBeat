@@ -52,7 +52,7 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 ## Architecture
 
 - `src/app/` contains the mode-select home, guided course, session setup, separate rhythm/audio/timing settings pages, practice, score import, results, and records routes.
-- `src/rhythm/` contains subdivision math, non-repeating pair generation with optional independent hand rests, the authored 20-lesson course, tap matching, scoring, and per-hand challenge streak rules.
+- `src/rhythm/` contains subdivision math, non-repeating pair generation with optional independent hand rests, conversion of generated patterns into pitch-free score bars, the authored 20-lesson course, tap matching, scoring, and per-hand challenge streak rules.
 - `src/rhythm/noteNotation.ts` builds repeated subdivision symbols and mixed-duration bar notation with beat-aware beams and flags.
 - `src/rhythm/musicXmlParser.ts` and `src/rhythm/midiParser.ts` convert MusicXML and Standard MIDI files into one- or two-hand rhythm tracks.
 - `src/rhythm/scoreTemplates.ts` contains short built-in public-domain melody practice arrangements; `src/rhythm/importedScoreLibrary.ts` validates and indexes recent and saved score data.
@@ -75,7 +75,7 @@ Choose Straight or Swing feel in Rhythm & meter settings. Swing moves binary off
 
 New sessions default to a slower 60 BPM. In Rhythm & meter settings, **Independent hand rests** optionally lets generated two-hand practice rest one hand for a pattern while the other continues playing. Rests are shown in the current and upcoming pattern, create no expected taps for the resting hand, and still treat a tap on that resting hand as an error. This setting is off by default and does not alter authored Learn lessons or imported scores.
 
-The home screen offers Two hands and One hand modes. One-hand practice has no left/right selector: either hand can tap anywhere across the full screen, and results are labeled One hand. Two-hand practice uses full-height left/right tap zones with large, centered rhythm notation. Tap zones and the note canvas extend edge-to-edge behind safe-area insets, while Pause and the beat indicator stay inset. A short pre-session tutorial explains the tap area; tapping anywhere starts the count-in. During practice, the screen keeps Pause, the beat indicator, the current notes, a clear beat-change countdown, and a compact next-pattern strip. The pause menu can resume or end the session, return home, change tempo, and rewind score practice by a selected number of bars. Applying a tempo change starts play over or resumes score practice from the current bar; rewinding starts a fresh run from the selected earlier bar. Score practice offers a one-note view or a moving rhythm score. The moving score keeps both colored hand lanes visible together, places the notes above the tap zones without pitch lines, and slides forward after each bar completes.
+The home screen offers Two hands and One hand modes, plus a notation choice between Rhythm symbols and Score notes for normal practice. One-hand practice has no left/right selector: either hand can tap anywhere across the full screen, and results are labeled One hand. Two-hand practice uses full-height left/right tap zones. Tap zones and the note canvas extend edge-to-edge behind safe-area insets, while Pause and the beat indicator stay inset. A short pre-session tutorial explains the tap area; tapping anywhere starts the count-in. During practice, the screen keeps Pause, the beat indicator, the current notes, a clear beat-change countdown, and a compact next-pattern strip when using rhythm symbols. Score notes lay out each hand's generated notes across complete bars, including mixed subdivisions, without pitch lines; both lanes advance together after each bar completes. The pause menu can resume or end the session, return home, change tempo, and rewind imported score practice by a selected number of bars. Imported score practice offers a one-note view or a moving rhythm score. Applying a tempo change starts normal play over or resumes imported score practice from the current bar; rewinding starts a fresh run from the selected earlier bar.
 
 Guided course results show the lesson's correct-note percentage and a five-star rating: 1 star below 50%, 2 at 50%, 3 at 70%, 4 at 85%, and 5 at 95%. The course path saves each lesson's best accuracy and attempt count locally, while the course overview shows lessons completed and stars earned. Replaying a lesson can improve its saved best rating.
 
@@ -117,7 +117,7 @@ During practice, an external QWERTY keyboard can tap either hand. Keys on the le
 
 ## End-to-end checks
 
-The home screen follows AstroDX's compact main-menu hierarchy: choose Two hands or One hand, then start. Settings and score import stay secondary to that choice. One-hand mode uses a full-screen tap area and does not ask the player to choose a side. The Settings page keeps tempo and duration close by and opens Rhythm & meter, Sounds & feedback, or Timing calibration on separate detail pages.
+The home screen follows AstroDX's compact main-menu hierarchy: choose Two hands or One hand, choose Rhythm symbols or Score notes, then start. Settings and score import stay secondary to those choices. One-hand mode uses a full-screen tap area and does not ask the player to choose a side. The Settings page keeps tempo and duration close by and opens Rhythm & meter, Sounds & feedback, or Timing calibration on separate detail pages.
 
 Build and install the release test app on a simulator or device, then run the Maestro smoke flow. E2E builds for both platforms force metronome, hand, and score audio off, regardless of stored settings, so automated runs stay silent. The score-import flow uses a bundled in-app test score in E2E builds, then checks the score preview and practice path; the system file picker still needs a manual device check. The flows exercise multi-page settings, the single-hand full-screen tap area, two-hand practice, results, visual replay, and records:
 
@@ -134,6 +134,7 @@ The home mode selection and start action have a separate flow. The pause flow ch
 npm run e2e:ios
 npm run e2e:direct-start -- --device DEVICE_ID
 E2E_MAESTRO_FLOW=practice-pause.yaml npm run e2e:maestro -- --device DEVICE_ID
+E2E_MAESTRO_FLOW=normal-score-display.yaml npm run e2e:maestro -- --device DEVICE_ID
 ~~~
 
 The challenge flow checks that an off-beat tap pauses silently, then resumes on the same exercise:

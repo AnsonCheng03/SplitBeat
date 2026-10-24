@@ -39,6 +39,7 @@ export const TIME_SIGNATURES = [
 export type TimeSignature = (typeof TIME_SIGNATURES)[number];
 export type Hand = 'left' | 'right';
 export type TrainingMode = 'two-hand' | 'single-hand';
+export type PracticeDisplayMode = 'rhythm' | 'score';
 export type TapFeedback = 'hit' | 'miss' | 'ignored';
 export type SoundPreset = 'wood' | 'beep' | 'bell' | 'soft';
 export type FlashSource = 'tap' | 'beat';
@@ -83,6 +84,7 @@ export interface ExerciseSettings {
   feel: RhythmicFeel;
   graceNotesEnabled: boolean;
   trainingMode: TrainingMode;
+  practiceDisplayMode: PracticeDisplayMode;
   singleHand: Hand;
   soundEnabled: boolean;
   metronomeSound: SoundPreset;
@@ -221,4 +223,11 @@ export interface SessionSnapshot {
   /** Current fractional quarter-note position inside the displayed score measure. */
   scoreQuarterInMeasure?: number;
   scoreTitle?: string;
+  /** Generated, unpitched notation bars for normal practice score display. */
+  practiceScoreMeasure?: ScoreRhythmMeasure;
+  practiceScorePreviousMeasure?: ScoreRhythmMeasure;
+  practiceScoreNextMeasure?: ScoreRhythmMeasure;
+  practiceScoreUpcomingMeasures?: ScoreRhythmMeasure[];
+  practiceScoreSequence?: number;
+  practiceScoreCount?: number;
 }

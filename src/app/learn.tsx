@@ -175,12 +175,10 @@ function PatternNote({
 }) {
   const displayName = SUBDIVISION_LABELS[subdivision].replace(' (', '\n(');
   return (
-    <View style={{ flex: 1, minWidth: 0, minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, borderRadius: 11, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
+    <View style={{ flex: 1, minWidth: 0, minHeight: 92, alignItems: 'center', justifyContent: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 11, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
+      <Text style={{ alignSelf: 'stretch', color, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>{label}</Text>
       <RhythmSymbol subdivision={subdivision} color={color} compact timeSignature={timeSignature} />
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={{ color, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>{label}</Text>
-        <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85} style={{ color: colors.text, fontSize: 10, lineHeight: 12, fontWeight: '700', marginTop: 2 }}>{displayName}</Text>
-      </View>
+      <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.65} style={{ alignSelf: 'stretch', color: colors.text, fontSize: 10, lineHeight: 12, fontWeight: '700', textAlign: 'center' }}>{displayName}</Text>
     </View>
   );
 }

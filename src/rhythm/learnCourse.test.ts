@@ -25,6 +25,7 @@ const preferences: ExerciseSettings = {
   feel: 'straight',
   graceNotesEnabled: false,
   trainingMode: 'two-hand',
+  practiceDisplayMode: 'rhythm',
   singleHand: 'right',
   soundEnabled: false,
   metronomeSound: 'wood',

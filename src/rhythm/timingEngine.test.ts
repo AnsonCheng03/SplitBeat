@@ -30,6 +30,7 @@ const settings: ExerciseSettings = {
   feel: 'straight',
   graceNotesEnabled: false,
   trainingMode: 'two-hand',
+  practiceDisplayMode: 'rhythm',
   singleHand: 'left',
   soundEnabled: false,
   metronomeSound: 'wood',
@@ -848,6 +849,37 @@ test('score view advances at bar boundaries and ends on the final bar', () => {
   assert.equal(afterScoreEnd.scoreUpcomingMeasures?.length, 1);
   assert.equal(afterScoreEnd.secondsRemaining, 0);
   assert.equal(afterScoreEnd.results?.durationSeconds, 8);
+});
+
+test('normal practice score notation is preloaded and advances at bar boundaries', () => {
+  const start = 47_000;
+  const engine = new RhythmTimingEngine({
+    settings: {
+      ...settings,
+      bpm: 60,
+      durationSeconds: 30,
+      practiceDisplayMode: 'score',
+      enabledSubdivisions: ['quarter', 'eighth'],
+    },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  const beforeStart = engine.advance(start - 1_000);
+  assert.equal(beforeStart.practiceScoreMeasure?.index, 0);
+  assert.equal(beforeStart.practiceScoreSequence, 0);
+  assert.equal(beforeStart.practiceScoreCount, 8);
+  assert.deepEqual(beforeStart.practiceScoreUpcomingMeasures?.map((measure) => measure.index), [0, 1, 2, 3, 4, 5, 6, 7]);
+  assert.ok((beforeStart.practiceScoreMeasure?.leftEvents.length ?? 0) > 0);
+
+  const beforeBarLine = engine.advance(start + 3_999);
+  assert.equal(beforeBarLine.practiceScoreMeasure?.index, 0);
+  assert.equal(beforeBarLine.practiceScoreSequence, 0);
+
+  const onBarLine = engine.advance(start + 4_000);
+  assert.equal(onBarLine.practiceScoreMeasure?.index, 1);
+  assert.equal(onBarLine.practiceScorePreviousMeasure?.index, 0);
+  assert.equal(onBarLine.practiceScoreSequence, 1);
 });
 
 test('score taps return imported pitch while visual replay records expected note positions', () => {

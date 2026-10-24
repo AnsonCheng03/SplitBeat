@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AudioStartButton } from '@/components/AudioStartButton';
+import { PracticeDisplayPicker } from '@/components/PracticeDisplayPicker';
 import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
 
@@ -118,6 +119,11 @@ export default function HomeScreen() {
               onPress={() => updateSettings({ trainingMode: 'single-hand', singleHand: 'left' })}
             />
           </View>
+          <PracticeDisplayPicker
+            value={settings.practiceDisplayMode}
+            onChange={(practiceDisplayMode) => updateSettings({ practiceDisplayMode })}
+            testIDPrefix="home.display"
+          />
 
         </View>
 

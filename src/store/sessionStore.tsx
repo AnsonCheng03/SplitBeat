@@ -61,6 +61,7 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   feel: 'straight',
   graceNotesEnabled: false,
   trainingMode: 'two-hand',
+  practiceDisplayMode: 'rhythm',
   singleHand: 'left',
   soundEnabled: !FORCE_SILENT_E2E,
   metronomeSound: 'wood',
@@ -144,6 +145,7 @@ function restoreSettings(raw: string | null): ExerciseSettings {
           ? parsed.graceNotesEnabled
           : DEFAULT_SETTINGS.graceNotesEnabled,
       trainingMode: parsed.trainingMode === 'single-hand' ? 'single-hand' : 'two-hand',
+      practiceDisplayMode: parsed.practiceDisplayMode === 'score' ? 'score' : 'rhythm',
       singleHand: parsed.singleHand === 'right' ? 'right' : 'left',
       soundEnabled: FORCE_SILENT_E2E
         ? false

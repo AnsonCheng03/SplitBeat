@@ -144,17 +144,38 @@ export default function PracticeScreen() {
   const initialScoreFocusWidth = Math.min(620, initialScoreContentWidth * (singleHandMode ? 0.76 : 0.38));
   const step = snapshot?.currentStep;
   const beatFlashToken = snapshot?.phase === 'running' ? snapshot.beatIndex + 1 : 0;
-  const showNextPattern = Boolean(!snapshot?.scoreMeasure && snapshot?.nextStep);
+  const importedScoreMeasure = snapshot?.scoreMeasure;
+  const practiceScoreMeasure = activeSettings.practiceDisplayMode === 'score'
+    ? snapshot?.practiceScoreMeasure
+    : undefined;
+  const displayScoreMeasure = importedScoreMeasure ?? practiceScoreMeasure;
+  const isScoreDisplay = Boolean(displayScoreMeasure);
+  const showNextPattern = Boolean(!isScoreDisplay && snapshot?.nextStep);
   const previewTop = Math.max(insets.top, 8) + (compact ? 46 : 58);
-  const previewHeight = snapshot?.scoreMeasure
+  const previewHeight = isScoreDisplay
     ? Math.min(220, Math.max(112, height * 0.25))
     : compact ? 62 : 74;
-  const changeCountdown = snapshot?.scoreMeasure ? undefined : snapshot?.beatsUntilChange;
+  const changeCountdown = isScoreDisplay ? undefined : snapshot?.beatsUntilChange;
   const scoreHandToShow = singleHandMode ? focusedHand : undefined;
   const scoreHandColor = scoreHandToShow === 'left' ? colors.left : colors.right;
-  const scoreMeasure = snapshot?.scoreMeasure;
+  const scoreMeasure = importedScoreMeasure;
   const scoreQuarterInMeasure = snapshot?.scoreQuarterInMeasure ?? 0;
   const scoreSequence = snapshot?.scoreMeasureSequence ?? 0;
+  const displayScoreSequence = importedScoreMeasure
+    ? snapshot?.scoreMeasureSequence ?? 0
+    : snapshot?.practiceScoreSequence ?? 0;
+  const displayScoreCount = importedScoreMeasure
+    ? snapshot?.scoreMeasureCount ?? 1
+    : snapshot?.practiceScoreCount ?? 1;
+  const displayScorePreviousMeasure = importedScoreMeasure
+    ? snapshot?.scorePreviousMeasure
+    : snapshot?.practiceScorePreviousMeasure;
+  const displayScoreNextMeasure = importedScoreMeasure
+    ? snapshot?.scoreNextMeasure
+    : snapshot?.practiceScoreNextMeasure;
+  const displayScoreUpcomingMeasures = importedScoreMeasure
+    ? snapshot?.scoreUpcomingMeasures
+    : snapshot?.practiceScoreUpcomingMeasures;
   const maxRewindBars = Math.max(0, snapshot?.scoreMeasure?.index ?? 0);
   const scoreBarsRemaining = snapshot?.scoreMeasureCount === undefined
     ? undefined
@@ -174,7 +195,7 @@ export default function PracticeScreen() {
         right: findNextScoreEvent(scoreMeasure, snapshot?.scoreNextMeasure, 'right', scoreQuarterInMeasure),
       }
     : undefined;
-  const rhythmDisplayStyle = snapshot?.scoreMeasure
+  const rhythmDisplayStyle = isScoreDisplay
     ? {
         top: Math.max(insets.top, 8) + (compact ? 46 : 58),
         height: Math.min(180, Math.max(110, height * 0.25)),
@@ -230,7 +251,7 @@ export default function PracticeScreen() {
                 resting={snapshot?.isRest}
                 compact={compact}
                 minimal
-                showMinimalLabel={Boolean(snapshot?.scoreMeasure)}
+                showMinimalLabel={isScoreDisplay}
                 style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '50%' }}
               />
               <TapZone
@@ -246,7 +267,7 @@ export default function PracticeScreen() {
                 resting={snapshot?.isRest}
                 compact={compact}
                 minimal
-                showMinimalLabel={Boolean(snapshot?.scoreMeasure)}
+                showMinimalLabel={isScoreDisplay}
                 style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '50%' }}
               />
 
@@ -286,47 +307,48 @@ export default function PracticeScreen() {
           <View
             testID="practice.rhythmDisplay"
             pointerEvents="none"
-            style={[{ position: 'absolute', left: -insets.left, right: -insets.right, flexDirection: 'row', alignItems: 'center', backgroundColor: snapshot.scoreMeasure ? colors.surface : 'transparent' }, rhythmDisplayStyle]}
+            style={[{ position: 'absolute', left: -insets.left, right: -insets.right, flexDirection: 'row', alignItems: 'center', backgroundColor: isScoreDisplay ? colors.surface : 'transparent' }, rhythmDisplayStyle]}
           >
-            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginHorizontal: snapshot.scoreMeasure ? scoreContentMargin : 0 }}>
-              {snapshot.scoreMeasure ? (
-                scoreDisplayMode === 'staff' ? (
-                  <View style={{ flex: 1, justifyContent: 'center' }}>
-                  <ScrollingScoreRhythm
-                    measure={snapshot.scoreMeasure}
-                    previousMeasure={snapshot.scorePreviousMeasure}
-                    nextMeasure={snapshot.scoreNextMeasure ?? snapshot.scoreMeasure}
-                    upcomingMeasures={snapshot.scoreUpcomingMeasures}
-                    sequence={scoreSequence}
-                    count={snapshot.scoreMeasureCount ?? 1}
-                    compact={compact}
-                    beamGroupQuarterNotes={pulseQuarterNotes(activeSettings.timeSignature)}
-                    minimal
-                    visibleHand={scoreHandToShow}
-                    focusedColor={singleHandMode ? scoreHandColor : undefined}
-                    initialViewportWidth={initialScoreViewportWidth}
-                  />
-                </View>
-              ) : (
-                singleHandMode ? (
-                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 8 }}>
-                    <Text style={{ color: scoreHandColor, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>{focusedHand.toUpperCase()} HAND</Text>
-                    <ScoreFocusNote event={scoreFocusEvents?.[focusedHand]} color={scoreHandColor} initialWidth={initialScoreFocusWidth} testID="practice.scoreFocusNote" />
-                  </View>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginHorizontal: isScoreDisplay ? scoreContentMargin : 0 }}>
+              {displayScoreMeasure ? (
+                importedScoreMeasure && scoreDisplayMode === 'focus' ? (
+                  singleHandMode ? (
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 8 }}>
+                      <Text style={{ color: scoreHandColor, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>{focusedHand.toUpperCase()} HAND</Text>
+                      <ScoreFocusNote event={scoreFocusEvents?.[focusedHand]} color={scoreHandColor} initialWidth={initialScoreFocusWidth} testID="practice.scoreFocusNote" />
+                    </View>
+                  ) : (
+                    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                        <Text style={{ color: colors.left, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>LEFT HAND</Text>
+                        <ScoreFocusNote event={scoreFocusEvents?.left} color={colors.left} initialWidth={initialScoreFocusWidth} testID="practice.scoreFocusNote.left" />
+                      </View>
+                      <View style={{ width: 1, height: 84, backgroundColor: colors.line, opacity: 0.7 }} />
+                      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                        <Text style={{ color: colors.right, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>RIGHT HAND</Text>
+                        <ScoreFocusNote event={scoreFocusEvents?.right} color={colors.right} initialWidth={initialScoreFocusWidth} testID="practice.scoreFocusNote.right" />
+                      </View>
+                    </View>
+                  )
                 ) : (
-                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                      <Text style={{ color: colors.left, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>LEFT HAND</Text>
-                      <ScoreFocusNote event={scoreFocusEvents?.left} color={colors.left} initialWidth={initialScoreFocusWidth} testID="practice.scoreFocusNote.left" />
-                    </View>
-                    <View style={{ width: 1, height: 84, backgroundColor: colors.line, opacity: 0.7 }} />
-                    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                      <Text style={{ color: colors.right, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>RIGHT HAND</Text>
-                      <ScoreFocusNote event={scoreFocusEvents?.right} color={colors.right} initialWidth={initialScoreFocusWidth} testID="practice.scoreFocusNote.right" />
-                    </View>
+                  <View style={{ flex: 1, justifyContent: 'center' }}>
+                    <ScrollingScoreRhythm
+                      measure={displayScoreMeasure}
+                      previousMeasure={displayScorePreviousMeasure}
+                      nextMeasure={displayScoreNextMeasure ?? displayScoreMeasure}
+                      upcomingMeasures={displayScoreUpcomingMeasures}
+                      sequence={displayScoreSequence}
+                      count={displayScoreCount}
+                      compact={compact}
+                      beamGroupQuarterNotes={pulseQuarterNotes(activeSettings.timeSignature)}
+                      minimal
+                      visibleHand={scoreHandToShow}
+                      focusedColor={singleHandMode ? scoreHandColor : undefined}
+                      initialViewportWidth={initialScoreViewportWidth}
+                    />
                   </View>
                 )
-              ) ) : singleHandMode && step ? (
+              ) : singleHandMode && step ? (
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: compact ? 6 : 10 }}>
                 <Text style={{ color: colors.accent, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>
                   {focusedHand.toUpperCase()}

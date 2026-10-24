@@ -2,6 +2,7 @@ import { createExerciseStepGenerator } from '@/rhythm/exerciseGenerator';
 import {
   isTupletSubdivision,
   roundSessionDurationToBar,
+  pulseQuarterNotes,
   SUBDIVISION_COUNTS,
   subdivisionOffsetMs,
   timeSignatureMetrics,
@@ -9,10 +10,11 @@ import {
 } from '@/rhythm/subdivisions';
 import { accuracyPercent, emptyHandStats, finalizeHandStats } from '@/rhythm/scoring';
 import { longestCorrectNoteStreak } from '@/rhythm/challenge';
+import { createPracticeScoreMeasure } from '@/rhythm/practiceScore';
 import type { ChallengeOutcome } from '@/rhythm/challenge';
 import { matchTap, timingWindowsForGoodWindow } from '@/rhythm/tapMatcher';
 import type { TimingWindows } from '@/rhythm/tapMatcher';
-import type { ImportedRhythmScore } from '@/types/importedScore';
+import type { ImportedRhythmScore, ScoreRhythmMeasure } from '@/types/importedScore';
 import type {
   AccuracyStats,
   ExerciseSettings,
@@ -146,6 +148,7 @@ export class RhythmTimingEngine {
     right: createMutableHandStats(),
   };
   private readonly combinations = new Map<string, MutableCombinationStats>();
+  private readonly practiceScoreMeasures = new Map<number, ScoreRhythmMeasure>();
   private readonly missedEvents: MissedEvent[] = [];
   private readonly replayExpectedEvents: ReplayExpectedEvent[] = [];
   private readonly replayTaps: ReplayTap[] = [];
@@ -720,6 +723,9 @@ export class RhythmTimingEngine {
     const overallRight = this.readHandStats('right');
     const phase = this.finished ? 'finished' : now < this.sessionStartTime ? 'countdown' : 'running';
     const scorePosition = this.currentScorePosition(now);
+    const practiceScorePosition = !this.importedScore && this.settings.practiceDisplayMode === 'score'
+      ? this.currentPracticeScorePosition(beatIndex)
+      : undefined;
     const remaining = this.endTime === null
       ? null
       : Math.max(0, (this.endTime - Math.max(now, this.sessionStartTime)) / 1_000);
@@ -769,6 +775,65 @@ export class RhythmTimingEngine {
             scoreTitle: this.importedScore?.title,
           }
         : {}),
+      ...(practiceScorePosition
+        ? {
+            practiceScoreMeasure: practiceScorePosition.measure,
+            practiceScorePreviousMeasure: practiceScorePosition.previousMeasure,
+            practiceScoreNextMeasure: practiceScorePosition.nextMeasure,
+            practiceScoreUpcomingMeasures: practiceScorePosition.upcomingMeasures,
+            practiceScoreSequence: practiceScorePosition.sequence,
+            practiceScoreCount: practiceScorePosition.count,
+          }
+        : {}),
+    };
+  }
+
+  private currentPracticeScorePosition(beatIndex: number) {
+    const sessionEndBeat = this.endTime === null
+      ? undefined
+      : Math.max(0, (this.endTime - this.sessionStartTime) / this.beatMs);
+    const totalBars = sessionEndBeat === undefined
+      ? undefined
+      : Math.max(1, Math.ceil(sessionEndBeat / this.beatsPerBar));
+    const sequence = Math.min(
+      Math.floor(beatIndex / this.beatsPerBar),
+      totalBars === undefined ? Number.POSITIVE_INFINITY : totalBars - 1,
+    );
+    const count = totalBars ?? sequence + 8;
+    const upcomingCount = Math.max(1, Math.min(8, count - sequence));
+    const makeMeasure = (barIndex: number) => {
+      const cached = this.practiceScoreMeasures.get(barIndex);
+      if (cached) return cached;
+      const created = createPracticeScoreMeasure({
+        barIndex,
+        beatsPerBar: this.beatsPerBar,
+        pulseQuarterNotes: pulseQuarterNotes(this.settings.timeSignature),
+        changeIntervalBeats: this.settings.changeIntervalBeats,
+        restBetweenChanges: this.settings.restBetweenChanges,
+        sessionEndBeat,
+        getStep: this.getStep,
+      });
+      this.practiceScoreMeasures.set(barIndex, created);
+      if (this.practiceScoreMeasures.size > 24) {
+        const oldestBarIndex = this.practiceScoreMeasures.keys().next().value;
+        if (oldestBarIndex !== undefined) this.practiceScoreMeasures.delete(oldestBarIndex);
+      }
+      return created;
+    };
+    const upcomingMeasures = Array.from(
+      { length: upcomingCount },
+      (_, offset) => makeMeasure(sequence + offset),
+    );
+    const measure = upcomingMeasures[0];
+    if (!measure) return undefined;
+
+    return {
+      measure,
+      previousMeasure: sequence > 0 ? makeMeasure(sequence - 1) : undefined,
+      nextMeasure: upcomingMeasures[1] ?? measure,
+      upcomingMeasures,
+      sequence,
+      count,
     };
   }
 
