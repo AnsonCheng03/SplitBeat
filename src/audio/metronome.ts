@@ -2,9 +2,17 @@ import { AudioContext } from 'react-native-audio-api';
 import type { AudioBuffer } from 'react-native-audio-api';
 import {
   createClickSamples,
+  createMusicNoteSamples,
   createPitchedNoteSamples,
   SOUND_OPTIONS,
 } from '@/audio/soundPresets';
+import {
+  getAccompanimentNotesAtBeat,
+  getBeatAudioTime,
+  isPatternChangeBeat,
+  PATTERN_CHANGE_CUE,
+  SESSION_START_CUE,
+} from '@/audio/musicPattern';
 import type { ReferenceRhythmEvent, SoundPreset } from '@/types/rhythm';
 
 interface MetronomeStartOptions {
@@ -14,6 +22,10 @@ interface MetronomeStartOptions {
   beatsPerBar: number;
   durationSeconds: number | null;
   soundEnabled: boolean;
+  backgroundMusicEnabled?: boolean;
+  sessionCuesEnabled?: boolean;
+  changeIntervalBeats?: number;
+  patternChangesEnabled?: boolean;
   referenceRhythmEnabled?: boolean;
   getReferenceEventsThrough?: (timeMs: number) => readonly ReferenceRhythmEvent[];
   sounds: MetronomeSounds;
@@ -34,6 +46,7 @@ export class MetronomeAudio {
   private readonly output = this.context.createGain();
   private readonly clickBuffers = new Map<SoundPreset, AudioBuffer>();
   private readonly pitchedNoteBuffers = new Map<number, AudioBuffer>();
+  private readonly musicNoteBuffers = new Map<number, AudioBuffer>();
   private timer: ReturnType<typeof setTimeout> | undefined;
   private startOptions: MetronomeStartOptions | undefined;
   private sounds: MetronomeSounds = { metronome: 'wood', leftHand: 'soft', rightHand: 'beep' };
@@ -121,11 +134,40 @@ export class MetronomeAudio {
         : options.sessionStartAudioTime + options.durationSeconds;
 
     while (true) {
-      const beatTime = options.sessionStartAudioTime + this.nextBeatIndex * beatDurationSeconds;
+      const beatTime = getBeatAudioTime(options.sessionStartAudioTime, options.bpm, this.nextBeatIndex);
       if (beatTime > horizon || beatTime >= endTime) break;
       if (beatTime >= this.context.currentTime - 0.01) {
         const beatInBar = ((this.nextBeatIndex % options.beatsPerBar) + options.beatsPerBar) % options.beatsPerBar;
         this.scheduleClick(beatTime, this.sounds.metronome, beatInBar === 0 ? 1.15 : 0.78);
+
+        if (this.nextBeatIndex >= 0 && options.soundEnabled) {
+          if (options.backgroundMusicEnabled) {
+            for (const note of getAccompanimentNotesAtBeat(this.nextBeatIndex, options.beatsPerBar)) {
+              this.scheduleBuffer(beatTime, this.getMusicNoteBuffer(note.midiPitch), note.level);
+            }
+          }
+
+          if (options.sessionCuesEnabled && this.nextBeatIndex === 0) {
+            for (const note of SESSION_START_CUE) {
+              const cueTime = beatTime + note.offsetBeats * beatDurationSeconds;
+              if (cueTime >= this.context.currentTime - 0.01 && cueTime <= horizon) {
+                this.scheduleBuffer(cueTime, this.getMusicNoteBuffer(note.midiPitch), note.level);
+              }
+            }
+          }
+
+          if (
+            options.sessionCuesEnabled
+            && options.patternChangesEnabled !== false
+            && isPatternChangeBeat(this.nextBeatIndex, options.changeIntervalBeats ?? 4)
+          ) {
+            this.scheduleBuffer(
+              beatTime,
+              this.getMusicNoteBuffer(PATTERN_CHANGE_CUE.midiPitch),
+              PATTERN_CHANGE_CUE.level,
+            );
+          }
+        }
       }
       this.nextBeatIndex += 1;
     }
@@ -196,6 +238,17 @@ export class MetronomeAudio {
     const buffer = this.context.createBuffer(1, samples.length, this.context.sampleRate);
     buffer.copyToChannel(samples, 0);
     this.pitchedNoteBuffers.set(midiPitch, buffer);
+    return buffer;
+  }
+
+  private getMusicNoteBuffer(midiPitch: number): AudioBuffer {
+    const cachedBuffer = this.musicNoteBuffers.get(midiPitch);
+    if (cachedBuffer) return cachedBuffer;
+
+    const samples = createMusicNoteSamples(midiPitch, this.context.sampleRate);
+    const buffer = this.context.createBuffer(1, samples.length, this.context.sampleRate);
+    buffer.copyToChannel(samples, 0);
+    this.musicNoteBuffers.set(midiPitch, buffer);
     return buffer;
   }
 

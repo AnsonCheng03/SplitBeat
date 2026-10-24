@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   createClickSamples,
+  createMusicNoteSamples,
   createPitchedNoteSamples,
   midiPitchToFrequency,
   SOUND_OPTIONS,
@@ -34,4 +35,12 @@ test('MusicXML MIDI pitches map to equal-tempered frequencies and playable offli
   assert.equal(note.length, Math.ceil(44_100 * 0.22));
   assert.ok([...note].every(Number.isFinite));
   assert.ok([...note].every((sample) => Math.abs(sample) <= 1));
+});
+
+test('generated accompaniment notes are finite, bounded, and long enough to sound tonal', () => {
+  const note = createMusicNoteSamples(48, 44_100);
+  assert.equal(note.length, Math.ceil(44_100 * 0.34));
+  assert.ok([...note].every(Number.isFinite));
+  assert.ok([...note].every((sample) => Math.abs(sample) < 1));
+  assert.ok(note.some((sample) => Math.abs(sample) > 0.01));
 });

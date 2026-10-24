@@ -16,7 +16,7 @@ export default function AudioSettingsScreen() {
       backTestID="settings.audio.back"
       section="audio"
       title="Sounds & feedback"
-      description="Choose each hand's sound and visual tap feedback."
+      description="Choose click sounds, accompaniment, and tap feedback."
     >
       <View style={{ marginTop: 18, borderTopWidth: 1, borderTopColor: colors.line }}>
         <SettingsToggleRow
@@ -24,6 +24,18 @@ export default function AudioSettingsScreen() {
           label="Sound effects"
           value={settings.soundEnabled}
           onChange={(soundEnabled) => updateSettings({ soundEnabled })}
+        />
+        <SettingsToggleRow
+          testID="setup.toggle.backgroundMusic"
+          label="Beat-synced accompaniment"
+          value={settings.backgroundMusicEnabled}
+          onChange={(backgroundMusicEnabled) => updateSettings({ backgroundMusicEnabled })}
+        />
+        <SettingsToggleRow
+          testID="setup.toggle.sessionCues"
+          label="Start and change cues"
+          value={settings.sessionCuesEnabled}
+          onChange={(sessionCuesEnabled) => updateSettings({ sessionCuesEnabled })}
         />
         <SettingsToggleRow
           testID="setup.toggle.haptics"
@@ -49,6 +61,9 @@ export default function AudioSettingsScreen() {
       </Text>
       <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
         The shown left and right patterns play automatically using each hand&apos;s selected sound. Keep this off to practice from the visual rhythm alone.
+      </Text>
+      <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
+        The accompaniment is synthesized on your device and follows your tempo and meter. A short pickup leads into beat one; change cues mark pattern boundaries. Sound effects must be on to hear either option.
       </Text>
 
       <SoundChoice

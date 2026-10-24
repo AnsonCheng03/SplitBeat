@@ -29,6 +29,8 @@ const preferences: ExerciseSettings = {
   practiceDisplayMode: 'rhythm',
   singleHand: 'right',
   soundEnabled: false,
+  backgroundMusicEnabled: false,
+  sessionCuesEnabled: true,
   metronomeSound: 'wood',
   leftHandSound: 'soft',
   rightHandSound: 'beep',

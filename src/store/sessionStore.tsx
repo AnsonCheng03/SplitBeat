@@ -68,6 +68,8 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   practiceDisplayMode: 'rhythm',
   singleHand: 'left',
   soundEnabled: !FORCE_SILENT_E2E,
+  backgroundMusicEnabled: false,
+  sessionCuesEnabled: true,
   metronomeSound: 'wood',
   leftHandSound: 'soft',
   rightHandSound: 'beep',
@@ -162,6 +164,10 @@ function restoreSettings(raw: string | null): ExerciseSettings {
         : typeof parsed.soundEnabled === 'boolean'
           ? parsed.soundEnabled
           : true,
+      backgroundMusicEnabled: parsed.backgroundMusicEnabled === true,
+      sessionCuesEnabled: typeof parsed.sessionCuesEnabled === 'boolean'
+        ? parsed.sessionCuesEnabled
+        : DEFAULT_SETTINGS.sessionCuesEnabled,
       metronomeSound: restoreSound(parsed.metronomeSound, DEFAULT_SETTINGS.metronomeSound),
       leftHandSound: restoreSound(parsed.leftHandSound, DEFAULT_SETTINGS.leftHandSound),
       rightHandSound: restoreSound(parsed.rightHandSound, DEFAULT_SETTINGS.rightHandSound),
@@ -528,6 +534,10 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       beatsPerBar: metrics.beatsPerBar,
       durationSeconds: getSessionDurationSeconds(activeSettings, score),
       soundEnabled: activeSettings.soundEnabled && !FORCE_SILENT_E2E,
+      backgroundMusicEnabled: activeSettings.backgroundMusicEnabled,
+      sessionCuesEnabled: activeSettings.sessionCuesEnabled,
+      changeIntervalBeats: activeSettings.changeIntervalBeats,
+      patternChangesEnabled: !score,
       referenceRhythmEnabled: activeSettings.referenceRhythmEnabled,
       getReferenceEventsThrough: (timeMs) => engine.getReferenceEventsThrough(timeMs),
       sounds: {

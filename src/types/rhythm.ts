@@ -98,6 +98,8 @@ export interface ExerciseSettings {
   practiceDisplayMode: PracticeDisplayMode;
   singleHand: Hand;
   soundEnabled: boolean;
+  backgroundMusicEnabled: boolean;
+  sessionCuesEnabled: boolean;
   metronomeSound: SoundPreset;
   leftHandSound: SoundPreset;
   rightHandSound: SoundPreset;

@@ -23,6 +23,8 @@ const baseSettings: ExerciseSettings = {
   practiceDisplayMode: 'score',
   singleHand: 'left',
   soundEnabled: false,
+  backgroundMusicEnabled: false,
+  sessionCuesEnabled: true,
   metronomeSound: 'wood',
   leftHandSound: 'soft',
   rightHandSound: 'beep',

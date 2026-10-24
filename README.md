@@ -57,7 +57,7 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 - `src/rhythm/musicXmlParser.ts` and `src/rhythm/midiParser.ts` convert MusicXML and Standard MIDI files into one- or two-hand rhythm tracks.
 - `src/rhythm/scoreTemplates.ts` contains short built-in public-domain melody practice arrangements; `src/rhythm/importedScoreLibrary.ts` validates and indexes recent and saved score data.
 - `src/rhythm/timingCalibration.ts` normalizes per-hand timing calibration and the selectable scoring window.
-- src/audio/ synthesizes selectable metronome and hand click tones, then schedules metronome clicks on the native audio clock.
+- `src/audio/` synthesizes selectable metronome and hand clicks, a generated beat-synced accompaniment, and session cues; it schedules all sounds on the native audio clock.
 - src/store/ owns session state, prepares the audio context and offline click sounds at app startup, and persists exercise settings, course progress, combination accuracy, and summary-only session history locally. Expected note positions and actual tap timestamps stay in the active result screen for visual replay only.
 - `src/components/` contains reusable symbols, settings controls, beat indicators, start buttons, and large touch zones. Noteheads, stems, flags, and beams are engraved by VexFlow in an offline Expo DOM view; the native rhythm planner supplies note times and beam groups.
 - `expo-build-properties` enables the iOS scene lifecycle required by iOS 27 and builds React Native from source, avoiding a missing prebuilt framework when launching the iPad simulator.
@@ -159,7 +159,7 @@ npm run e2e:ios
 E2E_MAESTRO_FLOW=learn-mode.yaml npm run e2e:maestro -- --device DEVICE_ID
 ~~~
 
-The audio settings flow checks independent left/right flash sources and optional playback of the displayed rhythm:
+The audio settings flow checks independent left/right flash sources, optional displayed-rhythm playback, and the accompaniment and session-cue controls. Its E2E build keeps audio silent:
 
 ~~~sh
 E2E_MAESTRO_FLOW=flash-source.yaml npm run e2e:maestro -- --device DEVICE_ID
@@ -195,6 +195,8 @@ EXPO_PUBLIC_E2E_SILENT=1 E2E_MAESTRO_FLOW=score-library.yaml npm run e2e:maestro
 ## Timing and scoring
 
 The engine captures a monotonic performance.now() timestamp at touch start. Expected event times are calculated from the exercise start time, selected meter, pattern boundary, and quarter-note subdivision interval; timer callbacks and animations never increment the rhythm clock. The metronome click is synthesized and scheduled against react-native-audio-api's native AudioContext.currentTime with a five-second lookahead, so ordinary React renders and JavaScript scheduling do not set the click time. Its bar accent and the visual beat indicator follow the selected meter. Setup offers Wood, Beep, Bell, and Soft sounds independently for the metronome, left-hand taps, and right-hand taps. **Play the shown rhythm** is off by default; when enabled, expected left/right events are scheduled on the native audio clock using each hand's selected sound (imported scores use their written pitches). Each hand can flash on its own tap or on the metronome beat. **Show correct / missed tap colors** is on by default: correct taps briefly flash teal and off-beat taps flash red; turn it off to hide result colors. These tones are synthesized locally and work offline; the Sound effects switch mutes them all. If sound is disabled, the tutorial warns before practice starts. Tap sound feedback is played immediately after capturing the touch timestamp and does not change event matching.
+
+**Beat-synced accompaniment** optionally generates a soft four-bar chord progression on device. Its notes are scheduled at `sessionStartAudioTime + beatIndex * (60 / bpm)`, with bar roots following the selected meter's metronome pulses. **Start and change cues** add a short pickup into the first exercise beat and a high note exactly on each generated pattern-change boundary. Both options use the same native AudioContext scheduler as the metronome, need no downloaded music or network service, and are muted by **Sound effects**. Accompaniment is off by default; session cues are on by default. E2E builds force sound off regardless of saved preferences.
 
 Timing calibration can measure a separate signed tap offset for each hand from eight on-time taps against the native metronome click. Positive offsets shift that hand's measured tap earlier during scoring; negative offsets shift it later. The sliders allow manual adjustment from -200 to +200 ms. The acceptable hit range can be tuned from ±50 to ±200 ms; Perfect and Great thresholds remain 30% and 60% of that range. Reset Timing Defaults restores both offsets to 0 ms and the hit range to ±100 ms. Calibration and range settings are stored locally.
 

@@ -113,3 +113,24 @@ export function createPitchedNoteSamples(
   }
   return samples;
 }
+
+export function createMusicNoteSamples(
+  midiPitch: number,
+  sampleRate: number,
+): Float32Array<ArrayBuffer> {
+  const durationSeconds = 0.34;
+  const frequency = midiPitchToFrequency(midiPitch);
+  const samples = new Float32Array(Math.ceil(sampleRate * durationSeconds));
+
+  for (let frame = 0; frame < samples.length; frame += 1) {
+    const time = frame / sampleRate;
+    const attack = Math.min(1, time * 55);
+    const decay = Math.exp(-time * 7.5);
+    const tone = Math.sin(2 * Math.PI * frequency * time)
+      + Math.sin(2 * Math.PI * frequency * 2 * time) * 0.19
+      + Math.sin(2 * Math.PI * frequency * 3 * time) * 0.06;
+    samples[frame] = tone * attack * decay * 0.5;
+  }
+
+  return samples;
+}

@@ -17,6 +17,10 @@ appId: com.splitbeat.twohandrhythm
     id: settings.audio.screen
 - tapOn:
     id: setup.toggle.referenceRhythm
+- tapOn:
+    id: setup.toggle.backgroundMusic
+- tapOn:
+    id: setup.toggle.sessionCues
 - scrollUntilVisible:
     element:
       id: setup.flash.left.beat
