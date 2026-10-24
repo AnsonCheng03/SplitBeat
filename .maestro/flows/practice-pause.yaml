@@ -34,8 +34,7 @@ appId: com.splitbeat.twohandrhythm
     timeout: 10000
 - tapOn:
     id: practice.pause
-- assertVisible:
-    id: practice.pauseMenu
+- assertVisible: PAUSED
 - assertVisible:
     id: practice.pause.continue
 - assertVisible:
@@ -46,16 +45,14 @@ appId: com.splitbeat.twohandrhythm
     id: practice.pause.applyBpm
 - tapOn:
     id: practice.pause.applyBpm
-- assertNotVisible:
-    id: practice.pauseMenu
+- assertNotVisible: PAUSED
 - extendedWaitUntil:
     visible:
       id: practice.rhythmDisplay
     timeout: 10000
 - tapOn:
     id: practice.pause
-- assertVisible:
-    id: practice.pauseMenu
+- assertVisible: PAUSED
 - tapOn:
     id: practice.pause.liveSettings
 - assertVisible:
@@ -74,20 +71,17 @@ appId: com.splitbeat.twohandrhythm
     direction: UP
 - tapOn:
     id: practice.liveSettings.back
-- assertVisible:
-    id: practice.pauseMenu
+- assertVisible: PAUSED
 - tapOn:
     id: practice.pause.continue
-- assertNotVisible:
-    id: practice.pauseMenu
+- assertNotVisible: PAUSED
 - extendedWaitUntil:
     notVisible:
       id: practice.resumeCountIn
     timeout: 10000
 - tapOn:
     id: practice.pause
-- assertVisible:
-    id: practice.pauseMenu
+- assertVisible: PAUSED
 - tapOn:
     id: practice.pause.home
 - extendedWaitUntil:

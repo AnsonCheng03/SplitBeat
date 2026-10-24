@@ -215,8 +215,7 @@ appId: com.splitbeat.twohandrhythm
     id: practice.tap.single
 - tapOn:
     id: practice.pause
-- assertVisible:
-    id: practice.pauseMenu
+- assertVisible: PAUSED
 - tapOn:
     id: practice.pause.finish
 - extendedWaitUntil:

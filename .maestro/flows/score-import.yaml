@@ -94,13 +94,11 @@ appId: com.splitbeat.twohandrhythm
     timeout: 15000
 - tapOn:
     id: practice.pause
-- assertVisible:
-    id: practice.pauseMenu
+- assertVisible: PAUSED
 - assertVisible: 1 BAR BACK
 - tapOn:
     id: practice.pause.rewind
-- assertNotVisible:
-    id: practice.pauseMenu
+- assertNotVisible: PAUSED
 - extendedWaitUntil:
     visible:
       id: results.screen
