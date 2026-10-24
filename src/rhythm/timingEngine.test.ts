@@ -14,7 +14,8 @@ import {
   timeSignatureMetrics,
 } from '@/rhythm/subdivisions';
 import { matchTap } from '@/rhythm/tapMatcher';
-import { getExerciseStartTime, RhythmTimingEngine } from '@/rhythm/timingEngine';
+import { getExerciseStartTime, getSessionDurationSeconds, RhythmTimingEngine } from '@/rhythm/timingEngine';
+import { findNextScoreEvent } from '@/rhythm/scoreStaff';
 import type { ExerciseSettings } from '@/types/rhythm';
 import type { ImportedRhythmScore } from '@/types/importedScore';
 
@@ -67,6 +68,39 @@ test('timed session lengths round up to the next bar in the selected meter', () 
   assert.equal(roundSessionDurationToBar(5, 60, '3/4'), 6);
   assert.equal(roundSessionDurationToBar(3, 60, '6/8'), 4);
   assert.equal(roundSessionDurationToBar(0, 60, '4/4'), 0);
+});
+
+test('score session duration comes from its score while play duration follows settings', () => {
+  assert.equal(getSessionDurationSeconds(settings), 32);
+  assert.equal(getSessionDurationSeconds({ ...settings, durationSeconds: 'endless' }), null);
+  assert.equal(
+    getSessionDurationSeconds(
+      { ...settings, durationSeconds: 30 },
+      { timeSignature: '4/4', totalQuarterNotes: 8 },
+    ),
+    8,
+  );
+  assert.equal(
+    getSessionDurationSeconds(
+      { ...settings, bpm: 120, durationSeconds: 'endless' },
+      { timeSignature: '6/8', totalQuarterNotes: 6 },
+    ),
+    2,
+  );
+});
+
+test('one-note score display does not wrap after the final note', () => {
+  const finalMeasure = {
+    index: 0,
+    startQuarter: 0,
+    durationQuarter: 4,
+    leftEvents: [{ startQuarter: 0, durationQuarter: 1 }],
+    rightEvents: [{ startQuarter: 2, durationQuarter: 1 }],
+  };
+
+  assert.equal(findNextScoreEvent(finalMeasure, undefined, 'left', 0)?.startQuarter, 0);
+  assert.equal(findNextScoreEvent(finalMeasure, undefined, 'left', 1), undefined);
+  assert.equal(findNextScoreEvent(finalMeasure, undefined, 'right', 1)?.startQuarter, 2);
 });
 
 test('reference playback events use the same mixed left and right pattern timestamps', () => {
@@ -635,6 +669,7 @@ test('timed sessions finish the last full bar instead of cutting notes off mid-b
     random: () => 0,
   });
 
+  assert.equal(engine.advance(start - 1_000).secondsRemaining, completedDurationMs / 1_000);
   assert.equal(engine.advance(start + 30_000).phase, 'running');
   assert.equal(engine.advance(start + completedDurationMs - 1).phase, 'running');
 
@@ -647,7 +682,7 @@ test('timed sessions finish the last full bar instead of cutting notes off mid-b
   assert.ok(Math.abs((lastExpectedEvent?.beatInBar ?? 0) - 3) < 0.000001);
 });
 
-test('score events use MusicXML quarter-note positions, loop, and score independently per hand', () => {
+test('score events use MusicXML quarter-note positions and play once through independently per hand', () => {
   const start = 50_000;
   const importedScore: ImportedRhythmScore = {
     formatVersion: 1,
@@ -684,11 +719,11 @@ test('score events use MusicXML quarter-note positions, loop, and score independ
   const preview = engine.advance(start + 100);
   assert.equal(preview.scoreTitle, 'Etude');
   assert.equal(preview.scoreMeasureNumber, 1);
-  assert.equal(preview.scorePreviousMeasure, importedScore.measures[0]);
+  assert.equal(preview.scorePreviousMeasure, undefined);
   assert.equal(preview.scoreMeasureSequence, 0);
-  assert.equal(preview.scoreNextMeasure, importedScore.measures[0]);
+  assert.equal(preview.scoreNextMeasure, undefined);
   assert.equal(preview.scoreMeasure?.rightEvents.length, 8);
-  assert.deepEqual(preview.scoreUpcomingMeasures?.slice(0, 4).map((measure) => measure.index), [0, 0, 0, 0]);
+  assert.deepEqual(preview.scoreUpcomingMeasures?.map((measure) => measure.index), [0]);
 
   engine.tap('left', start);
   engine.tap('right', start);
@@ -698,16 +733,16 @@ test('score events use MusicXML quarter-note positions, loop, and score independ
 
   assert.equal(results.source, 'score');
   assert.equal(results.scoreTitle, 'Etude');
-  assert.equal(results.left.totalExpected, 3);
-  assert.equal(results.left.totalHit, 2);
-  assert.equal(results.right.totalExpected, 9);
+  assert.equal(results.left.totalExpected, 2);
+  assert.equal(results.left.totalHit, 1);
+  assert.equal(results.right.totalExpected, 8);
   assert.equal(results.right.totalHit, 2);
-  assert.equal(results.stable.totalHit, 4);
+  assert.equal(results.stable.totalHit, 3);
   assert.equal(results.transition.totalExpected, 0);
   assert.deepEqual(results.combinations, []);
 });
 
-test('score view advances its measure sequence only at bar boundaries and repeats in order', () => {
+test('score view advances at bar boundaries and ends on the final bar', () => {
   const start = 52_000;
   const importedScore: ImportedRhythmScore = {
     formatVersion: 1,
@@ -743,20 +778,25 @@ test('score view advances its measure sequence only at bar boundaries and repeat
   const whileFirstBarPlays = engine.advance(start + 3_999);
   assert.equal(whileFirstBarPlays.scoreMeasure?.index, 0);
   assert.equal(whileFirstBarPlays.scoreMeasureSequence, 0);
-  assert.equal(whileFirstBarPlays.scorePreviousMeasure?.index, 1);
+  assert.equal(whileFirstBarPlays.scorePreviousMeasure, undefined);
   assert.equal(whileFirstBarPlays.scoreNextMeasure?.index, 1);
-  assert.deepEqual(whileFirstBarPlays.scoreUpcomingMeasures?.slice(0, 5).map((measure) => measure.index), [0, 1, 0, 1, 0]);
+  assert.deepEqual(whileFirstBarPlays.scoreUpcomingMeasures?.map((measure) => measure.index), [0, 1]);
 
   const atSecondBar = engine.advance(start + 4_000);
   assert.equal(atSecondBar.scoreMeasure?.index, 1);
   assert.equal(atSecondBar.scoreMeasureSequence, 1);
   assert.equal(atSecondBar.scorePreviousMeasure?.index, 0);
-  assert.equal(atSecondBar.scoreNextMeasure?.index, 0);
-  assert.deepEqual(atSecondBar.scoreUpcomingMeasures?.slice(0, 5).map((measure) => measure.index), [1, 0, 1, 0, 1]);
+  assert.equal(atSecondBar.scoreNextMeasure, undefined);
+  assert.deepEqual(atSecondBar.scoreUpcomingMeasures?.map((measure) => measure.index), [1]);
 
-  const onRepeat = engine.advance(start + 8_000);
-  assert.equal(onRepeat.scoreMeasure?.index, 0);
-  assert.equal(onRepeat.scoreMeasureSequence, 2);
+  const afterScoreEnd = engine.advance(start + 8_101);
+  assert.equal(afterScoreEnd.phase, 'finished');
+  assert.equal(afterScoreEnd.scoreMeasure?.index, 1);
+  assert.equal(afterScoreEnd.scoreMeasureSequence, 1);
+  assert.equal(afterScoreEnd.scoreNextMeasure, undefined);
+  assert.equal(afterScoreEnd.scoreUpcomingMeasures?.length, 1);
+  assert.equal(afterScoreEnd.secondsRemaining, 0);
+  assert.equal(afterScoreEnd.results?.durationSeconds, 8);
 });
 
 test('score taps return imported pitch while visual replay records expected note positions', () => {

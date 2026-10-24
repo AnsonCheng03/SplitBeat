@@ -16,6 +16,13 @@ import { useRhythmSession } from '@/store/sessionStore';
 import type { Hand, TapFeedback } from '@/types/rhythm';
 import { colors } from '@/theme';
 
+function formatTimeRemaining(seconds: number): string {
+  const roundedSeconds = Math.max(0, Math.ceil(seconds));
+  const minutes = Math.floor(roundedSeconds / 60);
+  const remainingSeconds = String(roundedSeconds % 60).padStart(2, '0');
+  return `${minutes}:${remainingSeconds} LEFT`;
+}
+
 export default function PracticeScreen() {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -109,10 +116,22 @@ export default function PracticeScreen() {
   const scoreMeasure = snapshot?.scoreMeasure;
   const scoreQuarterInMeasure = snapshot?.scoreQuarterInMeasure ?? 0;
   const scoreSequence = snapshot?.scoreMeasureSequence ?? 0;
+  const scoreBarsRemaining = snapshot?.scoreMeasureCount === undefined
+    ? undefined
+    : snapshot.phase === 'finished'
+      ? 0
+      : Math.max(0, snapshot.scoreMeasureCount - scoreSequence);
+  const remainingLabel = scoreBarsRemaining !== undefined
+    ? `${scoreBarsRemaining} ${scoreBarsRemaining === 1 ? 'BAR' : 'BARS'} LEFT`
+    : snapshot?.secondsRemaining !== null && snapshot?.secondsRemaining !== undefined
+      ? formatTimeRemaining(snapshot.secondsRemaining)
+      : snapshot
+        ? 'ENDLESS'
+        : '';
   const scoreFocusEvents = scoreMeasure
     ? {
-        left: findNextScoreEvent(scoreMeasure, snapshot?.scoreNextMeasure ?? scoreMeasure, 'left', scoreQuarterInMeasure),
-        right: findNextScoreEvent(scoreMeasure, snapshot?.scoreNextMeasure ?? scoreMeasure, 'right', scoreQuarterInMeasure),
+        left: findNextScoreEvent(scoreMeasure, snapshot?.scoreNextMeasure, 'left', scoreQuarterInMeasure),
+        right: findNextScoreEvent(scoreMeasure, snapshot?.scoreNextMeasure, 'right', scoreQuarterInMeasure),
       }
     : undefined;
   const rhythmDisplayStyle = snapshot?.scoreMeasure
@@ -332,17 +351,31 @@ export default function PracticeScreen() {
               />
             ) : null}
           </View>
-          <View testID="practice.changeCountdown" style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'flex-end', minWidth: compact ? 74 : 112, gap: compact ? 4 : 7 }}>
-            {snapshot && showNextPattern && snapshot.phase === 'running' && changeCountdown !== undefined ? (
-              <>
-                <Text testID="practice.nextPattern.countdown" style={{ color: colors.accent, fontSize: compact ? 21 : 30, lineHeight: compact ? 25 : 34, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
-                  {changeCountdown}
-                </Text>
-                <Text style={{ color: colors.accent, fontSize: compact ? 9 : 11, fontWeight: '900', letterSpacing: 1 }}>
-                  {changeCountdown === 1 ? 'BEAT' : 'BEATS'}
-                </Text>
-              </>
+          <View style={{ alignItems: 'flex-end', justifyContent: 'center', minWidth: compact ? 74 : 112 }}>
+            {remainingLabel ? (
+              <Text
+                testID={scoreBarsRemaining === undefined ? 'practice.timeRemaining' : 'practice.barsRemaining'}
+                accessibilityLabel={scoreBarsRemaining === undefined
+                  ? remainingLabel === 'ENDLESS' ? 'Endless session' : `${remainingLabel.replace(' LEFT', '')} remaining`
+                  : `${scoreBarsRemaining} ${scoreBarsRemaining === 1 ? 'bar' : 'bars'} remaining`}
+                numberOfLines={1}
+                style={{ color: colors.accent, fontSize: compact ? 8 : 10, lineHeight: compact ? 11 : 13, fontWeight: '900', letterSpacing: 0.8 }}
+              >
+                {remainingLabel}
+              </Text>
             ) : null}
+            <View testID="practice.changeCountdown" style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'flex-end', minHeight: compact ? 25 : 34, gap: compact ? 4 : 7 }}>
+              {snapshot && showNextPattern && snapshot.phase === 'running' && changeCountdown !== undefined ? (
+                <>
+                  <Text testID="practice.nextPattern.countdown" style={{ color: colors.accent, fontSize: compact ? 21 : 30, lineHeight: compact ? 25 : 34, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
+                    {changeCountdown}
+                  </Text>
+                  <Text style={{ color: colors.accent, fontSize: compact ? 9 : 11, fontWeight: '900', letterSpacing: 1 }}>
+                    {changeCountdown === 1 ? 'BEAT' : 'BEATS'}
+                  </Text>
+                </>
+              ) : null}
+            </View>
           </View>
         </View>
 

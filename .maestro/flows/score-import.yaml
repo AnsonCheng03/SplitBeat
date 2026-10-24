@@ -44,11 +44,6 @@ appId: com.splitbeat.twohandrhythm
 - tapOn:
     id: scoreImport.display.staff
 - scrollUntilVisible:
-    element: { id: scoreImport.duration.30 }
-    direction: DOWN
-- tapOn:
-    id: scoreImport.duration.30
-- scrollUntilVisible:
     element:
       id: scoreImport.start
     direction: DOWN
@@ -67,6 +62,8 @@ appId: com.splitbeat.twohandrhythm
       id: practice.rhythmDisplay
     timeout: 10000
 - assertVisible:
+    id: practice.barsRemaining
+- assertVisible:
     id: practice.scoreMeasure
 - assertVisible:
     id: practice.scoreMeasure.bar.0.leftNotation
@@ -80,10 +77,8 @@ appId: com.splitbeat.twohandrhythm
     id: practice.scoreMeasure.bar.1.leftNotation.note.0
 - assertVisible:
     id: practice.scoreMeasure.bar.1.rightNotation.note.0
-- assertVisible:
+- assertNotVisible:
     id: practice.scoreMeasure.bar.2.leftNotation.note.0
-- assertVisible:
-    id: practice.scoreMeasure.bar.2.rightNotation.note.0
 - assertVisible:
     id: practice.tap.left.label
 - assertVisible:
@@ -94,8 +89,6 @@ appId: com.splitbeat.twohandrhythm
     id: practice.tap.left
 - tapOn:
     id: practice.tap.right
-- tapOn:
-    id: practice.end
 - extendedWaitUntil:
     visible:
       id: results.screen

@@ -47,7 +47,7 @@ export default function ImportScoreScreen() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { settings, updateSettings, prepareExercise } = useRhythmSession();
+  const { settings, prepareExercise } = useRhythmSession();
   const [score, setScore] = useState<ImportedRhythmScore | null>(null);
   const [scoreFileName, setScoreFileName] = useState('');
   const [previewMeasureIndex, setPreviewMeasureIndex] = useState(0);
@@ -386,29 +386,6 @@ export default function ImportScoreScreen() {
                   >
                     <Text style={{ color: selected ? colors.accent : colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 }}>{option.label}</Text>
                     <Text style={{ color: colors.muted, fontSize: 9, marginTop: 3 }}>{option.detail}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-            <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1, marginTop: 10, marginBottom: 6 }}>PRACTICE LENGTH</Text>
-            <View style={{ flexDirection: 'row', gap: 7 }}>
-              {([
-                { label: '30 SEC', value: 30 },
-                { label: '1 MIN', value: 60 },
-                { label: '2 MIN', value: 120 },
-                { label: 'ENDLESS', value: 'endless' },
-              ] as const).map((option) => {
-                const selected = settings.durationSeconds === option.value;
-                return (
-                  <Pressable
-                    key={option.label}
-                    testID={`scoreImport.duration.${String(option.value)}`}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected }}
-                    onPress={() => updateSettings({ durationSeconds: option.value })}
-                    style={{ flex: 1, minHeight: 36, borderRadius: 10, borderWidth: 1, borderColor: selected ? colors.text : colors.line, backgroundColor: selected ? colors.text : colors.surface, alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <Text style={{ color: selected ? colors.background : colors.muted, fontSize: 10, fontWeight: '800' }}>{option.label}</Text>
                   </Pressable>
                 );
               })}

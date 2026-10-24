@@ -91,6 +91,18 @@ interface TimingEngineOptions {
 
 const COUNT_IN_BEATS = 3;
 
+export function getSessionDurationSeconds(
+  settings: Pick<ExerciseSettings, 'bpm' | 'timeSignature' | 'durationSeconds'>,
+  importedScore?: Pick<ImportedRhythmScore, 'timeSignature' | 'totalQuarterNotes'>,
+): number | null {
+  if (importedScore) {
+    const quarterNoteDurationMs = timeSignatureMetrics(settings.bpm, importedScore.timeSignature).quarterNoteDurationMs;
+    return (importedScore.totalQuarterNotes * quarterNoteDurationMs) / 1_000;
+  }
+  if (settings.durationSeconds === 'endless') return null;
+  return roundSessionDurationToBar(settings.durationSeconds, settings.bpm, settings.timeSignature);
+}
+
 function createMutableHandStats(): MutableHandStats {
   const empty = emptyHandStats();
   return {
@@ -185,14 +197,10 @@ export class RhythmTimingEngine {
     this.beatMs = metrics.beatDurationMs;
     this.quarterNoteMs = metrics.quarterNoteDurationMs;
     this.beatsPerBar = metrics.beatsPerBar;
-    this.endTime =
-      options.settings.durationSeconds === 'endless'
-        ? null
-        : options.sessionStartTime + roundSessionDurationToBar(
-            options.settings.durationSeconds,
-            options.settings.bpm,
-            options.settings.timeSignature,
-          ) * 1_000;
+    const sessionDurationSeconds = getSessionDurationSeconds(options.settings, this.importedScore);
+    this.endTime = sessionDurationSeconds === null
+      ? null
+      : options.sessionStartTime + sessionDurationSeconds * 1_000;
     this.getStep = createExerciseStepGenerator({
       enabledSubdivisions: options.settings.enabledSubdivisions,
       changeIntervalBeats: options.settings.changeIntervalBeats,
@@ -456,11 +464,9 @@ export class RhythmTimingEngine {
     const score = this.importedScore;
     if (!score || score.totalQuarterNotes <= 0 || this.timedScoreEvents.length === 0) return;
 
-    while (true) {
-      const scoreEventIndex = this.nextScoreEventToGenerate % this.timedScoreEvents.length;
-      const repeatIndex = Math.floor(this.nextScoreEventToGenerate / this.timedScoreEvents.length);
-      const scoreEvent = this.timedScoreEvents[scoreEventIndex];
-      const scoreQuarter = repeatIndex * score.totalQuarterNotes + scoreEvent.startQuarter;
+    while (this.nextScoreEventToGenerate < this.timedScoreEvents.length) {
+      const scoreEvent = this.timedScoreEvents[this.nextScoreEventToGenerate];
+      const scoreQuarter = scoreEvent.startQuarter;
       const expectedTimeMs = this.sessionStartTime + scoreQuarter * this.quarterNoteMs;
       if (expectedTimeMs > limitedTime) break;
       this.nextScoreEventToGenerate += 1;
@@ -712,7 +718,9 @@ export class RhythmTimingEngine {
     const overallRight = this.readHandStats('right');
     const phase = this.finished ? 'finished' : now < this.sessionStartTime ? 'countdown' : 'running';
     const scorePosition = this.currentScorePosition(now);
-    const remaining = this.endTime === null ? null : Math.max(0, (this.endTime - now) / 1_000);
+    const remaining = this.endTime === null
+      ? null
+      : Math.max(0, (this.endTime - Math.max(now, this.sessionStartTime)) / 1_000);
     const nextStepTime =
       this.sessionStartTime + (currentStep.startBeat + currentStep.durationBeats) * this.beatMs;
     const hasNextStep =
@@ -766,26 +774,23 @@ export class RhythmTimingEngine {
     const score = this.importedScore;
     if (!score || score.totalQuarterNotes <= 0 || score.measures.length === 0) return undefined;
     const elapsedQuarterNotes = Math.max(0, (now - this.sessionStartTime) / this.quarterNoteMs);
-    const scoreRepeat = Math.floor(elapsedQuarterNotes / score.totalQuarterNotes);
-    const scoreQuarter = elapsedQuarterNotes - scoreRepeat * score.totalQuarterNotes;
+    const scoreQuarter = Math.min(elapsedQuarterNotes, score.totalQuarterNotes);
     const measureIndex = score.measures.findIndex(
         (measure) =>
           scoreQuarter >= measure.startQuarter &&
           scoreQuarter < measure.startQuarter + measure.durationQuarter,
       );
-    const index = measureIndex < 0 ? 0 : measureIndex;
+    const index = measureIndex < 0 ? score.measures.length - 1 : measureIndex;
     const measure = score.measures[index];
     if (!measure) return undefined;
 
     return {
       measure,
-      previousMeasure: score.measures[(index - 1 + score.measures.length) % score.measures.length] ?? measure,
-      nextMeasure: score.measures[(index + 1) % score.measures.length] ?? measure,
-      upcomingMeasures: Array.from({ length: 8 }, (_, offset) =>
-        score.measures[(index + offset) % score.measures.length] ?? measure,
-      ),
-      sequence: scoreRepeat * score.measures.length + index,
-      quarterInMeasure: Math.max(0, scoreQuarter - measure.startQuarter),
+      previousMeasure: index > 0 ? score.measures[index - 1] : undefined,
+      nextMeasure: index + 1 < score.measures.length ? score.measures[index + 1] : undefined,
+      upcomingMeasures: score.measures.slice(index, index + 8),
+      sequence: index,
+      quarterInMeasure: Math.min(measure.durationQuarter, Math.max(0, scoreQuarter - measure.startQuarter)),
     };
   }
 

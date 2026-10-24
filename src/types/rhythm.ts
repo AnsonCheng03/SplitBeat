@@ -214,7 +214,7 @@ export interface SessionSnapshot {
   scoreNextMeasure?: ScoreRhythmMeasure;
   /** Current and following measures used to fill the visible rhythm strip. */
   scoreUpcomingMeasures?: ScoreRhythmMeasure[];
-  /** Monotonic bar number across score repeats, used to advance the score view at bar lines. */
+  /** Zero-based score bar index, used to advance the score view only at bar lines. */
   scoreMeasureSequence?: number;
   scoreMeasureNumber?: number;
   scoreMeasureCount?: number;

@@ -5,7 +5,7 @@ export type ScoreDisplayMode = 'focus' | 'staff';
 
 export function findNextScoreEvent(
   measure: ScoreRhythmMeasure,
-  nextMeasure: ScoreRhythmMeasure,
+  nextMeasure: ScoreRhythmMeasure | undefined,
   hand: Hand,
   quarterInMeasure: number,
 ): ScoreRhythmEvent | undefined {
@@ -18,5 +18,5 @@ export function findNextScoreEvent(
   );
   const upcomingEvent = currentEvents.find((event) => event.startQuarter >= quarterInMeasure - 0.000001);
 
-  return activeEvent ?? upcomingEvent ?? events(nextMeasure)[0];
+  return activeEvent ?? upcomingEvent ?? (nextMeasure ? events(nextMeasure)[0] : undefined);
 }

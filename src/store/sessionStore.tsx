@@ -12,13 +12,13 @@ import { MetronomeAudio } from '@/audio/metronome';
 import { SOUND_OPTIONS } from '@/audio/soundPresets';
 import { normalizeFlashSource } from '@/rhythm/flashSource';
 import { applyChallengeOutcomes, challengeMessage, createChallengeStreaks, createWrongTapTrigger } from '@/rhythm/challenge';
-import { RhythmTimingEngine } from '@/rhythm/timingEngine';
+import { getSessionDurationSeconds, RhythmTimingEngine } from '@/rhythm/timingEngine';
 import {
   DEFAULT_GOOD_WINDOW_MS,
   normalizeGoodWindowMs,
   normalizeTapOffsetMs,
 } from '@/rhythm/timingCalibration';
-import { roundSessionDurationToBar, timeSignatureMetrics } from '@/rhythm/subdivisions';
+import { timeSignatureMetrics } from '@/rhythm/subdivisions';
 import { appendSessionRecord, createSessionRecord, parseSessionHistory } from '@/store/sessionHistory';
 import type { SessionRecord } from '@/store/sessionHistory';
 import { SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
@@ -462,13 +462,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       sessionStartTime,
       bpm: activeSettings.bpm,
       beatsPerBar: metrics.beatsPerBar,
-      durationSeconds: activeSettings.durationSeconds === 'endless'
-        ? null
-        : roundSessionDurationToBar(
-            activeSettings.durationSeconds,
-            activeSettings.bpm,
-            activeSettings.timeSignature,
-          ),
+      durationSeconds: getSessionDurationSeconds(activeSettings, score),
       soundEnabled: activeSettings.soundEnabled && !FORCE_SILENT_E2E,
       referenceRhythmEnabled: activeSettings.referenceRhythmEnabled,
       getReferenceEventsThrough: (timeMs) => engine.getReferenceEventsThrough(timeMs),
