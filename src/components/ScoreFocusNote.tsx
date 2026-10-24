@@ -43,7 +43,7 @@ export function ScoreFocusNote({
       style={{ width: '76%', maxWidth: 620, height: 76, alignSelf: 'center', justifyContent: 'center' }}
     >
       {plan ? (
-        <NoteNotation plan={plan} color={color} accessibilityLabel={t('Next score note')} testID={`${testID}.notation`} useNativeGlyphs />
+        <NoteNotation plan={plan} color={color} accessibilityLabel={t('Next score note')} testID={`${testID}.notation`} />
       ) : !event ? (
         <Text style={{ color, textAlign: 'center', fontSize: 16, fontWeight: '900', letterSpacing: 1.2 }}>REST</Text>
       ) : null}

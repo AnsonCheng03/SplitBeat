@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, SafeAreaView, View } from 'react-native';
+import { Modal, Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MetronomeAudio } from '@/audio/metronome';
 import { calibrationOffsetFromErrors, CALIBRATION_TAPS_PER_HAND } from '@/rhythm/timingCalibration';
 import { timeSignatureMetrics } from '@/rhythm/subdivisions';

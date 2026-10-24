@@ -42,7 +42,7 @@ export function MixtureSymbol({
   return (
     <View style={{ width: plan.width * scale, height: plan.height * scale, alignItems: 'center', justifyContent: 'center' }}>
       <View style={{ width: plan.width, height: plan.height, transform: [{ scale }], alignItems: 'center', justifyContent: 'center' }}>
-        <NoteNotation plan={plan} color={color} accessibilityLabel={t(pattern.label)} useNativeGlyphs />
+        <NoteNotation plan={plan} color={color} accessibilityLabel={t(pattern.label)} />
         {pattern.atoms.map((atom, index) => atom.kind === 'rest' ? (
           <Text
             key={`${mixtureId}.rest.${index}`}

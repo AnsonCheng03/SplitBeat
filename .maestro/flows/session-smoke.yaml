@@ -6,6 +6,12 @@ appId: com.splitbeat.twohandrhythm
 - runFlow:
     when:
       visible:
+        text: Two-Hand Rhythm Trainer
+    commands:
+      - tapOn: Two-Hand Rhythm Trainer
+- runFlow:
+    when:
+      visible:
         text: Open
     commands:
       - tapOn: Open
@@ -30,8 +36,6 @@ appId: com.splitbeat.twohandrhythm
     id: home.start
 - tapOn:
     id: home.mode.singleHand
-- tapOn:
-    id: home.hand.right
 - tapOn:
     id: home.setup
 - assertVisible:
@@ -200,13 +204,11 @@ appId: com.splitbeat.twohandrhythm
       id: practice.restBeat
     timeout: 10000
 - assertVisible:
-    id: practice.tap.left
-- assertVisible:
-    id: practice.tap.right
+    id: practice.tap.single
 - tapOn:
-    id: practice.tap.left
+    id: practice.tap.single
 - tapOn:
-    id: practice.tap.right
+    id: practice.tap.single
 - tapOn:
     id: practice.pause
 - assertVisible:

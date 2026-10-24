@@ -21,7 +21,7 @@ function RecordRow({ record }: { record: SessionRecord }) {
   const sessionName = record.source === 'score'
     ? record.scoreTitle || 'Imported score'
     : record.trainingMode === 'single-hand'
-      ? `${record.singleHand} hand`
+      ? 'One hand'
       : 'Two hands';
 
   return (
@@ -39,8 +39,8 @@ function RecordRow({ record }: { record: SessionRecord }) {
         </Text>
       </View>
       <View style={{ flexDirection: 'row', gap: 12, marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.line }}>
-        <Text style={{ color: primaryHand === 'left' ? colors.left : colors.right, fontSize: 11, fontWeight: '800' }}>
-          {primaryHand === 'left' ? 'L' : 'R'} {Math.round(primaryAccuracy)}%
+        <Text style={{ color: record.trainingMode === 'single-hand' ? colors.accent : primaryHand === 'left' ? colors.left : colors.right, fontSize: 11, fontWeight: '800' }}>
+          {t(record.trainingMode === 'single-hand' ? 'ONE HAND' : primaryHand === 'left' ? 'L' : 'R')} {Math.round(primaryAccuracy)}%
         </Text>
         {record.trainingMode === 'two-hand' ? (
           <Text style={{ color: colors.right, fontSize: 11, fontWeight: '800' }}>R {Math.round(record.rightAccuracy)}%</Text>

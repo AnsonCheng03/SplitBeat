@@ -49,9 +49,9 @@ appId: com.splitbeat.twohandrhythm
       id: practice.scoreFocusNote.left
     timeout: 10000
 - assertVisible:
-    id: practice.scoreFocusNote.left.notation.note.0
+    id: practice.scoreFocusNote.left.notation
 - assertVisible:
-    id: practice.scoreFocusNote.right.notation.note.0
+    id: practice.scoreFocusNote.right.notation
 - assertNotVisible:
     id: practice.scoreHand.right
 - tapOn:

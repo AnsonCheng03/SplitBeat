@@ -71,7 +71,6 @@ function RhythmTrack({
                 color={color}
                 showStaffLines={showStaffLines}
                 staffLineColor={colors.dim}
-                useNativeGlyphs
                 testID={`${testIdPrefix}.${label.toLowerCase()}Notation`}
                 accessibilityLabel={t('{hand} bar with {notes} notes and {rests} rests', {
                   hand: t(label.toLowerCase()),

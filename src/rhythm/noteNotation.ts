@@ -379,7 +379,8 @@ function buildNotationPlan(
 
 
 /**
- * Make noteheads, stems, flags, and beams for the rhythm events in one bar.
+ * Calculate note positions, beam groups, and overlay geometry for one bar.
+ * VexFlow renders the engraved noteheads, stems, flags, beams, and dots from this plan.
  * Notes with different values share a beam only where their values permit it.
  */
 export function createBarNoteNotationPlan(

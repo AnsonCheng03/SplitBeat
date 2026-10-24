@@ -41,7 +41,6 @@ export function RhythmSymbol({ subdivision, color, compact = false, mini = false
     plan={plan}
     color={color}
     accessibilityLabel={t(SUBDIVISION_LABELS[subdivision])}
-    useNativeGlyphs
   />;
   if (scale === 1) return notation;
 

@@ -1,7 +1,6 @@
 import { View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import type { NoteNotationPlan } from '@/rhythm/noteNotation';
-import { NativeRhythmGlyphs } from '@/components/NativeRhythmGlyphs';
 import VexFlowNotationDOM from '@/components/VexFlowNotationDOM';
 
 export function NoteNotation({
@@ -11,7 +10,6 @@ export function NoteNotation({
   testID,
   showStaffLines = false,
   staffLineColor,
-  useNativeGlyphs = false,
 }: {
   plan: NoteNotationPlan;
   color: string;
@@ -19,7 +17,6 @@ export function NoteNotation({
   testID?: string;
   showStaffLines?: boolean;
   staffLineColor?: string;
-  useNativeGlyphs?: boolean;
 }) {
   return (
     <View
@@ -42,19 +39,18 @@ export function NoteNotation({
           }}
         />
       )) : null}
-      {useNativeGlyphs ? (
-        <NativeRhythmGlyphs plan={plan} color={color} testID={testID} />
-      ) : (
-        <VexFlowNotationDOM
-          plan={plan}
-          color={color}
-          dom={{
-            scrollEnabled: false,
-            bounces: false,
-            style: { position: 'absolute', left: 0, top: 0, width: plan.width, height: plan.height, backgroundColor: 'transparent' },
-          }}
-        />
-      )}
+      <VexFlowNotationDOM
+        plan={plan}
+        color={color}
+        noteCenterY={showStaffLines
+          ? (plan.height - 24) / 2 + 24
+          : plan.noteBaselineY ?? plan.height - 7}
+        dom={{
+          scrollEnabled: false,
+          bounces: false,
+          style: { position: 'absolute', left: 0, top: 0, width: plan.width, height: plan.height, backgroundColor: 'transparent' },
+        }}
+      />
       {plan.tupletLabels.map((label, index) => (
         <Text
           key={label.key}
