@@ -48,14 +48,14 @@ appId: com.splitbeat.twohandrhythm
     id: practice.tutorial
 - extendedWaitUntil:
     visible:
-      id: practice.scoreFocusNote.left
+      id: practice.scoreBeat.left
     timeout: 10000
 - assertVisible:
-    id: practice.scoreFocusNote.left.notation
+    id: practice.scoreBeat.left.notation
 - assertVisible:
-    id: practice.scoreFocusNote.right.notation
-- assertNotVisible:
-    id: practice.scoreHand.right
+    id: practice.scoreBeat.right
+- assertVisible:
+    id: practice.scoreBeat.right.notation
 - extendedWaitUntil:
     visible: "1 bar remaining"
     timeout: 15000

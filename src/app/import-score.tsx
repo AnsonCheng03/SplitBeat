@@ -7,7 +7,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
-import type { ScoreDisplayMode } from '@/rhythm/scoreStaff';
+import { scoreTrainingMode, type ScoreDisplayMode } from '@/rhythm/scoreStaff';
 import { createImportedScoreEntry, placeSingleTrackOnHand, rememberImportedScore, setImportedScoreSaved } from '@/rhythm/importedScoreLibrary';
 import { decodeBase64Bytes, parseMidiRhythm } from '@/rhythm/midiParser';
 import {
@@ -255,17 +255,16 @@ export default function ImportScoreScreen() {
 
   const start = async () => {
     if (!score || starting) return;
-    if (score.trackCount === 1 && !featureFlags.oneHandMode) {
-      Alert.alert(t('One-hand practice is disabled'), t('Enable One-hand practice in Settings → Features to play a single-track score.'));
+    const practiceScore = placeSingleTrackOnHand(score, settings.singleHand);
+    const trainingMode = scoreTrainingMode(score, settings.singleHand);
+    if (trainingMode.trainingMode === 'single-hand' && !featureFlags.oneHandMode) {
+      Alert.alert(t('One-hand practice is disabled'), t('Enable One-hand practice in Settings → Features to play a score with one active hand.'));
       return;
     }
     setStarting(true);
     try {
-      const practiceScore = placeSingleTrackOnHand(score, settings.singleHand);
       await prepareExercise(practiceScore, {
-        settings: score.trackCount === 1
-          ? { trainingMode: 'single-hand', singleHand: settings.singleHand }
-          : { trainingMode: 'two-hand' },
+        settings: trainingMode,
       });
       router.replace({ pathname: '/practice', params: { scoreDisplayMode: featureFlags.scoreNotation ? scoreDisplayMode : 'focus' } });
     } catch {
@@ -275,18 +274,21 @@ export default function ImportScoreScreen() {
   };
 
   const previewScore = score ? placeSingleTrackOnHand(score, settings.singleHand) : null;
+  const hasOneActiveHand = Boolean(score && scoreTrainingMode(score, settings.singleHand).trainingMode === 'single-hand');
   const previewContentWidth = Math.min(850, width - insets.left - insets.right);
   const initialPreviewNotationWidth = Math.max(0, previewContentWidth - 210);
   const currentEntry = library.find((entry) => entry.id === currentEntryId);
   const savedScores = library.filter((entry) => entry.saved);
   const recentScores = library.filter((entry) => !entry.saved);
-  const scoreTrackDescription = t(score?.trackCount === 1 ? '1 track · one hand' : '2 tracks · two hands');
+  const scoreTrackDescription = t(score?.trackCount === 1
+    ? '1 track · one hand'
+    : hasOneActiveHand ? '2 tracks · one active hand' : '2 tracks · two hands');
   const scoreMeasureDescription = score
     ? t('{count} {unit}', { count: score.measures.length, unit: t(score.measures.length === 1 ? 'bar' : 'bars') })
     : '';
   const scoreTempoDescription = score?.bpm ? `${score.bpm} BPM` : t('uses your saved tempo');
   const scoreNoteDescription = score
-    ? score.trackCount === 1
+    ? hasOneActiveHand
       ? t('{count} notes · one-hand mode', { count: score.measures.reduce((count, measure) => count + measure.leftEvents.length + measure.rightEvents.length, 0) })
       : t('{left} left-hand notes · {right} right-hand notes', {
         left: score.measures.reduce((count, measure) => count + measure.leftEvents.length, 0),
@@ -320,7 +322,7 @@ export default function ImportScoreScreen() {
 
         <Text style={{ color: colors.text, fontSize: 32, fontWeight: '900', letterSpacing: -0.8 }}>Bring a score.</Text>
         <Text style={{ color: colors.muted, fontSize: 14, marginTop: 5, marginBottom: 13 }}>
-          Import MIDI or MusicXML. One track trains one hand; two tracks train both hands.
+          Import MIDI or MusicXML. One active hand uses the full screen; two active hands train side by side.
         </Text>
 
         {!score ? (
@@ -522,7 +524,7 @@ export default function ImportScoreScreen() {
             {featureFlags.scoreNotation ? <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1, marginTop: 12, marginBottom: 6 }}>PRACTICE DISPLAY</Text> : null}
             {featureFlags.scoreNotation ? <View style={{ flexDirection: 'row', gap: 8 }}>
               {([
-                { value: 'focus', label: 'ONE NOTE', detail: 'One upcoming note for each hand' },
+                { value: 'focus', label: 'ONE NOTE', detail: 'Current beat · large hand panels' },
                 { value: 'staff', label: 'MOVING SCORE', detail: 'Both hand lanes · slides at each bar' },
               ] as const).map((option) => {
                 const selected = scoreDisplayMode === option.value;

@@ -4,6 +4,49 @@ import type { NoteNotationEvent } from '@/rhythm/noteNotation';
 
 export type ScoreDisplayMode = 'focus' | 'staff';
 
+export function scoreHandPresence(score: ImportedRhythmScore): Record<Hand, boolean> {
+  return {
+    left: score.measures.some((measure) => measure.leftEvents.some((event) => !event.isRest && !event.isTieContinuation)),
+    right: score.measures.some((measure) => measure.rightEvents.some((event) => !event.isRest && !event.isTieContinuation)),
+  };
+}
+
+export function scoreTrainingMode(
+  score: ImportedRhythmScore,
+  preferredHand: Hand,
+): { trainingMode: 'single-hand'; singleHand: Hand } | { trainingMode: 'two-hand' } {
+  if (score.trackCount === 1) return { trainingMode: 'single-hand', singleHand: preferredHand };
+
+  const hands = scoreHandPresence(score);
+  if (hands.left && !hands.right) return { trainingMode: 'single-hand', singleHand: 'left' };
+  if (hands.right && !hands.left) return { trainingMode: 'single-hand', singleHand: 'right' };
+  return { trainingMode: 'two-hand' };
+}
+
+export function scoreBeatEvents(
+  measure: ScoreRhythmMeasure,
+  nextMeasure: ScoreRhythmMeasure | undefined,
+  quarterInMeasure: number,
+  beatDurationQuarter: number,
+  hand: Hand,
+): ScoreRhythmEvent[] {
+  if (!Number.isFinite(quarterInMeasure) || !Number.isFinite(beatDurationQuarter) || beatDurationQuarter <= 0) return [];
+
+  const beatStart = Math.floor((Math.max(0, quarterInMeasure) + 0.000001) / beatDurationQuarter) * beatDurationQuarter;
+  const beatEnd = beatStart + beatDurationQuarter;
+  const measures = [measure, ...(nextMeasure && beatEnd > measure.durationQuarter + 0.000001 ? [nextMeasure] : [])];
+
+  return measures.flatMap((sourceMeasure, measureIndex) => {
+    const measureOffset = measureIndex === 0 ? 0 : measure.durationQuarter;
+    return (hand === 'left' ? sourceMeasure.leftEvents : sourceMeasure.rightEvents)
+      .filter((event) => {
+        const eventStart = measureOffset + event.startQuarter;
+        return eventStart >= beatStart - 0.000001 && eventStart < beatEnd - 0.000001;
+      })
+      .map((event) => ({ ...event, startQuarter: measureOffset + event.startQuarter - beatStart }));
+  }).sort((first, second) => first.startQuarter - second.startQuarter);
+}
+
 export function scoreNotationEvents(events: readonly ScoreRhythmEvent[]): NoteNotationEvent[] {
   return events.filter((event) => !event.isRest).map((event) => ({
     startQuarter: event.startQuarter,

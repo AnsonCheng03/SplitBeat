@@ -14,7 +14,7 @@ import { MetronomeIndicator } from '@/components/MetronomeIndicator';
 import { NextPatternPreview } from '@/components/NextPatternPreview';
 import { PracticeOverlayBackdrop } from '@/components/PracticeOverlayBackdrop';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
-import { ScoreFocusNote } from '@/components/ScoreFocusNote';
+import { ScoreBeatFocus } from '@/components/ScoreBeatFocus';
 import { ScrollingScoreRhythm } from '@/components/ScoreRhythmMeasure';
 import { SessionEndingOverlay } from '@/components/SessionEndingOverlay';
 import { TapZone } from '@/components/TapZone';
@@ -170,6 +170,7 @@ export default function PracticeScreen() {
     : undefined;
   const displayScoreMeasure = importedScoreMeasure ?? practiceScoreMeasure;
   const isScoreDisplay = Boolean(displayScoreMeasure);
+  const isScoreFocusDisplay = Boolean(importedScoreMeasure && scoreDisplayMode === 'focus');
   const scoreDisplayTop = Math.max(insets.top, 8) + (compact ? 46 : 58);
   const scoreDisplayHeight = Math.min(180, Math.max(110, height * 0.25));
   const showNextPattern = Boolean(!isScoreDisplay && snapshot?.nextStep);
@@ -229,6 +230,7 @@ export default function PracticeScreen() {
     .map(({ hand, label }) => `${t(hand === 'left' ? 'LEFT HAND' : 'RIGHT HAND')}: ${t(label)}`)
     .join('  ·  ');
   const rhythmDisplayStyle = isScoreDisplay
+    && !isScoreFocusDisplay
     ? {
         top: scoreDisplayTop,
         height: scoreDisplayHeight,
@@ -290,7 +292,7 @@ export default function PracticeScreen() {
                 resting={snapshot?.isRest}
                 compact={compact}
                 minimal
-                showMinimalLabel={isScoreDisplay}
+                showMinimalLabel={isScoreDisplay && !isScoreFocusDisplay}
                 style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '50%' }}
               />
               <TapZone
@@ -306,7 +308,7 @@ export default function PracticeScreen() {
                 resting={snapshot?.isRest}
                 compact={compact}
                 minimal
-                showMinimalLabel={isScoreDisplay}
+                showMinimalLabel={isScoreDisplay && !isScoreFocusDisplay}
                 style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '50%' }}
               />
 
@@ -318,7 +320,7 @@ export default function PracticeScreen() {
           )}
         </View>
 
-        {!tutorialVisible && isScoreDisplay && snapshot ? (
+        {!tutorialVisible && isScoreDisplay && !isScoreFocusDisplay && snapshot ? (
           <View
             testID="practice.scoreBackground"
             pointerEvents="none"
@@ -354,27 +356,47 @@ export default function PracticeScreen() {
           <View
             testID="practice.rhythmDisplay"
             pointerEvents="none"
-            style={[{ position: 'absolute', left: -insets.left, right: -insets.right, flexDirection: 'row', alignItems: 'center', backgroundColor: isScoreDisplay ? colors.surface : 'transparent' }, rhythmDisplayStyle]}
+            style={[{ position: 'absolute', left: -insets.left, right: -insets.right, flexDirection: 'row', alignItems: 'center', backgroundColor: isScoreDisplay && !isScoreFocusDisplay ? colors.surface : 'transparent' }, rhythmDisplayStyle]}
           >
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginHorizontal: isScoreDisplay ? scoreContentMargin : 0 }}>
               {displayScoreMeasure ? (
                 importedScoreMeasure && scoreDisplayMode === 'focus' ? (
                   singleHandMode ? (
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 8 }}>
-                      <Text style={{ color: scoreHandColor, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>{focusedHand.toUpperCase()} HAND</Text>
-                      <ScoreFocusNote event={scoreFocusEvents?.[focusedHand]} color={scoreHandColor} initialWidth={initialScoreFocusWidth} testID="practice.scoreFocusNote" />
-                    </View>
+                    <ScoreBeatFocus
+                      measure={importedScoreMeasure}
+                      nextMeasure={snapshot?.scoreNextMeasure}
+                      quarterInMeasure={scoreQuarterInMeasure}
+                      beatDurationQuarter={pulseQuarterNotes(activeSettings.timeSignature)}
+                      hand={focusedHand}
+                      color={colors.accent}
+                      oneHand
+                      compact={compact}
+                      initialWidth={initialScoreFocusWidth * 0.86}
+                    />
                   ) : (
-                    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                        <Text style={{ color: colors.left, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>LEFT HAND</Text>
-                        <ScoreFocusNote event={scoreFocusEvents?.left} color={colors.left} initialWidth={initialScoreFocusWidth} testID="practice.scoreFocusNote.left" />
-                      </View>
-                      <View style={{ width: 1, height: 84, backgroundColor: colors.line, opacity: 0.7 }} />
-                      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                        <Text style={{ color: colors.right, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>RIGHT HAND</Text>
-                        <ScoreFocusNote event={scoreFocusEvents?.right} color={colors.right} initialWidth={initialScoreFocusWidth} testID="practice.scoreFocusNote.right" />
-                      </View>
+                    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                      <ScoreBeatFocus
+                        measure={importedScoreMeasure}
+                        nextMeasure={snapshot?.scoreNextMeasure}
+                        quarterInMeasure={scoreQuarterInMeasure}
+                        beatDurationQuarter={pulseQuarterNotes(activeSettings.timeSignature)}
+                        hand="left"
+                        color={colors.left}
+                        oneHand={false}
+                        compact={compact}
+                        initialWidth={initialScoreFocusWidth}
+                      />
+                      <ScoreBeatFocus
+                        measure={importedScoreMeasure}
+                        nextMeasure={snapshot?.scoreNextMeasure}
+                        quarterInMeasure={scoreQuarterInMeasure}
+                        beatDurationQuarter={pulseQuarterNotes(activeSettings.timeSignature)}
+                        hand="right"
+                        color={colors.right}
+                        oneHand={false}
+                        compact={compact}
+                        initialWidth={initialScoreFocusWidth}
+                      />
                     </View>
                   )
                 ) : (

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { findNextScoreEvent, scoreNotationEvents } from '@/rhythm/scoreStaff';
-import type { ScoreRhythmMeasure } from '@/types/importedScore';
+import { findNextScoreEvent, scoreBeatEvents, scoreHandPresence, scoreNotationEvents, scoreTrainingMode } from '@/rhythm/scoreStaff';
+import type { ImportedRhythmScore, ScoreRhythmMeasure } from '@/types/importedScore';
 
 const firstBar: ScoreRhythmMeasure = {
   index: 0,
@@ -52,6 +52,51 @@ test('focus view exposes a cross-bar tie continuation so the screen can show its
     findNextScoreEvent(tiedContinuation, undefined, 'right', 0)?.isCrossBarTieContinuation,
     true,
   );
+});
+
+test('one-note view gathers the full rhythm for the current beat and compound pulse', () => {
+  const mixedBeat: ScoreRhythmMeasure = {
+    ...firstBar,
+    leftEvents: [
+      { startQuarter: 1.125, durationQuarter: 0.125 },
+      { startQuarter: 1.25, durationQuarter: 0.25 },
+      { startQuarter: 1.5, durationQuarter: 0.5 },
+    ],
+  };
+  assert.deepEqual(scoreBeatEvents(mixedBeat, undefined, 1.4, 1, 'left').map((event) => event.startQuarter), [0.125, 0.25, 0.5]);
+  assert.deepEqual(scoreBeatEvents(firstBar, nextBar, 1.6, 1.5, 'right').map((event) => event.startQuarter), [1]);
+});
+
+test('one-note view carries a compound pulse across a bar line', () => {
+  const shortBar = { ...firstBar, durationQuarter: 2.5, rightEvents: [{ startQuarter: 2.25, durationQuarter: 0.25 }] };
+  const followingBar = { ...nextBar, durationQuarter: 2.5, rightEvents: [{ startQuarter: 0.25, durationQuarter: 0.5 }] };
+
+  assert.deepEqual(
+    scoreBeatEvents(shortBar, followingBar, 2.1, 1.5, 'right').map((event) => event.startQuarter),
+    [0.75, 1.25],
+  );
+});
+
+test('score hand presence ignores empty and continuation-only lanes', () => {
+  const singleActiveHandScore: ImportedRhythmScore = {
+    formatVersion: 1,
+    title: 'Single active hand',
+    timeSignature: '4/4',
+    trackCount: 2,
+    bpm: null,
+    measures: [{
+      ...firstBar,
+      leftEvents: [{ startQuarter: 0, durationQuarter: 1, isTieContinuation: true }],
+      rightEvents: [{ startQuarter: 0, durationQuarter: 1 }],
+    }],
+    totalQuarterNotes: 4,
+    warnings: [],
+  };
+
+  assert.deepEqual(scoreHandPresence(singleActiveHandScore), { left: false, right: true });
+  assert.deepEqual(scoreTrainingMode(singleActiveHandScore, 'left'), { trainingMode: 'single-hand', singleHand: 'right' });
+  assert.deepEqual(scoreTrainingMode({ ...singleActiveHandScore, trackCount: 1 }, 'left'), { trainingMode: 'single-hand', singleHand: 'left' });
+  assert.deepEqual(scoreTrainingMode({ ...singleActiveHandScore, measures: [{ ...firstBar }] }, 'left'), { trainingMode: 'two-hand' });
 });
 
 test('staff notation uses each tied segment duration instead of overflowing the bar', () => {
