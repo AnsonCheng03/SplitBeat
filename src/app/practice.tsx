@@ -17,7 +17,7 @@ import type { Hand, TapFeedback } from '@/types/rhythm';
 import { colors } from '@/theme';
 
 export default function PracticeScreen() {
-  const { height } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const compact = height < 520;
   const router = useRouter();
@@ -92,6 +92,10 @@ export default function PracticeScreen() {
   const enabledHand = (hand: Hand) => activeSettings.trainingMode !== 'single-hand' || activeSettings.singleHand === hand;
   const singleHandMode = activeSettings.trainingMode === 'single-hand';
   const focusedHand = activeSettings.singleHand;
+  const scoreContentMargin = Math.max(16, insets.left + 18, insets.right + 18);
+  const initialScoreContentWidth = Math.max(0, width - scoreContentMargin * 2);
+  const initialScoreViewportWidth = Math.max(0, initialScoreContentWidth - 52);
+  const initialScoreFocusWidth = Math.min(620, initialScoreContentWidth * (singleHandMode ? 0.76 : 0.38));
   const step = snapshot?.currentStep;
   const beatFlashToken = snapshot?.phase === 'running' ? snapshot.beatIndex + 1 : 0;
   const showNextPattern = Boolean(!snapshot?.scoreMeasure && snapshot?.nextStep);
@@ -225,7 +229,7 @@ export default function PracticeScreen() {
             pointerEvents="none"
             style={[{ position: 'absolute', left: -insets.left, right: -insets.right, flexDirection: 'row', alignItems: 'center', backgroundColor: snapshot.scoreMeasure ? colors.surface : 'transparent' }, rhythmDisplayStyle]}
           >
-            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginHorizontal: snapshot.scoreMeasure ? Math.max(16, insets.left + 18, insets.right + 18) : 0 }}>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginHorizontal: snapshot.scoreMeasure ? scoreContentMargin : 0 }}>
               {snapshot.scoreMeasure ? (
                 scoreDisplayMode === 'staff' ? (
                   <View style={{ flex: 1, justifyContent: 'center' }}>
@@ -241,24 +245,25 @@ export default function PracticeScreen() {
                     minimal
                     visibleHand={scoreHandToShow}
                     focusedColor={singleHandMode ? scoreHandColor : undefined}
+                    initialViewportWidth={initialScoreViewportWidth}
                   />
                 </View>
               ) : (
                 singleHandMode ? (
                   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 8 }}>
                     <Text style={{ color: scoreHandColor, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>{focusedHand.toUpperCase()} HAND</Text>
-                    <ScoreFocusNote event={scoreFocusEvents?.[focusedHand]} color={scoreHandColor} testID="practice.scoreFocusNote" />
+                    <ScoreFocusNote event={scoreFocusEvents?.[focusedHand]} color={scoreHandColor} initialWidth={initialScoreFocusWidth} testID="practice.scoreFocusNote" />
                   </View>
                 ) : (
                   <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                       <Text style={{ color: colors.left, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>LEFT HAND</Text>
-                      <ScoreFocusNote event={scoreFocusEvents?.left} color={colors.left} testID="practice.scoreFocusNote.left" />
+                      <ScoreFocusNote event={scoreFocusEvents?.left} color={colors.left} initialWidth={initialScoreFocusWidth} testID="practice.scoreFocusNote.left" />
                     </View>
                     <View style={{ width: 1, height: 84, backgroundColor: colors.line, opacity: 0.7 }} />
                     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                       <Text style={{ color: colors.right, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>RIGHT HAND</Text>
-                      <ScoreFocusNote event={scoreFocusEvents?.right} color={colors.right} testID="practice.scoreFocusNote.right" />
+                      <ScoreFocusNote event={scoreFocusEvents?.right} color={colors.right} initialWidth={initialScoreFocusWidth} testID="practice.scoreFocusNote.right" />
                     </View>
                   </View>
                 )

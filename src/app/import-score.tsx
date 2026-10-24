@@ -1,7 +1,7 @@
 import { Link, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Alert, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
@@ -44,6 +44,8 @@ function currentTimestamp(): number {
 }
 
 export default function ImportScoreScreen() {
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { settings, updateSettings, prepareExercise } = useRhythmSession();
   const [score, setScore] = useState<ImportedRhythmScore | null>(null);
@@ -208,6 +210,8 @@ export default function ImportScoreScreen() {
   };
 
   const previewScore = score ? placeSingleTrackOnHand(score, settings.singleHand) : null;
+  const previewContentWidth = Math.min(850, width - insets.left - insets.right);
+  const initialPreviewNotationWidth = Math.max(0, previewContentWidth - 210);
   const currentEntry = library.find((entry) => entry.id === currentEntryId);
   const savedScores = library.filter((entry) => entry.saved);
   const recentScores = library.filter((entry) => !entry.saved);
@@ -348,6 +352,7 @@ export default function ImportScoreScreen() {
                   count={score.measures.length}
                   compact
                   beamGroupQuarterNotes={pulseQuarterNotes(score.timeSignature)}
+                  initialNotationWidth={initialPreviewNotationWidth}
                 />
               </View>
               <Pressable

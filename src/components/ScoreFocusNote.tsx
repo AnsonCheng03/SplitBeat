@@ -7,13 +7,18 @@ import type { ScoreRhythmEvent } from '@/types/importedScore';
 export function ScoreFocusNote({
   event,
   color,
+  initialWidth = 0,
   testID = 'practice.scoreFocusNote',
 }: {
   event?: ScoreRhythmEvent;
   color: string;
+  initialWidth?: number;
   testID?: string;
 }) {
-  const [width, setWidth] = useState(0);
+  const [measuredLayout, setMeasuredLayout] = useState({ estimate: initialWidth, width: 0 });
+  const width = measuredLayout.estimate === initialWidth && measuredLayout.width > 0
+    ? measuredLayout.width
+    : initialWidth;
   const plan = useMemo(() => {
     if (!event || width <= 0) return null;
     const durationQuarter = Math.max(2, event.durationQuarter * 2);
@@ -31,7 +36,7 @@ export function ScoreFocusNote({
   return (
     <View
       testID={testID}
-      onLayout={({ nativeEvent }) => setWidth(nativeEvent.layout.width)}
+      onLayout={({ nativeEvent }) => setMeasuredLayout({ estimate: initialWidth, width: nativeEvent.layout.width })}
       style={{ width: '76%', maxWidth: 620, height: 76, alignSelf: 'center', justifyContent: 'center' }}
     >
       {plan ? (

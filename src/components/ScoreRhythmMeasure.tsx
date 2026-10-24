@@ -16,6 +16,7 @@ function RhythmTrack({
   minimal = false,
   showStaffLines = false,
   showHandLabels = false,
+  initialNotationWidth = 0,
   testIdPrefix = 'practice.scoreMeasure',
 }: {
   label: string;
@@ -27,9 +28,13 @@ function RhythmTrack({
   minimal?: boolean;
   showStaffLines?: boolean;
   showHandLabels?: boolean;
+  initialNotationWidth?: number;
   testIdPrefix?: string;
 }) {
-  const [notationWidth, setNotationWidth] = useState(0);
+  const [measuredLayout, setMeasuredLayout] = useState({ estimate: initialNotationWidth, width: 0 });
+  const notationWidth = measuredLayout.estimate === initialNotationWidth && measuredLayout.width > 0
+    ? measuredLayout.width
+    : initialNotationWidth;
   const plan = useMemo(() => notationWidth > 0
     ? createBarNoteNotationPlan(events, {
       durationQuarter,
@@ -43,7 +48,7 @@ function RhythmTrack({
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: minimal ? 0 : 10, minHeight: size === 'compact' ? 40 : 54 }}>
       {(!minimal || showHandLabels) ? <Text style={{ color, fontSize: 9, fontWeight: '900', letterSpacing: 1, width: 48 }}>{label}</Text> : null}
       <View
-        onLayout={({ nativeEvent }) => setNotationWidth(nativeEvent.layout.width)}
+        onLayout={({ nativeEvent }) => setMeasuredLayout({ estimate: initialNotationWidth, width: nativeEvent.layout.width })}
         style={{ flex: 1, minHeight: size === 'compact' ? 36 : 50, justifyContent: 'center' }}
       >
         {events.length === 0 ? (
@@ -105,6 +110,7 @@ export function ScoreRhythmMeasure({
   minimal = false,
   showStaffLines = false,
   showHandLabels = false,
+  initialNotationWidth = 0,
 }: {
   measure: ScoreMeasure;
   number: number;
@@ -118,6 +124,7 @@ export function ScoreRhythmMeasure({
   minimal?: boolean;
   showStaffLines?: boolean;
   showHandLabels?: boolean;
+  initialNotationWidth?: number;
 }) {
   const size: NoteNotationSize = compact ? 'compact' : 'full';
 
@@ -142,6 +149,7 @@ export function ScoreRhythmMeasure({
           minimal={minimal}
           showStaffLines={showStaffLines}
           showHandLabels={showHandLabels}
+          initialNotationWidth={initialNotationWidth}
           testIdPrefix={testIdPrefix}
         />
       ) : null}
@@ -156,6 +164,7 @@ export function ScoreRhythmMeasure({
           minimal={minimal}
           showStaffLines={showStaffLines}
           showHandLabels={showHandLabels}
+          initialNotationWidth={initialNotationWidth}
           testIdPrefix={testIdPrefix}
         />
       ) : null}
@@ -177,6 +186,7 @@ interface ScrollingScoreRhythmProps {
   visibleHand?: Hand;
   focusedColor?: string;
   showStaffLines?: boolean;
+  initialViewportWidth?: number;
 }
 
 interface VisibleScoreBar {
@@ -203,6 +213,7 @@ function ScoreBarPanel({
   visibleHand,
   focusedColor,
   showStaffLines,
+  initialNotationWidth,
 }: {
   bar: VisibleScoreBar;
   count: number;
@@ -213,6 +224,7 @@ function ScoreBarPanel({
   visibleHand?: Hand;
   focusedColor?: string;
   showStaffLines: boolean;
+  initialNotationWidth: number;
 }) {
   return (
     <View
@@ -235,6 +247,7 @@ function ScoreBarPanel({
         beamGroupQuarterNotes={beamGroupQuarterNotes}
         minimal={minimal}
         showStaffLines={showStaffLines}
+        initialNotationWidth={initialNotationWidth}
         testIdPrefix={`practice.scoreMeasure.bar.${bar.sequence}`}
       /> : null}
       {(!visibleHand || visibleHand === 'right') ? <RhythmTrack
@@ -246,6 +259,7 @@ function ScoreBarPanel({
         beamGroupQuarterNotes={beamGroupQuarterNotes}
         minimal={minimal}
         showStaffLines={showStaffLines}
+        initialNotationWidth={initialNotationWidth}
         testIdPrefix={`practice.scoreMeasure.bar.${bar.sequence}`}
       /> : null}
       <MeasureBarLine testID={`practice.scoreMeasure.barline.${bar.sequence}`} inset={4} />
@@ -267,13 +281,16 @@ export function ScrollingScoreRhythm({
   visibleHand,
   focusedColor,
   showStaffLines = false,
+  initialViewportWidth = 0,
 }: ScrollingScoreRhythmProps) {
-  const [viewportWidth, setViewportWidth] = useState(0);
+  const [measuredViewportWidth, setMeasuredViewportWidth] = useState(0);
+  const viewportWidth = measuredViewportWidth || initialViewportWidth;
   const size: NoteNotationSize = compact ? 'compact' : 'full';
   const [translateX] = useState(() => new Animated.Value(0));
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
   const visibleSequenceRef = useRef(sequence);
   const barWidth = viewportWidth > 0 ? Math.max(160, Math.min(320, viewportWidth / 3)) : 0;
+  const initialNotationWidth = Math.max(0, barWidth - 8);
   const followingMeasures = upcomingMeasures?.length ? upcomingMeasures : [measure, nextMeasure];
   const upcomingBars = followingMeasures.map((item, offset) => scoreBar(item, count, sequence + offset));
   const visibleBars = sequence === 0 || !previousMeasure
@@ -321,7 +338,7 @@ export function ScrollingScoreRhythm({
       </View>
       <View
         testID="practice.scoreMeasure.viewport"
-        onLayout={({ nativeEvent }) => setViewportWidth(nativeEvent.layout.width)}
+        onLayout={({ nativeEvent }) => setMeasuredViewportWidth(nativeEvent.layout.width)}
         style={{ flex: 1, overflow: 'hidden', paddingVertical: minimal ? 0 : compact ? 3 : 7 }}
       >
         {barWidth > 0 ? (
@@ -341,6 +358,7 @@ export function ScrollingScoreRhythm({
                 visibleHand={visibleHand}
                 focusedColor={focusedColor}
                 showStaffLines={showStaffLines}
+                initialNotationWidth={initialNotationWidth}
               />
             ))}
           </Animated.View>
