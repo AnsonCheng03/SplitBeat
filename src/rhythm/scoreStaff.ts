@@ -1,0 +1,22 @@
+import type { Hand } from '@/types/rhythm';
+import type { ScoreRhythmEvent, ScoreRhythmMeasure } from '@/types/importedScore';
+
+export type ScoreDisplayMode = 'focus' | 'staff';
+
+export function findNextScoreEvent(
+  measure: ScoreRhythmMeasure,
+  nextMeasure: ScoreRhythmMeasure,
+  hand: Hand,
+  quarterInMeasure: number,
+): ScoreRhythmEvent | undefined {
+  const events = (current: ScoreRhythmMeasure) =>
+    [...(hand === 'left' ? current.leftEvents : current.rightEvents)].sort((left, right) => left.startQuarter - right.startQuarter);
+  const currentEvents = events(measure);
+  const activeEvent = currentEvents.find((event) =>
+    event.startQuarter <= quarterInMeasure + 0.000001 &&
+    event.startQuarter + event.durationQuarter > quarterInMeasure + 0.000001,
+  );
+  const upcomingEvent = currentEvents.find((event) => event.startQuarter >= quarterInMeasure - 0.000001);
+
+  return activeEvent ?? upcomingEvent ?? events(nextMeasure)[0];
+}

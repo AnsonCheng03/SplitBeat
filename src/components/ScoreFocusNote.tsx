@@ -1,0 +1,44 @@
+import { useMemo, useState } from 'react';
+import { Text, View } from 'react-native';
+import { NoteNotation } from '@/components/NoteNotation';
+import { createBarNoteNotationPlan } from '@/rhythm/noteNotation';
+import type { ScoreRhythmEvent } from '@/types/importedScore';
+
+export function ScoreFocusNote({
+  event,
+  color,
+  testID = 'practice.scoreFocusNote',
+}: {
+  event?: ScoreRhythmEvent;
+  color: string;
+  testID?: string;
+}) {
+  const [width, setWidth] = useState(0);
+  const plan = useMemo(() => {
+    if (!event || width <= 0) return null;
+    const durationQuarter = Math.max(2, event.durationQuarter * 2);
+    return createBarNoteNotationPlan([{
+      startQuarter: (durationQuarter - event.durationQuarter) / 2,
+      durationQuarter: event.durationQuarter,
+      tupletNumber: event.tupletNumber,
+    }], {
+      durationQuarter,
+      width,
+      size: 'full',
+    });
+  }, [event, width]);
+
+  return (
+    <View
+      testID={testID}
+      onLayout={({ nativeEvent }) => setWidth(nativeEvent.layout.width)}
+      style={{ width: '76%', maxWidth: 620, height: 76, alignSelf: 'center', justifyContent: 'center' }}
+    >
+      {plan ? (
+        <NoteNotation plan={plan} color={color} accessibilityLabel="Next score note" testID={`${testID}.notation`} useNativeGlyphs />
+      ) : !event ? (
+        <Text style={{ color, textAlign: 'center', fontSize: 16, fontWeight: '900', letterSpacing: 1.2 }}>REST</Text>
+      ) : null}
+    </View>
+  );
+}

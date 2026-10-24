@@ -600,6 +600,7 @@ test('score events use MusicXML quarter-note positions, loop, and score independ
   assert.equal(preview.scoreMeasureSequence, 0);
   assert.equal(preview.scoreNextMeasure, importedScore.measures[0]);
   assert.equal(preview.scoreMeasure?.rightEvents.length, 8);
+  assert.deepEqual(preview.scoreUpcomingMeasures?.slice(0, 4).map((measure) => measure.index), [0, 0, 0, 0]);
 
   engine.tap('left', start);
   engine.tap('right', start);
@@ -656,12 +657,14 @@ test('score view advances its measure sequence only at bar boundaries and repeat
   assert.equal(whileFirstBarPlays.scoreMeasureSequence, 0);
   assert.equal(whileFirstBarPlays.scorePreviousMeasure?.index, 1);
   assert.equal(whileFirstBarPlays.scoreNextMeasure?.index, 1);
+  assert.deepEqual(whileFirstBarPlays.scoreUpcomingMeasures?.slice(0, 5).map((measure) => measure.index), [0, 1, 0, 1, 0]);
 
   const atSecondBar = engine.advance(start + 4_000);
   assert.equal(atSecondBar.scoreMeasure?.index, 1);
   assert.equal(atSecondBar.scoreMeasureSequence, 1);
   assert.equal(atSecondBar.scorePreviousMeasure?.index, 0);
   assert.equal(atSecondBar.scoreNextMeasure?.index, 0);
+  assert.deepEqual(atSecondBar.scoreUpcomingMeasures?.slice(0, 5).map((measure) => measure.index), [1, 0, 1, 0, 1]);
 
   const onRepeat = engine.advance(start + 8_000);
   assert.equal(onRepeat.scoreMeasure?.index, 0);

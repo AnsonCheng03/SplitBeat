@@ -1,0 +1,63 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: LANDSCAPE_LEFT
+- launchApp:
+    clearState: true
+- runFlow:
+    when:
+      visible:
+        text: Two-Hand Rhythm Trainer
+    commands:
+      - tapOn: Two-Hand Rhythm Trainer
+- runFlow:
+    when:
+      visible:
+        text: Open
+    commands:
+      - tapOn: Open
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
+- tapOn:
+    id: home.importScore
+- assertVisible:
+    id: scoreImport.screen
+- tapOn:
+    id: scoreImport.loadSample
+- assertVisible:
+    id: scoreImport.summary
+- scrollUntilVisible:
+    element: { id: scoreImport.display.focus }
+    direction: DOWN
+- tapOn:
+    id: scoreImport.display.focus
+- scrollUntilVisible:
+    element: { id: scoreImport.start }
+    direction: DOWN
+- tapOn:
+    id: scoreImport.start
+- extendedWaitUntil:
+    visible:
+      id: practice.screen
+    timeout: 15000
+- tapOn:
+    id: practice.tutorial
+- extendedWaitUntil:
+    visible:
+      id: practice.scoreFocusNote.left
+    timeout: 10000
+- assertVisible:
+    id: practice.scoreFocusNote.left.notation.note.0
+- assertVisible:
+    id: practice.scoreFocusNote.right.notation.note.0
+- assertNotVisible:
+    id: practice.scoreHand.right
+- tapOn:
+    id: practice.end
+- extendedWaitUntil:
+    visible:
+      id: results.screen
+    timeout: 15000
+- assertVisible: SCORE SESSION COMPLETE

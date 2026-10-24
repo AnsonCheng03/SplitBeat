@@ -33,7 +33,16 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: scoreImport.summary
 - assertVisible: E2E Two Bar Score
-- assertVisible: 2 left-hand notes · 2 right-hand notes
+- assertVisible: 4 left-hand notes · 4 right-hand notes
+- scrollUntilVisible:
+    element: { id: scoreImport.display.staff }
+    direction: DOWN
+- assertVisible:
+    id: scoreImport.display.staff
+- assertVisible:
+    id: scoreImport.display.focus
+- tapOn:
+    id: scoreImport.display.staff
 - scrollUntilVisible:
     element: { id: scoreImport.duration.30 }
     direction: DOWN
@@ -60,9 +69,27 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: practice.scoreMeasure
 - assertVisible:
-    id: practice.scoreMeasure.leftNotation
+    id: practice.scoreMeasure.bar.0.leftNotation
 - assertVisible:
-    id: practice.scoreMeasure.rightNotation
+    id: practice.scoreMeasure.bar.0.leftNotation.note.0
+- assertVisible:
+    id: practice.scoreMeasure.bar.0.rightNotation
+- assertVisible:
+    id: practice.scoreMeasure.bar.0.rightNotation.note.0
+- assertVisible:
+    id: practice.scoreMeasure.bar.1.leftNotation.note.0
+- assertVisible:
+    id: practice.scoreMeasure.bar.1.rightNotation.note.0
+- assertVisible:
+    id: practice.scoreMeasure.bar.2.leftNotation.note.0
+- assertVisible:
+    id: practice.scoreMeasure.bar.2.rightNotation.note.0
+- assertVisible:
+    id: practice.tap.left.label
+- assertVisible:
+    id: practice.tap.right.label
+- assertNotVisible:
+    id: practice.scoreHand.left
 - tapOn:
     id: practice.tap.left
 - tapOn:

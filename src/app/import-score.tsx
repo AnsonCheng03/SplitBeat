@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
+import type { ScoreDisplayMode } from '@/rhythm/scoreStaff';
 import { createImportedScoreEntry, placeSingleTrackOnHand, rememberImportedScore, setImportedScoreSaved } from '@/rhythm/importedScoreLibrary';
 import { decodeBase64Bytes, parseMidiRhythm } from '@/rhythm/midiParser';
 import { SCORE_TEMPLATES } from '@/rhythm/scoreTemplates';
@@ -21,14 +22,18 @@ const E2E_SAMPLE_MUSICXML = `<score-partwise>
   <part id="P">
     <measure number="1">
       <attributes><divisions>24</divisions><staves>2</staves><time><beats>2</beats><beat-type>4</beat-type></time></attributes>
-      <note><duration>48</duration><staff>1</staff></note>
+      <note><duration>24</duration><staff>1</staff></note>
+      <note><duration>24</duration><staff>1</staff></note>
       <backup><duration>48</duration></backup>
-      <note><duration>48</duration><staff>2</staff></note>
+      <note><duration>24</duration><staff>2</staff></note>
+      <note><duration>24</duration><staff>2</staff></note>
     </measure>
     <measure number="2">
-      <note><duration>48</duration><staff>1</staff></note>
+      <note><duration>24</duration><staff>1</staff></note>
+      <note><duration>24</duration><staff>1</staff></note>
       <backup><duration>48</duration></backup>
-      <note><duration>48</duration><staff>2</staff></note>
+      <note><duration>24</duration><staff>2</staff></note>
+      <note><duration>24</duration><staff>2</staff></note>
     </measure>
   </part>
 </score-partwise>`;
@@ -52,6 +57,7 @@ export default function ImportScoreScreen() {
   const libraryLoadPromiseRef = useRef<Promise<Awaited<ReturnType<typeof loadImportedScoreLibrary>>> | null>(null);
   const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
   const [libraryLoaded, setLibraryLoaded] = useState(false);
+  const [scoreDisplayMode, setScoreDisplayMode] = useState<ScoreDisplayMode>('staff');
 
   useEffect(() => {
     let active = true;
@@ -194,7 +200,7 @@ export default function ImportScoreScreen() {
           ? { trainingMode: 'single-hand', singleHand: settings.singleHand }
           : { trainingMode: 'two-hand' },
       });
-      router.replace('/practice');
+      router.replace({ pathname: '/practice', params: { scoreDisplayMode } });
     } catch {
       Alert.alert('Audio could not start', 'Check your device audio settings and try again.');
       setStarting(false);
@@ -357,6 +363,28 @@ export default function ImportScoreScreen() {
             <Text style={{ color: colors.dim, fontSize: 10, lineHeight: 14, marginTop: 7 }}>
               Check the extracted rhythms against your score before you start.
             </Text>
+            <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1, marginTop: 12, marginBottom: 6 }}>PRACTICE DISPLAY</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {([
+                { value: 'focus', label: 'ONE NOTE', detail: 'One upcoming note for each hand' },
+                { value: 'staff', label: 'MOVING SCORE', detail: 'Both hand lanes · slides at each bar' },
+              ] as const).map((option) => {
+                const selected = scoreDisplayMode === option.value;
+                return (
+                  <Pressable
+                    key={option.value}
+                    testID={`scoreImport.display.${option.value}`}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected }}
+                    onPress={() => setScoreDisplayMode(option.value)}
+                    style={{ flex: 1, minHeight: 54, justifyContent: 'center', paddingHorizontal: 11, borderRadius: 12, borderWidth: 1, borderColor: selected ? colors.accent : colors.line, backgroundColor: selected ? `${colors.accent}18` : colors.surface }}
+                  >
+                    <Text style={{ color: selected ? colors.accent : colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 }}>{option.label}</Text>
+                    <Text style={{ color: colors.muted, fontSize: 9, marginTop: 3 }}>{option.detail}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
             <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1, marginTop: 10, marginBottom: 6 }}>PRACTICE LENGTH</Text>
             <View style={{ flexDirection: 'row', gap: 7 }}>
               {([

@@ -14,6 +14,8 @@ function RhythmTrack({
   size,
   beamGroupQuarterNotes,
   minimal = false,
+  showStaffLines = false,
+  showHandLabels = false,
   testIdPrefix = 'practice.scoreMeasure',
 }: {
   label: string;
@@ -23,10 +25,12 @@ function RhythmTrack({
   size: NoteNotationSize;
   beamGroupQuarterNotes: number;
   minimal?: boolean;
+  showStaffLines?: boolean;
+  showHandLabels?: boolean;
   testIdPrefix?: string;
 }) {
   const [notationWidth, setNotationWidth] = useState(0);
-  const plan = useMemo(() => events.length > 0 && notationWidth > 0
+  const plan = useMemo(() => notationWidth > 0
     ? createBarNoteNotationPlan(events, {
       durationQuarter,
       width: notationWidth,
@@ -36,20 +40,26 @@ function RhythmTrack({
     : null, [beamGroupQuarterNotes, durationQuarter, events, notationWidth, size]);
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: minimal ? 0 : 10, minHeight: size === 'compact' ? 32 : 46 }}>
-      {!minimal ? <Text style={{ color, fontSize: 9, fontWeight: '900', letterSpacing: 1, width: 42 }}>{label}</Text> : null}
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: minimal ? 0 : 10, minHeight: size === 'compact' ? 40 : 54 }}>
+      {(!minimal || showHandLabels) ? <Text style={{ color, fontSize: 9, fontWeight: '900', letterSpacing: 1, width: 48 }}>{label}</Text> : null}
       <View
         onLayout={({ nativeEvent }) => setNotationWidth(nativeEvent.layout.width)}
-        style={{ flex: 1, minHeight: size === 'compact' ? 28 : 42, justifyContent: 'center' }}
+        style={{ flex: 1, minHeight: size === 'compact' ? 36 : 50, justifyContent: 'center' }}
       >
         {events.length === 0 ? (
-          <Text style={{ color: colors.muted, fontSize: size === 'compact' ? 9 : 11, fontWeight: '800', letterSpacing: 1.1, textAlign: 'center' }}>
-            REST
-          </Text>
+          <View style={{ minHeight: size === 'compact' ? 36 : 50, alignItems: 'center', justifyContent: 'center' }}>
+            {showStaffLines && plan ? <NoteNotation plan={plan} color={color} showStaffLines staffLineColor={colors.dim} /> : null}
+            <Text style={{ position: 'absolute', color: colors.muted, fontSize: size === 'compact' ? 9 : 11, fontWeight: '800', letterSpacing: 1.1, textAlign: 'center' }}>
+              REST
+            </Text>
+          </View>
         ) : plan ? (
           <NoteNotation
             plan={plan}
             color={color}
+            showStaffLines={showStaffLines}
+            staffLineColor={colors.dim}
+            useNativeGlyphs
             testID={`${testIdPrefix}.${label.toLowerCase()}Notation`}
             accessibilityLabel={`${label.toLowerCase()} bar with ${events.length} notes`}
           />
@@ -93,6 +103,8 @@ export function ScoreRhythmMeasure({
   visibleHand,
   focusedColor,
   minimal = false,
+  showStaffLines = false,
+  showHandLabels = false,
 }: {
   measure: ScoreMeasure;
   number: number;
@@ -104,6 +116,8 @@ export function ScoreRhythmMeasure({
   visibleHand?: Hand;
   focusedColor?: string;
   minimal?: boolean;
+  showStaffLines?: boolean;
+  showHandLabels?: boolean;
 }) {
   const size: NoteNotationSize = compact ? 'compact' : 'full';
 
@@ -126,6 +140,8 @@ export function ScoreRhythmMeasure({
           size={size}
           beamGroupQuarterNotes={beamGroupQuarterNotes}
           minimal={minimal}
+          showStaffLines={showStaffLines}
+          showHandLabels={showHandLabels}
           testIdPrefix={testIdPrefix}
         />
       ) : null}
@@ -138,6 +154,8 @@ export function ScoreRhythmMeasure({
           size={size}
           beamGroupQuarterNotes={beamGroupQuarterNotes}
           minimal={minimal}
+          showStaffLines={showStaffLines}
+          showHandLabels={showHandLabels}
           testIdPrefix={testIdPrefix}
         />
       ) : null}
@@ -150,6 +168,7 @@ interface ScrollingScoreRhythmProps {
   measure: ScoreMeasure;
   previousMeasure?: ScoreMeasure;
   nextMeasure: ScoreMeasure;
+  upcomingMeasures?: ScoreMeasure[];
   sequence: number;
   count: number;
   compact?: boolean;
@@ -157,6 +176,7 @@ interface ScrollingScoreRhythmProps {
   minimal?: boolean;
   visibleHand?: Hand;
   focusedColor?: string;
+  showStaffLines?: boolean;
 }
 
 interface VisibleScoreBar {
@@ -182,6 +202,7 @@ function ScoreBarPanel({
   minimal,
   visibleHand,
   focusedColor,
+  showStaffLines,
 }: {
   bar: VisibleScoreBar;
   count: number;
@@ -191,9 +212,13 @@ function ScoreBarPanel({
   minimal: boolean;
   visibleHand?: Hand;
   focusedColor?: string;
+  showStaffLines: boolean;
 }) {
   return (
-    <View style={{ position: 'relative', width, paddingHorizontal: 4, paddingVertical: size === 'compact' ? 3 : 7, gap: size === 'compact' ? 2 : 4 }}>
+    <View
+      testID={`practice.scoreMeasure.bar.${bar.sequence}`}
+      style={{ position: 'relative', width, paddingHorizontal: 4, paddingVertical: size === 'compact' ? 3 : 7, gap: size === 'compact' ? 2 : 4 }}
+    >
       {!minimal ? (
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: size === 'compact' ? 0 : 2 }}>
           <Text style={{ color: colors.text, fontSize: size === 'compact' ? 10 : 11, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
@@ -209,6 +234,8 @@ function ScoreBarPanel({
         size={size}
         beamGroupQuarterNotes={beamGroupQuarterNotes}
         minimal={minimal}
+        showStaffLines={showStaffLines}
+        testIdPrefix={`practice.scoreMeasure.bar.${bar.sequence}`}
       /> : null}
       {(!visibleHand || visibleHand === 'right') ? <RhythmTrack
         label="RIGHT"
@@ -218,17 +245,20 @@ function ScoreBarPanel({
         size={size}
         beamGroupQuarterNotes={beamGroupQuarterNotes}
         minimal={minimal}
+        showStaffLines={showStaffLines}
+        testIdPrefix={`practice.scoreMeasure.bar.${bar.sequence}`}
       /> : null}
       <MeasureBarLine testID={`practice.scoreMeasure.barline.${bar.sequence}`} inset={4} />
     </View>
   );
 }
 
-/** Advances one complete bar at a time; both hand rows share the same horizontal motion. */
+/** Slides the score viewport when its supplied sequence changes. */
 export function ScrollingScoreRhythm({
   measure,
   previousMeasure,
   nextMeasure,
+  upcomingMeasures,
   sequence,
   count,
   compact = false,
@@ -236,29 +266,33 @@ export function ScrollingScoreRhythm({
   minimal = false,
   visibleHand,
   focusedColor,
+  showStaffLines = false,
 }: ScrollingScoreRhythmProps) {
   const [viewportWidth, setViewportWidth] = useState(0);
   const size: NoteNotationSize = compact ? 'compact' : 'full';
   const [translateX] = useState(() => new Animated.Value(0));
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
   const visibleSequenceRef = useRef(sequence);
+  const barWidth = viewportWidth > 0 ? Math.max(160, Math.min(320, viewportWidth / 3)) : 0;
+  const followingMeasures = upcomingMeasures?.length ? upcomingMeasures : [measure, nextMeasure];
+  const upcomingBars = followingMeasures.map((item, offset) => scoreBar(item, count, sequence + offset));
   const visibleBars = sequence === 0 || !previousMeasure
-    ? [scoreBar(measure, count, sequence), scoreBar(nextMeasure, count, sequence + 1)]
-    : [scoreBar(previousMeasure, count, sequence - 1), scoreBar(measure, count, sequence)];
+    ? upcomingBars
+    : [scoreBar(previousMeasure, count, sequence - 1), ...upcomingBars];
 
   useLayoutEffect(() => {
     if (sequence === visibleSequenceRef.current) return;
     visibleSequenceRef.current = sequence;
     animationRef.current?.stop();
 
-    if (viewportWidth <= 0 || previousMeasure?.index === measure.index) {
+    if (barWidth <= 0) {
       translateX.setValue(0);
       return;
     }
 
     translateX.setValue(0);
     animationRef.current = Animated.timing(translateX, {
-      toValue: -viewportWidth,
+      toValue: -barWidth,
       duration: 190,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
@@ -266,39 +300,52 @@ export function ScrollingScoreRhythm({
     animationRef.current.start();
 
     return () => animationRef.current?.stop();
-  }, [measure.index, previousMeasure?.index, sequence, translateX, viewportWidth]);
+  }, [barWidth, sequence, translateX]);
 
   return (
     <View
       testID="practice.scoreMeasure"
-      onLayout={({ nativeEvent }) => setViewportWidth(nativeEvent.layout.width)}
-      style={{ overflow: 'hidden', paddingHorizontal: compact ? 4 : 12, paddingVertical: minimal ? 0 : compact ? 3 : 7 }}
+      style={{ flex: 1, flexDirection: 'row', alignItems: 'center', overflow: 'hidden' }}
     >
-      {!minimal ? (
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: compact ? 0 : 2 }}>
-          <Text style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '800', letterSpacing: 1.1 }}>SCORE RHYTHM</Text>
-        </View>
-      ) : null}
-      {viewportWidth > 0 ? (
-        <Animated.View
-          testID="practice.scoreMeasure.strip"
-          style={{ width: viewportWidth * 2, flexDirection: 'row', transform: [{ translateX }] }}
-        >
-          {visibleBars.map((bar) => (
-            <ScoreBarPanel
-              key={bar.sequence}
-              bar={bar}
-              count={count}
-              width={viewportWidth}
-              size={size}
-              beamGroupQuarterNotes={beamGroupQuarterNotes}
-              minimal={minimal}
-              visibleHand={visibleHand}
-              focusedColor={focusedColor}
-            />
-          ))}
-        </Animated.View>
-      ) : null}
+      <View style={{ width: 52, gap: compact ? 2 : 4 }}>
+        {(!visibleHand || visibleHand === 'left') ? (
+          <View style={{ minHeight: compact ? 40 : 54, justifyContent: 'center' }}>
+            <Text style={{ color: visibleHand ? focusedColor ?? colors.left : colors.left, fontSize: 9, fontWeight: '900', letterSpacing: 1 }}>LEFT</Text>
+          </View>
+        ) : null}
+        {(!visibleHand || visibleHand === 'right') ? (
+          <View style={{ minHeight: compact ? 40 : 54, justifyContent: 'center' }}>
+            <Text style={{ color: visibleHand ? focusedColor ?? colors.right : colors.right, fontSize: 9, fontWeight: '900', letterSpacing: 1 }}>RIGHT</Text>
+          </View>
+        ) : null}
+      </View>
+      <View
+        testID="practice.scoreMeasure.viewport"
+        onLayout={({ nativeEvent }) => setViewportWidth(nativeEvent.layout.width)}
+        style={{ flex: 1, overflow: 'hidden', paddingVertical: minimal ? 0 : compact ? 3 : 7 }}
+      >
+        {barWidth > 0 ? (
+          <Animated.View
+            testID="practice.scoreMeasure.strip"
+            style={{ width: barWidth * visibleBars.length, flexDirection: 'row', transform: [{ translateX }] }}
+          >
+            {visibleBars.map((bar) => (
+              <ScoreBarPanel
+                key={bar.sequence}
+                bar={bar}
+                count={count}
+                width={barWidth}
+                size={size}
+                beamGroupQuarterNotes={beamGroupQuarterNotes}
+                minimal={minimal}
+                visibleHand={visibleHand}
+                focusedColor={focusedColor}
+                showStaffLines={showStaffLines}
+              />
+            ))}
+          </Animated.View>
+        ) : null}
+      </View>
     </View>
   );
 }

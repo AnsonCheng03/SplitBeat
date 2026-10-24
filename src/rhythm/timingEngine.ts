@@ -734,9 +734,11 @@ export class RhythmTimingEngine {
             scoreMeasure: scorePosition.measure,
             scorePreviousMeasure: scorePosition.previousMeasure,
             scoreNextMeasure: scorePosition.nextMeasure,
+            scoreUpcomingMeasures: scorePosition.upcomingMeasures,
             scoreMeasureSequence: scorePosition.sequence,
             scoreMeasureNumber: scorePosition.measure.index + 1,
             scoreMeasureCount: this.importedScore?.measures.length,
+            scoreQuarterInMeasure: scorePosition.quarterInMeasure,
             scoreTitle: this.importedScore?.title,
           }
         : {}),
@@ -762,7 +764,11 @@ export class RhythmTimingEngine {
       measure,
       previousMeasure: score.measures[(index - 1 + score.measures.length) % score.measures.length] ?? measure,
       nextMeasure: score.measures[(index + 1) % score.measures.length] ?? measure,
+      upcomingMeasures: Array.from({ length: 8 }, (_, offset) =>
+        score.measures[(index + offset) % score.measures.length] ?? measure,
+      ),
       sequence: scoreRepeat * score.measures.length + index,
+      quarterInMeasure: Math.max(0, scoreQuarter - measure.startQuarter),
     };
   }
 

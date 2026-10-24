@@ -7,8 +7,10 @@ import { HardwareKeyboardInput } from '@/components/HardwareKeyboardInput';
 import { MetronomeIndicator } from '@/components/MetronomeIndicator';
 import { NextPatternPreview } from '@/components/NextPatternPreview';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
+import { ScoreFocusNote } from '@/components/ScoreFocusNote';
 import { ScrollingScoreRhythm } from '@/components/ScoreRhythmMeasure';
 import { TapZone } from '@/components/TapZone';
+import { findNextScoreEvent, type ScoreDisplayMode } from '@/rhythm/scoreStaff';
 import { pulseQuarterNotes, SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import { useRhythmSession } from '@/store/sessionStore';
 import type { Hand, TapFeedback } from '@/types/rhythm';
@@ -19,8 +21,13 @@ export default function PracticeScreen() {
   const insets = useSafeAreaInsets();
   const compact = height < 520;
   const router = useRouter();
-  const { lessonId: rawLessonId } = useLocalSearchParams<{ lessonId?: string }>();
+  const { lessonId: rawLessonId, scoreDisplayMode: rawScoreDisplayMode } = useLocalSearchParams<{
+    lessonId?: string;
+    scoreDisplayMode?: string;
+  }>();
   const lessonId = Array.isArray(rawLessonId) ? rawLessonId[0] : rawLessonId;
+  const scoreDisplayModeParam = Array.isArray(rawScoreDisplayMode) ? rawScoreDisplayMode[0] : rawScoreDisplayMode;
+  const scoreDisplayMode: ScoreDisplayMode = scoreDisplayModeParam === 'focus' ? 'focus' : 'staff';
   const {
     snapshot,
     settings,
@@ -87,16 +94,29 @@ export default function PracticeScreen() {
   const focusedHand = activeSettings.singleHand;
   const step = snapshot?.currentStep;
   const beatFlashToken = snapshot?.phase === 'running' ? snapshot.beatIndex + 1 : 0;
-  const showNextPattern = Boolean(snapshot?.scoreMeasure
-    ? snapshot.scoreNextMeasure
-    : snapshot?.nextStep);
+  const showNextPattern = Boolean(!snapshot?.scoreMeasure && snapshot?.nextStep);
   const previewTop = Math.max(insets.top, 8) + (compact ? 46 : 58);
   const previewHeight = snapshot?.scoreMeasure
     ? Math.min(220, Math.max(112, height * 0.25))
     : compact ? 62 : 74;
-  const changeCountdown = snapshot?.scoreMeasure
-    ? snapshot.beatsPerBar - snapshot.beatInBar
-    : snapshot?.beatsUntilChange;
+  const changeCountdown = snapshot?.scoreMeasure ? undefined : snapshot?.beatsUntilChange;
+  const scoreHandToShow = singleHandMode ? focusedHand : undefined;
+  const scoreHandColor = scoreHandToShow === 'left' ? colors.left : colors.right;
+  const scoreMeasure = snapshot?.scoreMeasure;
+  const scoreQuarterInMeasure = snapshot?.scoreQuarterInMeasure ?? 0;
+  const scoreSequence = snapshot?.scoreMeasureSequence ?? 0;
+  const scoreFocusEvents = scoreMeasure
+    ? {
+        left: findNextScoreEvent(scoreMeasure, snapshot?.scoreNextMeasure ?? scoreMeasure, 'left', scoreQuarterInMeasure),
+        right: findNextScoreEvent(scoreMeasure, snapshot?.scoreNextMeasure ?? scoreMeasure, 'right', scoreQuarterInMeasure),
+      }
+    : undefined;
+  const rhythmDisplayStyle = snapshot?.scoreMeasure
+    ? {
+        top: Math.max(insets.top, 8) + (compact ? 46 : 58),
+        height: Math.min(180, Math.max(110, height * 0.25)),
+      }
+    : { top: -insets.top, bottom: -insets.bottom };
 
   const resumeFromChallenge = async () => {
     try {
@@ -147,6 +167,7 @@ export default function PracticeScreen() {
                 resting={snapshot?.isRest}
                 compact={compact}
                 minimal
+                showMinimalLabel={Boolean(snapshot?.scoreMeasure)}
                 style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '50%' }}
               />
               <TapZone
@@ -162,6 +183,7 @@ export default function PracticeScreen() {
                 resting={snapshot?.isRest}
                 compact={compact}
                 minimal
+                showMinimalLabel={Boolean(snapshot?.scoreMeasure)}
                 style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '50%' }}
               />
 
@@ -201,24 +223,46 @@ export default function PracticeScreen() {
           <View
             testID="practice.rhythmDisplay"
             pointerEvents="none"
-            style={{ position: 'absolute', top: -insets.top, bottom: -insets.bottom, left: -insets.left, right: -insets.right, flexDirection: 'row', alignItems: 'center' }}
+            style={[{ position: 'absolute', left: -insets.left, right: -insets.right, flexDirection: 'row', alignItems: 'center', backgroundColor: snapshot.scoreMeasure ? colors.surface : 'transparent' }, rhythmDisplayStyle]}
           >
-            {snapshot.scoreMeasure ? (
-              <View style={{ flex: 1 }}>
-                <ScrollingScoreRhythm
-                  measure={snapshot.scoreMeasure}
-                  previousMeasure={snapshot.scorePreviousMeasure}
-                  nextMeasure={snapshot.scoreNextMeasure ?? snapshot.scoreMeasure}
-                  sequence={snapshot.scoreMeasureSequence ?? 0}
-                  count={snapshot.scoreMeasureCount ?? 1}
-                  compact={compact}
-                  beamGroupQuarterNotes={pulseQuarterNotes(activeSettings.timeSignature)}
-                  minimal
-                  visibleHand={singleHandMode ? focusedHand : undefined}
-                  focusedColor={singleHandMode ? colors.accent : undefined}
-                />
-              </View>
-            ) : singleHandMode && step ? (
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginHorizontal: snapshot.scoreMeasure ? Math.max(16, insets.left + 18, insets.right + 18) : 0 }}>
+              {snapshot.scoreMeasure ? (
+                scoreDisplayMode === 'staff' ? (
+                  <View style={{ flex: 1, justifyContent: 'center' }}>
+                  <ScrollingScoreRhythm
+                    measure={snapshot.scoreMeasure}
+                    previousMeasure={snapshot.scorePreviousMeasure}
+                    nextMeasure={snapshot.scoreNextMeasure ?? snapshot.scoreMeasure}
+                    upcomingMeasures={snapshot.scoreUpcomingMeasures}
+                    sequence={scoreSequence}
+                    count={snapshot.scoreMeasureCount ?? 1}
+                    compact={compact}
+                    beamGroupQuarterNotes={pulseQuarterNotes(activeSettings.timeSignature)}
+                    minimal
+                    visibleHand={scoreHandToShow}
+                    focusedColor={singleHandMode ? scoreHandColor : undefined}
+                  />
+                </View>
+              ) : (
+                singleHandMode ? (
+                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 8 }}>
+                    <Text style={{ color: scoreHandColor, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>{focusedHand.toUpperCase()} HAND</Text>
+                    <ScoreFocusNote event={scoreFocusEvents?.[focusedHand]} color={scoreHandColor} testID="practice.scoreFocusNote" />
+                  </View>
+                ) : (
+                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                      <Text style={{ color: colors.left, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>LEFT HAND</Text>
+                      <ScoreFocusNote event={scoreFocusEvents?.left} color={colors.left} testID="practice.scoreFocusNote.left" />
+                    </View>
+                    <View style={{ width: 1, height: 84, backgroundColor: colors.line, opacity: 0.7 }} />
+                    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                      <Text style={{ color: colors.right, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>RIGHT HAND</Text>
+                      <ScoreFocusNote event={scoreFocusEvents?.right} color={colors.right} testID="practice.scoreFocusNote.right" />
+                    </View>
+                  </View>
+                )
+              ) ) : singleHandMode && step ? (
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: compact ? 6 : 10 }}>
                 <Text style={{ color: colors.accent, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>
                   {focusedHand.toUpperCase()}
@@ -255,7 +299,8 @@ export default function PracticeScreen() {
                   ) : null}
                 </View>
               </>
-            )}
+              )}
+            </View>
           </View>
         ) : null}
 

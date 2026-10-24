@@ -21,6 +21,7 @@ interface TapZoneProps {
   resting?: boolean;
   compact?: boolean;
   minimal?: boolean;
+  showMinimalLabel?: boolean;
   singleHand?: boolean;
   accessibilityLabelOverride?: string;
   style?: StyleProp<ViewStyle>;
@@ -45,6 +46,7 @@ export function TapZone({
   resting = false,
   compact = false,
   minimal = false,
+  showMinimalLabel = false,
   singleHand = false,
   accessibilityLabelOverride,
   style,
@@ -209,6 +211,15 @@ export function TapZone({
             {KEYBOARD_KEYS_BY_HAND[hand]}
           </Text>
         </>
+      ) : null}
+      {minimal && showMinimalLabel ? (
+        <Text
+          testID={`practice.tap.${hand}.label`}
+          pointerEvents="none"
+          style={{ position: 'absolute', top: '58%', left: 0, right: 0, color: accent, fontSize: compact ? 11 : 13, fontWeight: '900', letterSpacing: 2, opacity: 0.7, textAlign: 'center' }}
+        >
+          {hand.toUpperCase()}
+        </Text>
       ) : null}
       {missed && !minimal ? (
         <Animated.Text

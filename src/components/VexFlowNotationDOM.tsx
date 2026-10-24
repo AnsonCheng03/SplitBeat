@@ -39,7 +39,6 @@ function durationForNote(beamCount: number, durationQuarter: number): { duration
 function drawNotation(container: HTMLDivElement, plan: NoteNotationPlan, color: string) {
   container.replaceChildren();
   if (plan.events.length === 0) return;
-
   const renderer = new Renderer(container, Renderer.Backends.SVG);
   renderer.resize(plan.width, plan.height);
   const context = renderer.getContext();

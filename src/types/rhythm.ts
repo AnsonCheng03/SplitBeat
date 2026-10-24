@@ -205,9 +205,13 @@ export interface SessionSnapshot {
   scoreMeasure?: ScoreRhythmMeasure;
   scorePreviousMeasure?: ScoreRhythmMeasure;
   scoreNextMeasure?: ScoreRhythmMeasure;
+  /** Current and following measures used to fill the visible rhythm strip. */
+  scoreUpcomingMeasures?: ScoreRhythmMeasure[];
   /** Monotonic bar number across score repeats, used to advance the score view at bar lines. */
   scoreMeasureSequence?: number;
   scoreMeasureNumber?: number;
   scoreMeasureCount?: number;
+  /** Current fractional quarter-note position inside the displayed score measure. */
+  scoreQuarterInMeasure?: number;
   scoreTitle?: string;
 }
