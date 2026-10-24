@@ -211,7 +211,7 @@ export default function PracticeScreen() {
   const previewTop = Math.max(insets.top, 8) + (compact ? 46 : 58);
   const previewHeight = isScoreDisplay
     ? Math.min(220, Math.max(112, height * 0.25))
-    : compact ? 62 : 74;
+    : compact ? 88 : 104;
   const changeCountdown = isScoreDisplay ? undefined : snapshot?.beatsUntilChange;
   const scoreHandToShow = singleHandMode ? focusedHand : undefined;
   const scoreHandColor = scoreHandToShow === 'left' ? colors.left : colors.right;

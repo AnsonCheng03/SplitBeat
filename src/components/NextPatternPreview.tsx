@@ -37,28 +37,22 @@ interface HandPreviewProps {
   rest: boolean;
   timeSignature: TimeSignature;
   compact: boolean;
-  label?: string;
   colorOverride?: string;
 }
 
-function HandPreview({ hand, subdivision, mixtureId, rest, timeSignature, compact, label = 'NEXT', colorOverride }: HandPreviewProps) {
+function HandPreview({ hand, subdivision, mixtureId, rest, timeSignature, compact, colorOverride }: HandPreviewProps) {
   const { colors } = useTheme();
   const color = colorOverride ?? (hand === 'left' ? colors.left : colors.right);
+  const symbolScale = compact ? 1.3 : 1.45;
 
   return (
-    <View style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: compact ? 8 : 12, paddingHorizontal: compact ? 5 : 12 }}>
-      <Text
-        numberOfLines={1}
-        style={{ color, fontSize: compact ? 9 : 11, fontWeight: '900', letterSpacing: 1, minWidth: compact ? 29 : 38 }}
-      >
-        {label}
-      </Text>
+    <View style={{ flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: compact ? 5 : 12 }}>
       {rest ? (
-        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} compact scale={compact ? 0.85 : 1} rest />
+        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} compact scale={symbolScale} rest />
       ) : mixtureId ? (
-        <MixtureSymbol mixtureId={mixtureId} color={color} compact scale={compact ? 0.85 : 1} />
+        <MixtureSymbol mixtureId={mixtureId} color={color} compact scale={symbolScale} />
       ) : (
-        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} compact scale={compact ? 0.85 : 1} />
+        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} compact scale={symbolScale} />
       )}
     </View>
   );

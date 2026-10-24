@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { View } from 'react-native';
-import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
 import { createNoteNotationPlan, type NoteNotationSize } from '@/rhythm/noteNotation';
@@ -26,21 +25,13 @@ export function RhythmSymbol({ subdivision, color, compact = false, mini = false
   const { t } = useI18n();
   const size = notationSize(compact, mini);
   const plan = useMemo(() => createNoteNotationPlan(subdivision, size, timeSignature), [size, subdivision, timeSignature]);
-
-  if (rest) {
-    return (
-      <View style={{ width: Math.max(plan.width, compact ? 44 : 58) * scale, height: plan.height * scale, alignItems: 'center', justifyContent: 'center' }}>
-        <Text adjustsFontSizeToFit numberOfLines={1} style={{ color, fontSize: (mini ? 8 : compact ? 10 : 15) * scale, fontWeight: '900', letterSpacing: mini ? 0.7 : 1.8, textAlign: 'center' }}>
-          REST
-        </Text>
-      </View>
-    );
-  }
-
   const notation = <NoteNotation
     plan={plan}
     color={color}
-    accessibilityLabel={t(SUBDIVISION_LABELS[subdivision])}
+    accessibilityLabel={rest
+      ? t('{note} rest', { note: t(SUBDIVISION_LABELS[subdivision]) })
+      : t(SUBDIVISION_LABELS[subdivision])}
+    restSymbol={rest}
   />;
   if (scale === 1) return notation;
 
