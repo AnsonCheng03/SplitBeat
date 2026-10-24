@@ -18,7 +18,7 @@ import {
   normalizeGoodWindowMs,
   normalizeTapOffsetMs,
 } from '@/rhythm/timingCalibration';
-import { timeSignatureMetrics } from '@/rhythm/subdivisions';
+import { roundSessionDurationToBar, timeSignatureMetrics } from '@/rhythm/subdivisions';
 import { appendSessionRecord, createSessionRecord, parseSessionHistory } from '@/store/sessionHistory';
 import type { SessionRecord } from '@/store/sessionHistory';
 import { SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
@@ -462,7 +462,13 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       sessionStartTime,
       bpm: activeSettings.bpm,
       beatsPerBar: metrics.beatsPerBar,
-      durationSeconds: activeSettings.durationSeconds === 'endless' ? null : activeSettings.durationSeconds,
+      durationSeconds: activeSettings.durationSeconds === 'endless'
+        ? null
+        : roundSessionDurationToBar(
+            activeSettings.durationSeconds,
+            activeSettings.bpm,
+            activeSettings.timeSignature,
+          ),
       soundEnabled: activeSettings.soundEnabled && !FORCE_SILENT_E2E,
       referenceRhythmEnabled: activeSettings.referenceRhythmEnabled,
       getReferenceEventsThrough: (timeMs) => engine.getReferenceEventsThrough(timeMs),

@@ -6,6 +6,7 @@ import { generateExerciseSteps } from '@/rhythm/exerciseGenerator';
 import {
   beatDurationMs,
   expectedEventTimeMs,
+  roundSessionDurationToBar,
   subdivisionIntervalQuarterNotes,
   pulseQuarterNotes,
   subdivisionOffsetMs,
@@ -58,6 +59,14 @@ test('subdivision intervals follow the selected BPM', () => {
   assert.ok(Math.abs(subdivisionIntervalMs(60, 'sextuplet', '4/4') - 1_000 / 6) < 0.000001);
   assert.equal(subdivisionIntervalQuarterNotes('duplet', '6/8'), 0.75);
   assert.equal(expectedEventTimeMs(5_000, 60, 1, 1, 'duplet', '6/8'), 6_500);
+});
+
+test('timed session lengths round up to the next bar in the selected meter', () => {
+  assert.ok(Math.abs(roundSessionDurationToBar(60, 70, '4/4') - (72 * 60) / 70) < 0.000001);
+  assert.equal(roundSessionDurationToBar(60, 80, '4/4'), 60);
+  assert.equal(roundSessionDurationToBar(5, 60, '3/4'), 6);
+  assert.equal(roundSessionDurationToBar(3, 60, '6/8'), 4);
+  assert.equal(roundSessionDurationToBar(0, 60, '4/4'), 0);
 });
 
 test('reference playback events use the same mixed left and right pattern timestamps', () => {
@@ -608,6 +617,34 @@ test('the first two beats after a pair change are scored as transition events', 
 test('count-in places the first exercise beat after three full beats and lead-in', () => {
   assert.equal(getExerciseStartTime(100, 120, 300), 100 + 300 + 1_500);
   assert.equal(getExerciseStartTime(100, 60, 300, '6/8'), 100 + 300 + 3_000);
+});
+
+test('timed sessions finish the last full bar instead of cutting notes off mid-bar', () => {
+  const start = 54_000;
+  const completedDurationMs = roundSessionDurationToBar(30, 70, '4/4') * 1_000;
+  const engine = new RhythmTimingEngine({
+    settings: {
+      ...settings,
+      bpm: 70,
+      durationSeconds: 30,
+      enabledSubdivisions: ['quarter'],
+      trainingMode: 'single-hand',
+      singleHand: 'left',
+    },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  assert.equal(engine.advance(start + 30_000).phase, 'running');
+  assert.equal(engine.advance(start + completedDurationMs - 1).phase, 'running');
+
+  const completed = engine.advance(start + completedDurationMs + 101);
+  assert.equal(completed.phase, 'finished');
+  assert.equal(completed.results?.left.totalExpected, 36);
+  assert.ok(Math.abs((completed.results?.durationSeconds ?? 0) - completedDurationMs / 1_000) < 0.000001);
+  const lastExpectedEvent = completed.results?.replayExpectedEvents?.slice(-1)[0];
+  assert.equal(lastExpectedEvent?.barIndex, 9);
+  assert.ok(Math.abs((lastExpectedEvent?.beatInBar ?? 0) - 3) < 0.000001);
 });
 
 test('score events use MusicXML quarter-note positions, loop, and score independently per hand', () => {

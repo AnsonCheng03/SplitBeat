@@ -1,6 +1,7 @@
 import { createExerciseStepGenerator } from '@/rhythm/exerciseGenerator';
 import {
   isTupletSubdivision,
+  roundSessionDurationToBar,
   SUBDIVISION_COUNTS,
   subdivisionOffsetMs,
   timeSignatureMetrics,
@@ -187,7 +188,11 @@ export class RhythmTimingEngine {
     this.endTime =
       options.settings.durationSeconds === 'endless'
         ? null
-        : options.sessionStartTime + options.settings.durationSeconds * 1_000;
+        : options.sessionStartTime + roundSessionDurationToBar(
+            options.settings.durationSeconds,
+            options.settings.bpm,
+            options.settings.timeSignature,
+          ) * 1_000;
     this.getStep = createExerciseStepGenerator({
       enabledSubdivisions: options.settings.enabledSubdivisions,
       changeIntervalBeats: options.settings.changeIntervalBeats,
@@ -324,7 +329,7 @@ export class RhythmTimingEngine {
         left: toAccuracyStats(combination.left),
         right: toAccuracyStats(combination.right),
       })),
-      durationSeconds: Math.max(0, (this.toActiveTime(now) - this.sessionStartTime) / 1_000),
+      durationSeconds: this.elapsedSessionSeconds(this.toActiveTime(now)),
       missedEvents: [...this.missedEvents].sort(
         (firstEvent, secondEvent) =>
           firstEvent.barIndex - secondEvent.barIndex ||
@@ -843,7 +848,7 @@ export class RhythmTimingEngine {
         left: toAccuracyStats(combination.left),
         right: toAccuracyStats(combination.right),
       })),
-      durationSeconds: Math.max(0, (now - this.sessionStartTime) / 1_000),
+      durationSeconds: this.elapsedSessionSeconds(now),
       missedEvents: [...this.missedEvents],
       replayExpectedEvents: [...this.replayExpectedEvents],
       replayTaps: [...this.replayTaps].sort(
@@ -853,6 +858,11 @@ export class RhythmTimingEngine {
         ? { source: 'score' as const, scoreTitle: this.importedScore.title }
         : {}),
     };
+  }
+
+  private elapsedSessionSeconds(now: number): number {
+    const end = Math.min(now, this.endTime ?? Number.POSITIVE_INFINITY);
+    return Math.max(0, (end - this.sessionStartTime) / 1_000);
   }
 
   private toActiveTime(now: number): number {

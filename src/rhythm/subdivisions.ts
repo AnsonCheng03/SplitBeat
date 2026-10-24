@@ -110,6 +110,19 @@ export function timeSignatureMetrics(
   };
 }
 
+export function roundSessionDurationToBar(
+  durationSeconds: number,
+  bpm: number,
+  timeSignature: TimeSignature,
+): number {
+  if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) return 0;
+
+  const metrics = timeSignatureMetrics(bpm, timeSignature);
+  const barDurationSeconds = (metrics.beatsPerBar * metrics.beatDurationMs) / 1_000;
+  const bars = Math.ceil(durationSeconds / barDurationSeconds - 1e-10);
+  return bars * barDurationSeconds;
+}
+
 export function subdivisionIntervalMs(
   bpm: number,
   subdivision: Subdivision,

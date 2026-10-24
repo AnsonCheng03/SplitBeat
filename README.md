@@ -69,6 +69,8 @@ Quarter, eighth/quaver, sixteenth/semiquaver, 32nd/demisemiquaver, and 64th/hemi
 
 Choose 2/4, 3/4, 4/4, 5/4, 7/4, 2/2, 3/8, 6/8, 9/8, or 12/8 in Rhythm & meter settings. BPM follows the meter's written beat: denominator-note beats in simple meters, dotted-quarter pulses in 6/8, 9/8, and 12/8. For example, 6/8 at 60 BPM has two metronome pulses per bar, while quarter-note events are spaced about 667 ms apart. Pattern changes and the count-in use those same metronome pulses.
 
+Timed sessions treat the selected length as a minimum and finish at the next bar line, so both hands complete the final bar instead of stopping in the middle of it. The same rule applies to imported scores.
+
 Choose Straight or Swing feel in Rhythm & meter settings. Swing moves binary offbeats toward a 2:1 long-short ratio within each quarter note; quarter notes and all tuplets keep their regular timing. Sixteenth, 32nd, and 64th notes use the same long-short eighth-note grid. Optionally enable Grace note pickups: the engine adds one extra expected tap for each hand just before every pattern change. Or enable Rest before each change: both hands stay silent for the last beat before the next pattern while the metronome continues. The rest takes precedence over grace pickups. These settings are saved with the other local preferences.
 
 New sessions default to a slower 60 BPM. In Rhythm & meter settings, **Independent hand rests** optionally lets generated two-hand practice rest one hand for a pattern while the other continues playing. Rests are shown in the current and upcoming pattern, create no expected taps for the resting hand, and still treat a tap on that resting hand as an error. This setting is off by default and does not alter authored Learn lessons or imported scores.
