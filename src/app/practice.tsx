@@ -16,6 +16,7 @@ import { PracticeOverlayBackdrop } from '@/components/PracticeOverlayBackdrop';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
 import { ScoreFocusNote } from '@/components/ScoreFocusNote';
 import { ScrollingScoreRhythm } from '@/components/ScoreRhythmMeasure';
+import { SessionEndingOverlay } from '@/components/SessionEndingOverlay';
 import { TapZone } from '@/components/TapZone';
 import { findNextScoreEvent, type ScoreDisplayMode } from '@/rhythm/scoreStaff';
 import { pulseQuarterNotes } from '@/rhythm/subdivisions';
@@ -62,7 +63,8 @@ export default function PracticeScreen() {
   const activeSettings = sessionSettings ?? settings;
   const tapFeedbackEnabled = featureFlags.tapFeedback;
   const blurTargetRef = useRef<View>(null);
-  const hasNavigatedToResultsRef = useRef(false);
+  const hasStartedExitRef = useRef(false);
+  const [endingVisible, setEndingVisible] = useState(false);
   const [tutorialVisible, setTutorialVisible] = useState(true);
   const [starting, setStarting] = useState(false);
   const [pauseActionLoading, setPauseActionLoading] = useState(false);
@@ -74,20 +76,23 @@ export default function PracticeScreen() {
     right: { token: 0, feedback: null },
   });
 
+  const showEnding = useCallback(() => {
+    if (hasStartedExitRef.current) return;
+    hasStartedExitRef.current = true;
+    setEndingVisible(true);
+  }, []);
+
   const navigateToResults = useCallback(() => {
-    if (hasNavigatedToResultsRef.current) return;
-    hasNavigatedToResultsRef.current = true;
     router.replace(lessonId ? { pathname: '/results', params: { lessonId } } : '/results');
   }, [lessonId, router]);
 
   useEffect(() => {
     if (!snapshot && !exercisePrepared) router.replace(lessonId ? '/learn' : '/setup');
-    else if (!exercisePrepared && snapshot?.phase === 'finished' && results) navigateToResults();
-  }, [exercisePrepared, lessonId, navigateToResults, router, snapshot, results]);
+    else if (!exercisePrepared && snapshot?.phase === 'finished' && results) showEnding();
+  }, [exercisePrepared, lessonId, router, showEnding, snapshot, results]);
 
   const stop = () => {
     stopExercise();
-    navigateToResults();
   };
 
   const openPauseMenu = () => {
@@ -118,7 +123,7 @@ export default function PracticeScreen() {
   };
 
   const backHomeFromPause = () => {
-    hasNavigatedToResultsRef.current = true;
+    hasStartedExitRef.current = true;
     stopExercise();
     router.replace('/');
   };
@@ -222,6 +227,11 @@ export default function PracticeScreen() {
       Alert.alert(t('Could not resume audio'), t('Check your device audio settings and try again.'));
     }
   };
+
+  const endingResults = results ?? snapshot?.results;
+  const endingExpected = endingResults ? endingResults.left.totalExpected + endingResults.right.totalExpected : 0;
+  const endingHits = endingResults ? endingResults.left.totalHit + endingResults.right.totalHit : 0;
+  const endingAccuracy = endingExpected === 0 ? 0 : endingHits / endingExpected * 100;
 
   return (
     <View testID="practice.screen" style={{ flex: 1, backgroundColor: colors.background }}>
@@ -712,6 +722,17 @@ export default function PracticeScreen() {
               </View>
             </View>
           </PracticeOverlayBackdrop>
+        ) : null}
+
+        {endingVisible && endingResults ? (
+          <SessionEndingOverlay
+            accuracy={endingAccuracy}
+            hits={endingHits}
+            expected={endingExpected}
+            isScore={endingResults.source === 'score'}
+            isLesson={Boolean(lessonId)}
+            onComplete={navigateToResults}
+          />
         ) : null}
     </View>
   );
