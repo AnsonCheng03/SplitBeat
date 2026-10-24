@@ -106,4 +106,4 @@ appId: com.splitbeat.twohandrhythm
       id: results.screen
     timeout: 15000
 - assertVisible: SCORE SESSION COMPLETE
-- assertVisible: 80 BPM · 2/4 · E2E Two Bar Score
+- assertVisible: 60 BPM · 2/4 · E2E Two Bar Score

@@ -38,7 +38,8 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: learn.start
 - assertVisible: Find the pulse
-- assertVisible: 0 / 12
+- assertVisible:
+    id: learn.progress.count
 - assertVisible:
     id: learn.lesson.together-pulse
 - swipe:

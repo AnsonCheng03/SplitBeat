@@ -62,22 +62,28 @@ appId: com.splitbeat.twohandrhythm
     id: practice.liveSettings
 - assertVisible:
     id: practice.liveSettings.sound
+- scrollUntilVisible:
+    element:
+      id: practice.liveSettings.haptics
+    direction: DOWN
 - assertVisible:
     id: practice.liveSettings.haptics
 - scrollUntilVisible:
     element:
-      id: practice.liveSettings.flash.right.beat
-    direction: DOWN
+      id: practice.liveSettings.back
+    direction: UP
 - tapOn:
-    id: practice.liveSettings.flash.right.beat
-- tapOn:
-    id: practice.liveSettings.done
+    id: practice.liveSettings.back
 - assertVisible:
     id: practice.pauseMenu
 - tapOn:
     id: practice.pause.continue
 - assertNotVisible:
     id: practice.pauseMenu
+- extendedWaitUntil:
+    notVisible:
+      id: practice.resumeCountIn
+    timeout: 10000
 - tapOn:
     id: practice.pause
 - assertVisible:

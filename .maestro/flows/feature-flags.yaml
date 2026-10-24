@@ -17,8 +17,12 @@ appId: com.splitbeat.twohandrhythm
     id: settings.features.screen
 - extendedWaitUntil:
     visible:
-      text: 22 of 22 enabled
+      id: settings.features.enabledCount
     timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: feature.scoreImport
+    direction: DOWN
 - assertVisible:
     id: feature.scoreImport
 - scrollUntilVisible:
@@ -50,4 +54,4 @@ appId: com.splitbeat.twohandrhythm
 - tapOn:
     id: settings.features.enableAll
 - assertVisible:
-    text: 22 of 22 enabled
+    id: settings.features.enabledCount

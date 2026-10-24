@@ -4,6 +4,27 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createBarNoteNotationPlan, createNoteNotationPlan } from '@/rhythm/noteNotation';
 
+function assertNotationFits(plan: ReturnType<typeof createBarNoteNotationPlan>) {
+  for (const note of plan.notes) {
+    assert.ok(note.left >= 0, `${note.key} head starts inside the notation viewport`);
+    assert.ok(note.left + note.headWidth <= plan.width, `${note.key} head ends inside the notation viewport`);
+    assert.ok(note.left + note.stemLeft >= 0, `${note.key} stem starts inside the notation viewport`);
+    assert.ok(note.left + note.stemLeft + note.stemWidth <= plan.width, `${note.key} stem ends inside the notation viewport`);
+  }
+  for (const beam of plan.beams) {
+    assert.ok(beam.left >= 0, `${beam.key} starts inside the notation viewport`);
+    assert.ok(beam.left + beam.width <= plan.width, `${beam.key} ends inside the notation viewport`);
+  }
+  for (const dot of plan.dots) {
+    assert.ok(dot.left >= 0, `${dot.key} starts inside the notation viewport`);
+    assert.ok(dot.left + dot.size <= plan.width, `${dot.key} ends inside the notation viewport`);
+  }
+  for (const label of plan.tupletLabels) {
+    assert.ok(label.left >= 0, `${label.key} starts inside the notation viewport`);
+    assert.ok(label.left + label.width <= plan.width, `${label.key} ends inside the notation viewport`);
+  }
+}
+
 test('note builder creates joined noteheads and stems at each supported subdivision', () => {
   const cases = [
     ['quarter', 1],
@@ -137,6 +158,44 @@ test('bar note builder flags isolated short notes and splits beams at beat group
     { durationQuarter: 3, width: 360, beamGroupQuarterNotes: 1.5 },
   );
   assert.equal(compoundBeatGroups.beams.filter((beam) => beam.kind === 'beam' && beam.level === 0).length, 2);
+});
+
+test('bar note builder keeps final flags and dots inside the notation viewport', () => {
+  const finalFlag = createBarNoteNotationPlan([
+    { startQuarter: 3.5, durationQuarter: 0.25 },
+    { startQuarter: 3.875, durationQuarter: 0.125 },
+  ], { durationQuarter: 4, width: 640, size: 'compact' });
+  assert.ok(finalFlag.beams.some((beam) => beam.kind === 'flag' && beam.endIndex === 1));
+  assertNotationFits(finalFlag);
+
+  const finalDottedNote = createBarNoteNotationPlan([
+    { startQuarter: 3.25, durationQuarter: 0.75 },
+  ], { durationQuarter: 4, width: 320, size: 'compact' });
+  assert.equal(finalDottedNote.dots.length, 1);
+  assertNotationFits(finalDottedNote);
+});
+
+test('mixed bar notation stays within bounds at dense and narrow layout widths', () => {
+  const mixedEvents = [
+    { startQuarter: 0, durationQuarter: 0.75 },
+    { startQuarter: 0.75, durationQuarter: 0.125 },
+    { startQuarter: 0.875, durationQuarter: 0.125 },
+    { startQuarter: 1, durationQuarter: 0.0625 },
+    { startQuarter: 1.0625, durationQuarter: 0.0625 },
+    { startQuarter: 1.125, durationQuarter: 0.0625 },
+    { startQuarter: 1.1875, durationQuarter: 0.0625 },
+    { startQuarter: 3.875, durationQuarter: 0.125 },
+  ];
+
+  for (const width of [96, 240, 960]) {
+    const plan = createBarNoteNotationPlan(mixedEvents, {
+      durationQuarter: 4,
+      width,
+      size: 'compact',
+    });
+    assert.equal(plan.notes.length, mixedEvents.length);
+    assertNotationFits(plan);
+  }
 });
 
 test('bar note builder rejects invalid measure and note timing', () => {

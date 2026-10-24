@@ -26,8 +26,16 @@ appId: com.splitbeat.twohandrhythm
     direction: DOWN
 - tapOn:
     id: setup.mixture.dottedQuaverSemiquaver
+- scrollUntilVisible:
+    element:
+      id: setup.mixture.semiquaverTwoDemisemiquavers
+    direction: DOWN
 - tapOn:
     id: setup.mixture.semiquaverTwoDemisemiquavers
+- scrollUntilVisible:
+    element:
+      id: setup.mixture.semiquaverDemisemiquaverRestDemisemiquaver
+    direction: DOWN
 - tapOn:
     id: setup.mixture.semiquaverDemisemiquaverRestDemisemiquaver
 - assertVisible:

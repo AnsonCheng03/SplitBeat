@@ -18,6 +18,10 @@ appId: com.splitbeat.twohandrhythm
     id: exercise.leftBar
 - assertVisible:
     id: exercise.rightBar
+- scrollUntilVisible:
+    element:
+      id: exercise.practiceBar
+    direction: DOWN
 - tapOn:
     id: exercise.practiceBar
 - extendedWaitUntil:
@@ -40,4 +44,4 @@ appId: com.splitbeat.twohandrhythm
     visible:
       id: results.screen
     timeout: 15000
-- assertVisible: SESSION COMPLETE
+- assertVisible: SCORE SESSION COMPLETE

@@ -419,20 +419,28 @@ export function createBarNoteNotationPlan(
   const beamHeight = size === 'mini' ? 1.6 : size === 'compact' ? 1.8 : 2.6;
   const beamGap = beamHeight + (size === 'mini' ? 1 : size === 'compact' ? 1.2 : 1.8);
   const beamTop = size === 'mini' ? 3 : size === 'compact' ? 4 : 5;
-  const horizontalInset = Math.min(options.width / 2, headWidth / 2 + 2);
-  const usableWidth = Math.max(0, options.width - horizontalInset * 2);
+  const flagWidth = Math.max(size === 'mini' ? 5 : 7, headWidth * 0.9);
+  const leftInset = Math.min(options.width / 2, headWidth / 2 + 2);
+  const hasFlags = events.some((event) => (event.beamCount ?? inferredBeamCount(event.durationQuarter)) > 0);
+  const dotSize = Math.max(2, headHeight * 0.24);
+  const flagOverhang = hasFlags ? headWidth / 2 + Math.max(12, flagWidth * 1.5) + 4 : 0;
+  const dotOverhang = events.some((event) => isDottedValue(event.durationQuarter))
+    ? headWidth / 2 + dotSize * 1.7 + 3
+    : 0;
+  const rightInset = Math.min(options.width / 2, Math.max(headWidth / 2 + 2, flagOverhang, dotOverhang));
+  const usableWidth = Math.max(0, options.width - leftInset - rightInset);
   const orderedEvents = Array.from(events)
     .map((event, originalIndex) => ({ event, originalIndex }))
     .sort((left, right) => left.event.startQuarter - right.event.startQuarter || left.originalIndex - right.originalIndex)
     .map(({ event }) => event);
   const noteAnchors = orderedEvents.map(
-    (event) => horizontalInset + (event.startQuarter / options.durationQuarter) * usableWidth,
+    (event) => leftInset + (event.startQuarter / options.durationQuarter) * usableWidth,
   );
 
   return buildNotationPlan(orderedEvents, {
     width: options.width,
     height,
-    anchorStartX: horizontalInset,
+    anchorStartX: leftInset,
     anchorWidth: usableWidth,
     durationQuarter: options.durationQuarter,
     noteAnchors,
@@ -442,7 +450,7 @@ export function createBarNoteNotationPlan(
     beamTop: beamTop + tupletPadding,
     beamHeight,
     beamGap,
-    flagWidth: Math.max(size === 'mini' ? 5 : 7, headWidth * 0.9),
+    flagWidth,
     beamGroupQuarterNotes,
     tupletLabelFontSize: size === 'mini' ? 8 : size === 'compact' ? 10 : 12,
     noteBaselineY: height - 5,
