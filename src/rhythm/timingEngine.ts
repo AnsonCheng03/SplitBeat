@@ -365,8 +365,16 @@ export class RhythmTimingEngine {
 
   getResults(now: number): SessionResults {
     this.advance(now);
-    this.finishPendingEvents(this.toActiveTime(now));
+    const activeNow = this.toActiveTime(now);
+    const unreachedReplayEvents = this.collectUnreachedReplayEvents(activeNow);
+    this.finishPendingEvents(activeNow);
     this.finished = true;
+    const replayExpectedEvents = [...this.replayExpectedEvents, ...unreachedReplayEvents].sort(
+      (firstEvent, secondEvent) =>
+        firstEvent.barIndex - secondEvent.barIndex ||
+        firstEvent.beatInBar - secondEvent.beatInBar ||
+        firstEvent.hand.localeCompare(secondEvent.hand),
+    );
 
     return {
       bpm: this.settings.bpm,
@@ -396,19 +404,14 @@ export class RhythmTimingEngine {
         left: toAccuracyStats(combination.left),
         right: toAccuracyStats(combination.right),
       })),
-      durationSeconds: this.elapsedSessionSeconds(this.toActiveTime(now)),
+      durationSeconds: this.elapsedSessionSeconds(activeNow),
       missedEvents: [...this.missedEvents].sort(
         (firstEvent, secondEvent) =>
           firstEvent.barIndex - secondEvent.barIndex ||
           firstEvent.beatInBar - secondEvent.beatInBar ||
           firstEvent.hand.localeCompare(secondEvent.hand),
       ),
-      replayExpectedEvents: [...this.replayExpectedEvents].sort(
-        (firstEvent, secondEvent) =>
-          firstEvent.barIndex - secondEvent.barIndex ||
-          firstEvent.beatInBar - secondEvent.beatInBar ||
-          firstEvent.hand.localeCompare(secondEvent.hand),
-      ),
+      replayExpectedEvents,
       replayTaps: [...this.replayTaps].sort(
         (firstTap, secondTap) => firstTap.timestampMs - secondTap.timestampMs,
       ),
@@ -663,6 +666,30 @@ export class RhythmTimingEngine {
     }
   }
 
+  private collectUnreachedReplayEvents(now: number): ReplayExpectedEvent[] {
+    if (this.finished) return [];
+
+    const barDurationMs = this.beatsPerBar * this.beatMs;
+    const elapsedMs = Math.max(0, now - this.sessionStartTime);
+    const barOffset = Math.floor(elapsedMs / barDurationMs);
+    const barStartTime = this.sessionStartTime + barOffset * barDurationMs;
+    const barEndTime = Math.min(this.endTime ?? Number.POSITIVE_INFINITY, barStartTime + barDurationMs);
+    if (now >= barEndTime) return [];
+
+    this.generateThrough(barEndTime - 0.001);
+    const recordedEventIds = new Set(this.replayExpectedEvents.map((event) => event.id));
+    return (['left', 'right'] as const).flatMap((hand) =>
+      this.events[hand]
+        .filter((event) =>
+          !event.settled &&
+          event.expectedTimeMs > now &&
+          event.expectedTimeMs < barEndTime &&
+          !recordedEventIds.has(event.id),
+        )
+        .map((event) => this.createReplayExpectedEvent(hand, event, null, null, false)),
+    );
+  }
+
   private recordReplayTap(hand: Hand, timestamp: number): ReplayTap {
     const timestampMs = Math.max(0, timestamp - this.sessionStartTime);
     const barDurationMs = this.beatsPerBar * this.beatMs;
@@ -692,36 +719,7 @@ export class RhythmTimingEngine {
         ((event.expectedTimeMs - this.sessionStartTime) / this.beatMs) / this.beatsPerBar + 1e-9,
       ) + 1,
     });
-    const beatPosition = (event.expectedTimeMs - this.sessionStartTime) / this.beatMs;
-    const barOffset = Math.floor(beatPosition / this.beatsPerBar);
-    const beatInBar = beatPosition - barOffset * this.beatsPerBar;
-    const mixtureId = hand === 'left' ? event.step.leftMixture : event.step.rightMixture;
-    const subdivision = event.isScoreEvent || mixtureId
-      ? undefined
-      : hand === 'left' ? event.step.leftSubdivision : event.step.rightSubdivision;
-    const durationQuarter = event.durationQuarter ?? (
-      subdivision && isTupletSubdivision(subdivision)
-        ? this.quarterNoteMs / this.beatMs / tupletCount(subdivision)
-        : subdivision
-          ? 1 / SUBDIVISION_COUNTS[subdivision]
-          : 1
-    );
-    const replayEvent: ReplayExpectedEvent = {
-      id: event.id,
-      hand,
-      barIndex: barOffset + 1,
-      beatInBar,
-      ...(subdivision ? { subdivision } : {}),
-      durationQuarter,
-      ...(event.tupletNumber === undefined
-        ? subdivision && isTupletSubdivision(subdivision) ? { tupletNumber: tupletCount(subdivision) } : {}
-        : { tupletNumber: event.tupletNumber }),
-      isScoreEvent: event.isScoreEvent,
-      matched: grade !== null,
-      expectedTimeMs: event.expectedTimeMs,
-      ...(event.midiPitches ? { midiPitches: [...event.midiPitches] } : {}),
-      ...(errorMs === null ? {} : { timingErrorMs: errorMs }),
-    };
+    const replayEvent = this.createReplayExpectedEvent(hand, event, grade, errorMs, true);
     this.replayExpectedEvents.push(replayEvent);
 
     const stats = this.hands[hand];
@@ -732,6 +730,10 @@ export class RhythmTimingEngine {
       stats.absoluteErrorTotal += Math.abs(errorMs ?? 0);
       stats.signedErrorTotal += errorMs ?? 0;
     } else {
+      const mixtureId = hand === 'left' ? event.step.leftMixture : event.step.rightMixture;
+      const subdivision = event.isScoreEvent || mixtureId
+        ? undefined
+        : hand === 'left' ? event.step.leftSubdivision : event.step.rightSubdivision;
       stats.miss += 1;
       this.missedEvents.push({
         id: replayEvent.id,
@@ -765,6 +767,47 @@ export class RhythmTimingEngine {
     const transitionStats = isTransition ? this.transition : this.stable;
     transitionStats.totalExpected += 1;
     if (grade) transitionStats.totalHit += 1;
+  }
+
+  private createReplayExpectedEvent(
+    hand: Hand,
+    event: ExpectedEvent,
+    grade: 'perfect' | 'great' | 'good' | null,
+    errorMs: number | null,
+    reached: boolean,
+  ): ReplayExpectedEvent {
+    const beatPosition = (event.expectedTimeMs - this.sessionStartTime) / this.beatMs;
+    const barOffset = Math.floor(beatPosition / this.beatsPerBar);
+    const beatInBar = beatPosition - barOffset * this.beatsPerBar;
+    const mixtureId = hand === 'left' ? event.step.leftMixture : event.step.rightMixture;
+    const subdivision = event.isScoreEvent || mixtureId
+      ? undefined
+      : hand === 'left' ? event.step.leftSubdivision : event.step.rightSubdivision;
+    const durationQuarter = event.durationQuarter ?? (
+      subdivision && isTupletSubdivision(subdivision)
+        ? this.quarterNoteMs / this.beatMs / tupletCount(subdivision)
+        : subdivision
+          ? 1 / SUBDIVISION_COUNTS[subdivision]
+          : 1
+    );
+    const replayEvent: ReplayExpectedEvent = {
+      id: event.id,
+      hand,
+      barIndex: barOffset + 1,
+      beatInBar,
+      ...(subdivision ? { subdivision } : {}),
+      durationQuarter,
+      ...(event.tupletNumber === undefined
+        ? subdivision && isTupletSubdivision(subdivision) ? { tupletNumber: tupletCount(subdivision) } : {}
+        : { tupletNumber: event.tupletNumber }),
+      isScoreEvent: event.isScoreEvent,
+      matched: grade !== null,
+      reached,
+      expectedTimeMs: event.expectedTimeMs,
+      ...(event.midiPitches ? { midiPitches: [...event.midiPitches] } : {}),
+      ...(errorMs === null ? {} : { timingErrorMs: errorMs }),
+    };
+    return replayEvent;
   }
 
   private recordExtraTap(hand: Hand, tapTime: number): void {

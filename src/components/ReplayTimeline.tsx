@@ -193,7 +193,7 @@ function ReplayHandLane({
           const event = orderedEvents[index];
           if (!event) return null;
           const size = Math.max(7, Math.min(8, note.headWidth * 0.75));
-          return (
+          return event.reached === false ? null : (
             <ReplayStatusBadge
               key={event.id}
               status={event.matched ? 'correct' : 'miss'}

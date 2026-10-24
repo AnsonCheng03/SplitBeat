@@ -1080,16 +1080,46 @@ test('visual replay preserves actual tap positions including unmatched extra tap
     { hand: 'left', timestampMs: 250, matchedEventId: undefined, timingErrorMs: undefined },
     { hand: 'right', timestampMs: 1_100, matchedEventId: 'right:step-0:1', timingErrorMs: 100 },
   ]);
-  assert.deepEqual(results.replayExpectedEvents?.map(({ hand, beatInBar, matched }) => ({
-    hand,
-    beatInBar,
-    matched,
-  })), [
+  assert.deepEqual(results.replayExpectedEvents
+    ?.filter((event) => event.reached !== false)
+    .map(({ hand, beatInBar, matched }) => ({
+      hand,
+      beatInBar,
+      matched,
+    })), [
     { hand: 'left', beatInBar: 0, matched: true },
     { hand: 'right', beatInBar: 0, matched: false },
     { hand: 'left', beatInBar: 1, matched: false },
     { hand: 'right', beatInBar: 1, matched: true },
   ]);
+});
+
+test('early stop fills the current replay bar without scoring notes not reached yet', () => {
+  const start = 72_000;
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, enabledSubdivisions: ['quarter'] },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  const results = engine.getResults(start + 200);
+
+  for (const hand of ['left', 'right'] as const) {
+    assert.deepEqual(
+      results.replayExpectedEvents
+        ?.filter((event) => event.hand === hand && event.barIndex === 1)
+        .map(({ beatInBar, matched, reached }) => ({ beatInBar, matched, reached })),
+      [
+        { beatInBar: 0, matched: false, reached: true },
+        { beatInBar: 1, matched: false, reached: false },
+        { beatInBar: 2, matched: false, reached: false },
+        { beatInBar: 3, matched: false, reached: false },
+      ],
+    );
+  }
+  assert.equal(results.left.totalExpected, 1);
+  assert.equal(results.right.totalExpected, 1);
+  assert.equal(results.missedEvents.length, 2);
 });
 
 test('visual replay assigns compound-meter taps to the correct measure', () => {

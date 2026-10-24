@@ -166,6 +166,8 @@ export interface ReplayExpectedEvent extends MissedEvent {
   /** Duration used to draw the expected rhythm in the replay timeline. */
   durationQuarter: number;
   matched: boolean;
+  /** False for notes later in a bar that was stopped before they were reached. */
+  reached?: boolean;
   /** Calibrated error used for scoring; negative is early and positive is late. */
   timingErrorMs?: number;
   /** Hidden score pitches, retained only for this session's replay. */

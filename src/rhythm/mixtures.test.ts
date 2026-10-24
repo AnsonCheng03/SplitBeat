@@ -128,7 +128,7 @@ test('the timing engine scores mixture note onsets at their written quarter-note
 
   const results = engine.getResults(start + 900);
   const leftEvents = results.replayExpectedEvents
-    ?.filter(({ hand }) => hand === 'left')
+    ?.filter(({ hand, reached }) => hand === 'left' && reached !== false)
     .map(({ expectedTimeMs }) => expectedTimeMs - start);
   assert.deepEqual(leftEvents, [0, 750]);
   assert.ok(results.missedEvents.every((event) => event.durationQuarter !== undefined));
@@ -150,7 +150,7 @@ test('a written mixture rest has no expected tap and an early tap into it remain
   assert.equal(engine.tap('left', start + 250), 'miss');
   const results = engine.getResults(start + 900);
   const expectedOnsets = results.replayExpectedEvents
-    ?.filter(({ hand }) => hand === 'left')
+    ?.filter(({ hand, reached }) => hand === 'left' && reached !== false)
     .map(({ expectedTimeMs }) => expectedTimeMs - start);
   assert.deepEqual(expectedOnsets, [0, 375, 500, 875]);
 });
