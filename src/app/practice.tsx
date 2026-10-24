@@ -5,6 +5,7 @@ import { Alert, Pressable, Text, useWindowDimensions, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Countdown } from '@/components/Countdown';
 import { HardwareKeyboardInput } from '@/components/HardwareKeyboardInput';
+import { LivePracticeSettings } from '@/components/LivePracticeSettings';
 import { MixtureSymbol } from '@/components/MixtureSymbol';
 import { MetronomeIndicator } from '@/components/MetronomeIndicator';
 import { NextPatternPreview } from '@/components/NextPatternPreview';
@@ -40,6 +41,7 @@ export default function PracticeScreen() {
   const scoreDisplayMode: ScoreDisplayMode = scoreDisplayModeParam === 'focus' ? 'focus' : 'staff';
   const {
     featureFlags,
+    updateSettings,
     snapshot,
     settings,
     sessionSettings,
@@ -58,6 +60,7 @@ export default function PracticeScreen() {
   const [tutorialVisible, setTutorialVisible] = useState(true);
   const [starting, setStarting] = useState(false);
   const [pauseActionLoading, setPauseActionLoading] = useState(false);
+  const [quickSettingsOpen, setQuickSettingsOpen] = useState(false);
   const [bpmDraft, setBpmDraft] = useState(activeSettings.bpm);
   const [rewindBars, setRewindBars] = useState(1);
   const [keyboardTapTokens, setKeyboardTapTokens] = useState<Record<Hand, { token: number; feedback: TapFeedback | null }>>({
@@ -531,7 +534,17 @@ export default function PracticeScreen() {
           </Pressable>
         ) : null}
 
-        {snapshot?.phase === 'paused' && snapshot.challengeMessage ? (
+        {snapshot?.phase === 'paused' && quickSettingsOpen ? (
+          <LivePracticeSettings
+            settings={activeSettings}
+            featureFlags={featureFlags}
+            onSettingsChange={updateSettings}
+            onBack={() => setQuickSettingsOpen(false)}
+            compact={compact}
+          />
+        ) : null}
+
+        {snapshot?.phase === 'paused' && snapshot.challengeMessage && !quickSettingsOpen ? (
           <View testID="practice.challengePause" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(7, 10, 14, 0.72)', paddingHorizontal: 24 }}>
             <View style={{ width: '100%', maxWidth: 460, alignItems: 'center', padding: compact ? 18 : 26, borderRadius: 20, borderWidth: 1, borderColor: colors.accent, backgroundColor: colors.surface }}>
               <Text style={{ color: colors.accent, fontSize: compact ? 12 : 14, fontWeight: '900', letterSpacing: 1.6 }}>
@@ -540,6 +553,14 @@ export default function PracticeScreen() {
               <Text style={{ color: colors.text, fontSize: compact ? 17 : 22, lineHeight: compact ? 23 : 29, fontWeight: '800', textAlign: 'center', marginTop: 10 }}>
                 {snapshot.challengeMessage ?? 'Take a breath, then continue when you are ready.'}
               </Text>
+              <Pressable
+                testID="practice.challengeLiveSettings"
+                accessibilityRole="button"
+                onPress={() => setQuickSettingsOpen(true)}
+                style={{ minHeight: 42, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', marginTop: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.line }}
+              >
+                <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '900', letterSpacing: 0.8 }}>LIVE SETTINGS</Text>
+              </Pressable>
               <Pressable testID="practice.challengeResume" accessibilityRole="button" onPress={() => void resumeFromChallenge()} style={{ minHeight: 54, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', marginTop: 20, borderRadius: 14, backgroundColor: colors.accent }}>
                 <Text style={{ color: colors.background, fontSize: 14, fontWeight: '900', letterSpacing: 1.1 }}>CONTINUE</Text>
               </Pressable>
@@ -550,7 +571,7 @@ export default function PracticeScreen() {
           </View>
         ) : null}
 
-        {snapshot?.phase === 'paused' && !snapshot.challengeMessage ? (
+        {snapshot?.phase === 'paused' && !snapshot.challengeMessage && !quickSettingsOpen ? (
           <View testID="practice.pauseMenu" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(7, 10, 14, 0.84)', paddingHorizontal: Math.max(16, insets.left + 16, insets.right + 16), paddingVertical: Math.max(10, insets.top + 8, insets.bottom + 8) }}>
             <View style={{ width: '100%', maxWidth: 700, padding: compact ? 14 : 20, borderRadius: 20, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: compact ? 8 : 12 }}>
@@ -644,15 +665,25 @@ export default function PracticeScreen() {
                 ) : null}
               </View>
 
-              <Pressable
-                testID="practice.pause.continue"
-                accessibilityRole="button"
-                disabled={pauseActionLoading}
-                onPress={() => void continueFromPause()}
-                style={{ minHeight: compact ? 42 : 50, borderRadius: 13, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginTop: compact ? 8 : 12, opacity: pauseActionLoading ? 0.5 : 1 }}
-              >
-                <Text style={{ color: colors.background, fontSize: compact ? 11 : 13, fontWeight: '900', letterSpacing: 1 }}>CONTINUE</Text>
-              </Pressable>
+              <View style={{ flexDirection: 'row', gap: 9, marginTop: compact ? 8 : 12 }}>
+                <Pressable
+                  testID="practice.pause.continue"
+                  accessibilityRole="button"
+                  disabled={pauseActionLoading}
+                  onPress={() => void continueFromPause()}
+                  style={{ flex: 1, minHeight: compact ? 42 : 50, borderRadius: 13, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', opacity: pauseActionLoading ? 0.5 : 1 }}
+                >
+                  <Text style={{ color: colors.background, fontSize: compact ? 11 : 13, fontWeight: '900', letterSpacing: 1 }}>CONTINUE</Text>
+                </Pressable>
+                <Pressable
+                  testID="practice.pause.liveSettings"
+                  accessibilityRole="button"
+                  onPress={() => setQuickSettingsOpen(true)}
+                  style={{ flex: 1, minHeight: compact ? 42 : 50, borderRadius: 13, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Text style={{ color: colors.text, fontSize: compact ? 10 : 12, fontWeight: '900', letterSpacing: 0.8 }}>LIVE SETTINGS</Text>
+                </Pressable>
+              </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: compact ? 2 : 5 }}>
                 <Pressable testID="practice.pause.finish" accessibilityRole="button" onPress={stop} style={{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 8 }}>
                   <Text style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 0.8 }}>END SESSION</Text>

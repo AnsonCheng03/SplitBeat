@@ -47,6 +47,34 @@ const FEATURE_FLAGS_KEY = 'split-beat.feature-flags.v1';
 const COUNT_IN_BEATS = 3;
 const AUDIO_LEAD_IN_MS = 300;
 const FORCE_SILENT_E2E = process.env.EXPO_PUBLIC_E2E_SILENT === '1';
+const LIVE_PRACTICE_SETTING_KEYS = [
+  'soundEnabled',
+  'backgroundMusicEnabled',
+  'sessionCuesEnabled',
+  'metronomeSound',
+  'leftHandSound',
+  'rightHandSound',
+  'leftFlashSource',
+  'rightFlashSource',
+  'tapResultFlashEnabled',
+  'referenceRhythmEnabled',
+  'leftTapOffsetMs',
+  'rightTapOffsetMs',
+  'goodWindowMs',
+  'hapticsEnabled',
+] as const satisfies readonly (keyof ExerciseSettings)[];
+
+type LivePracticeSettingKey = (typeof LIVE_PRACTICE_SETTING_KEYS)[number];
+
+function livePracticeSettingsPatch(
+  patch: Partial<ExerciseSettings>,
+): Partial<Pick<ExerciseSettings, LivePracticeSettingKey>> {
+  const livePatch: Partial<Pick<ExerciseSettings, LivePracticeSettingKey>> = {};
+  for (const key of LIVE_PRACTICE_SETTING_KEYS) {
+    if (patch[key] !== undefined) Object.assign(livePatch, { [key]: patch[key] });
+  }
+  return livePatch;
+}
 
 export type AudioPreparationStatus = 'loading' | 'ready' | 'error';
 
@@ -380,6 +408,14 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   }, [settings.referenceRhythmEnabled]);
 
   useEffect(() => {
+    audioRef.current?.setBackgroundMusicEnabled(settings.backgroundMusicEnabled);
+  }, [settings.backgroundMusicEnabled]);
+
+  useEffect(() => {
+    audioRef.current?.setSessionCuesEnabled(settings.sessionCuesEnabled);
+  }, [settings.sessionCuesEnabled]);
+
+  useEffect(() => {
     audioRef.current?.setSounds({
       metronome: settings.metronomeSound,
       leftHand: settings.leftHandSound,
@@ -388,7 +424,20 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   }, [settings.metronomeSound, settings.leftHandSound, settings.rightHandSound]);
 
   const updateSettings = useCallback((patch: Partial<ExerciseSettings>) => {
-    setSettings((current) => ({ ...current, ...patch }));
+    const effectivePatch = FORCE_SILENT_E2E && patch.soundEnabled !== undefined
+      ? { ...patch, soundEnabled: false }
+      : patch;
+    setSettings((current) => ({ ...current, ...effectivePatch }));
+    const livePatch = livePracticeSettingsPatch(effectivePatch);
+    if (engineRef.current && Object.keys(livePatch).length > 0) {
+      sessionSettingsRef.current = { ...sessionSettingsRef.current, ...livePatch };
+      setSessionSettings((current) => current ? { ...current, ...livePatch } : current);
+      engineRef.current.updateTimingCalibration({
+        ...(livePatch.leftTapOffsetMs === undefined ? {} : { leftTapOffsetMs: livePatch.leftTapOffsetMs }),
+        ...(livePatch.rightTapOffsetMs === undefined ? {} : { rightTapOffsetMs: livePatch.rightTapOffsetMs }),
+        ...(livePatch.goodWindowMs === undefined ? {} : { goodWindowMs: livePatch.goodWindowMs }),
+      });
+    }
   }, []);
 
   const updateFeatureFlag = useCallback((id: FeatureFlagId, enabled: boolean) => {

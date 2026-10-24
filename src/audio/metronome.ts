@@ -145,6 +145,14 @@ export class MetronomeAudio {
     if (this.startOptions) this.startOptions.referenceRhythmEnabled = enabled;
   }
 
+  setBackgroundMusicEnabled(enabled: boolean): void {
+    if (this.startOptions) this.startOptions.backgroundMusicEnabled = enabled;
+  }
+
+  setSessionCuesEnabled(enabled: boolean): void {
+    if (this.startOptions) this.startOptions.sessionCuesEnabled = enabled;
+  }
+
   playHandClick(hand: 'left' | 'right'): void {
     if (!this.startOptions?.soundEnabled || this.closed) return;
     const preset = hand === 'left' ? this.sounds.leftHand : this.sounds.rightHand;

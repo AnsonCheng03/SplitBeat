@@ -137,12 +137,12 @@ export class RhythmTimingEngine {
   readonly beatsPerBar: number;
   readonly sessionStartTime: number;
 
-  private readonly settings: ExerciseSettings;
+  private settings: ExerciseSettings;
   private readonly importedScore?: ImportedRhythmScore;
   private readonly timedScoreEvents: TimedScoreEvent[];
-  private readonly timingWindows: TimingWindows;
-  private readonly settleWindowMsByHand: Record<Hand, number>;
-  private readonly sessionSettleWindowMs: number;
+  private timingWindows: TimingWindows;
+  private settleWindowMsByHand: Record<Hand, number>;
+  private sessionSettleWindowMs: number;
   private readonly endTime: number | null;
   private readonly getStep: (stepIndex: number) => ExerciseStep;
   private readonly events: Record<Hand, ExpectedEvent[]> = { left: [], right: [] };
@@ -218,6 +218,21 @@ export class RhythmTimingEngine {
       allowHandRests: options.settings.handRestsEnabled && options.settings.trainingMode === 'two-hand',
       random: options.random,
     });
+  }
+
+  updateTimingCalibration(
+    patch: Partial<Pick<ExerciseSettings, 'leftTapOffsetMs' | 'rightTapOffsetMs' | 'goodWindowMs'>>,
+  ): void {
+    this.settings = { ...this.settings, ...patch };
+    this.timingWindows = timingWindowsForGoodWindow(this.settings.goodWindowMs);
+    this.settleWindowMsByHand = {
+      left: this.timingWindows.goodMs + Math.max(0, this.settings.leftTapOffsetMs),
+      right: this.timingWindows.goodMs + Math.max(0, this.settings.rightTapOffsetMs),
+    };
+    this.sessionSettleWindowMs = Math.max(
+      this.settleWindowMsByHand.left,
+      this.settleWindowMsByHand.right,
+    );
   }
 
   advance(now: number): SessionSnapshot {

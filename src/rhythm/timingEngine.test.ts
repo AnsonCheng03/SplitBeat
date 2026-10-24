@@ -676,6 +676,17 @@ test('late tap calibration keeps each hand eligible through its adjusted hit win
   assert.equal(snapshot.leftStats.averageSignedErrorMs, 70);
 });
 
+test('timing calibration can be updated during an active session', () => {
+  const start = 13_500;
+  const engine = new RhythmTimingEngine({ settings, sessionStartTime: start, random: () => 0 });
+  engine.updateTimingCalibration({ leftTapOffsetMs: 60, goodWindowMs: 120 });
+
+  assert.equal(engine.tap('left', start + 150), 'hit');
+  const snapshot = engine.advance(start + 251);
+  assert.equal(snapshot.leftStats.totalHit, 1);
+  assert.equal(snapshot.leftStats.averageSignedErrorMs, 90);
+});
+
 test('the selected timing range controls which taps count as hits', () => {
   const start = 14_000;
   const engine = new RhythmTimingEngine({
