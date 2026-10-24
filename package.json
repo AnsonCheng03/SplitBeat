@@ -18,7 +18,6 @@
     "e2e:maestro": "node scripts/e2e/run-maestro.mjs",
     "e2e:language": "EXPO_PUBLIC_E2E_SILENT=1 E2E_MAESTRO_FLOW=language-settings.yaml node scripts/e2e/run-maestro.mjs",
     "e2e:direct-start": "E2E_MAESTRO_FLOW=direct-start.yaml node scripts/e2e/run-maestro.mjs",
-    "e2e:features": "E2E_MAESTRO_FLOW=feature-flags.yaml node scripts/e2e/run-maestro.mjs",
     "e2e:exercise": "E2E_MAESTRO_FLOW=exercise-mode.yaml node scripts/e2e/run-maestro.mjs",
     "e2e:score-import": "E2E_MAESTRO_FLOW=score-import.yaml node scripts/e2e/run-maestro.mjs"
   },

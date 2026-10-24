@@ -8,15 +8,14 @@ import { FullBleedSafeArea } from '@/components/FullBleedSafeArea';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 
-export type SettingsSection = 'session' | 'rhythm' | 'audio' | 'appearance' | 'timing' | 'features' | 'language';
+export type SettingsSection = 'session' | 'rhythm' | 'audio' | 'appearance' | 'timing' | 'language';
 
-const sections: { id: SettingsSection; label: string; href: '/setup' | '/settings/rhythm' | '/settings/audio' | '/settings/appearance' | '/settings/timing' | '/settings/features' | '/settings/language'; testID?: string }[] = [
+const sections: { id: SettingsSection; label: string; href: '/setup' | '/settings/rhythm' | '/settings/audio' | '/settings/appearance' | '/settings/timing' | '/settings/language'; testID?: string }[] = [
   { id: 'session', label: 'Pace & length', href: '/setup' },
   { id: 'rhythm', label: 'Rhythm & meter', href: '/settings/rhythm', testID: 'setup.card.rhythm' },
   { id: 'audio', label: 'Sounds', href: '/settings/audio', testID: 'setup.card.audio' },
   { id: 'appearance', label: 'Appearance', href: '/settings/appearance', testID: 'setup.card.appearance' },
   { id: 'timing', label: 'Timing', href: '/settings/timing', testID: 'setup.card.timing' },
-  { id: 'features', label: 'Features', href: '/settings/features', testID: 'setup.card.features' },
   { id: 'language', label: 'Language', href: '/settings/language', testID: 'setup.card.language' },
 ];
 

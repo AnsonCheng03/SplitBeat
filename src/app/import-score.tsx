@@ -258,7 +258,7 @@ export default function ImportScoreScreen() {
     const practiceScore = placeSingleTrackOnHand(score, settings.singleHand);
     const trainingMode = scoreTrainingMode(score, settings.singleHand);
     if (trainingMode.trainingMode === 'single-hand' && !featureFlags.oneHandMode) {
-      Alert.alert(t('One-hand practice is disabled'), t('Enable One-hand practice in Settings → Features to play a score with one active hand.'));
+      Alert.alert(t('One-hand score training is unavailable in this build.'), t('Choose a two-hand score or install a build with one-hand practice enabled.'));
       return;
     }
     setStarting(true);

@@ -133,13 +133,19 @@ The iOS target includes the Game Center entitlement. Before leaderboard submissi
 
 During practice, an external QWERTY keyboard can tap either hand. Keys on the left side (`Q W E R T`, `A S D F G`, `Z X C V B`, and `1–5`) play the left hand; keys on the right side (`Y U I O P`, `H J K L`, `N M`, and `6–0`) play the right. iOS/iPadOS receives key presses through a focused hidden text field with the software keyboard suppressed; Android forwards native key-down timestamps into the rhythm clock and filters OS key repeats. The app does not request keyboard or microphone permissions.
 
+## Build-time feature availability
+
+Feature availability is fixed when the JavaScript bundle is built and is not user-configurable in the app. Set `EXPO_PUBLIC_FEATURE_FLAGS` to a JSON object in `.env` or the build environment. Unlisted flags default to enabled; invalid JSON also falls back to all enabled. For example, to ship a build without the Learn course or Game Center:
+
+~~~sh
+EXPO_PUBLIC_FEATURE_FLAGS='{"learnCourse":false,"gameCenter":false}' npm run ios:archive
+~~~
+
+For EAS builds, add the same variable to the selected `preview` or `production` environment. The supported keys are `oneHandMode`, `scoreNotation`, `focusPractice`, `timingCalibration`, `scoreImport`, `savedScoreLibrary`, `learnCourse`, `rhythmExtensions`, `mixtures`, `restsAndGrace`, `soundEffects`, `backgroundMusic`, `sessionCues`, `shownRhythmPlayback`, `tapHaptics`, `tapFeedback`, `challengeMode`, `gameCenter`, `sessionRecords`, `missedNoteReplay`, and `externalKeyboard`. User preferences inside an enabled feature, such as whether accompaniment is audible, remain stored separately.
+
 ## End-to-end checks
 
-The home screen follows AstroDX's compact main-menu hierarchy: choose Two hands or One hand, choose Rhythm symbols or Score notes, then start. Settings and score import stay secondary to those choices. One-hand mode uses a full-screen tap area and does not ask the player to choose a side. The Settings page keeps tempo and duration close by and opens Rhythm & meter, Sounds & feedback, Timing calibration, and Features on separate detail pages.
-
-### Feature availability
-
-Settings → Features lists practice modes, timing calibration, score import and saved scores, the guided course and its purchase, rhythm extensions, mixtures and rests, audio and feedback options, challenges, Game Center, records, replay, and external keyboard input. All 22 feature switches default to enabled. Their availability is stored locally and can be reset with **Enable All**. These switches control whether the related entry points and behavior are available; preferences inside a feature (for example, whether background accompaniment is audible) remain separate. Disabling score import does not remove saved score data, and disabling records stops new summaries from being saved without deleting existing records.
+The home screen follows AstroDX's compact main-menu hierarchy: choose Two hands or One hand, choose Rhythm symbols or Score notes, then start. Settings and score import stay secondary to those choices. One-hand mode uses a full-screen tap area and does not ask the player to choose a side. The Settings page keeps tempo and duration close by and opens Rhythm & meter, Sounds & feedback, Timing calibration, and Language on separate detail pages.
 
 Build and install the release test app on a simulator or device, then run the Maestro smoke flow. E2E builds for both platforms force metronome, hand, and score audio off, regardless of stored settings, so automated runs stay silent. The score-import flow uses a bundled in-app test score in E2E builds, then checks the score preview and practice path; the system file picker still needs a manual device check. The flows exercise multi-page settings, the single-hand full-screen tap area, two-hand practice, results, visual replay, and records:
 
@@ -183,12 +189,6 @@ The appearance flow checks the Light mode control and navigation back to session
 
 ~~~sh
 E2E_MAESTRO_FLOW=appearance-settings.yaml npm run e2e:maestro -- --device DEVICE_ID
-~~~
-
-The feature-flags flow checks the feature list and its **Enable All** action. It does not start a practice session or play audio:
-
-~~~sh
-npm run e2e:features -- --device DEVICE_ID
 ~~~
 
 The Rhythm & meter settings flow checks that mixture note values and rests can be selected:

@@ -11,8 +11,8 @@ import React, {
 import { MetronomeAudio } from '@/audio/metronome';
 import { SOUND_OPTIONS } from '@/audio/soundPresets';
 import { normalizeFlashSource } from '@/rhythm/flashSource';
-import { applyFeatureFlagsToPatternPairs, applyFeatureFlagsToSettings, DEFAULT_FEATURE_FLAGS, parseFeatureFlags } from '@/features/featureFlags';
-import type { FeatureFlagId, FeatureFlags } from '@/features/featureFlags';
+import { applyFeatureFlagsToPatternPairs, applyFeatureFlagsToSettings, BUILD_FEATURE_FLAGS } from '@/features/featureFlags';
+import type { FeatureFlags } from '@/features/featureFlags';
 import {
   applyChallengeBarOutcomes,
   applyChallengeOutcomes,
@@ -51,7 +51,6 @@ import type {
 const SETTINGS_KEY = 'two-hand-rhythm-trainer.settings.v1';
 const SESSION_HISTORY_KEY = 'split-beat.session-history.v1';
 const COMBINATION_PROGRESS_KEY = 'split-beat.combination-progress.v1';
-const FEATURE_FLAGS_KEY = 'split-beat.feature-flags.v1';
 const COUNT_IN_BEATS = 3;
 const AUDIO_LEAD_IN_MS = 300;
 const FORCE_SILENT_E2E = process.env.EXPO_PUBLIC_E2E_SILENT === '1';
@@ -131,9 +130,6 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
 interface SessionContextValue {
   settings: ExerciseSettings;
   featureFlags: FeatureFlags;
-  featureFlagsLoaded: boolean;
-  updateFeatureFlag: (id: FeatureFlagId, enabled: boolean) => void;
-  enableAllFeatures: () => void;
   sessionSettings: ExerciseSettings | null;
   updateSettings: (patch: Partial<ExerciseSettings>) => void;
   audioStatus: AudioPreparationStatus;
@@ -265,9 +261,8 @@ function monotonicNow(): number {
 
 export function SessionProvider({ children }: React.PropsWithChildren) {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-  const [featureFlags, setFeatureFlags] = useState<FeatureFlags>(DEFAULT_FEATURE_FLAGS);
-  const [featureFlagsLoaded, setFeatureFlagsLoaded] = useState(false);
-  const featureFlagsRef = useRef<FeatureFlags>(DEFAULT_FEATURE_FLAGS);
+  const featureFlags = BUILD_FEATURE_FLAGS;
+  const featureFlagsRef = useRef<FeatureFlags>(BUILD_FEATURE_FLAGS);
   const [sessionSettings, setSessionSettings] = useState<ExerciseSettings | null>(null);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [snapshot, setSnapshot] = useState<SessionSnapshot | null>(null);
@@ -309,32 +304,6 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       active = false;
     };
   }, []);
-
-  useEffect(() => {
-    let active = true;
-    void AsyncStorage.getItem(FEATURE_FLAGS_KEY)
-      .then((raw) => {
-        if (active) {
-          const restoredFlags = parseFeatureFlags(raw);
-          featureFlagsRef.current = restoredFlags;
-          setFeatureFlags(restoredFlags);
-        }
-      })
-      .catch(() => {
-        if (active) {
-          featureFlagsRef.current = { ...DEFAULT_FEATURE_FLAGS };
-          setFeatureFlags(featureFlagsRef.current);
-        }
-      })
-      .finally(() => {
-        if (active) setFeatureFlagsLoaded(true);
-      });
-    return () => { active = false; };
-  }, []);
-
-  useEffect(() => {
-    if (featureFlagsLoaded) void AsyncStorage.setItem(FEATURE_FLAGS_KEY, JSON.stringify(featureFlags));
-  }, [featureFlags, featureFlagsLoaded]);
 
   useEffect(() => {
     let active = true;
@@ -462,20 +431,6 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
         ...(livePatch.goodWindowMs === undefined ? {} : { goodWindowMs: livePatch.goodWindowMs }),
       });
     }
-  }, []);
-
-  const updateFeatureFlag = useCallback((id: FeatureFlagId, enabled: boolean) => {
-    setFeatureFlags((current) => {
-      const next = { ...current, [id]: enabled };
-      featureFlagsRef.current = next;
-      return next;
-    });
-  }, []);
-
-  const enableAllFeatures = useCallback(() => {
-    const allEnabled = { ...DEFAULT_FEATURE_FLAGS };
-    featureFlagsRef.current = allEnabled;
-    setFeatureFlags(allEnabled);
   }, []);
 
   const stopTimers = useCallback(() => {
@@ -758,19 +713,13 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     score?: ImportedRhythmScore,
     options: ExercisePreparationOptions = {},
   ) => {
-    if (!featureFlagsLoaded) {
-      const restoredFlags = parseFeatureFlags(await AsyncStorage.getItem(FEATURE_FLAGS_KEY).catch(() => null));
-      featureFlagsRef.current = restoredFlags;
-      setFeatureFlags(restoredFlags);
-      setFeatureFlagsLoaded(true);
-    }
     const activeFlags = featureFlagsRef.current;
     pendingOptionsRef.current = options;
     setSessionSettings(applyFeatureFlagsToSettings({ ...settings, ...options.settings }, activeFlags));
     await prepareAudio();
     pendingScoreRef.current = score;
     setExercisePrepared(true);
-  }, [featureFlagsLoaded, prepareAudio, settings]);
+  }, [prepareAudio, settings]);
 
   const prepareRepeatExercise = useCallback(async () => {
     if (!results) throw new Error('There is no completed exercise to repeat.');
@@ -855,8 +804,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   );
 
   const value = useMemo(
-    () => ({ settings, featureFlags, featureFlagsLoaded, updateFeatureFlag, enableAllFeatures, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, discardReplayData }),
-    [settings, featureFlags, featureFlagsLoaded, updateFeatureFlag, enableAllFeatures, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, discardReplayData],
+    () => ({ settings, featureFlags, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, discardReplayData }),
+    [settings, featureFlags, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, discardReplayData],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

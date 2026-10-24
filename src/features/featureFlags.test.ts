@@ -4,8 +4,9 @@ import type { ExerciseSettings } from '@/types/rhythm';
 import {
   applyFeatureFlagsToPatternPairs,
   applyFeatureFlagsToSettings,
+  BUILD_FEATURE_FLAGS,
   DEFAULT_FEATURE_FLAGS,
-  FEATURE_GROUPS,
+  FEATURE_FLAG_IDS,
   parseFeatureFlags,
 } from './featureFlags';
 
@@ -45,17 +46,19 @@ const settings: ExerciseSettings = {
   hapticsEnabled: true,
 };
 
-test('feature list defaults every listed feature to enabled', () => {
-  const featureIds = FEATURE_GROUPS.flatMap((group) => group.features.map((feature) => feature.id));
-  assert.equal(featureIds.length, Object.keys(DEFAULT_FEATURE_FLAGS).length);
-  assert.ok(featureIds.every((id) => DEFAULT_FEATURE_FLAGS[id]));
+test('build feature defaults enable every defined flag', () => {
+  assert.equal(FEATURE_FLAG_IDS.length, Object.keys(DEFAULT_FEATURE_FLAGS).length);
+  assert.ok(FEATURE_FLAG_IDS.every((id) => DEFAULT_FEATURE_FLAGS[id]));
 });
 
-test('feature flag persistence restores explicit values and defaults missing or malformed values to enabled', () => {
+test('build feature environment overrides explicit flags and defaults unspecified flags to enabled', () => {
   assert.deepEqual(parseFeatureFlags(null), DEFAULT_FEATURE_FLAGS);
+  assert.deepEqual(parseFeatureFlags(undefined), DEFAULT_FEATURE_FLAGS);
   assert.deepEqual(parseFeatureFlags('{broken'), DEFAULT_FEATURE_FLAGS);
   assert.equal(parseFeatureFlags('{"gameCenter":false}').gameCenter, false);
   assert.equal(parseFeatureFlags('{"gameCenter":false}').backgroundMusic, true);
+  assert.equal(parseFeatureFlags('{"gameCenter":"false"}').gameCenter, true);
+  assert.deepEqual(BUILD_FEATURE_FLAGS, parseFeatureFlags(process.env.EXPO_PUBLIC_FEATURE_FLAGS));
 });
 
 test('disabled feature groups are removed from effective session settings', () => {

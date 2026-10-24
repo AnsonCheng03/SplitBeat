@@ -1,64 +1,31 @@
 import type { ExerciseSettings, RhythmPatternPair, Subdivision } from '@/types/rhythm';
 
-export interface FeatureFlagDefinition {
-  id: string;
-  label: string;
-  description: string;
-}
+export const FEATURE_FLAG_IDS = [
+  'oneHandMode',
+  'scoreNotation',
+  'focusPractice',
+  'timingCalibration',
+  'scoreImport',
+  'savedScoreLibrary',
+  'learnCourse',
+  'rhythmExtensions',
+  'mixtures',
+  'restsAndGrace',
+  'soundEffects',
+  'backgroundMusic',
+  'sessionCues',
+  'shownRhythmPlayback',
+  'tapHaptics',
+  'tapFeedback',
+  'challengeMode',
+  'gameCenter',
+  'sessionRecords',
+  'missedNoteReplay',
+  'externalKeyboard',
+] as const;
 
-export const FEATURE_GROUPS = [
-  {
-    title: 'Practice modes',
-    features: [
-      { id: 'oneHandMode', label: 'One-hand practice', description: 'Practice with a full-screen tap area.' },
-      { id: 'scoreNotation', label: 'Score notes', description: 'Show the rhythm as moving notes across bars.' },
-      { id: 'focusPractice', label: 'Focus practice', description: 'Review pairs, choose patterns, and type a bar.' },
-      { id: 'timingCalibration', label: 'Timing calibration', description: 'Adjust each hand for your device and touch response.' },
-    ],
-  },
-  {
-    title: 'Scores and learning',
-    features: [
-      { id: 'scoreImport', label: 'MIDI and MusicXML import', description: 'Train from one- or two-track score files.' },
-      { id: 'savedScoreLibrary', label: 'Templates and saved scores', description: 'Keep imported scores and use built-in songs.' },
-      { id: 'learnCourse', label: 'Learn course and purchase', description: 'Guided lessons, progress, and the course unlock.' },
-    ],
-  },
-  {
-    title: 'Rhythm features',
-    features: [
-      { id: 'rhythmExtensions', label: 'Tuplets, swing, and compound meter', description: 'Use tuplets, swung feel, and compound time signatures.' },
-      { id: 'mixtures', label: 'Mixed-note patterns', description: 'Combine different note values and rests in a beat.' },
-      { id: 'restsAndGrace', label: 'Rests and grace pickups', description: 'Add rests between changes or for one hand.' },
-    ],
-  },
-  {
-    title: 'Sound and feedback',
-    features: [
-      { id: 'soundEffects', label: 'Sound effects', description: 'Metronome, hand taps, and score-note sounds.' },
-      { id: 'backgroundMusic', label: 'Beat-synced accompaniment', description: 'Play the generated chord backing during practice.' },
-      { id: 'sessionCues', label: 'Start and change cues', description: 'Hear a start pickup and pattern-change cue.' },
-      { id: 'shownRhythmPlayback', label: 'Play the shown rhythm', description: 'Hear each expected note for the left and right hands.' },
-      { id: 'tapHaptics', label: 'Tap haptics', description: 'Add a light vibration when tapping.' },
-      { id: 'tapFeedback', label: 'Correct and missed tap colors', description: 'Flash teal for a hit and red for an error.' },
-    ],
-  },
-  {
-    title: 'Challenges and progress',
-    features: [
-      { id: 'challengeMode', label: 'Mistake challenge', description: 'Pause or end a session after errors.' },
-      { id: 'gameCenter', label: 'Game Center leaderboard', description: 'Submit and view your best clean streak on iOS.' },
-      { id: 'sessionRecords', label: 'My Records', description: 'Save and review practice session summaries.' },
-      { id: 'missedNoteReplay', label: 'Missed-note visual replay', description: 'Compare expected notes with your recorded taps.' },
-      { id: 'externalKeyboard', label: 'External keyboard input', description: 'Play either hand with a connected keyboard.' },
-    ],
-  },
-] as const satisfies readonly { title: string; features: readonly FeatureFlagDefinition[] }[];
-
-export type FeatureFlagId = (typeof FEATURE_GROUPS)[number]['features'][number]['id'];
+export type FeatureFlagId = (typeof FEATURE_FLAG_IDS)[number];
 export type FeatureFlags = Record<FeatureFlagId, boolean>;
-
-const FEATURE_FLAG_IDS = FEATURE_GROUPS.flatMap(({ features }) => features.map(({ id }) => id)) as FeatureFlagId[];
 
 export const DEFAULT_FEATURE_FLAGS: FeatureFlags = Object.fromEntries(
   FEATURE_FLAG_IDS.map((id) => [id, true]),
@@ -67,7 +34,7 @@ export const DEFAULT_FEATURE_FLAGS: FeatureFlags = Object.fromEntries(
 const SIMPLE_TIME_SIGNATURES = ['2/4', '3/4', '4/4', '5/4', '7/4', '2/2', '3/8'] as const;
 export const BASIC_SUBDIVISIONS = ['quarter', 'eighth', 'sixteenth'] as const satisfies readonly Subdivision[];
 
-export function parseFeatureFlags(raw: string | null): FeatureFlags {
+export function parseFeatureFlags(raw: string | null | undefined): FeatureFlags {
   if (!raw) return { ...DEFAULT_FEATURE_FLAGS };
   try {
     const parsed = JSON.parse(raw) as Partial<Record<FeatureFlagId, unknown>>;
@@ -78,6 +45,9 @@ export function parseFeatureFlags(raw: string | null): FeatureFlags {
     return { ...DEFAULT_FEATURE_FLAGS };
   }
 }
+
+/** Feature availability is embedded in the JS bundle at build time. */
+export const BUILD_FEATURE_FLAGS = parseFeatureFlags(process.env.EXPO_PUBLIC_FEATURE_FLAGS);
 
 export function applyFeatureFlagsToSettings(
   settings: ExerciseSettings,
