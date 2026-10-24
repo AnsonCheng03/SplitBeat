@@ -20,6 +20,8 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: settings.appearance.screen
 - tapOn:
+    id: settings.appearance.display.score
+- tapOn:
     id: settings.appearance.lightMode
 - tapOn:
     id: settings.appearance.back
@@ -29,8 +31,6 @@ appId: com.splitbeat.twohandrhythm
     id: setup.home
 - assertVisible:
     id: home.screen
-- tapOn:
-    id: home.display.score
 - tapOn:
     id: home.start
 - extendedWaitUntil:

@@ -13,7 +13,27 @@ appId: com.splitbeat.twohandrhythm
       id: home.audioStatus
     timeout: 15000
 - tapOn:
-    id: home.display.score
+    id: home.setup
+- assertVisible:
+    id: setup.screen
+- scrollUntilVisible:
+    element:
+      id: setup.card.appearance
+    direction: DOWN
+- tapOn:
+    id: setup.card.appearance
+- assertVisible:
+    id: settings.appearance.screen
+- tapOn:
+    id: settings.appearance.display.score
+- tapOn:
+    id: settings.appearance.back
+- assertVisible:
+    id: setup.screen
+- tapOn:
+    id: setup.home
+- assertVisible:
+    id: home.screen
 - assertVisible:
     id: home.start
 - tapOn:

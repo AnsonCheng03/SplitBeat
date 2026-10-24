@@ -7,10 +7,12 @@ export function PracticeDisplayPicker({
   value,
   onChange,
   testIDPrefix,
+  label = 'NOTATION',
 }: {
   value: PracticeDisplayMode;
   onChange: (value: PracticeDisplayMode) => void;
   testIDPrefix: string;
+  label?: string;
 }) {
   const { colors } = useTheme();
   const options: { label: string; value: PracticeDisplayMode }[] = [
@@ -21,7 +23,7 @@ export function PracticeDisplayPicker({
   return (
     <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
       <Text style={{ width: 76, color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.4 }}>
-        NOTATION
+        {label}
       </Text>
       <View style={{ flex: 1, flexDirection: 'row', gap: 8 }}>
         {options.map((option) => {

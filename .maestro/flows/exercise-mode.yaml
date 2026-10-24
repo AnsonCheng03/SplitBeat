@@ -9,6 +9,8 @@ appId: com.splitbeat.twohandrhythm
       id: home.screen
     timeout: 15000
 - tapOn:
+    id: home.activityPicker
+- tapOn:
     id: home.exercise
 - assertVisible:
     id: exercise.screen
