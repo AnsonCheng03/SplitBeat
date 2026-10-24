@@ -1,4 +1,4 @@
-import { Link, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -244,6 +244,46 @@ function DisclosureHeader({
         {expanded ? 'HIDE  −' : 'VIEW  +'}
       </Text>
     </Pressable>
+  );
+}
+
+function ResultsActionRow({
+  testID,
+  label,
+  accessibilityLabel,
+  color,
+  onPress,
+  last = false,
+}: {
+  testID: string;
+  label: string;
+  accessibilityLabel: string;
+  color: string;
+  onPress: () => void;
+  last?: boolean;
+}) {
+  const { colors } = useTheme();
+  return (
+    <View>
+      <Pressable
+        testID={testID}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        onPress={onPress}
+        style={({ pressed }) => ({
+          minHeight: 58,
+          paddingHorizontal: 17,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: pressed ? colors.surfaceRaised : 'transparent',
+        })}
+      >
+        <Text style={{ color, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>{label}</Text>
+        <Text accessibilityElementsHidden style={{ color, fontSize: 23, lineHeight: 27, fontWeight: '500' }}>›</Text>
+      </Pressable>
+      {!last ? <View style={{ height: 1, marginHorizontal: 16, backgroundColor: colors.line }} /> : null}
+    </View>
   );
 }
 
@@ -704,43 +744,41 @@ export default function ResultsScreen() {
             </Text>
           </Pressable>
         ) : null}
-        <Link href="/setup" asChild>
-          <Pressable
+        <View testID="results.navigation" style={{ marginTop: 14, marginBottom: 18, overflow: 'hidden', borderRadius: 15, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
+          <ResultsActionRow
             testID="results.settings"
-            accessibilityRole="button"
+            label={t('CHANGE SETTINGS')}
             accessibilityLabel={t('Change settings')}
-            onPress={discardReplayData}
-            style={({ pressed }) => ({ flexDirection: 'row', backgroundColor: pressed ? colors.surface : colors.surfaceRaised, minHeight: 62, paddingHorizontal: 24, borderRadius: 15, alignItems: 'center', justifyContent: 'space-between', marginTop: 14, borderWidth: 1, borderColor: colors.line })}
-          >
-          <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>{t('CHANGE SETTINGS')}</Text>
-            <Text accessibilityElementsHidden style={{ color: colors.muted, fontSize: 24, lineHeight: 28, fontWeight: '500' }}>›</Text>
-          </Pressable>
-        </Link>
-        {featureFlags.sessionRecords ? <Link href="/records" asChild>
-          <Pressable
-            testID="results.records"
-            accessibilityRole="button"
-            accessibilityLabel={t('View my record')}
-            onPress={discardReplayData}
-            style={({ pressed }) => ({ flexDirection: 'row', backgroundColor: pressed ? colors.surface : colors.surfaceRaised, minHeight: 62, paddingHorizontal: 24, borderRadius: 15, alignItems: 'center', justifyContent: 'space-between', marginTop: 14, borderWidth: 1, borderColor: colors.line })}
-          >
-            <Text style={{ color: colors.left, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>{t('VIEW MY RECORD')}</Text>
-            <Text accessibilityElementsHidden style={{ color: colors.left, fontSize: 24, lineHeight: 28, fontWeight: '500' }}>›</Text>
-          </Pressable>
-        </Link> : null}
-        <Pressable
-          testID="results.home"
-          accessibilityRole="button"
-          accessibilityLabel={t('Back home')}
-          onPress={() => {
-            discardReplayData();
-            router.replace('/');
-          }}
-          style={({ pressed }) => ({ flexDirection: 'row', backgroundColor: pressed ? colors.surface : colors.surfaceRaised, minHeight: 62, paddingHorizontal: 24, borderRadius: 15, alignItems: 'center', justifyContent: 'space-between', marginTop: 14, marginBottom: 18, borderWidth: 1, borderColor: colors.line })}
-        >
-          <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>{t('BACK HOME')}</Text>
-          <Text accessibilityElementsHidden style={{ color: colors.muted, fontSize: 24, lineHeight: 28, fontWeight: '500' }}>›</Text>
-        </Pressable>
+            color={colors.text}
+            onPress={() => {
+              discardReplayData();
+              router.replace('/setup');
+            }}
+          />
+          {featureFlags.sessionRecords ? (
+            <ResultsActionRow
+              testID="results.records"
+              label={t('VIEW MY RECORD')}
+              accessibilityLabel={t('View my record')}
+              color={colors.left}
+              onPress={() => {
+                discardReplayData();
+                router.replace('/records');
+              }}
+            />
+          ) : null}
+          <ResultsActionRow
+            testID="results.home"
+            label={t('BACK HOME')}
+            accessibilityLabel={t('Back home')}
+            color={colors.muted}
+            onPress={() => {
+              discardReplayData();
+              router.replace('/');
+            }}
+            last
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
