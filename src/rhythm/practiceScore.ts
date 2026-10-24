@@ -4,6 +4,7 @@ import {
   tupletCount,
 } from '@/rhythm/subdivisions';
 import type { ScoreRhythmEvent, ScoreRhythmMeasure } from '@/types/importedScore';
+import { expandMixturePattern } from '@/rhythm/mixtures';
 import type { ExerciseStep, Hand } from '@/types/rhythm';
 
 const EPSILON = 0.000001;
@@ -84,6 +85,33 @@ function appendHandEvents(
   },
 ): void {
   if (hand === 'left' ? step.leftRest : step.rightRest) return;
+
+  const mixtureId = hand === 'left' ? step.leftMixture : step.rightMixture;
+  if (mixtureId) {
+    const stepStartQuarter = step.startBeat * options.pulseQuarterNotes;
+    const stepEndQuarter = (step.startBeat + step.durationBeats) * options.pulseQuarterNotes;
+    const barStartQuarter = options.barStartBeat * options.pulseQuarterNotes;
+    const barEndQuarter = options.barEndBeat * options.pulseQuarterNotes;
+    const sessionEndQuarter = options.sessionEndBeat === undefined
+      ? Number.POSITIVE_INFINITY
+      : options.sessionEndBeat * options.pulseQuarterNotes;
+
+    for (const atom of expandMixturePattern(mixtureId, stepStartQuarter, stepEndQuarter)) {
+      const absoluteBeat = atom.startQuarter / options.pulseQuarterNotes;
+      if (
+        atom.startQuarter < barStartQuarter - EPSILON ||
+        atom.startQuarter >= barEndQuarter - EPSILON ||
+        atom.startQuarter >= sessionEndQuarter - EPSILON ||
+        Math.floor(absoluteBeat + EPSILON) === options.restBeat
+      ) continue;
+      destination.push({
+        startQuarter: Math.max(0, atom.startQuarter - barStartQuarter),
+        durationQuarter: Math.min(atom.durationQuarter, barEndQuarter - atom.startQuarter, sessionEndQuarter - atom.startQuarter),
+        ...(atom.kind === 'rest' ? { isRest: true } : {}),
+      });
+    }
+    return;
+  }
 
   const subdivision = hand === 'left' ? step.leftSubdivision : step.rightSubdivision;
   const isTuplet = isTupletSubdivision(subdivision);

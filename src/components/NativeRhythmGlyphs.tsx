@@ -70,6 +70,21 @@ export function NativeRhythmGlyphs({
           />
         );
       })}
+      {plan.dots.map((dot) => (
+        <View
+          key={dot.key}
+          style={{
+            position: 'absolute',
+            left: dot.left,
+            top: dot.top,
+            width: dot.size,
+            height: dot.size,
+            borderRadius: dot.size / 2,
+            backgroundColor: color,
+            zIndex: 2,
+          }}
+        />
+      ))}
     </>
   );
 }

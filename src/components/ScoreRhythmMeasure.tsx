@@ -35,14 +35,16 @@ function RhythmTrack({
   const notationWidth = measuredLayout.estimate === initialNotationWidth && measuredLayout.width > 0
     ? measuredLayout.width
     : initialNotationWidth;
+  const noteEvents = useMemo(() => events.filter((event) => !event.isRest), [events]);
+  const restEvents = useMemo(() => events.filter((event) => event.isRest), [events]);
   const plan = useMemo(() => notationWidth > 0
-    ? createBarNoteNotationPlan(events, {
+    ? createBarNoteNotationPlan(noteEvents, {
       durationQuarter,
       width: notationWidth,
       size,
       beamGroupQuarterNotes,
     })
-    : null, [beamGroupQuarterNotes, durationQuarter, events, notationWidth, size]);
+    : null, [beamGroupQuarterNotes, durationQuarter, noteEvents, notationWidth, size]);
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: minimal ? 0 : 10, minHeight: size === 'compact' ? 40 : 54 }}>
@@ -59,20 +61,41 @@ function RhythmTrack({
             </Text>
           </View>
         ) : plan ? (
-          <NoteNotation
-            plan={plan}
-            color={color}
-            showStaffLines={showStaffLines}
-            staffLineColor={colors.dim}
-            useNativeGlyphs
-            testID={`${testIdPrefix}.${label.toLowerCase()}Notation`}
-            accessibilityLabel={`${label.toLowerCase()} bar with ${events.length} notes`}
-          />
+          <View style={{ minHeight: size === 'compact' ? 36 : 50, justifyContent: 'center' }}>
+            {noteEvents.length > 0 || showStaffLines ? (
+              <NoteNotation
+                plan={plan}
+                color={color}
+                showStaffLines={showStaffLines}
+                staffLineColor={colors.dim}
+                useNativeGlyphs
+                testID={`${testIdPrefix}.${label.toLowerCase()}Notation`}
+                accessibilityLabel={`${label.toLowerCase()} bar with ${noteEvents.length} notes and ${restEvents.length} rests`}
+              />
+            ) : null}
+            {restEvents.map((event, index) => (
+              <Text
+                key={`${label}.rest.${event.startQuarter}.${index}`}
+                style={{
+                  position: 'absolute',
+                  left: `${((event.startQuarter + event.durationQuarter / 2) / durationQuarter) * 100}%`,
+                  transform: [{ translateX: -12 }],
+                  color,
+                  fontSize: size === 'compact' ? 7 : 8,
+                  fontWeight: '900',
+                  letterSpacing: 0.2,
+                  textAlign: 'center',
+                }}
+              >
+                REST
+              </Text>
+            ))}
+          </View>
         ) : null}
       </View>
       {!minimal ? (
         <Text style={{ color: colors.muted, fontSize: 10, fontVariant: ['tabular-nums'], width: 28, textAlign: 'right' }}>
-          {events.length}
+          {noteEvents.length}
         </Text>
       ) : null}
     </View>

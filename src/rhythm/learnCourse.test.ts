@@ -22,6 +22,7 @@ const preferences: ExerciseSettings = {
   restBetweenChanges: false,
   handRestsEnabled: false,
   enabledSubdivisions: ['quarter', 'eighth'],
+  enabledMixtures: [],
   feel: 'straight',
   graceNotesEnabled: false,
   trainingMode: 'two-hand',

@@ -1,8 +1,9 @@
 import { SUBDIVISIONS } from '@/types/rhythm';
-import type { ExerciseStep, RhythmPatternPair, Subdivision } from '@/types/rhythm';
+import type { ExerciseStep, MixturePatternId, RhythmPatternPair, Subdivision } from '@/types/rhythm';
 
 export interface ExerciseGeneratorOptions {
   enabledSubdivisions: Subdivision[];
+  enabledMixtures?: MixturePatternId[];
   changeIntervalBeats: number;
   patternPairs?: readonly RhythmPatternPair[];
   patternPairWeights?: readonly number[];
@@ -19,7 +20,9 @@ function samePattern(first: RhythmPatternPair, second: RhythmPatternPair): boole
   return first.leftSubdivision === second.leftSubdivision &&
     first.rightSubdivision === second.rightSubdivision &&
     (first.leftRest === true) === (second.leftRest === true) &&
-    (first.rightRest === true) === (second.rightRest === true);
+    (first.rightRest === true) === (second.rightRest === true) &&
+    first.leftMixture === second.leftMixture &&
+    first.rightMixture === second.rightMixture;
 }
 
 function patternKey(pattern: RhythmPatternPair): string {
@@ -28,6 +31,8 @@ function patternKey(pattern: RhythmPatternPair): string {
     pattern.rightSubdivision,
     pattern.leftRest === true,
     pattern.rightRest === true,
+    pattern.leftMixture ?? '',
+    pattern.rightMixture ?? '',
   ].join(':');
 }
 
@@ -69,6 +74,7 @@ export function createExerciseStepGenerator(options: ExerciseGeneratorOptions) {
   const allowed = SUBDIVISIONS.filter((subdivision) =>
     options.enabledSubdivisions.includes(subdivision),
   );
+  const allowedMixtures = options.enabledMixtures ?? [];
   const steps: ExerciseStep[] = [];
 
   return (stepIndex: number): ExerciseStep => {
@@ -76,12 +82,23 @@ export function createExerciseStepGenerator(options: ExerciseGeneratorOptions) {
       const previous = steps.at(-1);
       const candidates: WeightedPattern[] = options.patternPairs?.length
         ? weightedPatterns(options.patternPairs, options.patternPairWeights)
-        : allowed.flatMap((leftSubdivision) =>
-            allowed.map((rightSubdivision) => ({
-              pattern: { leftSubdivision, rightSubdivision },
-              weight: 1,
-            })),
-          );
+        : (() => {
+            const handChoices: { subdivision: Subdivision; mixtureId?: MixturePatternId }[] = [
+              ...allowed.map((subdivision) => ({ subdivision })),
+              ...allowedMixtures.map((mixtureId) => ({ subdivision: 'quarter' as const, mixtureId })),
+            ];
+            return handChoices.flatMap((left) =>
+              handChoices.map((right) => ({
+                pattern: {
+                  leftSubdivision: left.subdivision,
+                  rightSubdivision: right.subdivision,
+                  ...(left.mixtureId ? { leftMixture: left.mixtureId } : {}),
+                  ...(right.mixtureId ? { rightMixture: right.mixtureId } : {}),
+                },
+                weight: 1,
+              })),
+            );
+          })();
       const restCandidates: WeightedPattern[] = options.allowHandRests && !options.patternPairs?.length
         ? candidates.flatMap((candidate) => [
             { pattern: { ...candidate.pattern, leftRest: true }, weight: candidate.weight },
@@ -109,6 +126,8 @@ export function createExerciseStepGenerator(options: ExerciseGeneratorOptions) {
         rightSubdivision: selected.rightSubdivision,
         leftRest: selected.leftRest === true,
         rightRest: selected.rightRest === true,
+        ...(selected.leftMixture ? { leftMixture: selected.leftMixture } : {}),
+        ...(selected.rightMixture ? { rightMixture: selected.rightMixture } : {}),
         startBeat: steps.length * options.changeIntervalBeats,
         durationBeats: options.changeIntervalBeats,
       });

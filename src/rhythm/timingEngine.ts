@@ -11,6 +11,7 @@ import {
 import { accuracyPercent, emptyHandStats, finalizeHandStats } from '@/rhythm/scoring';
 import { longestCorrectNoteStreak } from '@/rhythm/challenge';
 import { createPracticeScoreMeasure } from '@/rhythm/practiceScore';
+import { expandMixturePattern } from '@/rhythm/mixtures';
 import type { ChallengeOutcome } from '@/rhythm/challenge';
 import { matchTap, timingWindowsForGoodWindow } from '@/rhythm/tapMatcher';
 import type { TimingWindows } from '@/rhythm/tapMatcher';
@@ -79,6 +80,8 @@ interface MutableCombinationStats {
   rightSubdivision: Subdivision;
   leftRest: boolean;
   rightRest: boolean;
+  leftMixture?: ExerciseStep['leftMixture'];
+  rightMixture?: ExerciseStep['rightMixture'];
   left: MutableAccuracyStats;
   right: MutableAccuracyStats;
 }
@@ -207,6 +210,7 @@ export class RhythmTimingEngine {
       : options.sessionStartTime + sessionDurationSeconds * 1_000;
     this.getStep = createExerciseStepGenerator({
       enabledSubdivisions: options.settings.enabledSubdivisions,
+      enabledMixtures: options.settings.enabledMixtures,
       changeIntervalBeats: options.settings.changeIntervalBeats,
       patternPairs: options.patternPairs,
       patternPairWeights: options.patternPairWeights,
@@ -339,6 +343,8 @@ export class RhythmTimingEngine {
         rightSubdivision: combination.rightSubdivision,
         leftRest: combination.leftRest,
         rightRest: combination.rightRest,
+        ...(combination.leftMixture ? { leftMixture: combination.leftMixture } : {}),
+        ...(combination.rightMixture ? { rightMixture: combination.rightMixture } : {}),
         left: toAccuracyStats(combination.left),
         right: toAccuracyStats(combination.right),
       })),
@@ -396,8 +402,32 @@ export class RhythmTimingEngine {
       for (const hand of ['left', 'right'] as const) {
         if (this.settings.trainingMode === 'single-hand' && hand !== this.settings.singleHand) continue;
         if (hand === 'left' ? step.leftRest : step.rightRest) continue;
+        const mixtureId = hand === 'left' ? step.leftMixture : step.rightMixture;
         const subdivision = hand === 'left' ? step.leftSubdivision : step.rightSubdivision;
-        if (isTupletSubdivision(subdivision)) {
+        if (mixtureId) {
+          const pulseQuarter = pulseQuarterNotes(this.settings.timeSignature);
+          const stepStartQuarter = step.startBeat * pulseQuarter;
+          const stepEndQuarter = (step.startBeat + step.durationBeats) * pulseQuarter;
+          const atoms = expandMixturePattern(mixtureId, stepStartQuarter, stepEndQuarter);
+          for (let atomIndex = 0; atomIndex < atoms.length; atomIndex += 1) {
+            const atom = atoms[atomIndex];
+            if (!atom || atom.kind !== 'note') continue;
+            const expectedTimeMs = this.sessionStartTime + atom.startQuarter * this.quarterNoteMs;
+            if (expectedTimeMs >= stepEndTime || (this.endTime !== null && expectedTimeMs >= this.endTime)) continue;
+            const beatOffset = Math.floor((expectedTimeMs - stepStartTime) / this.beatMs + 1e-9);
+            if (beatOffset === restBeatOffset) continue;
+            this.events[hand].push({
+              id: `${hand}:${step.id}:mixture:${atomIndex}`,
+              expectedTimeMs,
+              step,
+              beatIndex: Math.floor((expectedTimeMs - this.sessionStartTime) / this.beatMs + 1e-9),
+              durationQuarter: atom.durationQuarter,
+              isGraceNote: false,
+              isScoreEvent: false,
+              settled: false,
+            });
+          }
+        } else if (isTupletSubdivision(subdivision)) {
           const notesPerBeat = tupletCount(subdivision);
           let tupletEventIndex = 0;
           for (let beatOffset = 0; beatOffset < step.durationBeats; beatOffset += 1) {
@@ -419,30 +449,29 @@ export class RhythmTimingEngine {
               tupletEventIndex += 1;
             }
           }
-          continue;
-        }
-
-        const divisions = SUBDIVISION_COUNTS[subdivision];
-        for (let subdivisionIndex = 0; ; subdivisionIndex += 1) {
-          const quarterIndex = Math.floor(subdivisionIndex / divisions);
-          const noteIndex = subdivisionIndex % divisions;
-          const expectedTimeMs =
-            stepStartTime +
-            quarterIndex * this.quarterNoteMs +
-            subdivisionOffsetMs(this.quarterNoteMs, subdivision, noteIndex, this.settings.feel);
-          if (expectedTimeMs >= stepEndTime) break;
-          if (this.endTime !== null && expectedTimeMs >= this.endTime) continue;
-          const beatOffset = Math.floor((expectedTimeMs - stepStartTime) / this.beatMs + 1e-9);
-          if (beatOffset === restBeatOffset) continue;
-          this.events[hand].push({
-            id: `${hand}:${step.id}:${subdivisionIndex}`,
-            expectedTimeMs,
-            step,
-            beatIndex: Math.floor((expectedTimeMs - this.sessionStartTime) / this.beatMs + 1e-9),
-            isGraceNote: false,
-            isScoreEvent: false,
-            settled: false,
-          });
+        } else {
+          const divisions = SUBDIVISION_COUNTS[subdivision];
+          for (let subdivisionIndex = 0; ; subdivisionIndex += 1) {
+            const quarterIndex = Math.floor(subdivisionIndex / divisions);
+            const noteIndex = subdivisionIndex % divisions;
+            const expectedTimeMs =
+              stepStartTime +
+              quarterIndex * this.quarterNoteMs +
+              subdivisionOffsetMs(this.quarterNoteMs, subdivision, noteIndex, this.settings.feel);
+            if (expectedTimeMs >= stepEndTime) break;
+            if (this.endTime !== null && expectedTimeMs >= this.endTime) continue;
+            const beatOffset = Math.floor((expectedTimeMs - stepStartTime) / this.beatMs + 1e-9);
+            if (beatOffset === restBeatOffset) continue;
+            this.events[hand].push({
+              id: `${hand}:${step.id}:${subdivisionIndex}`,
+              expectedTimeMs,
+              step,
+              beatIndex: Math.floor((expectedTimeMs - this.sessionStartTime) / this.beatMs + 1e-9),
+              isGraceNote: false,
+              isScoreEvent: false,
+              settled: false,
+            });
+          }
         }
 
         const graceLead = graceLeads?.[hand];
@@ -511,6 +540,8 @@ export class RhythmTimingEngine {
   }
 
   private graceLeadMs(previousStep: ExerciseStep, upcomingStep: ExerciseStep, hand: Hand): number {
+    if ((hand === 'left' ? previousStep.leftMixture : previousStep.rightMixture) ||
+      (hand === 'left' ? upcomingStep.leftMixture : upcomingStep.rightMixture)) return 0;
     const previousSubdivision = hand === 'left'
       ? previousStep.leftSubdivision
       : previousStep.rightSubdivision;
@@ -612,7 +643,8 @@ export class RhythmTimingEngine {
     const beatPosition = (event.expectedTimeMs - this.sessionStartTime) / this.beatMs;
     const barOffset = Math.floor(beatPosition / this.beatsPerBar);
     const beatInBar = beatPosition - barOffset * this.beatsPerBar;
-    const subdivision = event.isScoreEvent
+    const mixtureId = hand === 'left' ? event.step.leftMixture : event.step.rightMixture;
+    const subdivision = event.isScoreEvent || mixtureId
       ? undefined
       : hand === 'left' ? event.step.leftSubdivision : event.step.rightSubdivision;
     const durationQuarter = event.durationQuarter ?? (
@@ -653,7 +685,7 @@ export class RhythmTimingEngine {
         hand: replayEvent.hand,
         barIndex: replayEvent.barIndex,
         beatInBar: replayEvent.beatInBar,
-        ...(event.isScoreEvent
+        ...(event.isScoreEvent || mixtureId
           ? {
               ...(event.durationQuarter === undefined ? {} : { durationQuarter: event.durationQuarter }),
               ...(event.tupletNumber === undefined ? {} : { tupletNumber: event.tupletNumber }),
@@ -669,7 +701,7 @@ export class RhythmTimingEngine {
       return;
     }
 
-    const key = `${event.step.leftRest ? 'rest' : event.step.leftSubdivision}:${event.step.rightRest ? 'rest' : event.step.rightSubdivision}`;
+    const key = `${event.step.leftRest ? 'rest' : event.step.leftMixture ?? event.step.leftSubdivision}:${event.step.rightRest ? 'rest' : event.step.rightMixture ?? event.step.rightSubdivision}`;
     let combination = this.combinations.get(key);
     if (!combination) {
       combination = {
@@ -677,6 +709,8 @@ export class RhythmTimingEngine {
         rightSubdivision: event.step.rightSubdivision,
         leftRest: event.step.leftRest,
         rightRest: event.step.rightRest,
+        ...(event.step.leftMixture ? { leftMixture: event.step.leftMixture } : {}),
+        ...(event.step.rightMixture ? { rightMixture: event.step.rightMixture } : {}),
         left: createMutableAccuracyStats(),
         right: createMutableAccuracyStats(),
       };
@@ -917,6 +951,8 @@ export class RhythmTimingEngine {
         rightSubdivision: combination.rightSubdivision,
         leftRest: combination.leftRest,
         rightRest: combination.rightRest,
+        ...(combination.leftMixture ? { leftMixture: combination.leftMixture } : {}),
+        ...(combination.rightMixture ? { rightMixture: combination.rightMixture } : {}),
         left: toAccuracyStats(combination.left),
         right: toAccuracyStats(combination.right),
       })),

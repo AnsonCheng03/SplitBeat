@@ -23,6 +23,12 @@ export const SUBDIVISIONS = [
 ] as const;
 
 export type Subdivision = (typeof SUBDIVISIONS)[number];
+export const MIXTURE_PATTERN_IDS = [
+  'dottedQuaverSemiquaver',
+  'semiquaverTwoDemisemiquavers',
+  'semiquaverDemisemiquaverRestDemisemiquaver',
+] as const;
+export type MixturePatternId = (typeof MIXTURE_PATTERN_IDS)[number];
 export const TIME_SIGNATURES = [
   '2/4',
   '3/4',
@@ -55,6 +61,8 @@ export interface ExerciseStep {
   rightSubdivision: Subdivision;
   leftRest: boolean;
   rightRest: boolean;
+  leftMixture?: MixturePatternId;
+  rightMixture?: MixturePatternId;
   startBeat: number;
   durationBeats: number;
 }
@@ -71,6 +79,8 @@ export interface RhythmPatternPair {
   rightSubdivision: Subdivision;
   leftRest?: boolean;
   rightRest?: boolean;
+  leftMixture?: MixturePatternId;
+  rightMixture?: MixturePatternId;
 }
 
 export interface ExerciseSettings {
@@ -81,6 +91,7 @@ export interface ExerciseSettings {
   restBetweenChanges: boolean;
   handRestsEnabled: boolean;
   enabledSubdivisions: Subdivision[];
+  enabledMixtures: MixturePatternId[];
   feel: RhythmicFeel;
   graceNotesEnabled: boolean;
   trainingMode: TrainingMode;
@@ -123,6 +134,8 @@ export interface CombinationStats {
   rightSubdivision: Subdivision;
   leftRest: boolean;
   rightRest: boolean;
+  leftMixture?: MixturePatternId;
+  rightMixture?: MixturePatternId;
   left: AccuracyStats;
   right: AccuracyStats;
 }

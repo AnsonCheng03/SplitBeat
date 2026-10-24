@@ -69,6 +69,17 @@ test('bar note builder beams adjacent notes according to each note duration', ()
   assert.equal(triplet.tupletLabels[0]?.text, '3');
 });
 
+test('dotted quavers receive a beam and visible dot in mixed-value notation', () => {
+  const plan = createBarNoteNotationPlan([
+    { startQuarter: 0, durationQuarter: 0.75 },
+    { startQuarter: 0.75, durationQuarter: 0.25 },
+  ], { durationQuarter: 1, width: 100 });
+
+  assert.equal(plan.events[0]?.beamCount, 1);
+  assert.equal(plan.dots.length, 1);
+  assert.equal(plan.dots[0]?.key, 'dot-0');
+});
+
 test('engraving plans preserve sorted mixed note values and tuplet metadata', () => {
   const plan = createBarNoteNotationPlan(
     [

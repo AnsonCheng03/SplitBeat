@@ -22,7 +22,7 @@ import {
 import { timeSignatureMetrics } from '@/rhythm/subdivisions';
 import { appendSessionRecord, createSessionRecord, parseSessionHistory } from '@/store/sessionHistory';
 import type { SessionRecord } from '@/store/sessionHistory';
-import { SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
+import { MIXTURE_PATTERN_IDS, SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
 import type { ImportedRhythmScore } from '@/types/importedScore';
 import type {
   ExerciseSettings,
@@ -58,6 +58,7 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   restBetweenChanges: false,
   handRestsEnabled: false,
   enabledSubdivisions: ['quarter', 'eighth', 'triplet', 'sixteenth'],
+  enabledMixtures: [],
   feel: 'straight',
   graceNotesEnabled: false,
   trainingMode: 'two-hand',
@@ -112,6 +113,9 @@ function restoreSettings(raw: string | null): ExerciseSettings {
       : DEFAULT_SETTINGS.enabledSubdivisions;
     const validSubdivisions =
       enabledSubdivisions.length >= 2 ? enabledSubdivisions : DEFAULT_SETTINGS.enabledSubdivisions;
+    const enabledMixtures = Array.isArray(parsed.enabledMixtures)
+      ? MIXTURE_PATTERN_IDS.filter((item) => parsed.enabledMixtures?.includes(item))
+      : DEFAULT_SETTINGS.enabledMixtures;
     const durationSeconds = [30, 60, 120, 'endless'].includes(
       parsed.durationSeconds as number | 'endless',
     )
@@ -139,6 +143,7 @@ function restoreSettings(raw: string | null): ExerciseSettings {
       restBetweenChanges: parsed.restBetweenChanges === true,
       handRestsEnabled: parsed.handRestsEnabled === true,
       enabledSubdivisions: validSubdivisions as Subdivision[],
+      enabledMixtures: [...enabledMixtures],
       feel: parsed.feel === 'swing' ? 'swing' : 'straight',
       graceNotesEnabled:
         typeof parsed.graceNotesEnabled === 'boolean'

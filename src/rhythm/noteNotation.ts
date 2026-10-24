@@ -44,6 +44,13 @@ export interface NoteBeamShape {
   rotationDegrees: number;
 }
 
+export interface NoteDotShape {
+  key: string;
+  left: number;
+  top: number;
+  size: number;
+}
+
 export interface NoteNotationPlan {
   width: number;
   height: number;
@@ -55,6 +62,7 @@ export interface NoteNotationPlan {
   events: NoteNotationEvent[];
   notes: NoteGlyphShape[];
   beams: NoteBeamShape[];
+  dots: NoteDotShape[];
   tupletLabels: { key: string; text: string; left: number; width: number; top: number; fontSize: number }[];
   noteBaselineY: number | null;
 }
@@ -108,6 +116,13 @@ function beamGroupSize(count: number, beamIndex: number): number {
 function inferredBeamCount(durationQuarter: number): number {
   if (durationQuarter >= 1 - EPSILON) return 0;
 
+  const dottedBase = durationQuarter / 1.5;
+  const dottedBeamCount = Math.round(Math.log2(1 / dottedBase));
+  if (dottedBeamCount >= 0 && dottedBeamCount <= 4 &&
+    Math.abs(dottedBase - 1 / 2 ** dottedBeamCount) < EPSILON) {
+    return dottedBeamCount;
+  }
+
   const tripletBeamCount = Math.log2(1 / (durationQuarter * 3)) + 1;
   const roundedTripletBeamCount = Math.round(tripletBeamCount);
   if (
@@ -119,6 +134,13 @@ function inferredBeamCount(durationQuarter: number): number {
   }
 
   return Math.max(0, Math.min(4, Math.round(Math.log2(1 / durationQuarter))));
+}
+
+function isDottedValue(durationQuarter: number): boolean {
+  if (!Number.isFinite(durationQuarter) || durationQuarter <= 0) return false;
+  const base = durationQuarter / 1.5;
+  const exponent = Math.round(Math.log2(1 / base));
+  return exponent >= 0 && exponent <= 4 && Math.abs(base - 1 / 2 ** exponent) < EPSILON;
 }
 
 function slotWidthFor(count: number, size: NoteNotationSize): number {
@@ -281,6 +303,18 @@ function buildNotationPlan(
       stemWidth: metrics.stemWidth,
     };
   });
+  const dots: NoteDotShape[] = notes.flatMap((note, index) => {
+    if (!isDottedValue(note.durationQuarter)) return [];
+    const glyph = glyphs[index];
+    if (!glyph) return [];
+    const dotSize = Math.max(2, metrics.headHeight * 0.24);
+    return [{
+      key: `dot-${note.sourceIndex}`,
+      left: glyph.left + glyph.headWidth + dotSize * 0.7,
+      top: glyph.headTop + glyph.headHeight * 0.38,
+      size: dotSize,
+    }];
+  });
 
   const tupletLabels: NoteNotationPlan['tupletLabels'] = [];
   let tupletGroupIndex = 0;
@@ -337,6 +371,7 @@ function buildNotationPlan(
     })),
     notes: glyphs,
     beams,
+    dots,
     tupletLabels,
     noteBaselineY: metrics.noteBaselineY,
   };

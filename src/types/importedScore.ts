@@ -9,6 +9,8 @@ export interface ScoreRhythmEvent {
   midiPitches?: number[];
   /** Actual note count in the MusicXML tuplet group, when explicitly marked. */
   tupletNumber?: number;
+  /** An explicit rest included in generated mixture notation. */
+  isRest?: boolean;
 }
 
 export interface ScoreRhythmMeasure {

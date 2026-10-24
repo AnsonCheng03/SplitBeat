@@ -8,11 +8,12 @@ import { GameCenterChallengeCard } from '@/components/GameCenterChallengeCard';
 import { accuracyPercent } from '@/rhythm/scoring';
 import { LEARN_COURSE } from '@/rhythm/learnCourse';
 import { starsForAccuracy } from '@/rhythm/learnRating';
+import { getMixturePattern } from '@/rhythm/mixtures';
 import { SUBDIVISION_LABELS, timeSignatureMetrics } from '@/rhythm/subdivisions';
 import { completeLearnLesson, recordLearnLessonResult } from '@/store/learnProgress';
 import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
-import type { HandStats, MissedEvent, SessionResults, Subdivision } from '@/types/rhythm';
+import type { HandStats, MixturePatternId, MissedEvent, SessionResults, Subdivision } from '@/types/rhythm';
 
 function percent(value: number) {
   return Math.round(value) + '%';
@@ -111,6 +112,7 @@ function buildFeedback(results: SessionResults, weak?: ReturnType<typeof weakest
     const handName = weak.weakHand === 'left' ? 'Left' : 'Right';
     const affectedSubdivision =
       weak.weakHand === 'left' ? weak.leftSubdivision : weak.rightSubdivision;
+    const affectedMixture = weak.weakHand === 'left' ? weak.leftMixture : weak.rightMixture;
     const affectedPattern: Record<Subdivision, string> = {
       quarter: 'quarter-note pulse',
       eighth: 'eighth-note subdivisions',
@@ -127,10 +129,13 @@ function buildFeedback(results: SessionResults, weak?: ReturnType<typeof weakest
       sixtyFourth: '64th-note subdivisions',
     };
     if (results.trainingMode === 'single-hand') {
-      messages.push(`Your one-hand ${affectedPattern[affectedSubdivision]} need extra practice.`);
+      messages.push(affectedMixture
+        ? `Your one-hand ${getMixturePattern(affectedMixture).label.toLowerCase()} need extra practice.`
+        : `Your one-hand ${affectedPattern[affectedSubdivision]} need extra practice.`);
     } else {
       const otherHandName = weak.weakHand === 'left' ? 'right' : 'left';
       const otherSubdivision = weak.weakHand === 'left' ? weak.rightSubdivision : weak.leftSubdivision;
+      const otherMixture = weak.weakHand === 'left' ? weak.rightMixture : weak.leftMixture;
       const otherHandRests = weak.weakHand === 'left' ? weak.rightRest : weak.leftRest;
       const playedPattern: Record<Subdivision, string> = {
         quarter: 'quarter notes',
@@ -147,10 +152,16 @@ function buildFeedback(results: SessionResults, weak?: ReturnType<typeof weakest
         thirtySecond: '32nd notes',
         sixtyFourth: '64th notes',
       };
-      const verb = affectedSubdivision === 'quarter' ? 'is' : 'are';
+      const affectedPatternName = affectedMixture
+        ? getMixturePattern(affectedMixture).label.toLowerCase()
+        : affectedPattern[affectedSubdivision];
+      const otherPatternName = otherMixture
+        ? getMixturePattern(otherMixture).label.toLowerCase()
+        : playedPattern[otherSubdivision];
+      const verb = affectedMixture || affectedSubdivision === 'quarter' ? 'is' : 'are';
       messages.push(
-        'Your ' + handName.toLowerCase() + '-hand ' + affectedPattern[affectedSubdivision] + ' ' + verb +
-        ' less steady when your ' + otherHandName + ' hand ' + (otherHandRests ? 'rests' : `plays ${playedPattern[otherSubdivision]}`) + '.',
+        'Your ' + handName.toLowerCase() + '-hand ' + affectedPatternName + ' ' + verb +
+        ' less steady when your ' + otherHandName + ' hand ' + (otherHandRests ? 'rests' : `plays ${otherPatternName}`) + '.',
       );
     }
   }
@@ -223,8 +234,8 @@ function DisclosureHeader({
   );
 }
 
-function weakLabel(subdivision: Subdivision, rest = false) {
-  return rest ? 'REST' : SUBDIVISION_LABELS[subdivision].toUpperCase();
+function weakLabel(subdivision: Subdivision, rest = false, mixtureId?: MixturePatternId) {
+  return rest ? 'REST' : mixtureId ? getMixturePattern(mixtureId).label.toUpperCase() : SUBDIVISION_LABELS[subdivision].toUpperCase();
 }
 
 function missedBarGroups(events: readonly MissedEvent[]) {
@@ -519,8 +530,8 @@ export default function ResultsScreen() {
                   <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>{results.trainingMode === 'single-hand' ? 'MOST DIFFICULT PATTERN' : 'MOST DIFFICULT PAIR'}</Text>
                   <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', marginTop: 13 }}>
                     {results.trainingMode === 'single-hand'
-                      ? `ONE HAND · ${weakLabel(weakest[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision'], weakest[results.singleHand === 'left' ? 'leftRest' : 'rightRest'])}`
-                      : `Left: ${weakLabel(weakest.leftSubdivision, weakest.leftRest)}   ·   Right: ${weakLabel(weakest.rightSubdivision, weakest.rightRest)}`}
+                      ? `ONE HAND · ${weakLabel(weakest[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision'], weakest[results.singleHand === 'left' ? 'leftRest' : 'rightRest'], weakest[results.singleHand === 'left' ? 'leftMixture' : 'rightMixture'])}`
+                      : `Left: ${weakLabel(weakest.leftSubdivision, weakest.leftRest, weakest.leftMixture)}   ·   Right: ${weakLabel(weakest.rightSubdivision, weakest.rightRest, weakest.rightMixture)}`}
                   </Text>
                   <Text style={{ color: colors.accent, fontSize: 30, fontWeight: '900', marginTop: 5 }}>
                     {results.trainingMode === 'single-hand' ? 'ONE HAND' : weakest.weakHand.toUpperCase()} {percent(weakest.accuracy)}
@@ -532,11 +543,11 @@ export default function ResultsScreen() {
                 <View style={{ marginTop: 22 }}>
                   <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4, marginBottom: 5 }}>{results.trainingMode === 'single-hand' ? 'PATTERN BREAKDOWN' : 'PAIR BREAKDOWN'}</Text>
                   {combinations.map((combination) => (
-                    <View key={`${combination.leftRest ? 'rest' : combination.leftSubdivision}:${combination.rightRest ? 'rest' : combination.rightSubdivision}`} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line }}>
+                    <View key={`${combination.leftRest ? 'rest' : combination.leftMixture ?? combination.leftSubdivision}:${combination.rightRest ? 'rest' : combination.rightMixture ?? combination.rightSubdivision}`} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line }}>
                       <Text style={{ color: colors.muted, flex: 1, fontSize: 12 }}>
                         {results.trainingMode === 'single-hand'
-                          ? `ONE HAND · ${weakLabel(combination[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision'], combination[results.singleHand === 'left' ? 'leftRest' : 'rightRest'])}`
-                          : `${weakLabel(combination.leftSubdivision, combination.leftRest)} / ${weakLabel(combination.rightSubdivision, combination.rightRest)}`}
+                          ? `ONE HAND · ${weakLabel(combination[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision'], combination[results.singleHand === 'left' ? 'leftRest' : 'rightRest'], combination[results.singleHand === 'left' ? 'leftMixture' : 'rightMixture'])}`
+                          : `${weakLabel(combination.leftSubdivision, combination.leftRest, combination.leftMixture)} / ${weakLabel(combination.rightSubdivision, combination.rightRest, combination.rightMixture)}`}
                       </Text>
                       {results.trainingMode === 'single-hand' ? (
                         <Text style={{ color: colors.accent, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>

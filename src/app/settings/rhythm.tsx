@@ -5,6 +5,7 @@ import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsPage } from '@/components/SettingsPage';
 import { SettingsToggleRow } from '@/components/SettingsToggleRow';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
+import { MIXTURE_PATTERNS } from '@/rhythm/mixtures';
 import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
 import { SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
@@ -27,6 +28,15 @@ export default function RhythmSettingsScreen() {
       ? settings.enabledSubdivisions.filter((item) => item !== subdivision)
       : [...settings.enabledSubdivisions, subdivision];
     updateSettings({ enabledSubdivisions: next });
+  };
+
+  const toggleMixture = (mixtureId: (typeof MIXTURE_PATTERNS)[number]['id']) => {
+    const enabled = settings.enabledMixtures.includes(mixtureId);
+    updateSettings({
+      enabledMixtures: enabled
+        ? settings.enabledMixtures.filter((item) => item !== mixtureId)
+        : [...settings.enabledMixtures, mixtureId],
+    });
   };
 
   return (
@@ -130,6 +140,44 @@ export default function RhythmSettingsScreen() {
         <Text style={helperText}>
           Tuplets divide one metronome beat evenly. The beat length follows your time signature. Keep at least two patterns enabled.
         </Text>
+      </Section>
+
+      <Section title="MIXTURE">
+        <Text style={helperText}>
+          Choose mixed note groups to use for either hand. The shorter half-beat patterns repeat to fill a 4/4 beat.
+        </Text>
+        <View style={{ gap: 8, marginTop: 10 }}>
+          {MIXTURE_PATTERNS.map((mixture) => {
+            const selected = settings.enabledMixtures.includes(mixture.id);
+            return (
+              <Pressable
+                key={mixture.id}
+                testID={`setup.mixture.${mixture.id}`}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: selected }}
+                accessibilityLabel={`${mixture.label}. ${mixture.detail}`}
+                onPress={() => toggleMixture(mixture.id)}
+                style={{
+                  minHeight: 56,
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  borderRadius: 12,
+                  justifyContent: 'center',
+                  backgroundColor: selected ? colors.leftSurface : colors.surface,
+                  borderWidth: 1,
+                  borderColor: selected ? colors.left : colors.line,
+                }}
+              >
+                <Text style={{ color: selected ? colors.left : colors.text, fontSize: 13, fontWeight: '800' }}>
+                  {mixture.label}
+                </Text>
+                <Text style={{ color: colors.muted, fontSize: 11, marginTop: 3 }}>
+                  {mixture.detail}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </Section>
 
       <Section title="EXTRA">

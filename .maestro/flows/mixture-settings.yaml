@@ -1,0 +1,43 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: LANDSCAPE_LEFT
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
+- tapOn:
+    id: home.setup
+- assertVisible:
+    id: setup.screen
+- scrollUntilVisible:
+    element:
+      id: setup.card.rhythm
+    direction: DOWN
+- tapOn:
+    id: setup.card.rhythm
+- assertVisible:
+    id: settings.rhythm.screen
+- scrollUntilVisible:
+    element:
+      id: setup.mixture.dottedQuaverSemiquaver
+    direction: DOWN
+- tapOn:
+    id: setup.mixture.dottedQuaverSemiquaver
+- tapOn:
+    id: setup.mixture.semiquaverTwoDemisemiquavers
+- tapOn:
+    id: setup.mixture.semiquaverDemisemiquaverRestDemisemiquaver
+- assertVisible:
+    id: setup.mixture.dottedQuaverSemiquaver
+- scrollUntilVisible:
+    element:
+      id: settings.rhythm.back
+    direction: UP
+    visibilityPercentage: 90
+- tapOn:
+    id: settings.rhythm.back
+- assertVisible:
+    id: setup.start

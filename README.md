@@ -52,7 +52,7 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 ## Architecture
 
 - `src/app/` contains the mode-select home, guided course, session setup, separate rhythm/audio/timing settings pages, practice, score import, results, and records routes.
-- `src/rhythm/` contains subdivision math, non-repeating pair generation with optional independent hand rests, conversion of generated patterns into pitch-free score bars, the authored 20-lesson course, tap matching, scoring, and per-hand challenge streak rules.
+- `src/rhythm/` contains subdivision math, selectable mixed note/rest patterns, non-repeating pair generation with optional independent hand rests, conversion of generated patterns into pitch-free score bars, the authored 20-lesson course, tap matching, scoring, and per-hand challenge streak rules.
 - `src/rhythm/noteNotation.ts` builds repeated subdivision symbols and mixed-duration bar notation with beat-aware beams and flags.
 - `src/rhythm/musicXmlParser.ts` and `src/rhythm/midiParser.ts` convert MusicXML and Standard MIDI files into one- or two-hand rhythm tracks.
 - `src/rhythm/scoreTemplates.ts` contains short built-in public-domain melody practice arrangements; `src/rhythm/importedScoreLibrary.ts` validates and indexes recent and saved score data.
@@ -66,6 +66,8 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 ## Rhythms
 
 Quarter, eighth/quaver, sixteenth/semiquaver, 32nd/demisemiquaver, and 64th/hemidemisemiquaver values are evenly spaced on a quarter-note grid. Tuplets are grouped across one metronome beat, whose length follows the time signature: duplets (2) through nonuplets (9), including triplets, are supported. For example, a duplet in 6/8 divides its dotted-quarter pulse into two equal notes; a triplet in 2/2 divides its half-note pulse into three. Tuplet symbols show their group number, and imported MusicXML tuplet marks are carried into the bar preview. The default enables quarter, eighth, triplet, and sixteenth; faster values and other tuplets can be enabled in Rhythm & meter settings.
+
+The **Mixture** section in Rhythm & meter lets either hand receive mixed note values inside one pattern: dotted quaver + semiquaver, semiquaver + two demisemiquavers, or semiquaver + demisemiquaver rest + demisemiquaver. The half-beat figures repeat to fill each 4/4 beat. Mixture note onsets and rests are included in timing, scoring, replay, and generated score notation. Mixtures are off by default.
 
 Choose 2/4, 3/4, 4/4, 5/4, 7/4, 2/2, 3/8, 6/8, 9/8, or 12/8 in Rhythm & meter settings. BPM follows the meter's written beat: denominator-note beats in simple meters, dotted-quarter pulses in 6/8, 9/8, and 12/8. For example, 6/8 at 60 BPM has two metronome pulses per bar, while quarter-note events are spaced about 667 ms apart. Pattern changes and the count-in use those same metronome pulses.
 
@@ -155,6 +157,12 @@ The audio settings flow checks independent left/right flash sources and optional
 
 ~~~sh
 E2E_MAESTRO_FLOW=flash-source.yaml npm run e2e:maestro -- --device DEVICE_ID
+~~~
+
+The Rhythm & meter settings flow checks that the three Mixture choices can be enabled:
+
+~~~sh
+E2E_MAESTRO_FLOW=mixture-settings.yaml npm run e2e:maestro -- --device DEVICE_ID
 ~~~
 
 The MusicXML import flow has a separate Maestro test:

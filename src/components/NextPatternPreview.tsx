@@ -1,11 +1,12 @@
 import { useLayoutEffect, useState } from 'react';
 import { Animated, Easing, Text, View } from 'react-native';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
+import { MixtureSymbol } from '@/components/MixtureSymbol';
 import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
-import { patternLabel } from '@/rhythm/subdivisions';
+import { patternLabelForHand } from '@/rhythm/mixtures';
 import { colors } from '@/theme';
 import type { ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
-import type { ExerciseStep, Hand, Subdivision, TimeSignature } from '@/types/rhythm';
+import type { ExerciseStep, Hand, MixturePatternId, Subdivision, TimeSignature } from '@/types/rhythm';
 
 interface NextPatternPreviewProps {
   step: ExerciseStep | null;
@@ -30,6 +31,7 @@ interface NextPatternPreviewProps {
 interface HandPreviewProps {
   hand: Hand;
   subdivision: Subdivision;
+  mixtureId?: MixturePatternId;
   rest: boolean;
   timeSignature: TimeSignature;
   compact: boolean;
@@ -37,7 +39,7 @@ interface HandPreviewProps {
   colorOverride?: string;
 }
 
-function HandPreview({ hand, subdivision, rest, timeSignature, compact, label = 'NEXT', colorOverride }: HandPreviewProps) {
+function HandPreview({ hand, subdivision, mixtureId, rest, timeSignature, compact, label = 'NEXT', colorOverride }: HandPreviewProps) {
   const color = colorOverride ?? (hand === 'left' ? colors.left : colors.right);
 
   return (
@@ -48,7 +50,13 @@ function HandPreview({ hand, subdivision, rest, timeSignature, compact, label = 
       >
         {label}
       </Text>
-      <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} compact scale={compact ? 0.65 : 0.78} rest={rest} />
+      {rest ? (
+        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} compact scale={compact ? 0.65 : 0.78} rest />
+      ) : mixtureId ? (
+        <MixtureSymbol mixtureId={mixtureId} color={color} compact scale={compact ? 0.65 : 0.78} />
+      ) : (
+        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} compact scale={compact ? 0.65 : 0.78} />
+      )}
       <Text
         numberOfLines={1}
         adjustsFontSizeToFit
@@ -60,7 +68,7 @@ function HandPreview({ hand, subdivision, rest, timeSignature, compact, label = 
           flexShrink: 1,
         }}
       >
-        {patternLabel(subdivision, rest)}
+        {patternLabelForHand(subdivision, rest, mixtureId)}
       </Text>
     </View>
   );
@@ -119,10 +127,10 @@ export function NextPatternPreview({
     ? `Next score bar ${scoreMeasureNumber ?? scoreMeasure.index + 1}. Starts in ${countdown} ${countdownLabel.toLowerCase()}.`
     : step
       ? focusedHand
-        ? `Next pattern. Changes in ${countdown} ${countdownLabel.toLowerCase()}. One hand: ${patternLabel(focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision, focusedHand === 'left' ? step.leftRest : step.rightRest)}` + changeDetail
+        ? `Next pattern. Changes in ${countdown} ${countdownLabel.toLowerCase()}. One hand: ${patternLabelForHand(focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision, focusedHand === 'left' ? step.leftRest : step.rightRest, focusedHand === 'left' ? step.leftMixture : step.rightMixture)}` + changeDetail
         : `Next pattern. Changes in ${countdown} ${countdownLabel.toLowerCase()}. ` +
-        `Left hand: ${patternLabel(step.leftSubdivision, step.leftRest)}. ` +
-        `Right hand: ${patternLabel(step.rightSubdivision, step.rightRest)}` + changeDetail
+        `Left hand: ${patternLabelForHand(step.leftSubdivision, step.leftRest, step.leftMixture)}. ` +
+        `Right hand: ${patternLabelForHand(step.rightSubdivision, step.rightRest, step.rightMixture)}` + changeDetail
       : 'Upcoming pattern';
 
   return (
@@ -195,6 +203,7 @@ export function NextPatternPreview({
               <HandPreview
                 hand={focusedHand}
                 subdivision={focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision}
+                mixtureId={focusedHand === 'left' ? step.leftMixture : step.rightMixture}
                 rest={focusedHand === 'left' ? step.leftRest : step.rightRest}
                 timeSignature={timeSignature}
                 compact={compact}
@@ -202,9 +211,9 @@ export function NextPatternPreview({
               />
             ) : (
               <>
-                <HandPreview hand="left" subdivision={step.leftSubdivision} rest={step.leftRest} timeSignature={timeSignature} compact={compact} />
+                <HandPreview hand="left" subdivision={step.leftSubdivision} mixtureId={step.leftMixture} rest={step.leftRest} timeSignature={timeSignature} compact={compact} />
                 <View style={{ width: 1, height: '82%', backgroundColor: colors.line }} />
-                <HandPreview hand="right" subdivision={step.rightSubdivision} rest={step.rightRest} timeSignature={timeSignature} compact={compact} />
+                <HandPreview hand="right" subdivision={step.rightSubdivision} mixtureId={step.rightMixture} rest={step.rightRest} timeSignature={timeSignature} compact={compact} />
               </>
             )}
           </View>
