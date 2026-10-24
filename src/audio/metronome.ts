@@ -88,7 +88,7 @@ export class MetronomeAudio {
       options.beatsPerBar,
     );
     const firstClickTime = this.context.currentTime + plan.firstBeatOffsetMs / 1_000;
-    for (let index = 0; index < options.beatsPerBar; index += 1) {
+    for (let index = 0; index < plan.countInBeats; index += 1) {
       const beatIndex = plan.nextBeatIndex + index;
       const beatInBar = ((beatIndex % options.beatsPerBar) + options.beatsPerBar) % options.beatsPerBar;
       this.scheduleClick(firstClickTime + index * plan.beatDurationMs / 1_000, this.sounds.metronome, beatInBar === 0 ? 1.15 : 0.78);

@@ -43,13 +43,21 @@ test('start and pattern-change cues sit on the beat grid', () => {
   assert.equal(isPatternChangeBeat(2, 0), false);
 });
 
-test('resume count-in starts on the next beat and lasts one full bar', () => {
+test('resume count-in starts on the next beat and lasts half a bar', () => {
   const plan = getResumeCountInPlan(12.25, 10, 60, 4);
 
   assert.equal(plan.beatDurationMs, 1_000);
   assert.equal(plan.nextBeatIndex, 3);
   assert.equal(plan.firstBeatOffsetMs, 830);
-  assert.equal(plan.durationMs, 4_080);
+  assert.equal(plan.countInBeats, 2);
+  assert.equal(plan.durationMs, 2_830);
+});
+
+test('resume count-in uses half the pulse count in compound meter', () => {
+  const plan = getResumeCountInPlan(10, 10, 60, 2);
+
+  assert.equal(plan.countInBeats, 1);
+  assert.equal(plan.durationMs, 2_080);
 });
 
 test('invalid meter and pulse inputs produce no accompaniment events', () => {

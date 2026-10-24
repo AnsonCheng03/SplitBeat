@@ -22,6 +22,7 @@ export const RESUME_COUNT_IN_LEAD_IN_MS = 80;
 export interface ResumeCountInPlan {
   beatDurationMs: number;
   firstBeatOffsetMs: number;
+  countInBeats: number;
   durationMs: number;
   nextBeatIndex: number;
 }
@@ -60,11 +61,14 @@ export function getResumeCountInPlan(
   const elapsedBeats = (currentAudioTime - sessionStartAudioTime) / (beatDurationMs / 1_000);
   const nextBeatIndex = Math.floor(elapsedBeats) + 1;
   const timeToNextBeatMs = (nextBeatIndex - elapsedBeats) * beatDurationMs;
+  const countInBeats = Math.max(1, Math.ceil(beatsPerBar / 2));
+  const firstBeatOffsetMs = RESUME_COUNT_IN_LEAD_IN_MS + timeToNextBeatMs;
 
   return {
     beatDurationMs,
-    firstBeatOffsetMs: RESUME_COUNT_IN_LEAD_IN_MS + timeToNextBeatMs,
-    durationMs: RESUME_COUNT_IN_LEAD_IN_MS + beatsPerBar * beatDurationMs,
+    firstBeatOffsetMs,
+    countInBeats,
+    durationMs: firstBeatOffsetMs + countInBeats * beatDurationMs,
     nextBeatIndex,
   };
 }
