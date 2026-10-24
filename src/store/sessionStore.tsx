@@ -13,7 +13,7 @@ import { SOUND_OPTIONS } from '@/audio/soundPresets';
 import { normalizeFlashSource } from '@/rhythm/flashSource';
 import { applyFeatureFlagsToPatternPairs, applyFeatureFlagsToSettings, DEFAULT_FEATURE_FLAGS, parseFeatureFlags } from '@/features/featureFlags';
 import type { FeatureFlagId, FeatureFlags } from '@/features/featureFlags';
-import { applyChallengeOutcomes, challengeMessage, createChallengeStreaks, createWrongTapTrigger } from '@/rhythm/challenge';
+import { applyChallengeOutcomes, challengeMessage, createChallengeStreaks } from '@/rhythm/challenge';
 import { scoreFromMeasure } from '@/rhythm/scoreStaff';
 import { getSessionDurationSeconds, RhythmTimingEngine } from '@/rhythm/timingEngine';
 import {
@@ -481,7 +481,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     void audioRef.current?.pause().catch(() => undefined);
   }, [snapshot?.phase, stopExercise, stopTimers]);
 
-  const checkChallenge = useCallback((engine: RhythmTimingEngine, feedback?: TapFeedback, hand?: Hand): boolean => {
+  const checkChallenge = useCallback((engine: RhythmTimingEngine): boolean => {
     const activeSettings = sessionSettingsRef.current;
     const processed = applyChallengeOutcomes(
       challengeStreaksRef.current,
@@ -491,9 +491,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     challengeStreaksRef.current = processed.streaks;
     if (activeSettings.challengeAction === 'off') return false;
 
-    const trigger = activeSettings.challengeMissStreak === 1 && feedback === 'miss' && hand
-      ? createWrongTapTrigger(hand)
-      : processed.trigger;
+    const trigger = processed.trigger;
     if (!trigger) return false;
 
     const message = challengeMessage(trigger, activeSettings.challengeAction);
@@ -691,7 +689,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     else audioRef.current?.playHandClick(hand);
     const nextSnapshot = engine.advance(monotonicNow());
     if (nextSnapshot.phase === 'finished') setSnapshot(nextSnapshot);
-    else if (!checkChallenge(engine, tapResult.feedback, hand)) setSnapshot(nextSnapshot);
+    else if (!checkChallenge(engine)) setSnapshot(nextSnapshot);
     return tapResult.feedback;
   }, [checkChallenge]);
 

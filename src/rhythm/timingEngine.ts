@@ -248,7 +248,9 @@ export class RhythmTimingEngine {
   takeChallengeOutcomes(): ChallengeOutcome[] {
     const outcomes = this.challengeOutcomes.splice(0);
     return outcomes.sort(
-      (first, second) => first.expectedTimeMs - second.expectedTimeMs || first.hand.localeCompare(second.hand),
+      (first, second) => first.expectedTimeMs - second.expectedTimeMs
+        || first.hand.localeCompare(second.hand)
+        || (first.kind === 'extra-tap' ? 1 : 0) - (second.kind === 'extra-tap' ? 1 : 0),
     );
   }
 
@@ -277,6 +279,7 @@ export class RhythmTimingEngine {
     }
 
     const activeTapTime = this.toActiveTime(actualTapTime);
+    if (this.endTime !== null && activeTapTime >= this.endTime) return { feedback: 'ignored' };
 
     const replayTap = this.recordReplayTap(hand, activeTapTime);
 
@@ -285,7 +288,10 @@ export class RhythmTimingEngine {
     const calibratedTapTime = activeTapTime - tapOffsetMs;
     this.generateThrough(calibratedTapTime + this.timingWindows.goodMs);
     this.settleDueEvents(activeTapTime);
-    if (this.isRestAt(calibratedTapTime)) return { feedback: 'miss' };
+    if (this.isRestAt(calibratedTapTime)) {
+      this.recordExtraTap(hand, calibratedTapTime);
+      return { feedback: 'miss' };
+    }
 
     const candidates = this.events[hand].filter(
       (event) =>
@@ -301,10 +307,16 @@ export class RhythmTimingEngine {
       calibratedTapTime,
       this.timingWindows,
     );
-    if (!match) return { feedback: 'miss' };
+    if (!match) {
+      this.recordExtraTap(hand, calibratedTapTime);
+      return { feedback: 'miss' };
+    }
 
     const matchedEvent = candidates.find((event) => event.id === match.eventId);
-    if (!matchedEvent) return { feedback: 'miss' };
+    if (!matchedEvent) {
+      this.recordExtraTap(hand, calibratedTapTime);
+      return { feedback: 'miss' };
+    }
     replayTap.matchedEventId = matchedEvent.id;
     replayTap.timingErrorMs = activeTapTime - matchedEvent.expectedTimeMs;
     if (matchedEvent.midiPitches) replayTap.midiPitches = [...matchedEvent.midiPitches];
@@ -640,6 +652,7 @@ export class RhythmTimingEngine {
       hand,
       matched: grade !== null,
       expectedTimeMs: event.expectedTimeMs,
+      kind: 'expected-note',
     });
     const beatPosition = (event.expectedTimeMs - this.sessionStartTime) / this.beatMs;
     const barOffset = Math.floor(beatPosition / this.beatsPerBar);
@@ -703,21 +716,7 @@ export class RhythmTimingEngine {
       return;
     }
 
-    const key = `${event.step.leftRest ? 'rest' : event.step.leftMixture ?? event.step.leftSubdivision}:${event.step.rightRest ? 'rest' : event.step.rightMixture ?? event.step.rightSubdivision}`;
-    let combination = this.combinations.get(key);
-    if (!combination) {
-      combination = {
-        leftSubdivision: event.step.leftSubdivision,
-        rightSubdivision: event.step.rightSubdivision,
-        leftRest: event.step.leftRest,
-        rightRest: event.step.rightRest,
-        ...(event.step.leftMixture ? { leftMixture: event.step.leftMixture } : {}),
-        ...(event.step.rightMixture ? { rightMixture: event.step.rightMixture } : {}),
-        left: createMutableAccuracyStats(),
-        right: createMutableAccuracyStats(),
-      };
-      this.combinations.set(key, combination);
-    }
+    const combination = this.getCombinationStats(event.step);
     const combinationHand = combination[hand];
     combinationHand.totalExpected += 1;
     if (grade) combinationHand.totalHit += 1;
@@ -728,6 +727,48 @@ export class RhythmTimingEngine {
     const transitionStats = isTransition ? this.transition : this.stable;
     transitionStats.totalExpected += 1;
     if (grade) transitionStats.totalHit += 1;
+  }
+
+  private recordExtraTap(hand: Hand, tapTime: number): void {
+    const handStats = this.hands[hand];
+    handStats.totalExpected += 1;
+    handStats.miss += 1;
+    this.challengeOutcomes.push({ hand, matched: false, expectedTimeMs: tapTime, kind: 'extra-tap' });
+
+    if (this.importedScore) {
+      this.stable.totalExpected += 1;
+      return;
+    }
+
+    const beatIndex = Math.floor((tapTime - this.sessionStartTime) / this.beatMs + 1e-9);
+    const stepIndex = Math.max(0, Math.floor(beatIndex / this.settings.changeIntervalBeats));
+    const step = this.getStep(stepIndex);
+    this.getCombinationStats(step)[hand].totalExpected += 1;
+
+    const isTransition = step.startBeat > 0
+      && beatIndex >= step.startBeat
+      && beatIndex < step.startBeat + 2;
+    const accuracyStats = isTransition ? this.transition : this.stable;
+    accuracyStats.totalExpected += 1;
+  }
+
+  private getCombinationStats(step: ExerciseStep): MutableCombinationStats {
+    const key = `${step.leftRest ? 'rest' : step.leftMixture ?? step.leftSubdivision}:${step.rightRest ? 'rest' : step.rightMixture ?? step.rightSubdivision}`;
+    let combination = this.combinations.get(key);
+    if (!combination) {
+      combination = {
+        leftSubdivision: step.leftSubdivision,
+        rightSubdivision: step.rightSubdivision,
+        leftRest: step.leftRest,
+        rightRest: step.rightRest,
+        ...(step.leftMixture ? { leftMixture: step.leftMixture } : {}),
+        ...(step.rightMixture ? { rightMixture: step.rightMixture } : {}),
+        left: createMutableAccuracyStats(),
+        right: createMutableAccuracyStats(),
+      };
+      this.combinations.set(key, combination);
+    }
+    return combination;
   }
 
   private readHandStats(hand: Hand): HandStats {

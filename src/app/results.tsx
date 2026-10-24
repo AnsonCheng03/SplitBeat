@@ -15,7 +15,7 @@ import { SUBDIVISION_LABELS, timeSignatureMetrics } from '@/rhythm/subdivisions'
 import { completeLearnLesson, recordLearnLessonResult } from '@/store/learnProgress';
 import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
-import type { HandStats, MixturePatternId, MissedEvent, SessionResults, Subdivision } from '@/types/rhythm';
+import type { HandStats, MixturePatternId, MissedEvent, ReplayTap, SessionResults, Subdivision } from '@/types/rhythm';
 
 function percent(value: number) {
   return Math.round(value) + '%';
@@ -240,14 +240,27 @@ function weakLabel(subdivision: Subdivision, rest = false, mixtureId?: MixturePa
   return rest ? 'REST' : mixtureId ? getMixturePattern(mixtureId).label.toUpperCase() : SUBDIVISION_LABELS[subdivision].toUpperCase();
 }
 
-function missedBarGroups(events: readonly MissedEvent[]) {
-  const groups = new Map<number, MissedEvent[]>();
-  for (const event of events) {
-    const group = groups.get(event.barIndex) ?? [];
-    group.push(event);
-    groups.set(event.barIndex, group);
+interface ReplayErrorGroup {
+  barIndex: number;
+  missedEvents: MissedEvent[];
+  extraTaps: ReplayTap[];
+}
+
+function replayErrorBarGroups(results: SessionResults | null): ReplayErrorGroup[] {
+  if (!results) return [];
+  const groups = new Map<number, ReplayErrorGroup>();
+  const getGroup = (barIndex: number) => {
+    const group = groups.get(barIndex) ?? { barIndex, missedEvents: [], extraTaps: [] };
+    groups.set(barIndex, group);
+    return group;
+  };
+  for (const event of results.missedEvents) {
+    getGroup(event.barIndex).missedEvents.push(event);
   }
-  return Array.from(groups.entries()).sort(([first], [second]) => first - second);
+  for (const tap of results.replayTaps ?? []) {
+    if (!tap.matchedEventId) getGroup(tap.barIndex).extraTaps.push(tap);
+  }
+  return Array.from(groups.values()).sort((first, second) => first.barIndex - second.barIndex);
 }
 
 function missedPosition(event: MissedEvent): string {
@@ -260,6 +273,16 @@ function missedPosition(event: MissedEvent): string {
       ? 'score note'
       : scoreDurationLabel(event.durationQuarter, event.tupletNumber);
   return `beat ${beat}${offset} · ${rhythm}`;
+}
+
+function replayErrorSummary(label: string, missedEvents: readonly MissedEvent[], extraTaps: readonly ReplayTap[]) {
+  const counts = [
+    ...(missedEvents.length ? [`${missedEvents.length} missed`] : []),
+    ...(extraTaps.length ? [`${extraTaps.length} extra`] : []),
+  ];
+  const positions = missedEvents.slice(0, 4).map(missedPosition).join(', ');
+  const moreMisses = missedEvents.length > 4 ? `, +${missedEvents.length - 4}` : '';
+  return `${label} · ${counts.join(' · ')}${positions ? ` · ${positions}${moreMisses}` : ''}`;
 }
 
 function scoreDurationLabel(durationQuarter: number, tupletNumber?: number): string {
@@ -289,7 +312,8 @@ export default function ResultsScreen() {
   const completionAttemptedRef = useRef<string | null>(null);
   const courseLesson = LEARN_COURSE.find((lesson) => lesson.id === lessonId);
   const lessonAccuracy = results ? sessionAccuracy(results) : 0;
-  const missedBars = missedBarGroups(results?.missedEvents ?? []);
+  const replayErrorBars = replayErrorBarGroups(results);
+  const extraTapCount = (results?.replayTaps ?? []).filter((tap) => !tap.matchedEventId).length;
   const replaySoundEnabled = (sessionSettings ?? settings).soundEnabled && featureFlags.soundEffects;
 
   const stopReplayAudio = useCallback(async (playbackId?: number) => {
@@ -473,27 +497,29 @@ export default function ResultsScreen() {
           />
         ) : null}
 
-        {featureFlags.missedNoteReplay && missedBars.length > 0 ? (
+        {featureFlags.missedNoteReplay && replayErrorBars.length > 0 ? (
           <View style={{ marginTop: 22 }}>
             <DisclosureHeader
               testID="results.missedNotes"
-              title={`MISSED NOTES · ${results.missedEvents.length}`}
+              title={`WRONG NOTES · ${results.missedEvents.length + extraTapCount}`}
               expanded={showMissedNotes}
               onPress={() => setShowMissedNotes((expanded) => !expanded)}
             />
             {showMissedNotes ? (
               <View style={{ paddingTop: 12 }}>
                 <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18, marginBottom: 9 }}>
-                  Replay shows the expected notes beside your recorded taps. Leaving this page clears replay.
+                  {results.missedEvents.length} missed · {extraTapCount} extra. Both lower accuracy. Replay shows the expected notes beside your taps; leaving this page clears replay.
                 </Text>
                 {!replaySoundEnabled && process.env.EXPO_PUBLIC_E2E_SILENT !== '1' ? (
                   <Text style={{ color: colors.muted, fontSize: 11, lineHeight: 16, marginBottom: 9 }}>
                     Replay sound is off. Turn it on in Settings → Sounds to hear the notes.
                   </Text>
                 ) : null}
-                {missedBars.map(([barIndex, events]) => {
-                  const leftEvents = events.filter((event) => event.hand === 'left');
-                  const rightEvents = events.filter((event) => event.hand === 'right');
+                {replayErrorBars.map(({ barIndex, missedEvents, extraTaps }) => {
+                  const leftEvents = missedEvents.filter((event) => event.hand === 'left');
+                  const rightEvents = missedEvents.filter((event) => event.hand === 'right');
+                  const leftExtraTaps = extraTaps.filter((tap) => tap.hand === 'left');
+                  const rightExtraTaps = extraTaps.filter((tap) => tap.hand === 'right');
                   const expectedEvents = results.replayExpectedEvents?.filter((event) => event.barIndex === barIndex) ?? [];
                   const taps = results.replayTaps?.filter((tap) => tap.barIndex === barIndex) ?? [];
                   const replayHands = results.trainingMode === 'single-hand'
@@ -505,14 +531,14 @@ export default function ResultsScreen() {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                         <View style={{ flex: 1, gap: 4 }}>
                           <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>BAR {barIndex}</Text>
-                          {leftEvents.length > 0 ? (
+                          {leftEvents.length + leftExtraTaps.length > 0 ? (
                             <Text numberOfLines={2} style={{ color: colors.left, fontSize: 11, lineHeight: 16 }}>
-                              {results.trainingMode === 'single-hand' ? 'ONE HAND' : 'LEFT'} · {leftEvents.length} missed · {leftEvents.slice(0, 4).map(missedPosition).join(', ')}{leftEvents.length > 4 ? `, +${leftEvents.length - 4}` : ''}
+                              {replayErrorSummary(results.trainingMode === 'single-hand' ? 'ONE HAND' : 'LEFT', leftEvents, leftExtraTaps)}
                             </Text>
                           ) : null}
-                          {rightEvents.length > 0 ? (
+                          {rightEvents.length + rightExtraTaps.length > 0 ? (
                             <Text numberOfLines={2} style={{ color: colors.right, fontSize: 11, lineHeight: 16 }}>
-                              {results.trainingMode === 'single-hand' ? 'ONE HAND' : 'RIGHT'} · {rightEvents.length} missed · {rightEvents.slice(0, 4).map(missedPosition).join(', ')}{rightEvents.length > 4 ? `, +${rightEvents.length - 4}` : ''}
+                              {replayErrorSummary(results.trainingMode === 'single-hand' ? 'ONE HAND' : 'RIGHT', rightEvents, rightExtraTaps)}
                             </Text>
                           ) : null}
                         </View>

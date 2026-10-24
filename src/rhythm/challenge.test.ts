@@ -45,6 +45,16 @@ test('any-error mode can trigger immediately on an off-beat tap', () => {
   });
 });
 
+test('extra taps count toward consecutive-error challenge thresholds', () => {
+  const result = applyChallengeOutcomes(createChallengeStreaks(), [
+    { hand: 'left', matched: false, expectedTimeMs: 0, kind: 'expected-note' },
+    { hand: 'left', matched: false, expectedTimeMs: 500, kind: 'extra-tap' },
+  ], 2);
+
+  assert.deepEqual(result.streaks, { left: 2, right: 0 });
+  assert.deepEqual(result.trigger, { hand: 'left', missStreak: 2, reason: 'miss-streak' });
+});
+
 test('longest clean streak spans hands and resets at a missed or extra note', () => {
   const sessionStartTime = 5_000;
   const expectedEvents = [

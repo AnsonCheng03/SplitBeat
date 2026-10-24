@@ -87,7 +87,7 @@ The home screen offers Two hands and One hand modes, plus a notation choice betw
 
 Guided course results show the lesson's correct-note percentage and a five-star rating: 1 star below 50%, 2 at 50%, 3 at 70%, 4 at 85%, and 5 at 95%. The course path saves each lesson's best accuracy and attempt count locally, while the course overview shows lessons completed and stars earned. Replaying a lesson can improve its saved best rating.
 
-Rhythm & meter settings can add a challenge response. Set it to pause or end the session after any off-beat tap or missed note, or after two, three, or five consecutive missed notes on one hand. Correct notes reset only that hand's miss streak. Paused sessions stop the audio clock and freeze the exercise clock; Continue resumes on the same beat, and End Session opens the current results.
+Rhythm & meter settings can add a challenge response. Set it to pause or end the session after any off-beat tap or missed note, or after two, three, or five consecutive errors on one hand. Extra taps and missed notes both advance the error streak; a correct note resets only that hand's streak. Paused sessions stop the audio clock and freeze the exercise clock; Continue resumes on the same beat, and End Session opens the current results.
 
 ## Guided learning
 
@@ -111,7 +111,7 @@ The internal `ImportedRhythmScore` JSON stores each measure's start and duration
 
 ## Session records and missed-note replay
 
-The home screen's **My Records** page keeps the 100 most recent summary records on the device, including date, meter, tempo, mode, and overall/hand accuracy. Missed notes are listed by bar on the result page. Replay shows the expected notes and recorded taps on the same beat timeline, with a moving playhead; missed and extra taps are highlighted. When sound is enabled, the expected notes play softly and recorded taps play with the selected hand sound. Imported score replays retain and sound the matched pitches. Replay timing is scheduled from the native audio clock, and the display follows the same bar duration. Replay details are removed when the result page loses focus, and are never stored in session history. Automated E2E builds keep replay audio silent.
+The home screen's **My Records** page keeps the 100 most recent summary records on the device, including date, meter, tempo, mode, and overall/hand accuracy. Missed notes and extra taps are listed by bar on the result page. Replay shows the expected notes and recorded taps on the same beat timeline, with a moving playhead; missed and extra taps are highlighted. When sound is enabled, the expected notes play softly and recorded taps play with the selected hand sound. Imported score replays retain and sound the matched pitches. Replay timing is scheduled from the native audio clock, and the display follows the same bar duration. Replay details are removed when the result page loses focus, and are never stored in session history. Automated E2E builds keep replay audio silent.
 
 ## Challenge streak leaderboard
 
@@ -212,7 +212,7 @@ Timing calibration can measure a separate signed tap offset for each hand from e
 
 Pattern changes take effect on the scheduled beat boundary without interrupting the metronome. The practice display keeps the active notes, beat indicator, and a next-pattern card with a readable beat countdown; notation moves only when its bar is complete.
 
-Each hand has its own expected-event queue. A tap claims the nearest unmatched event within the selected timing range after applying that hand's calibration offset. Event times are calculated from the session origin and the selected meter, subdivision, and feel; timer callbacks and animations never increment the rhythm clock. Perfect and Great use 30% and 60% of the selected range. An unclaimed event becomes a miss after the adjusted window closes; a duplicate or out-of-window tap cannot consume an already matched event. Transition accuracy covers the first two metronome pulses after each generated pair change, including enabled grace pickups.
+Each hand has its own expected-event queue. A tap claims the nearest unmatched event within the selected timing range after applying that hand's calibration offset. Event times are calculated from the session origin and the selected meter, subdivision, and feel; timer callbacks and animations never increment the rhythm clock. Perfect and Great use 30% and 60% of the selected range. An unclaimed event becomes a miss after the adjusted window closes. Every unmatched tap, including a duplicate, a tap during a rest, or an out-of-window tap, is counted as an additional wrong event and lowers accuracy. Transition accuracy covers the first two metronome pulses after each generated pair change, including enabled grace pickups.
 
 ## Known platform limits
 

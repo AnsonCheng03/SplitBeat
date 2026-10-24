@@ -4,6 +4,7 @@ export interface ChallengeOutcome {
   hand: Hand;
   matched: boolean;
   expectedTimeMs: number;
+  kind?: 'expected-note' | 'extra-tap';
 }
 
 export interface ChallengeStreaks {
@@ -68,8 +69,8 @@ export function createChallengeStreaks(): ChallengeStreaks {
 }
 
 /**
- * Update per-hand miss streaks in expected-note order. A correct note resets
- * only that hand, so one hand's success cannot hide the other's misses.
+ * Update per-hand error streaks in timestamp order. A correct note resets
+ * only that hand, while an extra tap adds an error to that hand's streak.
  */
 export function applyChallengeOutcomes(
   streaks: ChallengeStreaks,
@@ -78,7 +79,9 @@ export function applyChallengeOutcomes(
 ): { streaks: ChallengeStreaks; trigger: ChallengeTrigger | null } {
   const next = { ...streaks };
   const ordered = [...outcomes].sort(
-    (first, second) => first.expectedTimeMs - second.expectedTimeMs || first.hand.localeCompare(second.hand),
+    (first, second) => first.expectedTimeMs - second.expectedTimeMs
+      || first.hand.localeCompare(second.hand)
+      || (first.kind === 'extra-tap' ? 1 : 0) - (second.kind === 'extra-tap' ? 1 : 0),
   );
 
   for (const outcome of ordered) {
@@ -86,7 +89,11 @@ export function applyChallengeOutcomes(
     if (!outcome.matched && next[outcome.hand] >= threshold) {
       return {
         streaks: next,
-        trigger: { hand: outcome.hand, missStreak: next[outcome.hand], reason: 'miss-streak' },
+        trigger: {
+          hand: outcome.hand,
+          missStreak: next[outcome.hand],
+          reason: outcome.kind === 'extra-tap' && next[outcome.hand] === 1 ? 'wrong-tap' : 'miss-streak',
+        },
       };
     }
   }
@@ -103,5 +110,5 @@ export function challengeMessage(trigger: ChallengeTrigger, action: 'pause' | 's
   if (trigger.reason === 'wrong-tap') {
     return `${outcome} after an off-beat tap on your ${trigger.hand} hand.`;
   }
-  return `${outcome} after ${trigger.missStreak} ${trigger.hand}-hand notes in a row were missed.`;
+  return `${outcome} after ${trigger.missStreak} consecutive mistakes on your ${trigger.hand} hand.`;
 }

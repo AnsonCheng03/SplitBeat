@@ -181,11 +181,47 @@ test('independent hand rests leave one lane silent while the other keeps its exp
   assert.equal(engine.tap('right', start), 'hit');
 
   const results = engine.getResults(start + 200);
-  assert.equal(results.left.totalExpected, 0);
+  assert.equal(results.left.totalExpected, 1);
+  assert.equal(results.left.totalHit, 0);
+  assert.equal(results.left.miss, 1);
   assert.equal(results.right.totalExpected, 1);
   assert.equal(results.right.totalHit, 1);
+  assert.deepEqual(results.combinations[0]?.left, { totalExpected: 1, totalHit: 0 });
   assert.equal(results.combinations[0].leftRest, true);
   assert.equal(results.combinations[0].rightRest, false);
+});
+
+test('extra taps reduce hand, stable, and combination accuracy', () => {
+  const start = 36_500;
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, changeIntervalBeats: 2, enabledSubdivisions: ['quarter'] },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  assert.equal(engine.tap('left', start), 'hit');
+  assert.equal(engine.tap('left', start + 500), 'miss');
+  const results = engine.getResults(start + 600);
+
+  assert.deepEqual(results.left, {
+    totalExpected: 2,
+    totalHit: 1,
+    perfect: 1,
+    great: 0,
+    good: 0,
+    miss: 1,
+    averageAbsoluteErrorMs: 0,
+    averageSignedErrorMs: 0,
+  });
+  assert.equal(results.combinations[0]?.left.totalExpected, 2);
+  assert.equal(results.combinations[0]?.left.totalHit, 1);
+  assert.equal(results.stable.totalExpected, 3);
+  assert.equal(results.stable.totalHit, 1);
+  assert.equal(results.replayTaps?.filter((tap) => !tap.matchedEventId).length, 1);
+  assert.deepEqual(
+    engine.takeChallengeOutcomes().filter((outcome) => outcome.kind === 'extra-tap'),
+    [{ hand: 'left', matched: false, expectedTimeMs: start + 500, kind: 'extra-tap' }],
+  );
 });
 
 test('swing stretches binary offbeats while triplets remain even', () => {
@@ -661,7 +697,8 @@ test('the selected timing range controls which taps count as hits', () => {
   strictEngine.tap('left', start + 575);
   const strictSnapshot = strictEngine.advance(start + 651);
   assert.equal(strictSnapshot.leftStats.totalHit, 0);
-  assert.equal(strictSnapshot.leftStats.miss, 1);
+  assert.equal(strictSnapshot.leftStats.miss, 2);
+  assert.equal(strictSnapshot.leftStats.totalExpected, 2);
 });
 
 test('session engine scores simultaneous hands and counts later missed notes', () => {
@@ -783,7 +820,7 @@ test('score events use MusicXML quarter-note positions and play once through ind
   engine.tap('left', start);
   engine.tap('right', start);
   engine.tap('right', start + 500);
-  engine.tap('left', start + 4_000);
+  assert.equal(engine.tap('left', start + 4_000), 'ignored');
   const results = engine.getResults(start + 4_100);
 
   assert.equal(results.source, 'score');
