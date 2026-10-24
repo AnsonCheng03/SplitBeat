@@ -65,7 +65,7 @@ appId: com.splitbeat.twohandrhythm
       id: practice.nextPattern.countdown
     timeout: 7000
 - tapOn:
-    id: practice.end
+    id: practice.challengeEnd
 - extendedWaitUntil:
     visible:
       id: results.screen
