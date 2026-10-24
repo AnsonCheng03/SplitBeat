@@ -300,6 +300,30 @@ test('a guided lesson only generates its authored hand patterns', () => {
   assert.deepEqual(steps.map(({ startBeat }) => startBeat), [0, 4, 8, 12, 16, 20]);
 });
 
+test('weighted lesson patterns follow their authored subdivision chances', () => {
+  const patterns = [
+    { leftSubdivision: 'quarter' as const, rightSubdivision: 'quarter' as const },
+    { leftSubdivision: 'eighth' as const, rightSubdivision: 'eighth' as const },
+  ];
+  const heavierQuarter = generateExerciseSteps({
+    enabledSubdivisions: ['quarter', 'eighth'],
+    changeIntervalBeats: 4,
+    patternPairs: patterns,
+    patternPairWeights: [90, 10],
+    random: () => 0.5,
+  }, 1);
+  const lighterQuarter = generateExerciseSteps({
+    enabledSubdivisions: ['quarter', 'eighth'],
+    changeIntervalBeats: 4,
+    patternPairs: patterns,
+    patternPairWeights: [90, 10],
+    random: () => 0.95,
+  }, 1);
+
+  assert.deepEqual([heavierQuarter[0].leftSubdivision, heavierQuarter[0].rightSubdivision], ['quarter', 'quarter']);
+  assert.deepEqual([lighterQuarter[0].leftSubdivision, lighterQuarter[0].rightSubdivision], ['eighth', 'eighth']);
+});
+
 test('rest before a change silences the last beat while the metronome beat stays aligned', () => {
   const start = 36_000;
   const engine = new RhythmTimingEngine({

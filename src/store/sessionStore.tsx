@@ -47,6 +47,7 @@ export type AudioPreparationStatus = 'loading' | 'ready' | 'error';
 export interface ExercisePreparationOptions {
   settings?: Partial<ExerciseSettings>;
   patternPairs?: readonly RhythmPatternPair[];
+  patternPairWeights?: readonly number[];
 }
 
 export const DEFAULT_SETTINGS: ExerciseSettings = {
@@ -471,6 +472,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       sessionStartTime,
       importedScore: score,
       patternPairs: preparationOptions.patternPairs,
+      patternPairWeights: preparationOptions.patternPairWeights,
     });
     engineRef.current = engine;
     setResults(null);

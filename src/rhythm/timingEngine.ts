@@ -86,6 +86,7 @@ interface TimingEngineOptions {
   sessionStartTime: number;
   importedScore?: ImportedRhythmScore;
   patternPairs?: readonly RhythmPatternPair[];
+  patternPairWeights?: readonly number[];
   random?: () => number;
 }
 
@@ -205,6 +206,7 @@ export class RhythmTimingEngine {
       enabledSubdivisions: options.settings.enabledSubdivisions,
       changeIntervalBeats: options.settings.changeIntervalBeats,
       patternPairs: options.patternPairs,
+      patternPairWeights: options.patternPairWeights,
       allowHandRests: options.settings.handRestsEnabled && options.settings.trainingMode === 'two-hand',
       random: options.random,
     });

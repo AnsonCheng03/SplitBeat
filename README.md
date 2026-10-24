@@ -52,7 +52,7 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 ## Architecture
 
 - `src/app/` contains the mode-select home, guided course, session setup, separate rhythm/audio/timing settings pages, practice, score import, results, and records routes.
-- `src/rhythm/` contains subdivision math, non-repeating pair generation with optional independent hand rests, the authored 12-lesson course, tap matching, scoring, and per-hand challenge streak rules.
+- `src/rhythm/` contains subdivision math, non-repeating pair generation with optional independent hand rests, the authored 20-lesson course, tap matching, scoring, and per-hand challenge streak rules.
 - `src/rhythm/noteNotation.ts` builds repeated subdivision symbols and mixed-duration bar notation with beat-aware beams and flags.
 - `src/rhythm/musicXmlParser.ts` and `src/rhythm/midiParser.ts` convert MusicXML and Standard MIDI files into one- or two-hand rhythm tracks.
 - `src/rhythm/scoreTemplates.ts` contains short built-in public-domain melody practice arrangements; `src/rhythm/importedScoreLibrary.ts` validates and indexes recent and saved score data.
@@ -83,7 +83,7 @@ Rhythm & meter settings can add a challenge response. Set it to pause or end the
 
 ## Guided learning
 
-Choose **Learn rhythm** on the home screen for a 12-lesson path from a steady single-hand pulse through two-hand independence, eighths, triplets, sixteenths, compound meter, swing, tuplets, and mixed rhythms. The first three lessons are free; one non-consumable purchase unlocks the full course. Each lesson uses a fixed authored hand-pattern set and a short 30-second exercise. Lessons unlock in order after the previous exercise is completed; no minimum score is required. Progress is stored locally and the course does not overwrite the player's normal settings. Leaving a lesson's results returns to the next available lesson.
+Choose **Learn rhythm** on the home screen for a 20-lesson path from a steady single-hand pulse through two-hand independence, eighths, triplets, sixteenths, compound meter, swing, tuplets, rests, and mixed rhythms. The first two lessons keep both hands on the same steady pulse. Later lessons can assign different rhythms to either hand; advanced lessons use visible per-hand probability mixes such as 50% crotchets, 30% quavers, 10% triplets, and 10% semiquavers. Each two-hand lesson includes hand-swapped patterns so both hands practice every rhythm. The first three lessons are free; one non-consumable purchase unlocks the full course. Each lesson uses authored patterns and a short 30-second exercise. Lessons unlock in order after the previous exercise is completed; no minimum score is required. Progress is stored locally and the course does not overwrite the player's normal settings. Leaving a lesson's results returns to the next available lesson.
 
 ### Learn course purchase
 

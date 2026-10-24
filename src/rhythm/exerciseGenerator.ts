@@ -5,8 +5,14 @@ export interface ExerciseGeneratorOptions {
   enabledSubdivisions: Subdivision[];
   changeIntervalBeats: number;
   patternPairs?: readonly RhythmPatternPair[];
+  patternPairWeights?: readonly number[];
   allowHandRests?: boolean;
   random?: () => number;
+}
+
+interface WeightedPattern {
+  pattern: RhythmPatternPair;
+  weight: number;
 }
 
 function samePattern(first: RhythmPatternPair, second: RhythmPatternPair): boolean {
@@ -14,6 +20,48 @@ function samePattern(first: RhythmPatternPair, second: RhythmPatternPair): boole
     first.rightSubdivision === second.rightSubdivision &&
     (first.leftRest === true) === (second.leftRest === true) &&
     (first.rightRest === true) === (second.rightRest === true);
+}
+
+function patternKey(pattern: RhythmPatternPair): string {
+  return [
+    pattern.leftSubdivision,
+    pattern.rightSubdivision,
+    pattern.leftRest === true,
+    pattern.rightRest === true,
+  ].join(':');
+}
+
+function weightedPatterns(
+  patterns: readonly RhythmPatternPair[],
+  weights?: readonly number[],
+): WeightedPattern[] {
+  const uniquePatterns = new Map<string, WeightedPattern>();
+  patterns.forEach((pattern, index) => {
+    const weight = weights?.[index] ?? 1;
+    if (weight <= 0) return;
+    const key = patternKey(pattern);
+    const existing = uniquePatterns.get(key);
+    uniquePatterns.set(key, {
+      pattern,
+      weight: (existing?.weight ?? 0) + weight,
+    });
+  });
+  return [...uniquePatterns.values()];
+}
+
+function selectWeightedPattern(
+  choices: readonly WeightedPattern[],
+  random: () => number,
+): RhythmPatternPair | undefined {
+  const totalWeight = choices.reduce((total, choice) => total + choice.weight, 0);
+  if (totalWeight <= 0) return choices[0]?.pattern;
+
+  let target = random() * totalWeight;
+  for (const choice of choices) {
+    if (target < choice.weight) return choice.pattern;
+    target -= choice.weight;
+  }
+  return choices.at(-1)?.pattern;
 }
 
 export function createExerciseStepGenerator(options: ExerciseGeneratorOptions) {
@@ -26,36 +74,32 @@ export function createExerciseStepGenerator(options: ExerciseGeneratorOptions) {
   return (stepIndex: number): ExerciseStep => {
     while (steps.length <= stepIndex) {
       const previous = steps.at(-1);
-      const candidates: RhythmPatternPair[] = options.patternPairs?.length
-        ? options.patternPairs.filter((candidate, index, pairs) =>
-            pairs.findIndex((pair) =>
-              pair.leftSubdivision === candidate.leftSubdivision &&
-              pair.rightSubdivision === candidate.rightSubdivision &&
-              (pair.leftRest === true) === (candidate.leftRest === true) &&
-              (pair.rightRest === true) === (candidate.rightRest === true),
-            ) === index,
-          )
+      const candidates: WeightedPattern[] = options.patternPairs?.length
+        ? weightedPatterns(options.patternPairs, options.patternPairWeights)
         : allowed.flatMap((leftSubdivision) =>
-            allowed.map((rightSubdivision) => ({ leftSubdivision, rightSubdivision })),
+            allowed.map((rightSubdivision) => ({
+              pattern: { leftSubdivision, rightSubdivision },
+              weight: 1,
+            })),
           );
-      const restCandidates: RhythmPatternPair[] = options.allowHandRests && !options.patternPairs?.length
+      const restCandidates: WeightedPattern[] = options.allowHandRests && !options.patternPairs?.length
         ? candidates.flatMap((candidate) => [
-            { ...candidate, leftRest: true },
-            { ...candidate, rightRest: true },
+            { pattern: { ...candidate.pattern, leftRest: true }, weight: candidate.weight },
+            { pattern: { ...candidate.pattern, rightRest: true }, weight: candidate.weight },
           ])
         : [];
       const canAddRandomRests = restCandidates.length > 0;
       const preferRest = canAddRandomRests && random() < 0.2;
       const preferredCandidates = preferRest ? restCandidates : candidates;
       const alternateCandidates = preferRest ? candidates : restCandidates;
-      const availablePreferred = preferredCandidates.filter((candidate) => !previous || !samePattern(candidate, previous));
-      const availableAlternate = alternateCandidates.filter((candidate) => !previous || !samePattern(candidate, previous));
+      const availablePreferred = preferredCandidates.filter((candidate) => !previous || !samePattern(candidate.pattern, previous));
+      const availableAlternate = alternateCandidates.filter((candidate) => !previous || !samePattern(candidate.pattern, previous));
       const choices = availablePreferred.length > 0
         ? availablePreferred
         : availableAlternate.length > 0
           ? availableAlternate
           : preferredCandidates;
-      const selected = choices[Math.floor(random() * choices.length)] ?? {
+      const selected = selectWeightedPattern(choices, random) ?? {
         leftSubdivision: 'quarter' as const,
         rightSubdivision: 'eighth' as const,
       };

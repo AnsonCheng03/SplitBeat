@@ -5,6 +5,7 @@ import { test } from 'node:test';
 import {
   getLessonAvailability,
   LEARN_COURSE,
+  lessonOffersHandSwaps,
   lessonProgressPercent,
   lessonSettings,
   markLessonCompleted,
@@ -41,13 +42,66 @@ const preferences: ExerciseSettings = {
 };
 
 test('the course advances from a pulse through subdivisions, tuplets, and mixed meter', () => {
-  assert.equal(LEARN_COURSE.length, 12);
+  assert.equal(LEARN_COURSE.length, 20);
+  assert.deepEqual(LEARN_COURSE.map((lesson) => lesson.number), Array.from({ length: 20 }, (_, index) => index + 1));
   assert.equal(LEARN_COURSE[0].trainingMode, 'single-hand');
   assert.equal(LEARN_COURSE[1].patternPairs[0].leftSubdivision, 'quarter');
   assert.ok(LEARN_COURSE.some((lesson) => lesson.timeSignature === '6/8'));
   assert.ok(LEARN_COURSE.some((lesson) => lesson.feel === 'swing'));
   assert.ok(LEARN_COURSE.some((lesson) => lesson.patternPairs.some((pair) => pair.leftSubdivision === 'sixtyFourth' || pair.rightSubdivision === 'sixtyFourth')));
   assert.equal(LEARN_COURSE.at(-1)?.restBetweenChanges, true);
+});
+
+test('two-hand lessons let either hand play each authored rhythm', () => {
+  const twoHandLessons = LEARN_COURSE.filter((lesson) => lesson.trainingMode === 'two-hand');
+  assert.ok(twoHandLessons.length > 0);
+
+  for (const lesson of twoHandLessons) {
+    for (const pattern of lesson.patternPairs) {
+      assert.ok(lesson.patternPairs.some((candidate) => (
+        candidate.leftSubdivision === pattern.rightSubdivision
+        && candidate.rightSubdivision === pattern.leftSubdivision
+        && (candidate.leftRest === true) === (pattern.rightRest === true)
+        && (candidate.rightRest === true) === (pattern.leftRest === true)
+      )), `${lesson.id} is missing the hand-swapped pattern`);
+    }
+  }
+
+  assert.equal(lessonOffersHandSwaps(LEARN_COURSE[0]), false);
+  assert.equal(lessonOffersHandSwaps(LEARN_COURSE[1]), false);
+  assert.equal(lessonOffersHandSwaps(LEARN_COURSE[2]), true);
+  assert.equal(lessonOffersHandSwaps(LEARN_COURSE.find((lesson) => lesson.id === 'share-the-rest')!), true);
+});
+
+test('early lessons keep a shared pulse before later lessons introduce per-hand weighted variety', () => {
+  assert.deepEqual(LEARN_COURSE[1].patternPairs, [
+    { leftSubdivision: 'quarter', rightSubdivision: 'quarter' },
+  ]);
+
+  const lesson = LEARN_COURSE.find((item) => item.id === 'sixteenth-notes');
+  assert.ok(lesson);
+  assert.deepEqual(lesson.handSubdivisionWeights, {
+    quarter: 50,
+    eighth: 30,
+    triplet: 10,
+    sixteenth: 10,
+  });
+  assert.equal(lesson.patternPairs.length, 16);
+  assert.equal(lesson.patternPairWeights?.length, lesson.patternPairs.length);
+
+  const totalWeight = lesson.patternPairWeights?.reduce((total, weight) => total + weight, 0) ?? 0;
+  for (const hand of ['leftSubdivision', 'rightSubdivision'] as const) {
+    for (const subdivision of ['quarter', 'eighth', 'triplet', 'sixteenth'] as const) {
+      const expectedPercent: number = lesson.handSubdivisionWeights[subdivision] ?? 0;
+      let handWeight = 0;
+      lesson.patternPairs.forEach((pattern, index) => {
+        if (pattern[hand] === subdivision) {
+          handWeight += lesson.patternPairWeights?.[index] ?? 0;
+        }
+      });
+      assert.equal(Math.round((handWeight / totalWeight) * 100), expectedPercent);
+    }
+  }
 });
 
 test('lessons unlock in order and completion can be revisited safely', () => {

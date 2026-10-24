@@ -4,15 +4,16 @@ import { Alert, Pressable, ScrollView, Text, View, useWindowDimensions } from 'r
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FullBleedSafeArea } from '@/components/FullBleedSafeArea';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
+import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import {
   getLessonAvailability,
   LEARN_COURSE,
+  lessonOffersHandSwaps,
   lessonProgressPercent,
   lessonSettings,
 } from '@/rhythm/learnCourse';
 import { starsForAccuracy, totalLearnStars } from '@/rhythm/learnRating';
 import { requiresLearnCourseUnlock } from '@/rhythm/learnCourseAccess';
-import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import { useLearnCoursePurchase } from '@/hooks/useLearnCoursePurchase';
 import { readLearnProgress, readLearnRatings } from '@/store/learnProgress';
 import { useRhythmSession } from '@/store/sessionStore';
@@ -89,12 +90,53 @@ function LessonTile({
 }
 
 function PatternPreview({ lesson }: { lesson: LearnLesson }) {
+  const weights = lesson.handSubdivisionWeights;
+  if (weights) {
+    const distribution = Object.entries(weights)
+      .filter((entry): entry is [LearnLesson['patternPairs'][number]['leftSubdivision'], number] => entry[1] > 0);
+    return (
+      <View style={{ marginTop: 12 }}>
+        <Text style={{ color: colors.muted, fontSize: 8, fontWeight: '900', letterSpacing: 0.8 }}>
+          LEFT + RIGHT · WEIGHTED MIX
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 7 }}>
+          {distribution.map(([subdivision, weight]) => (
+            <View
+              key={subdivision}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 5, borderRadius: 9, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}
+            >
+              <RhythmSymbol subdivision={subdivision} color={colors.accent} mini timeSignature={lesson.timeSignature} />
+              <Text style={{ color: colors.text, fontSize: 8, fontWeight: '800' }}>
+                {Math.round(weight)}% {SUBDIVISION_LABELS[subdivision]}
+              </Text>
+            </View>
+          ))}
+        </View>
+        <Text style={{ color: colors.dim, fontSize: 8, fontWeight: '700', marginTop: 6 }}>
+          Each hand chooses independently from this mix.
+        </Text>
+        {lessonOffersHandSwaps(lesson) ? (
+          <Text style={{ color: colors.accent, fontSize: 8, fontWeight: '900', letterSpacing: 0.8, marginTop: 5 }}>
+            ↔ BOTH HANDS TAKE EACH RHYTHM
+          </Text>
+        ) : null}
+      </View>
+    );
+  }
+
   const pair = lesson.patternPairs[0];
   const oneHand = lesson.trainingMode === 'single-hand';
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 }}>
-      <PatternNote label={oneHand ? 'ONE HAND' : 'LEFT'} subdivision={pair.leftSubdivision} color={oneHand ? colors.accent : colors.left} timeSignature={lesson.timeSignature} />
-      {oneHand ? null : <PatternNote label="RIGHT" subdivision={pair.rightSubdivision} color={colors.right} timeSignature={lesson.timeSignature} />}
+    <View style={{ marginTop: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <PatternNote label={oneHand ? 'ONE HAND' : 'LEFT'} subdivision={pair.leftSubdivision} color={oneHand ? colors.accent : colors.left} timeSignature={lesson.timeSignature} />
+        {oneHand ? null : <PatternNote label="RIGHT" subdivision={pair.rightSubdivision} color={colors.right} timeSignature={lesson.timeSignature} />}
+      </View>
+      {lessonOffersHandSwaps(lesson) ? (
+        <Text style={{ color: colors.accent, fontSize: 8, fontWeight: '900', letterSpacing: 0.8, marginTop: 8 }}>
+          ↔ BOTH HANDS TAKE EACH RHYTHM
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -177,6 +219,7 @@ export default function LearnScreen() {
       await prepareExercise(undefined, {
         settings: lessonSettings(selectedLesson, settings),
         patternPairs: selectedLesson.patternPairs,
+        patternPairWeights: selectedLesson.patternPairWeights,
       });
       router.replace({ pathname: '/practice', params: { lessonId: selectedLesson.id } });
     } catch {
@@ -272,7 +315,7 @@ export default function LearnScreen() {
         {requiresPurchase ? (
           <View testID="learn.purchase.offer" style={{ marginTop: 14, paddingHorizontal: 11, paddingVertical: 9, borderRadius: 12, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.line }}>
             <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.9 }}>FULL COURSE · ONE-TIME UNLOCK</Text>
-            <Text style={{ color: colors.muted, fontSize: 10, lineHeight: 14, marginTop: 4 }}>Try the first 3 lessons free, then unlock all 12 lessons with one purchase.</Text>
+            <Text style={{ color: colors.muted, fontSize: 10, lineHeight: 14, marginTop: 4 }}>Try the first 3 lessons free, then unlock all {LEARN_COURSE.length} lessons with one purchase.</Text>
           </View>
         ) : lessonSequenceLocked ? (
           <Text style={{ color: colors.muted, fontSize: 10, lineHeight: 14, marginTop: 12 }}>

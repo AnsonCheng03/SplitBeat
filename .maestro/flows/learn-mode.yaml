@@ -104,7 +104,7 @@ appId: com.splitbeat.twohandrhythm
     visible:
       id: learn.screen
     timeout: 15000
-- assertVisible: 1 / 12
+- assertVisible: 1 / 20
 - assertVisible:
     id: learn.progress.stars
 - assertVisible:
