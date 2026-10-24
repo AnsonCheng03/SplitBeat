@@ -21,7 +21,7 @@ import type { CombinationFilter, CombinationProgress, SavedPracticePair } from '
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import { SUBDIVISIONS } from '@/types/rhythm';
-import type { Hand, MixturePatternId, Subdivision } from '@/types/rhythm';
+import type { DurationOption, Hand, MixturePatternId, Subdivision } from '@/types/rhythm';
 
 type PatternSelection = { subdivision: Subdivision; mixture?: MixturePatternId; rest: boolean };
 type ExerciseTab = 'review' | 'later' | 'pair' | 'bar';
@@ -40,6 +40,13 @@ const subdivisionShortLabels: Partial<Record<Subdivision, string>> = {
   thirtySecond: '32nd',
   sixtyFourth: '64th',
 };
+
+const practiceDurations: { label: string; value: DurationOption }[] = [
+  { label: '30 sec', value: 30 },
+  { label: '60 sec', value: 60 },
+  { label: '2 min', value: 120 },
+  { label: 'Endless', value: 'endless' },
+];
 
 function defaultBarText(timeSignature: string, unit: 'q' | 'e'): string {
   const [numerator, denominator] = timeSignature.split('/').map(Number);
@@ -77,6 +84,7 @@ export default function ExerciseScreen() {
   const [rightSelection, setRightSelection] = useState<PatternSelection>({ subdivision: 'eighth', rest: false });
   const [leftText, setLeftText] = useState(() => defaultBarText(settings.timeSignature, 'q'));
   const [rightText, setRightText] = useState(() => defaultBarText(settings.timeSignature, 'e'));
+  const [practiceDuration, setPracticeDuration] = useState<DurationOption>('endless');
   const [starting, setStarting] = useState(false);
 
   const visibleProgress = useMemo(
@@ -122,7 +130,7 @@ export default function ExerciseScreen() {
     settings: {
       timeSignature: progress.timeSignature,
       trainingMode: 'two-hand',
-      durationSeconds: settings.durationSeconds,
+      durationSeconds: practiceDuration,
       handRestsEnabled: false,
     },
     patternPairs: [practicePairFromProgress(progress)],
@@ -138,7 +146,7 @@ export default function ExerciseScreen() {
       settings: {
         timeSignature: saved.timeSignature,
         trainingMode: 'two-hand',
-        durationSeconds: settings.durationSeconds,
+        durationSeconds: practiceDuration,
         handRestsEnabled: pair.leftRest === true || pair.rightRest === true,
       },
       patternPairs: [pair],
@@ -155,7 +163,7 @@ export default function ExerciseScreen() {
     return launch(() => prepareExercise(undefined, {
       settings: {
         trainingMode: 'two-hand',
-        durationSeconds: settings.durationSeconds,
+        durationSeconds: practiceDuration,
         handRestsEnabled: false,
       },
       patternPairs: [pair],
@@ -200,6 +208,23 @@ export default function ExerciseScreen() {
             <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }}>{combinationProgress.length} SAVED PAIRS</Text>
           </View>
         </View>
+
+        {activeTab !== 'bar' ? (
+          <View testID="exercise.duration" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
+            <Text style={sectionTitle}>{t('SESSION LENGTH')}</Text>
+            <View style={{ flexDirection: 'row', gap: 7 }}>
+              {practiceDurations.map((option) => (
+                <ChoiceChip
+                  key={option.value}
+                  testID={`exercise.duration.${option.value}`}
+                  label={t(option.label)}
+                  selected={practiceDuration === option.value}
+                  onPress={() => setPracticeDuration(option.value)}
+                />
+              ))}
+            </View>
+          </View>
+        ) : null}
 
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 17 }}>
           <ChoiceChip testID="exercise.tab.review" label="Review pairs" selected={activeTab === 'review'} onPress={() => setActiveTab('review')} />
