@@ -155,6 +155,7 @@ const TRADITIONAL_CHINESE: Record<string, string> = {
   'BACK': '返回',
   'DONE': '完成',
   'LISTEN': '聆聽',
+  'START WITH': '從此節奏開始',
   'BEAT': '拍',
   'BEATS': '拍',
   'LEFT': '左',

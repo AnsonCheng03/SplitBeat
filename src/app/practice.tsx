@@ -21,6 +21,7 @@ import { TapZone } from '@/components/TapZone';
 import { findNextScoreEvent, type ScoreDisplayMode } from '@/rhythm/scoreStaff';
 import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import { patternLabelForHand } from '@/rhythm/mixtures';
+import { getResumeStartNotes } from '@/rhythm/resumeStart';
 import { useRhythmSession } from '@/store/sessionStore';
 import type { Hand, TapFeedback } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -216,6 +217,17 @@ export default function PracticeScreen() {
         right: findNextScoreEvent(scoreMeasure, snapshot?.scoreNextMeasure, 'right', scoreQuarterInMeasure),
       }
     : undefined;
+  const resumeStartNotes = snapshot?.resumeCountIn && step
+    ? getResumeStartNotes({
+        step,
+        singleHand: singleHandMode,
+        focusedHand,
+        scoreEvents: importedScoreMeasure ? scoreFocusEvents : undefined,
+      })
+    : [];
+  const resumeStartLabel = resumeStartNotes
+    .map(({ hand, label }) => `${t(hand === 'left' ? 'LEFT HAND' : 'RIGHT HAND')}: ${t(label)}`)
+    .join('  ·  ');
   const rhythmDisplayStyle = isScoreDisplay
     ? {
         top: scoreDisplayTop,
@@ -314,7 +326,7 @@ export default function PracticeScreen() {
           />
         ) : null}
 
-        {!tutorialVisible && showNextPattern && snapshot ? (
+        {!tutorialVisible && showNextPattern && snapshot && !snapshot.resumeCountIn ? (
           <NextPatternPreview
             step={snapshot.scoreMeasure ? null : snapshot.nextStep}
             beatsUntilChange={snapshot.beatsUntilChange}
@@ -448,7 +460,7 @@ export default function PracticeScreen() {
           </View>
         ) : null}
 
-        <View pointerEvents="box-none" style={{ position: 'absolute', top: insets.top, left: 0, right: 0, minHeight: compact ? 42 : 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: Math.max(compact ? 13 : 22, insets.left + 12), paddingRight: Math.max(compact ? 13 : 22, insets.right + 12) }}>
+        <View pointerEvents="box-none" style={{ position: 'absolute', top: insets.top, left: 0, right: 0, minHeight: snapshot?.resumeCountIn ? (compact ? 48 : 58) : compact ? 42 : 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: Math.max(compact ? 13 : 22, insets.left + 12), paddingRight: Math.max(compact ? 13 : 22, insets.right + 12) }}>
           <Pressable
             testID="practice.pause"
             accessibilityRole="button"
@@ -461,9 +473,21 @@ export default function PracticeScreen() {
               Ⅱ  PAUSE
             </Text>
           </Pressable>
-          <View testID="practice.beatCounter" style={{ alignItems: 'center', justifyContent: 'center', minWidth: 90, minHeight: 38 }}>
+          <View testID="practice.beatCounter" style={{ alignItems: 'center', justifyContent: 'center', minWidth: snapshot?.resumeCountIn ? Math.min(520, Math.max(200, width * 0.5)) : 90, minHeight: snapshot?.resumeCountIn ? (compact ? 48 : 58) : 38 }}>
             {snapshot?.resumeCountIn ? (
-              <Text testID="practice.resumeCountIn" style={{ color: colors.accent, fontSize: compact ? 7 : 9, fontWeight: '900', letterSpacing: 1.2 }}>LISTEN</Text>
+              <>
+                <Text testID="practice.resumeCountIn" style={{ color: colors.accent, fontSize: compact ? 7 : 9, fontWeight: '900', letterSpacing: 1.2 }}>LISTEN</Text>
+                <Text
+                  testID="practice.resumeStartNote"
+                  accessibilityLabel={t('START WITH') + ': ' + resumeStartLabel}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.55}
+                  style={{ maxWidth: '100%', color: colors.text, fontSize: compact ? 8 : 10, lineHeight: compact ? 11 : 13, fontWeight: '800', textAlign: 'center' }}
+                >
+                  {t('START WITH')}: {resumeStartLabel}
+                </Text>
+              </>
             ) : null}
             {snapshot?.countdown !== null && snapshot?.countdown !== undefined ? (
               <Countdown value={snapshot.countdown} compact={compact} />
