@@ -125,7 +125,11 @@ During practice, an external QWERTY keyboard can tap either hand. Keys on the le
 
 ## End-to-end checks
 
-The home screen follows AstroDX's compact main-menu hierarchy: choose Two hands or One hand, choose Rhythm symbols or Score notes, then start. Settings and score import stay secondary to those choices. One-hand mode uses a full-screen tap area and does not ask the player to choose a side. The Settings page keeps tempo and duration close by and opens Rhythm & meter, Sounds & feedback, or Timing calibration on separate detail pages.
+The home screen follows AstroDX's compact main-menu hierarchy: choose Two hands or One hand, choose Rhythm symbols or Score notes, then start. Settings and score import stay secondary to those choices. One-hand mode uses a full-screen tap area and does not ask the player to choose a side. The Settings page keeps tempo and duration close by and opens Rhythm & meter, Sounds & feedback, Timing calibration, and Features on separate detail pages.
+
+### Feature availability
+
+Settings → Features lists practice modes, timing calibration, score import and saved scores, the guided course and its purchase, rhythm extensions, mixtures and rests, audio and feedback options, challenges, Game Center, records, replay, and external keyboard input. All 22 feature switches default to enabled. Their availability is stored locally and can be reset with **Enable All**. These switches control whether the related entry points and behavior are available; preferences inside a feature (for example, whether background accompaniment is audible) remain separate. Disabling score import does not remove saved score data, and disabling records stops new summaries from being saved without deleting existing records.
 
 Build and install the release test app on a simulator or device, then run the Maestro smoke flow. E2E builds for both platforms force metronome, hand, and score audio off, regardless of stored settings, so automated runs stay silent. The score-import flow uses a bundled in-app test score in E2E builds, then checks the score preview and practice path; the system file picker still needs a manual device check. The flows exercise multi-page settings, the single-hand full-screen tap area, two-hand practice, results, visual replay, and records:
 
@@ -163,6 +167,12 @@ The audio settings flow checks independent left/right flash sources, optional di
 
 ~~~sh
 E2E_MAESTRO_FLOW=flash-source.yaml npm run e2e:maestro -- --device DEVICE_ID
+~~~
+
+The feature-flags flow checks the feature list and its **Enable All** action. It does not start a practice session or play audio:
+
+~~~sh
+npm run e2e:features -- --device DEVICE_ID
 ~~~
 
 The Rhythm & meter settings flow checks that the three Mixture choices can be enabled:

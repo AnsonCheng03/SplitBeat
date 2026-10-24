@@ -1,5 +1,5 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FullBleedSafeArea } from '@/components/FullBleedSafeArea';
@@ -221,7 +221,7 @@ export default function LearnScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { lessonId: routeLessonId } = useLocalSearchParams<{ lessonId?: string }>();
-  const { settings, audioStatus, prepareExercise } = useRhythmSession();
+  const { settings, featureFlags, audioStatus, prepareExercise } = useRhythmSession();
   const purchase = useLearnCoursePurchase();
   const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([]);
   const [lessonRatings, setLessonRatings] = useState<Awaited<ReturnType<typeof readLearnRatings>>>([]);
@@ -230,6 +230,10 @@ export default function LearnScreen() {
   const [starting, setStarting] = useState(false);
   const compact = width < 950;
   const detailWidth = (width - insets.left - insets.right) * (compact ? 0.56 : 0.64);
+
+  useEffect(() => {
+    if (!featureFlags.learnCourse) router.replace('/');
+  }, [featureFlags.learnCourse, router]);
 
   useFocusEffect(useCallback(() => {
     let active = true;

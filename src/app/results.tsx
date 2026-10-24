@@ -272,7 +272,7 @@ function scoreDurationLabel(durationQuarter: number, tupletNumber?: number): str
 }
 
 export default function ResultsScreen() {
-  const { results, prepareRepeatExercise, discardReplayData } = useRhythmSession();
+  const { results, featureFlags, prepareRepeatExercise, discardReplayData } = useRhythmSession();
   const router = useRouter();
   const { lessonId: rawLessonId } = useLocalSearchParams<{ lessonId?: string }>();
   const lessonId = Array.isArray(rawLessonId) ? rawLessonId[0] : rawLessonId;
@@ -416,7 +416,7 @@ export default function ResultsScreen() {
           </View>
         )}
 
-        {results.challengeMode ? (
+        {featureFlags.gameCenter && results.challengeMode ? (
           <GameCenterChallengeCard
             testID="results.gameCenter"
             challengeMode
@@ -424,7 +424,7 @@ export default function ResultsScreen() {
           />
         ) : null}
 
-        {missedBars.length > 0 ? (
+        {featureFlags.missedNoteReplay && missedBars.length > 0 ? (
           <View style={{ marginTop: 22 }}>
             <DisclosureHeader
               testID="results.missedNotes"
@@ -590,7 +590,7 @@ export default function ResultsScreen() {
             {startingAgain ? 'PREPARING…' : 'START AGAIN'}
           </Text>
         </Pressable>
-        {courseLesson && lessonCompleted ? (
+        {featureFlags.learnCourse && courseLesson && lessonCompleted ? (
           <Pressable
             testID="results.continueLearning"
             accessibilityRole="button"
@@ -618,7 +618,7 @@ export default function ResultsScreen() {
             <Text accessibilityElementsHidden style={{ color: colors.muted, fontSize: 24, lineHeight: 28, fontWeight: '500' }}>›</Text>
           </Pressable>
         </Link>
-        <Link href="/records" asChild>
+        {featureFlags.sessionRecords ? <Link href="/records" asChild>
           <Pressable
             testID="results.records"
             accessibilityRole="button"
@@ -629,7 +629,7 @@ export default function ResultsScreen() {
             <Text style={{ color: colors.left, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>VIEW MY RECORD</Text>
             <Text accessibilityElementsHidden style={{ color: colors.left, fontSize: 24, lineHeight: 28, fontWeight: '500' }}>›</Text>
           </Pressable>
-        </Link>
+        </Link> : null}
         <Pressable
           testID="results.home"
           accessibilityRole="button"

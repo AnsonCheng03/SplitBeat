@@ -3,15 +3,17 @@ import { Link } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FullBleedSafeArea } from '@/components/FullBleedSafeArea';
+import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
 
-export type SettingsSection = 'session' | 'rhythm' | 'audio' | 'timing';
+export type SettingsSection = 'session' | 'rhythm' | 'audio' | 'timing' | 'features';
 
-const sections: { id: SettingsSection; label: string; href: '/setup' | '/settings/rhythm' | '/settings/audio' | '/settings/timing'; testID?: string }[] = [
+const sections: { id: SettingsSection; label: string; href: '/setup' | '/settings/rhythm' | '/settings/audio' | '/settings/timing' | '/settings/features'; testID?: string }[] = [
   { id: 'session', label: 'Pace & length', href: '/setup' },
   { id: 'rhythm', label: 'Rhythm & meter', href: '/settings/rhythm', testID: 'setup.card.rhythm' },
   { id: 'audio', label: 'Sounds', href: '/settings/audio', testID: 'setup.card.audio' },
   { id: 'timing', label: 'Timing', href: '/settings/timing', testID: 'setup.card.timing' },
+  { id: 'features', label: 'Features', href: '/settings/features', testID: 'setup.card.features' },
 ];
 
 export function SettingsPage({
@@ -32,6 +34,7 @@ export function SettingsPage({
   footer?: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
+  const { featureFlags } = useRhythmSession();
 
   return (
     <FullBleedSafeArea
@@ -76,7 +79,7 @@ export function SettingsPage({
         </Text>
 
         <View style={{ gap: 5 }}>
-          {sections.map((item) => {
+          {sections.filter((item) => item.id !== 'timing' || featureFlags.timingCalibration).map((item) => {
             const selected = item.id === section;
             return (
               <Link key={item.id} href={item.href} asChild>

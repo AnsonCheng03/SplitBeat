@@ -8,7 +8,7 @@ import { colors } from '@/theme';
 import type { SoundPreset } from '@/types/rhythm';
 
 export default function AudioSettingsScreen() {
-  const { settings, updateSettings } = useRhythmSession();
+  const { settings, featureFlags, updateSettings } = useRhythmSession();
 
   return (
     <SettingsPage
@@ -19,86 +19,86 @@ export default function AudioSettingsScreen() {
       description="Choose click sounds, accompaniment, and tap feedback."
     >
       <View style={{ marginTop: 18, borderTopWidth: 1, borderTopColor: colors.line }}>
-        <SettingsToggleRow
+        {featureFlags.soundEffects ? <SettingsToggleRow
           testID="setup.toggle.sound"
           label="Sound effects"
           value={settings.soundEnabled}
           onChange={(soundEnabled) => updateSettings({ soundEnabled })}
-        />
-        <SettingsToggleRow
+        /> : null}
+        {featureFlags.backgroundMusic ? <SettingsToggleRow
           testID="setup.toggle.backgroundMusic"
           label="Beat-synced accompaniment"
           value={settings.backgroundMusicEnabled}
           onChange={(backgroundMusicEnabled) => updateSettings({ backgroundMusicEnabled })}
-        />
-        <SettingsToggleRow
+        /> : null}
+        {featureFlags.sessionCues ? <SettingsToggleRow
           testID="setup.toggle.sessionCues"
           label="Start and change cues"
           value={settings.sessionCuesEnabled}
           onChange={(sessionCuesEnabled) => updateSettings({ sessionCuesEnabled })}
-        />
-        <SettingsToggleRow
+        /> : null}
+        {featureFlags.tapHaptics ? <SettingsToggleRow
           testID="setup.toggle.haptics"
           label="Tap haptics"
           value={settings.hapticsEnabled}
           onChange={(hapticsEnabled) => updateSettings({ hapticsEnabled })}
-        />
-        <SettingsToggleRow
+        /> : null}
+        {featureFlags.tapFeedback ? <SettingsToggleRow
           testID="setup.toggle.tapResultFlash"
           label="Show correct / missed tap colors"
           value={settings.tapResultFlashEnabled}
           onChange={(tapResultFlashEnabled) => updateSettings({ tapResultFlashEnabled })}
-        />
-        <SettingsToggleRow
+        /> : null}
+        {featureFlags.shownRhythmPlayback ? <SettingsToggleRow
           testID="setup.toggle.referenceRhythm"
           label="Play the shown rhythm"
           value={settings.referenceRhythmEnabled}
           onChange={(referenceRhythmEnabled) => updateSettings({ referenceRhythmEnabled })}
-        />
+        /> : null}
       </View>
-      <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
+      {featureFlags.tapFeedback ? <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
         Correct taps flash teal; off-beat taps flash red. Turn this off for less visual feedback.
-      </Text>
-      <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
+      </Text> : null}
+      {featureFlags.shownRhythmPlayback ? <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
         The shown left and right patterns play automatically using each hand&apos;s selected sound. Keep this off to practice from the visual rhythm alone.
-      </Text>
-      <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
+      </Text> : null}
+      {featureFlags.backgroundMusic || featureFlags.sessionCues ? <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
         The accompaniment is synthesized on your device and follows your tempo and meter. A short pickup leads into beat one; change cues mark pattern boundaries. Sound effects must be on to hear either option.
-      </Text>
+      </Text> : null}
 
-      <SoundChoice
+      {featureFlags.soundEffects ? <SoundChoice
         title="METRONOME"
         testIDPrefix="setup.sound.metronome"
         value={settings.metronomeSound}
         onChange={(metronomeSound) => updateSettings({ metronomeSound })}
-      />
-      <SoundChoice
+      /> : null}
+      {featureFlags.soundEffects ? <SoundChoice
         title="LEFT HAND"
         testIDPrefix="setup.sound.left"
         value={settings.leftHandSound}
         onChange={(leftHandSound) => updateSettings({ leftHandSound })}
-      />
-      <SoundChoice
+      /> : null}
+      {featureFlags.soundEffects ? <SoundChoice
         title="RIGHT HAND"
         testIDPrefix="setup.sound.right"
         value={settings.rightHandSound}
         onChange={(rightHandSound) => updateSettings({ rightHandSound })}
-      />
-      <FlashSourceChoice
+      /> : null}
+      {featureFlags.tapFeedback ? <FlashSourceChoice
         hand="LEFT"
         testIDPrefix="setup.flash.left"
         value={settings.leftFlashSource}
         onChange={(leftFlashSource) => updateSettings({ leftFlashSource })}
-      />
-      <FlashSourceChoice
+      /> : null}
+      {featureFlags.tapFeedback ? <FlashSourceChoice
         hand="RIGHT"
         testIDPrefix="setup.flash.right"
         value={settings.rightFlashSource}
         onChange={(rightFlashSource) => updateSettings({ rightFlashSource })}
-      />
-      <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 18 }}>
+      /> : null}
+      {featureFlags.tapFeedback ? <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 18 }}>
         Tap flashes follow your touch. Beat flashes follow the metronome. Sounds are generated on your device; turn off Sound effects to mute them.
-      </Text>
+      </Text> : null}
     </SettingsPage>
   );
 }

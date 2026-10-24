@@ -9,7 +9,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test src/rhythm/*.test.ts src/audio/*.test.ts",
+    "test": "node --import tsx --test src/rhythm/*.test.ts src/audio/*.test.ts src/features/*.test.ts",
     "lint": "eslint .",
     "e2e:ios": "EXPO_PUBLIC_E2E_SILENT=1 expo run:ios --configuration Release",
     "e2e:android": "EXPO_PUBLIC_E2E_SILENT=1 expo run:android --variant release",
@@ -17,6 +17,7 @@
     "release:testflight": "bash scripts/release-testflight.sh",
     "e2e:maestro": "node scripts/e2e/run-maestro.mjs",
     "e2e:direct-start": "E2E_MAESTRO_FLOW=direct-start.yaml node scripts/e2e/run-maestro.mjs",
+    "e2e:features": "E2E_MAESTRO_FLOW=feature-flags.yaml node scripts/e2e/run-maestro.mjs",
     "e2e:exercise": "E2E_MAESTRO_FLOW=exercise-mode.yaml node scripts/e2e/run-maestro.mjs",
     "e2e:score-import": "E2E_MAESTRO_FLOW=score-import.yaml node scripts/e2e/run-maestro.mjs"
   },

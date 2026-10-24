@@ -39,6 +39,7 @@ export default function PracticeScreen() {
   const scoreDisplayModeParam = Array.isArray(rawScoreDisplayMode) ? rawScoreDisplayMode[0] : rawScoreDisplayMode;
   const scoreDisplayMode: ScoreDisplayMode = scoreDisplayModeParam === 'focus' ? 'focus' : 'staff';
   const {
+    featureFlags,
     snapshot,
     settings,
     sessionSettings,
@@ -52,6 +53,7 @@ export default function PracticeScreen() {
     results,
   } = useRhythmSession();
   const activeSettings = sessionSettings ?? settings;
+  const tapFeedbackEnabled = featureFlags.tapFeedback;
   const hasNavigatedToResultsRef = useRef(false);
   const [tutorialVisible, setTutorialVisible] = useState(true);
   const [starting, setStarting] = useState(false);
@@ -214,7 +216,7 @@ export default function PracticeScreen() {
 
   return (
     <View testID="practice.screen" style={{ flex: 1, backgroundColor: colors.background }}>
-      <HardwareKeyboardInput onTap={handleKeyboardTap} />
+      {featureFlags.externalKeyboard ? <HardwareKeyboardInput onTap={handleKeyboardTap} /> : null}
       <View style={{ flex: 1 }}>
         <View
           pointerEvents="box-none"
@@ -226,9 +228,9 @@ export default function PracticeScreen() {
               testID="practice.tap.single"
               onTap={registerTap}
               hapticsEnabled={activeSettings.hapticsEnabled}
-              tapResultFlashEnabled={activeSettings.tapResultFlashEnabled}
-              flashSource={focusedHand === 'left' ? activeSettings.leftFlashSource : activeSettings.rightFlashSource}
-              beatFlashToken={beatFlashToken}
+              tapResultFlashEnabled={tapFeedbackEnabled && activeSettings.tapResultFlashEnabled}
+              flashSource={tapFeedbackEnabled ? (focusedHand === 'left' ? activeSettings.leftFlashSource : activeSettings.rightFlashSource) : 'beat'}
+              beatFlashToken={tapFeedbackEnabled ? beatFlashToken : 0}
               singleHand
               accessibilityLabelOverride="One-hand full-screen tap area"
               keyboardTapToken={keyboardTapTokens[focusedHand].token}
@@ -244,9 +246,9 @@ export default function PracticeScreen() {
                 hand="left"
                 onTap={registerTap}
                 hapticsEnabled={activeSettings.hapticsEnabled}
-                tapResultFlashEnabled={activeSettings.tapResultFlashEnabled}
-                flashSource={activeSettings.leftFlashSource}
-                beatFlashToken={beatFlashToken}
+                tapResultFlashEnabled={tapFeedbackEnabled && activeSettings.tapResultFlashEnabled}
+                flashSource={tapFeedbackEnabled ? activeSettings.leftFlashSource : 'beat'}
+                beatFlashToken={tapFeedbackEnabled ? beatFlashToken : 0}
                 keyboardTapToken={keyboardTapTokens.left.token}
                 keyboardTapFeedback={keyboardTapTokens.left.feedback}
                 enabled={enabledHand('left')}
@@ -260,9 +262,9 @@ export default function PracticeScreen() {
                 hand="right"
                 onTap={registerTap}
                 hapticsEnabled={activeSettings.hapticsEnabled}
-                tapResultFlashEnabled={activeSettings.tapResultFlashEnabled}
-                flashSource={activeSettings.rightFlashSource}
-                beatFlashToken={beatFlashToken}
+                tapResultFlashEnabled={tapFeedbackEnabled && activeSettings.tapResultFlashEnabled}
+                flashSource={tapFeedbackEnabled ? activeSettings.rightFlashSource : 'beat'}
+                beatFlashToken={tapFeedbackEnabled ? beatFlashToken : 0}
                 keyboardTapToken={keyboardTapTokens.right.token}
                 keyboardTapFeedback={keyboardTapTokens.right.feedback}
                 enabled={enabledHand('right')}

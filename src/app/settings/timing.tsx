@@ -1,4 +1,6 @@
 import Slider from '@react-native-community/slider';
+import { useEffect } from 'react';
+import { useRouter } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { SettingsPage } from '@/components/SettingsPage';
 import { TimingCalibration } from '@/components/TimingCalibration';
@@ -15,7 +17,11 @@ function signedMilliseconds(value: number): string {
 }
 
 export default function TimingSettingsScreen() {
-  const { settings, updateSettings } = useRhythmSession();
+  const { settings, featureFlags, updateSettings } = useRhythmSession();
+  const router = useRouter();
+  useEffect(() => {
+    if (!featureFlags.timingCalibration) router.replace('/setup');
+  }, [featureFlags.timingCalibration, router]);
 
   const reset = () =>
     updateSettings({

@@ -47,7 +47,7 @@ export default function ImportScoreScreen() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { settings, prepareExercise } = useRhythmSession();
+  const { settings, featureFlags, prepareExercise } = useRhythmSession();
   const [score, setScore] = useState<ImportedRhythmScore | null>(null);
   const [scoreFileName, setScoreFileName] = useState('');
   const [previewMeasureIndex, setPreviewMeasureIndex] = useState(0);
@@ -62,6 +62,13 @@ export default function ImportScoreScreen() {
   const [scoreDisplayMode, setScoreDisplayMode] = useState<ScoreDisplayMode>('staff');
 
   useEffect(() => {
+    if (!featureFlags.scoreImport) router.replace('/');
+  }, [featureFlags.scoreImport, router]);
+
+  useEffect(() => {
+    if (!featureFlags.savedScoreLibrary) {
+      return;
+    }
     let active = true;
     const loading = loadImportedScoreLibrary();
     libraryLoadPromiseRef.current = loading;
@@ -74,9 +81,10 @@ export default function ImportScoreScreen() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [featureFlags.savedScoreLibrary]);
 
   const rememberScore = async (loadedScore: ImportedRhythmScore, fileName: string, source: 'midi' | 'musicxml' | 'template') => {
+    if (!featureFlags.savedScoreLibrary) return;
     const entry = createImportedScoreEntry(source, fileName, loadedScore, currentTimestamp());
     setCurrentEntryId(entry.id);
     const storedLibrary = await (libraryLoadPromiseRef.current ?? Promise.resolve(libraryRef.current));
@@ -159,6 +167,7 @@ export default function ImportScoreScreen() {
   const loadE2ESample = () => loadMusicXml(E2E_SAMPLE_MUSICXML, 'E2E Two Bar Score');
 
   const loadLibraryEntry = (entry: (typeof library)[number]) => {
+    if (!featureFlags.savedScoreLibrary) return;
     setScore(entry.score);
     setScoreFileName(entry.fileName);
     setScoreSource(entry.source);
@@ -173,7 +182,7 @@ export default function ImportScoreScreen() {
   };
 
   const saveCurrentScore = (saved: boolean) => {
-    if (!currentEntryId || !score) return;
+    if (!featureFlags.savedScoreLibrary || !currentEntryId || !score) return;
     try {
       const next = setImportedScoreSaved(libraryRef.current, currentEntryId, saved);
       libraryRef.current = next;
@@ -194,6 +203,10 @@ export default function ImportScoreScreen() {
 
   const start = async () => {
     if (!score || starting) return;
+    if (score.trackCount === 1 && !featureFlags.oneHandMode) {
+      Alert.alert('One-hand practice is disabled', 'Enable One-hand practice in Settings → Features to play a single-track score.');
+      return;
+    }
     setStarting(true);
     try {
       const practiceScore = placeSingleTrackOnHand(score, settings.singleHand);
@@ -202,7 +215,7 @@ export default function ImportScoreScreen() {
           ? { trainingMode: 'single-hand', singleHand: settings.singleHand }
           : { trainingMode: 'two-hand' },
       });
-      router.replace({ pathname: '/practice', params: { scoreDisplayMode } });
+      router.replace({ pathname: '/practice', params: { scoreDisplayMode: featureFlags.scoreNotation ? scoreDisplayMode : 'focus' } });
     } catch {
       Alert.alert('Audio could not start', 'Check your device audio settings and try again.');
       setStarting(false);
@@ -250,7 +263,7 @@ export default function ImportScoreScreen() {
                 <Text style={{ color: colors.dim, fontSize: 11, fontWeight: '700' }}>Load test score</Text>
               </Pressable>
             ) : null}
-            <View style={{ marginTop: 13 }}>
+            {featureFlags.savedScoreLibrary ? <View style={{ marginTop: 13 }}>
               <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.3, marginBottom: 8 }}>START WITH A TEMPLATE</Text>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 {SCORE_TEMPLATES.map((template) => (
@@ -266,8 +279,8 @@ export default function ImportScoreScreen() {
                   </Pressable>
                 ))}
               </View>
-            </View>
-            <View style={{ marginTop: 15 }}>
+            </View> : null}
+            {featureFlags.savedScoreLibrary ? <View style={{ marginTop: 15 }}>
               <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.3, marginBottom: 7 }}>MY SAVED SCORES</Text>
               {!libraryLoaded ? (
                 <Text style={{ color: colors.dim, fontSize: 11, paddingVertical: 7 }}>Loading your score library…</Text>
@@ -287,8 +300,8 @@ export default function ImportScoreScreen() {
                   <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900', marginLeft: 9 }}>OPEN ›</Text>
                 </Pressable>
               ))}
-            </View>
-            {recentScores.length > 0 ? (
+            </View> : null}
+            {featureFlags.savedScoreLibrary && recentScores.length > 0 ? (
               <View style={{ marginTop: 12 }}>
                 <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.3, marginBottom: 7 }}>RECENT SCORES</Text>
                 {recentScores.slice(0, 6).map((entry) => (
@@ -311,7 +324,7 @@ export default function ImportScoreScreen() {
               <Text style={{ color: colors.text, fontSize: 19, fontWeight: '900' }}>{score.title}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 3 }}>
                 <Text numberOfLines={1} style={{ flex: 1, color: colors.dim, fontSize: 10 }}>{scoreFileName}</Text>
-                <Pressable
+                {featureFlags.savedScoreLibrary ? <Pressable
                   testID="scoreImport.save"
                   accessibilityRole="button"
                   accessibilityLabel={currentEntry?.saved ? 'Remove score from saved scores' : 'Save this score'}
@@ -320,9 +333,9 @@ export default function ImportScoreScreen() {
                   style={({ pressed }) => ({ minHeight: 34, justifyContent: 'center', paddingHorizontal: 10, marginLeft: 8, borderRadius: 9, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: currentEntry?.saved ? colors.accent : colors.line, opacity: currentEntry ? 1 : 0.6 })}
                 >
                   <Text style={{ color: currentEntry?.saved ? colors.accent : colors.left, fontSize: 9, fontWeight: '900', letterSpacing: 0.5 }}>{!currentEntry ? 'SAVING…' : currentEntry.saved ? 'SAVED ✓' : 'SAVE SCORE'}</Text>
-                </Pressable>
+                </Pressable> : null}
               </View>
-              <Text style={{ color: colors.dim, fontSize: 9, marginTop: 4 }}>{scoreSource.toUpperCase()} · STORED ON THIS DEVICE</Text>
+              <Text style={{ color: colors.dim, fontSize: 9, marginTop: 4 }}>{scoreSource.toUpperCase()} · {featureFlags.savedScoreLibrary ? 'STORED ON THIS DEVICE' : 'SESSION ONLY'}</Text>
               <Text testID="scoreImport.summary" style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>
                 {score.trackCount === 1 ? '1 track · one hand' : '2 tracks · two hands'} · {score.measures.length} {score.measures.length === 1 ? 'bar' : 'bars'} · {score.timeSignature} · {score.bpm ? `${score.bpm} BPM` : 'uses your saved tempo'}
               </Text>
@@ -368,8 +381,8 @@ export default function ImportScoreScreen() {
             <Text style={{ color: colors.dim, fontSize: 10, lineHeight: 14, marginTop: 7 }}>
               Check the extracted rhythms against your score before you start.
             </Text>
-            <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1, marginTop: 12, marginBottom: 6 }}>PRACTICE DISPLAY</Text>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
+            {featureFlags.scoreNotation ? <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1, marginTop: 12, marginBottom: 6 }}>PRACTICE DISPLAY</Text> : null}
+            {featureFlags.scoreNotation ? <View style={{ flexDirection: 'row', gap: 8 }}>
               {([
                 { value: 'focus', label: 'ONE NOTE', detail: 'One upcoming note for each hand' },
                 { value: 'staff', label: 'MOVING SCORE', detail: 'Both hand lanes · slides at each bar' },
@@ -389,11 +402,11 @@ export default function ImportScoreScreen() {
                   </Pressable>
                 );
               })}
-            </View>
+            </View> : null}
             <View style={{ flexDirection: 'row', gap: 9, marginTop: 11 }}>
-              <Pressable testID="scoreImport.library" onPress={() => setScore(null)} style={{ minHeight: 56, width: 94, borderRadius: 14, borderWidth: 1, borderColor: colors.line, justifyContent: 'center', alignItems: 'center' }}>
+              {featureFlags.savedScoreLibrary ? <Pressable testID="scoreImport.library" onPress={() => setScore(null)} style={{ minHeight: 56, width: 94, borderRadius: 14, borderWidth: 1, borderColor: colors.line, justifyContent: 'center', alignItems: 'center' }}>
                 <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800' }}>MY SCORES</Text>
-              </Pressable>
+              </Pressable> : null}
               <Pressable testID="scoreImport.changeFile" onPress={() => void importScoreFile()} disabled={importing} style={{ minHeight: 56, width: 108, borderRadius: 14, borderWidth: 1, borderColor: colors.line, justifyContent: 'center', alignItems: 'center' }}>
                 <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800' }}>{importing ? 'OPENING…' : 'IMPORT FILE'}</Text>
               </Pressable>

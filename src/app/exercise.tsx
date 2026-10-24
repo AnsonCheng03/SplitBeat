@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MIXTURE_PATTERNS, patternLabelForHand } from '@/rhythm/mixtures';
@@ -51,11 +51,15 @@ function noteSelectionLabel(selection: PatternSelection): string {
 export default function ExerciseScreen() {
   const router = useRouter();
   const {
+    featureFlags,
     settings,
     combinationProgress,
     combinationProgressLoaded,
     prepareExercise,
   } = useRhythmSession();
+  useEffect(() => {
+    if (!featureFlags.focusPractice) router.replace('/');
+  }, [featureFlags.focusPractice, router]);
   const [filter, setFilter] = useState<CombinationFilter>('all');
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState<ExerciseTab>('review');

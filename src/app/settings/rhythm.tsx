@@ -8,6 +8,7 @@ import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import { MIXTURE_PATTERNS } from '@/rhythm/mixtures';
 import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
+import { BASIC_SUBDIVISIONS } from '@/features/featureFlags';
 import { SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
 import type { ExerciseSettings, Subdivision, TimeSignature } from '@/types/rhythm';
 
@@ -19,7 +20,13 @@ const intervals: { label: string; value: ExerciseSettings['changeIntervalBeats']
 ];
 
 export default function RhythmSettingsScreen() {
-  const { settings, updateSettings } = useRhythmSession();
+  const { settings, featureFlags, updateSettings } = useRhythmSession();
+  const visibleSubdivisions = featureFlags.rhythmExtensions
+    ? SUBDIVISIONS
+    : SUBDIVISIONS.filter((subdivision) => BASIC_SUBDIVISIONS.includes(subdivision as (typeof BASIC_SUBDIVISIONS)[number]));
+  const visibleTimeSignatures = featureFlags.rhythmExtensions
+    ? TIME_SIGNATURES
+    : TIME_SIGNATURES.filter((signature) => ['2/4', '3/4', '4/4', '5/4', '7/4', '2/2', '3/8'].includes(signature));
 
   const toggleSubdivision = (subdivision: Subdivision) => {
     const enabled = settings.enabledSubdivisions.includes(subdivision);
@@ -49,7 +56,7 @@ export default function RhythmSettingsScreen() {
     >
       <Section title="TIME SIGNATURE">
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {TIME_SIGNATURES.map((timeSignature: TimeSignature) => {
+          {visibleTimeSignatures.map((timeSignature: TimeSignature) => {
             const selected = settings.timeSignature === timeSignature;
             return (
               <Pressable
@@ -92,7 +99,7 @@ export default function RhythmSettingsScreen() {
         />
       </Section>
 
-      <Section title="FEEL">
+      {featureFlags.rhythmExtensions ? <Section title="FEEL">
         <SettingsChoiceRow
           testIDPrefix="setup.feel"
           options={[
@@ -105,11 +112,11 @@ export default function RhythmSettingsScreen() {
         <Text style={helperText}>
           Swing stretches binary offbeats to a 2:1 feel. Tuplets keep their even spacing.
         </Text>
-      </Section>
+      </Section> : null}
 
       <Section title="ALLOWED SUBDIVISIONS">
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {SUBDIVISIONS.map((subdivision) => {
+          {visibleSubdivisions.map((subdivision) => {
             const selected = settings.enabledSubdivisions.includes(subdivision);
             return (
               <Pressable
@@ -142,7 +149,7 @@ export default function RhythmSettingsScreen() {
         </Text>
       </Section>
 
-      <Section title="MIXTURE">
+      {featureFlags.mixtures ? <Section title="MIXTURE">
         <Text style={helperText}>
           Choose mixed note groups to use for either hand. The shorter half-beat patterns repeat to fill a 4/4 beat.
         </Text>
@@ -178,9 +185,9 @@ export default function RhythmSettingsScreen() {
             );
           })}
         </View>
-      </Section>
+      </Section> : null}
 
-      <Section title="EXTRA">
+      {featureFlags.restsAndGrace ? <Section title="EXTRA">
         <SettingsToggleRow
           testID="setup.toggle.graceNotes"
           label="Grace note pickups"
@@ -208,9 +215,9 @@ export default function RhythmSettingsScreen() {
         <Text style={helperText}>
           Occasionally one hand rests while the other keeps playing. Available in generated two-hand practice.
         </Text>
-      </Section>
+      </Section> : null}
 
-      <Section title="CHALLENGE">
+      {featureFlags.challengeMode ? <Section title="CHALLENGE">
         <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700', marginBottom: 8 }}>
           WHEN A MISTAKE HAPPENS
         </Text>
@@ -241,8 +248,8 @@ export default function RhythmSettingsScreen() {
         <Text style={helperText}>
           Any error reacts to an off-beat tap or missed note. Consecutive misses count separately for each hand; a correct note resets that hand’s streak. A pause can be resumed from the practice screen.
         </Text>
-        <GameCenterChallengeCard testID="setup.challenge.gameCenter" />
-      </Section>
+        {featureFlags.gameCenter ? <GameCenterChallengeCard testID="setup.challenge.gameCenter" /> : null}
+      </Section> : null}
     </SettingsPage>
   );
 }

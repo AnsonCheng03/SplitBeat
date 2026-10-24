@@ -8,7 +8,7 @@ import { useRhythmSession } from '@/store/sessionStore';
 import { colors } from '@/theme';
 
 export default function HomeScreen() {
-  const { settings, updateSettings, audioStatus, prepareAudio, prepareExercise } = useRhythmSession();
+  const { settings, featureFlags, updateSettings, audioStatus, prepareAudio, prepareExercise } = useRhythmSession();
   const [starting, setStarting] = useState(false);
   const router = useRouter();
   const buttonStatus = starting ? 'loading' : audioStatus;
@@ -42,7 +42,7 @@ export default function HomeScreen() {
             </Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 7 }}>
-            <Pressable
+            {featureFlags.sessionRecords ? <Pressable
               testID="home.records"
               accessibilityRole="button"
               accessibilityLabel="View training records"
@@ -61,7 +61,7 @@ export default function HomeScreen() {
               <Text style={{ color: colors.left, fontSize: 12, fontWeight: '900', letterSpacing: 0.8 }}>
                 MY RECORDS
               </Text>
-            </Pressable>
+            </Pressable> : null}
             <Pressable
               testID="home.setup"
               accessibilityRole="button"
@@ -90,7 +90,7 @@ export default function HomeScreen() {
             <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', letterSpacing: -0.5 }}>
               Choose a mode
             </Text>
-            <Pressable
+            {featureFlags.learnCourse ? <Pressable
               testID="home.learn"
               accessibilityRole="button"
               accessibilityLabel="Open the guided rhythm course"
@@ -101,35 +101,35 @@ export default function HomeScreen() {
               <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.7 }}>
                 LEARN RHYTHM · 3 FREE  ›
               </Text>
-            </Pressable>
+            </Pressable> : null}
           </View>
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <ModeChoice
               testID="home.mode.twoHand"
               mode="two-hand"
-              selected={settings.trainingMode === 'two-hand'}
+              selected={!featureFlags.oneHandMode || settings.trainingMode === 'two-hand'}
               title="Two hands"
               onPress={() => updateSettings({ trainingMode: 'two-hand' })}
             />
-            <ModeChoice
+            {featureFlags.oneHandMode ? <ModeChoice
               testID="home.mode.singleHand"
               mode="single-hand"
               selected={settings.trainingMode === 'single-hand'}
               title="One hand"
               onPress={() => updateSettings({ trainingMode: 'single-hand', singleHand: 'left' })}
-            />
+            /> : null}
           </View>
-          <PracticeDisplayPicker
+          {featureFlags.scoreNotation ? <PracticeDisplayPicker
             value={settings.practiceDisplayMode}
             onChange={(practiceDisplayMode) => updateSettings({ practiceDisplayMode })}
             testIDPrefix="home.display"
-          />
+          /> : null}
 
         </View>
 
         <View style={{ width: '100%', maxWidth: 960, alignSelf: 'center', gap: 10, paddingBottom: 2 }}>
           <View style={{ flexDirection: 'row', gap: 9 }}>
-            <Pressable
+            {featureFlags.focusPractice ? <Pressable
               testID="home.exercise"
               accessibilityRole="button"
               accessibilityLabel="Review combinations and create a rhythm to practise"
@@ -149,8 +149,8 @@ export default function HomeScreen() {
               <Text style={{ color: colors.left, fontSize: 11, fontWeight: '900', letterSpacing: 0.8 }}>
                 FOCUS PRACTICE  ›
               </Text>
-            </Pressable>
-            <Pressable
+            </Pressable> : null}
+            {featureFlags.scoreImport ? <Pressable
               testID="home.importScore"
               accessibilityRole="button"
               accessibilityLabel="Train from a score"
@@ -170,7 +170,7 @@ export default function HomeScreen() {
               <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '900', letterSpacing: 0.8 }}>
                 TRAIN FROM A SCORE  ›
               </Text>
-            </Pressable>
+            </Pressable> : null}
           </View>
           <AudioStartButton
             testID="home.start"
@@ -197,7 +197,7 @@ export default function HomeScreen() {
             }
             subtitle={
               audioStatus === 'ready'
-                ? `AUDIO READY · ${settings.bpm} BPM · ${settings.trainingMode === 'single-hand' ? 'ONE HAND' : 'TWO HANDS'}`
+                ? `AUDIO READY · ${settings.bpm} BPM · ${featureFlags.oneHandMode && settings.trainingMode === 'single-hand' ? 'ONE HAND' : 'TWO HANDS'}`
                 : audioStatus === 'error'
                   ? 'TAP TO PREPARE THE METRONOME AGAIN'
                   : 'PREPARING THE METRONOME'
