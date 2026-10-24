@@ -9,6 +9,7 @@ import {
 import {
   getAccompanimentNotesAtBeat,
   getBeatAudioTime,
+  getResumeCountInPlan,
   isPatternChangeBeat,
   PATTERN_CHANGE_CUE,
   SESSION_START_CUE,
@@ -46,6 +47,7 @@ export class MetronomeAudio {
   private readonly context = new AudioContext();
   private readonly output = this.context.createGain();
   private readonly clickBuffers = new Map<SoundPreset, AudioBuffer>();
+  private readonly scheduledSources = new Set<ReturnType<AudioContext['createBufferSource']>>();
   private readonly pitchedNoteBuffers = new Map<number, AudioBuffer>();
   private readonly musicNoteBuffers = new Map<number, AudioBuffer>();
   private timer: ReturnType<typeof setTimeout> | undefined;
@@ -74,12 +76,46 @@ export class MetronomeAudio {
     }
   }
 
+  async resumeWithCountIn(): Promise<{ durationMs: number }> {
+    const options = this.startOptions;
+    if (!options || this.closed) throw new Error('The metronome is unavailable.');
+
+    await this.context.resume();
+    const plan = getResumeCountInPlan(
+      this.context.currentTime,
+      options.sessionStartAudioTime,
+      options.bpm,
+      options.beatsPerBar,
+    );
+    const firstClickTime = this.context.currentTime + plan.firstBeatOffsetMs / 1_000;
+    for (let index = 0; index < options.beatsPerBar; index += 1) {
+      const beatIndex = plan.nextBeatIndex + index;
+      const beatInBar = ((beatIndex % options.beatsPerBar) + options.beatsPerBar) % options.beatsPerBar;
+      this.scheduleClick(firstClickTime + index * plan.beatDurationMs / 1_000, this.sounds.metronome, beatInBar === 0 ? 1.15 : 0.78);
+    }
+
+    options.sessionStartAudioTime += plan.durationMs / 1_000;
+    this.nextBeatIndex = Math.max(0, plan.nextBeatIndex);
+    this.scheduledReferenceEventIds.clear();
+    this.paused = false;
+    this.output.gain.value = options.soundEnabled ? 0.75 : 0;
+    this.scheduleAhead();
+    return { durationMs: plan.durationMs };
+  }
+
   async pause(): Promise<void> {
     if (this.closed || this.paused) return;
     this.paused = true;
     this.output.gain.value = 0;
     if (this.timer) clearTimeout(this.timer);
     this.timer = undefined;
+    if (this.startOptions) {
+      const beatDurationSeconds = 60 / this.startOptions.bpm;
+      const elapsedBeats = (this.context.currentTime - this.startOptions.sessionStartAudioTime) / beatDurationSeconds;
+      this.nextBeatIndex = Math.floor(elapsedBeats) + 1;
+    }
+    this.scheduledReferenceEventIds.clear();
+    this.cancelScheduledSources();
     await this.context.suspend();
   }
 
@@ -251,10 +287,23 @@ export class MetronomeAudio {
     source.connect(gain);
     gain.connect(this.output);
     source.onEnded = () => {
+      this.scheduledSources.delete(source);
       source.disconnect();
       gain.disconnect();
     };
     source.start(when);
+    this.scheduledSources.add(source);
+  }
+
+  private cancelScheduledSources(): void {
+    for (const source of this.scheduledSources) {
+      try {
+        source.stop();
+      } catch {
+        // A source that already ended cannot be stopped again.
+      }
+    }
+    this.scheduledSources.clear();
   }
 
   private getClickBuffer(sound: SoundPreset): AudioBuffer {

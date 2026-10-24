@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   getAccompanimentNotesAtBeat,
   getBeatAudioTime,
+  getResumeCountInPlan,
   isPatternChangeBeat,
   PATTERN_CHANGE_CUE,
   SESSION_START_CUE,
@@ -40,6 +41,15 @@ test('start and pattern-change cues sit on the beat grid', () => {
   );
   assert.equal(isPatternChangeBeat(0, 1), false);
   assert.equal(isPatternChangeBeat(2, 0), false);
+});
+
+test('resume count-in starts on the next beat and lasts one full bar', () => {
+  const plan = getResumeCountInPlan(12.25, 10, 60, 4);
+
+  assert.equal(plan.beatDurationMs, 1_000);
+  assert.equal(plan.nextBeatIndex, 3);
+  assert.equal(plan.firstBeatOffsetMs, 830);
+  assert.equal(plan.durationMs, 4_080);
 });
 
 test('invalid meter and pulse inputs produce no accompaniment events', () => {

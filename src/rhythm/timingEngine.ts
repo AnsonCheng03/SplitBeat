@@ -164,6 +164,7 @@ export class RhythmTimingEngine {
   private nextReplayTapId = 0;
   private finished = false;
   private pausedAt: number | null = null;
+  private resumeAt: number | null = null;
   private pausedDurationMs = 0;
   private readonly challengeOutcomes: ChallengeOutcome[] = [];
 
@@ -220,6 +221,7 @@ export class RhythmTimingEngine {
   }
 
   advance(now: number): SessionSnapshot {
+    this.completeResumeCountIn(now);
     const activeNow = this.toActiveTime(now);
     if (!this.finished) {
       this.generateThrough(activeNow + this.timingWindows.goodMs);
@@ -230,7 +232,7 @@ export class RhythmTimingEngine {
       }
     }
 
-    return this.createSnapshot(activeNow);
+    return this.createSnapshot(activeNow, now);
   }
 
   pause(now: number): void {
@@ -243,6 +245,16 @@ export class RhythmTimingEngine {
     if (this.finished || this.pausedAt === null) return;
     this.pausedDurationMs += Math.max(0, now - this.pausedAt);
     this.pausedAt = null;
+    this.resumeAt = null;
+  }
+
+  isPaused(): boolean {
+    return this.pausedAt !== null;
+  }
+
+  beginResumeCountIn(now: number, durationMs: number): void {
+    if (this.finished || this.pausedAt === null || this.resumeAt !== null) return;
+    this.resumeAt = now + Math.max(0, durationMs);
   }
 
   takeChallengeOutcomes(): ChallengeOutcome[] {
@@ -273,6 +285,7 @@ export class RhythmTimingEngine {
   }
 
   tapWithDetails(hand: Hand, actualTapTime: number): TapResult {
+    this.completeResumeCountIn(actualTapTime);
     if (this.finished || this.pausedAt !== null) return { feedback: 'ignored' };
     if (this.settings.trainingMode === 'single-hand' && hand !== this.settings.singleHand) {
       return { feedback: 'ignored' };
@@ -785,7 +798,7 @@ export class RhythmTimingEngine {
     );
   }
 
-  private createSnapshot(now: number): SessionSnapshot {
+  private createSnapshot(now: number, wallNow: number): SessionSnapshot {
     const elapsed = now - this.sessionStartTime;
     const beatIndex = Math.max(0, Math.floor(elapsed / this.beatMs));
     const stepIndex = Math.floor(beatIndex / this.settings.changeIntervalBeats);
@@ -798,7 +811,12 @@ export class RhythmTimingEngine {
     const countdownValue = Math.max(1, COUNT_IN_BEATS - countInBeat);
     const overallLeft = this.readHandStats('left');
     const overallRight = this.readHandStats('right');
-    const phase = this.finished ? 'finished' : now < this.sessionStartTime ? 'countdown' : 'running';
+    const resumeCountIn = this.resumeAt !== null && wallNow < this.resumeAt;
+    const phase = this.finished
+      ? 'finished'
+      : resumeCountIn || now < this.sessionStartTime
+        ? 'countdown'
+        : 'running';
     const scorePosition = this.currentScorePosition(now);
     const practiceScorePosition = !this.importedScore && this.settings.practiceDisplayMode === 'score'
       ? this.currentPracticeScorePosition(beatIndex)
@@ -834,10 +852,13 @@ export class RhythmTimingEngine {
       rightStats: overallRight,
       countdown:
         phase === 'countdown'
-          ? countdownValue
+          ? resumeCountIn
+            ? Math.max(1, Math.min(this.beatsPerBar, Math.ceil((this.resumeAt! - wallNow) / this.beatMs)))
+            : countdownValue
           : now < this.sessionStartTime + 180
             ? 'START'
             : null,
+      ...(resumeCountIn ? { resumeCountIn: true } : {}),
       results: this.finished ? this.getResultsWithoutAdvance(now) : undefined,
       ...(scorePosition
         ? {
@@ -863,6 +884,13 @@ export class RhythmTimingEngine {
           }
         : {}),
     };
+  }
+
+  private completeResumeCountIn(now: number): void {
+    if (this.resumeAt === null || this.pausedAt === null || now < this.resumeAt) return;
+    this.pausedDurationMs += Math.max(0, this.resumeAt - this.pausedAt);
+    this.pausedAt = null;
+    this.resumeAt = null;
   }
 
   private currentPracticeScorePosition(beatIndex: number) {

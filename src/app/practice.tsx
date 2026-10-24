@@ -422,7 +422,7 @@ export default function PracticeScreen() {
             testID="practice.pause"
             accessibilityRole="button"
             accessibilityLabel="Pause practice"
-            disabled={!snapshot || snapshot.phase === 'paused' || snapshot.phase === 'finished'}
+            disabled={!snapshot || snapshot.phase === 'paused' || snapshot.phase === 'finished' || snapshot.resumeCountIn}
             onPress={openPauseMenu}
             hitSlop={12}
           >
@@ -431,6 +431,9 @@ export default function PracticeScreen() {
             </Text>
           </Pressable>
           <View testID="practice.beatCounter" style={{ alignItems: 'center', justifyContent: 'center', minWidth: 90, minHeight: 38 }}>
+            {snapshot?.resumeCountIn ? (
+              <Text testID="practice.resumeCountIn" style={{ color: colors.accent, fontSize: compact ? 7 : 9, fontWeight: '900', letterSpacing: 1.2 }}>LISTEN</Text>
+            ) : null}
             {snapshot?.countdown !== null && snapshot?.countdown !== undefined ? (
               <Countdown value={snapshot.countdown} compact={compact} />
             ) : snapshot ? (

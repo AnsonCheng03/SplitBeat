@@ -1064,6 +1064,30 @@ test('pausing freezes the rhythm clock and excludes the pause from session durat
   ]);
 });
 
+test('continuing resumes only after a count-in and preserves the paused beat', () => {
+  const start = 91_000;
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, enabledSubdivisions: ['quarter'], trainingMode: 'single-hand', singleHand: 'left' },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  assert.equal(engine.tap('left', start), 'hit');
+  engine.pause(start + 500);
+  engine.beginResumeCountIn(start + 8_500, 4_080);
+
+  const countIn = engine.advance(start + 12_000);
+  assert.equal(countIn.phase, 'countdown');
+  assert.equal(countIn.resumeCountIn, true);
+  assert.equal(engine.tap('left', start + 12_000), 'ignored');
+
+  const resumed = engine.advance(start + 12_580);
+  assert.equal(resumed.phase, 'running');
+  assert.equal(resumed.resumeCountIn, undefined);
+  assert.equal(resumed.beatIndex, 0);
+  assert.equal(engine.tap('left', start + 13_080), 'hit');
+});
+
 test('typed score rests remain visible notation but do not create expected taps', () => {
   const score: ImportedRhythmScore = {
     formatVersion: 1,

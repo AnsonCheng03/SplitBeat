@@ -17,6 +17,14 @@ export const SESSION_START_CUE: readonly StartCueNote[] = [
 ];
 
 export const PATTERN_CHANGE_CUE: MusicNote = { midiPitch: 79, level: 0.24 };
+export const RESUME_COUNT_IN_LEAD_IN_MS = 80;
+
+export interface ResumeCountInPlan {
+  beatDurationMs: number;
+  firstBeatOffsetMs: number;
+  durationMs: number;
+  nextBeatIndex: number;
+}
 
 export function getAccompanimentNotesAtBeat(beatIndex: number, beatsPerBar: number): MusicNote[] {
   if (!Number.isInteger(beatIndex) || !Number.isInteger(beatsPerBar) || beatsPerBar < 1) return [];
@@ -40,6 +48,25 @@ export function getAccompanimentNotesAtBeat(beatIndex: number, beatsPerBar: numb
 
 export function getBeatAudioTime(sessionStartAudioTime: number, bpm: number, beatIndex: number): number {
   return sessionStartAudioTime + beatIndex * (60 / bpm);
+}
+
+export function getResumeCountInPlan(
+  currentAudioTime: number,
+  sessionStartAudioTime: number,
+  bpm: number,
+  beatsPerBar: number,
+): ResumeCountInPlan {
+  const beatDurationMs = 60_000 / bpm;
+  const elapsedBeats = (currentAudioTime - sessionStartAudioTime) / (beatDurationMs / 1_000);
+  const nextBeatIndex = Math.floor(elapsedBeats) + 1;
+  const timeToNextBeatMs = (nextBeatIndex - elapsedBeats) * beatDurationMs;
+
+  return {
+    beatDurationMs,
+    firstBeatOffsetMs: RESUME_COUNT_IN_LEAD_IN_MS + timeToNextBeatMs,
+    durationMs: RESUME_COUNT_IN_LEAD_IN_MS + beatsPerBar * beatDurationMs,
+    nextBeatIndex,
+  };
 }
 
 export function isPatternChangeBeat(beatIndex: number, changeIntervalBeats: number): boolean {

@@ -468,7 +468,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
 
   const pauseExercise = useCallback(() => {
     const engine = engineRef.current;
-    if (!engine || snapshot?.phase === 'paused' || snapshot?.phase === 'finished') return;
+    if (!engine || snapshot?.phase === 'paused' || snapshot?.phase === 'finished' || snapshot?.resumeCountIn) return;
     const now = monotonicNow();
     engine.pause(now);
     const pausedSnapshot = engine.advance(now);
@@ -479,7 +479,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     stopTimers();
     setSnapshot({ ...pausedSnapshot, phase: 'paused' });
     void audioRef.current?.pause().catch(() => undefined);
-  }, [snapshot?.phase, stopExercise, stopTimers]);
+  }, [snapshot?.phase, snapshot?.resumeCountIn, stopExercise, stopTimers]);
 
   const checkChallenge = useCallback((engine: RhythmTimingEngine): boolean => {
     const activeSettings = sessionSettingsRef.current;
@@ -505,6 +505,10 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       const engine = engineRef.current;
       if (!engine) return;
       const nextSnapshot = engine.advance(monotonicNow());
+      if (challengePausedRef.current && !nextSnapshot.resumeCountIn) {
+        challengeStreaksRef.current = createChallengeStreaks();
+        challengePausedRef.current = false;
+      }
       if (nextSnapshot.phase === 'finished' && nextSnapshot.results) {
         setSnapshot(nextSnapshot);
         setResults(nextSnapshot.results);
@@ -682,8 +686,11 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   const registerTap = useCallback((hand: Hand, timestamp: number): TapFeedback | null => {
     const engine = engineRef.current;
     if (!engine) return null;
-    if (challengePausedRef.current) return 'ignored';
     const tapResult = engine.tapWithDetails(hand, timestamp);
+    if (challengePausedRef.current && !engine.isPaused()) {
+      challengeStreaksRef.current = createChallengeStreaks();
+      challengePausedRef.current = false;
+    }
     if (tapResult.feedback === 'ignored') return 'ignored';
     if (tapResult.midiPitches?.length) audioRef.current?.playScorePitches(tapResult.midiPitches);
     else audioRef.current?.playHandClick(hand);
@@ -699,13 +706,11 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     if (!engine || snapshot?.phase !== 'paused') return;
     try {
       if (!audio) throw new Error('The metronome audio session is unavailable.');
-      await audio.resume();
+      const { durationMs } = await audio.resumeWithCountIn();
       const now = monotonicNow();
-      engine.resume(now);
-      if (challengePausedRef.current) challengeStreaksRef.current = createChallengeStreaks();
-      challengePausedRef.current = false;
+      engine.beginResumeCountIn(now, durationMs);
       setSnapshot(engine.advance(now));
-      scheduleSessionClock(30);
+      scheduleSessionClock(0);
     } catch {
       setAudioStatus('error');
       throw new Error('The metronome audio could not resume.');

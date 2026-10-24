@@ -210,6 +210,7 @@ export interface SessionResults {
 
 export interface SessionSnapshot {
   phase: 'countdown' | 'running' | 'paused' | 'finished';
+  resumeCountIn?: boolean;
   bpm: number;
   timeSignature: TimeSignature;
   beatsPerBar: number;
