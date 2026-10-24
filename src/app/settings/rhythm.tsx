@@ -70,7 +70,7 @@ export default function RhythmSettingsScreen() {
       description="Choose the pulse and rhythms for your session."
     >
       <Section title="TIME SIGNATURE">
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
           {visibleTimeSignatures.map((timeSignature: TimeSignature) => {
             const selected = settings.timeSignature === timeSignature;
             return (
@@ -83,8 +83,10 @@ export default function RhythmSettingsScreen() {
                 onPress={() => updateTimeSignature(timeSignature)}
                 style={{
                   flexGrow: 1,
-                  flexBasis: '17%',
-                  minHeight: 42,
+                  flexBasis: '18%',
+                  minWidth: 76,
+                  minHeight: 48,
+                  paddingHorizontal: 10,
                   borderRadius: 12,
                   justifyContent: 'center',
                   alignItems: 'center',
@@ -130,7 +132,7 @@ export default function RhythmSettingsScreen() {
       </Section> : null}
 
       <Section title="ALLOWED SUBDIVISIONS">
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
           {visibleSubdivisions.map((subdivision) => {
             const selected = settings.enabledSubdivisions.includes(subdivision);
             return (
@@ -141,8 +143,8 @@ export default function RhythmSettingsScreen() {
                 accessibilityState={{ checked: selected, disabled: selected && settings.enabledSubdivisions.length <= 2 }}
                 onPress={() => toggleSubdivision(subdivision)}
                 style={{
-                  paddingHorizontal: 13,
-                  minHeight: 40,
+                  paddingHorizontal: 15,
+                  minHeight: 48,
                   borderRadius: 12,
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -168,7 +170,7 @@ export default function RhythmSettingsScreen() {
         <Text style={helperText}>
           Choose note values that Split Beat may combine for either hand. It generates a fresh pattern for each change and keeps the pattern within one bar.
         </Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 12 }}>
           {mixtureNoteOptionsForBar(barDurationQuarterNotes(settings.timeSignature)).map((option) => {
             const selected = (settings.mixtureNoteValues ?? []).includes(option.value);
             return (
@@ -180,8 +182,8 @@ export default function RhythmSettingsScreen() {
                 accessibilityLabel={t(option.label)}
                 onPress={() => toggleMixtureNoteValue(option.value)}
                 style={{
-                  minHeight: 40,
-                  paddingHorizontal: 12,
+                  minHeight: 48,
+                  paddingHorizontal: 14,
                   borderRadius: 12,
                   justifyContent: 'center',
                   backgroundColor: selected ? colors.leftSurface : colors.surface,
@@ -239,7 +241,7 @@ export default function RhythmSettingsScreen() {
       </Section> : null}
 
       {featureFlags.challengeMode ? <Section title="CHALLENGE">
-        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700', marginBottom: 8 }}>
+        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700', marginBottom: 12 }}>
           WHEN A MISTAKE HAPPENS
         </Text>
         <SettingsChoiceRow
@@ -252,7 +254,7 @@ export default function RhythmSettingsScreen() {
           value={settings.challengeAction}
           onChange={(challengeAction) => updateSettings({ challengeAction })}
         />
-        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700', marginTop: 16, marginBottom: 8 }}>
+        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700', marginTop: 20, marginBottom: 12 }}>
           COUNT ERRORS BY
         </Text>
         <SettingsChoiceRow
@@ -264,7 +266,7 @@ export default function RhythmSettingsScreen() {
           value={settings.challengeTriggerMode}
           onChange={(challengeTriggerMode) => updateSettings({ challengeTriggerMode })}
         />
-        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700', marginTop: 16, marginBottom: 8 }}>
+        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700', marginTop: 20, marginBottom: 12 }}>
           TRIGGER AFTER
         </Text>
         <SettingsChoiceRow
@@ -304,8 +306,8 @@ export default function RhythmSettingsScreen() {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   const { colors } = useTheme();
   return (
-    <View style={{ marginTop: 22 }}>
-      <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6, marginBottom: 10 }}>
+    <View style={{ marginTop: 28 }}>
+      <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6, marginBottom: 14 }}>
         {title}
       </Text>
       {children}

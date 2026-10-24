@@ -25,7 +25,7 @@ export function SettingsToggleRow({
       accessibilityState={{ checked: value }}
       disabled={disabled}
       onPress={() => onChange(!value)}
-      style={{ minHeight: description ? 72 : 54, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.line, gap: 16, paddingVertical: 10, opacity: disabled ? 0.55 : 1 }}
+      style={{ minHeight: description ? 82 : 64, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.line, gap: 18, paddingVertical: 14, opacity: disabled ? 0.55 : 1 }}
     >
       <View style={{ flex: 1, gap: 4 }}>
         <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>{label}</Text>

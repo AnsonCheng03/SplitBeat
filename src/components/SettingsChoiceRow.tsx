@@ -15,7 +15,7 @@ export function SettingsChoiceRow<T extends string | number>({
 }) {
   const { colors } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
       {options.map((option) => {
         const selected = option.value === value;
         return (
@@ -27,8 +27,9 @@ export function SettingsChoiceRow<T extends string | number>({
             onPress={() => onChange(option.value)}
             style={{
               flex: 1,
-              minWidth: 72,
-              minHeight: 43,
+              minWidth: 88,
+              minHeight: 50,
+              paddingHorizontal: 10,
               borderRadius: 12,
               justifyContent: 'center',
               alignItems: 'center',

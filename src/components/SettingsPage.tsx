@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'expo-router';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,6 +38,9 @@ export function SettingsPage({
 }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
+  const compact = width < 760 || height < 500;
+  const sidebarWidth = compact ? 176 : 224;
   const { featureFlags } = useRhythmSession();
   const { t } = useI18n();
 
@@ -54,7 +57,7 @@ export function SettingsPage({
             top: 0,
             bottom: 0,
             left: 0,
-            width: 224 + insets.left,
+            width: sidebarWidth + insets.left,
             borderRightWidth: 1,
             borderRightColor: colors.line,
             backgroundColor: colors.surface,
@@ -64,15 +67,15 @@ export function SettingsPage({
     >
       <View
         style={{
-          width: 224,
-          paddingHorizontal: 14,
-          paddingTop: 14,
-          paddingBottom: 12,
+          width: sidebarWidth,
+          paddingHorizontal: compact ? 10 : 14,
+          paddingTop: compact ? 8 : 14,
+          paddingBottom: compact ? 8 : 12,
           backgroundColor: 'transparent',
         }}
       >
         <Link href={section === 'session' ? '/' : '/setup'} asChild>
-          <Pressable testID={backTestID} hitSlop={10} style={{ minHeight: 42, justifyContent: 'center', marginBottom: 20 }}>
+          <Pressable testID={backTestID} accessibilityRole="button" hitSlop={6} style={{ minHeight: 48, justifyContent: 'center', marginBottom: compact ? 10 : 20, paddingHorizontal: 8 }}>
             <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '800', letterSpacing: 0.6 }}>
               ‹  {t(section === 'session' ? 'HOME' : 'SETUP')}
             </Text>
@@ -83,7 +86,11 @@ export function SettingsPage({
           {t('SETTINGS')}
         </Text>
 
-        <View style={{ gap: 5 }}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ gap: 10, paddingBottom: 10 }}
+          showsVerticalScrollIndicator={false}
+        >
           {sections.filter((item) => item.id !== 'timing' || featureFlags.timingCalibration).map((item) => {
             const selected = item.id === section;
             return (
@@ -93,34 +100,35 @@ export function SettingsPage({
                   accessibilityRole="button"
                   accessibilityState={{ selected }}
                   style={({ pressed }) => ({
-                    minHeight: 46,
+                    minHeight: 50,
                     justifyContent: 'center',
-                    paddingHorizontal: 11,
-                    borderRadius: 11,
+                    paddingHorizontal: 12,
+                    borderRadius: 12,
                     backgroundColor: selected || pressed ? colors.surfaceRaised : 'transparent',
                     borderWidth: 1,
                     borderColor: selected ? colors.line : 'transparent',
                   })}
                 >
-                  <Text style={{ color: selected ? colors.text : colors.muted, fontSize: 13, fontWeight: selected ? '800' : '600' }}>
+                  <Text style={{ color: selected ? colors.text : colors.muted, fontSize: compact ? 12 : 13, fontWeight: selected ? '800' : '600' }}>
                     {t(item.label)}
                   </Text>
                 </Pressable>
               </Link>
             );
           })}
-        </View>
+        </ScrollView>
 
-        <View style={{ flex: 1 }} />
-        <Text style={{ color: colors.dim, fontSize: 10, fontWeight: '800', letterSpacing: 1.1, paddingHorizontal: 8 }}>
-          {t('BEEP BEEP BEAT - RHYTHM COACH')}
-        </Text>
+        {!compact ? (
+          <Text style={{ color: colors.dim, fontSize: 10, fontWeight: '800', letterSpacing: 1.1, paddingHorizontal: 8, paddingTop: 12 }}>
+            {t('BEEP BEEP BEAT - RHYTHM COACH')}
+          </Text>
+        ) : null}
       </View>
 
       <View style={{ flex: 1, minWidth: 0 }}>
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 20, paddingBottom: 28, width: '100%', maxWidth: 1120, alignSelf: 'center' }}
+          contentContainerStyle={{ paddingHorizontal: compact ? 16 : 28, paddingTop: compact ? 14 : 20, paddingBottom: compact ? 20 : 28, width: '100%', maxWidth: 1120, alignSelf: 'center' }}
           showsVerticalScrollIndicator={false}
         >
           <Text style={{ color: colors.text, fontSize: 28, fontWeight: '900', letterSpacing: -0.7 }}>

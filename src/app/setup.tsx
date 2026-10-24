@@ -66,7 +66,7 @@ export default function SetupScreen() {
         </View>
       )}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'stretch', gap: 16, marginTop: 18 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'stretch', gap: 18, marginTop: 22 }}>
         <View style={{ flex: 1.25, minWidth: 0, backgroundColor: colors.surface, borderRadius: 18, padding: 18, borderWidth: 1, borderColor: colors.line }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
             <Text style={{ color: colors.muted, fontWeight: '800', fontSize: 11, letterSpacing: 1.1 }}>TEMPO</Text>
@@ -75,18 +75,19 @@ export default function SetupScreen() {
               <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '800' }}>BPM</Text>
             </View>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 16 }}>
             <Pressable
               testID="setup.tempo.decrease"
+              accessibilityRole="button"
               accessibilityLabel={t('Decrease tempo')}
               onPress={() => updateSettings({ bpm: Math.max(40, settings.bpm - 1) })}
-              style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}
             >
               <Text style={{ color: colors.text, fontSize: 23 }}>−</Text>
             </Pressable>
             <Slider
               testID="setup.tempo.slider"
-              style={{ flex: 1, height: 42 }}
+              style={{ flex: 1, height: 48 }}
               minimumValue={40}
               maximumValue={200}
               step={1}
@@ -98,9 +99,10 @@ export default function SetupScreen() {
             />
             <Pressable
               testID="setup.tempo.increase"
+              accessibilityRole="button"
               accessibilityLabel={t('Increase tempo')}
               onPress={() => updateSettings({ bpm: Math.min(200, settings.bpm + 1) })}
-              style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}
             >
               <Text style={{ color: colors.text, fontSize: 23 }}>+</Text>
             </Pressable>
