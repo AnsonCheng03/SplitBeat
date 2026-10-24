@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   filterScoreTemplates,
+  SCORE_TEMPLATE_CATEGORIES,
   SCORE_TEMPLATES,
 } from '@/rhythm/scoreTemplates';
 
@@ -10,9 +11,21 @@ test('filters example scores by category', () => {
   assert.deepEqual(classical.map(({ id }) => id), [
     'ode-to-joy-one-hand',
     'fur-elise-difficult-one-hand',
+    'minuet-in-g-easy-duet',
   ]);
-  assert.ok(filterScoreTemplates(SCORE_TEMPLATES, { category: 'Pop' }).some(({ id }) => id === 'pop-groove-difficult-duet'));
+  const pop = filterScoreTemplates(SCORE_TEMPLATES, { category: 'Pop' });
+  assert.equal(pop.length, 3);
+  assert.ok(pop.some(({ id }) => id === 'pop-groove-difficult-duet'));
   assert.equal(filterScoreTemplates(SCORE_TEMPLATES, { category: 'All' }).length, SCORE_TEMPLATES.length);
+});
+
+test('provides at least three example songs in every category', () => {
+  for (const category of SCORE_TEMPLATE_CATEGORIES) {
+    assert.ok(
+      filterScoreTemplates(SCORE_TEMPLATES, { category }).length >= 3,
+      `${category} should have at least three example songs`,
+    );
+  }
 });
 
 test('combines tags with AND matching for difficulty and hand setup', () => {
@@ -24,7 +37,10 @@ test('combines tags with AND matching for difficulty and hand setup', () => {
   const easyOneHandScores = filterScoreTemplates(SCORE_TEMPLATES, {
     tags: ['Easy', 'One hand'],
   });
-  assert.deepEqual(easyOneHandScores.map(({ id }) => id), ['ode-to-joy-one-hand']);
+  assert.deepEqual(easyOneHandScores.map(({ id }) => id), [
+    'ode-to-joy-one-hand',
+    'mary-had-a-little-lamb-easy-one-hand',
+  ]);
 });
 
 test('combines category and tags and allows empty results', () => {
@@ -36,7 +52,7 @@ test('combines category and tags and allows empty results', () => {
 
   assert.deepEqual(filterScoreTemplates(SCORE_TEMPLATES, {
     category: 'Pop',
-    tags: ['Easy'],
+    tags: ['Holiday'],
   }), []);
 });
 

@@ -804,6 +804,10 @@ const TRADITIONAL_CHINESE: Record<string, string> = {
   'A calm melody paired with a simple bass pulse.': '平穩旋律搭配簡單的低音節拍。',
   'An original syncopated groove with interlocking hands.': '原創切分節奏，左右手交錯演奏。',
   'A quick repeated-note motif in its original 3/8 meter.': '以原本 3/8 拍呈現的快速重複音型。',
+  'An original pop melody with a steady two-hand pulse.': '原創流行旋律，搭配穩定的雙手節拍。',
+  'An original pop line with quick offbeat changes.': '原創流行旋律，包含快速的弱拍變化。',
+  'A balanced two-hand arrangement in 3/4.': '平衡的雙手改編，採用 3/4 拍。',
+  'A familiar folk melody for a relaxed one-hand start.': '熟悉的民謠旋律，適合輕鬆開始單手練習。',
 };
 
 export function resolveLocale(preference: LanguagePreference, deviceLocale: string): AppLocale {
