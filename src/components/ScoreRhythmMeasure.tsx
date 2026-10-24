@@ -9,6 +9,10 @@ import type { ScoreRhythmEvent, ScoreRhythmMeasure as ScoreMeasure } from '@/typ
 import type { Hand } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
 
+function scoreLaneHeight(size: NoteNotationSize): number {
+  return size === 'compact' ? 44 : 58;
+}
+
 function RhythmTrack({
   label,
   events,
@@ -36,6 +40,7 @@ function RhythmTrack({
 }) {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const laneHeight = scoreLaneHeight(size);
   const [measuredLayout, setMeasuredLayout] = useState({ estimate: initialNotationWidth, width: 0 });
   const notationWidth = measuredLayout.estimate === initialNotationWidth && measuredLayout.width > 0
     ? measuredLayout.width
@@ -52,21 +57,21 @@ function RhythmTrack({
     : null, [beamGroupQuarterNotes, durationQuarter, notationEvents, notationWidth, size]);
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: minimal ? 0 : 10, minHeight: size === 'compact' ? 40 : 54 }}>
+    <View style={{ height: laneHeight, flexDirection: 'row', alignItems: 'center', gap: minimal ? 0 : 10 }}>
       {(!minimal || showHandLabels) ? <Text style={{ color, fontSize: 9, fontWeight: '900', letterSpacing: 1, width: 48 }}>{label}</Text> : null}
       <View
         onLayout={({ nativeEvent }) => setMeasuredLayout({ estimate: initialNotationWidth, width: nativeEvent.layout.width })}
-        style={{ flex: 1, minHeight: size === 'compact' ? 36 : 50, justifyContent: 'center' }}
+        style={{ flex: 1, height: laneHeight, justifyContent: 'center' }}
       >
         {events.length === 0 ? (
-          <View style={{ minHeight: size === 'compact' ? 36 : 50, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ height: laneHeight, alignItems: 'center', justifyContent: 'center' }}>
             {showStaffLines && plan ? <NoteNotation plan={plan} color={color} showStaffLines staffLineColor={colors.dim} /> : null}
             <Text style={{ position: 'absolute', color: colors.muted, fontSize: size === 'compact' ? 9 : 11, fontWeight: '800', letterSpacing: 1.1, textAlign: 'center' }}>
               REST
             </Text>
           </View>
         ) : plan ? (
-          <View style={{ minHeight: size === 'compact' ? 36 : 50, justifyContent: 'center' }}>
+          <View style={{ height: laneHeight, justifyContent: 'center' }}>
             {notationEvents.length > 0 || showStaffLines ? (
               <NoteNotation
                 plan={plan}
@@ -304,6 +309,7 @@ export function ScrollingScoreRhythm({
   const [measuredViewportWidth, setMeasuredViewportWidth] = useState(0);
   const viewportWidth = measuredViewportWidth || initialViewportWidth;
   const size: NoteNotationSize = compact ? 'compact' : 'full';
+  const laneHeight = scoreLaneHeight(size);
   const [translateX] = useState(() => new Animated.Value(0));
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
   const visibleSequenceRef = useRef(sequence);
@@ -344,12 +350,12 @@ export function ScrollingScoreRhythm({
     >
       <View style={{ width: 52, gap: compact ? 2 : 4 }}>
         {(!visibleHand || visibleHand === 'left') ? (
-          <View style={{ minHeight: compact ? 40 : 54, justifyContent: 'center' }}>
+          <View style={{ height: laneHeight, justifyContent: 'center' }}>
             <Text style={{ color: visibleHand ? focusedColor ?? colors.left : colors.left, fontSize: 9, fontWeight: '900', letterSpacing: 1 }}>LEFT</Text>
           </View>
         ) : null}
         {(!visibleHand || visibleHand === 'right') ? (
-          <View style={{ minHeight: compact ? 40 : 54, justifyContent: 'center' }}>
+          <View style={{ height: laneHeight, justifyContent: 'center' }}>
             <Text style={{ color: visibleHand ? focusedColor ?? colors.right : colors.right, fontSize: 9, fontWeight: '900', letterSpacing: 1 }}>RIGHT</Text>
           </View>
         ) : null}

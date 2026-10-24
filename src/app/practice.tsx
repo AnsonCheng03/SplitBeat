@@ -206,7 +206,9 @@ export default function PracticeScreen() {
   const isScoreDisplay = Boolean(displayScoreMeasure);
   const isScoreFocusDisplay = Boolean(importedScoreMeasure && scoreDisplayMode === 'focus');
   const scoreDisplayTop = Math.max(insets.top, 8) + (compact ? 46 : 58);
-  const scoreDisplayHeight = Math.min(180, Math.max(110, height * 0.25));
+  const scoreDisplayHeight = compact
+    ? Math.min(180, Math.max(110, height * 0.25))
+    : Math.min(200, Math.max(136, height * 0.27));
   const showNextPattern = Boolean(!isScoreDisplay && snapshot?.nextStep);
   const previewTop = Math.max(insets.top, 8) + (compact ? 46 : 58);
   const previewHeight = isScoreDisplay
