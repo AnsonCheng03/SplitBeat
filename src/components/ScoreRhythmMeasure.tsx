@@ -275,7 +275,13 @@ function ScoreBarPanel({
   return (
     <View
       testID={`practice.scoreMeasure.bar.${bar.sequence}`}
-      style={{ position: 'relative', width, paddingHorizontal: 4, paddingVertical: size === 'compact' ? 3 : 7, gap: size === 'compact' ? 2 : 4 }}
+      style={{
+        position: 'relative',
+        width,
+        paddingHorizontal: 4,
+        paddingVertical: minimal ? 0 : size === 'compact' ? 3 : 7,
+        gap: size === 'compact' ? 2 : 4,
+      }}
     >
       {!minimal ? (
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: size === 'compact' ? 0 : 2 }}>
@@ -336,6 +342,9 @@ export function ScrollingScoreRhythm({
   const viewportWidth = measuredViewportWidth || initialViewportWidth;
   const size: NoteNotationSize = compact ? 'compact' : 'full';
   const laneHeight = scoreLaneHeight(size);
+  const visibleLaneCount = visibleHand ? 1 : 2;
+  const laneGap = visibleLaneCount > 1 ? compact ? 2 : 4 : 0;
+  const scoreRowsHeight = laneHeight * visibleLaneCount + laneGap;
   const [translateX] = useState(() => new Animated.Value(0));
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
   const visibleSequenceRef = useRef(sequence);
@@ -374,7 +383,7 @@ export function ScrollingScoreRhythm({
       testID="practice.scoreMeasure"
       style={{ flex: 1, flexDirection: 'row', alignItems: 'center', overflow: 'hidden' }}
     >
-      <View style={{ width: 52, gap: compact ? 2 : 4 }}>
+      <View style={{ width: 52, height: minimal ? scoreRowsHeight : undefined, gap: laneGap }}>
         {(!visibleHand || visibleHand === 'left') ? (
           <View style={{ height: laneHeight, justifyContent: 'center' }}>
             <Text style={{ color: visibleHand ? focusedColor ?? colors.left : colors.left, fontSize: 9, fontWeight: '900', letterSpacing: 1 }}>LEFT</Text>
@@ -389,7 +398,12 @@ export function ScrollingScoreRhythm({
       <View
         testID="practice.scoreMeasure.viewport"
         onLayout={({ nativeEvent }) => setMeasuredViewportWidth(nativeEvent.layout.width)}
-        style={{ flex: 1, overflow: 'hidden', paddingVertical: minimal ? 0 : compact ? 3 : 7 }}
+        style={{
+          flex: 1,
+          height: minimal ? scoreRowsHeight : undefined,
+          overflow: 'hidden',
+          paddingVertical: minimal ? 0 : compact ? 3 : 7,
+        }}
       >
         {barWidth > 0 ? (
           <Animated.View
