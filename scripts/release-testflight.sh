@@ -62,6 +62,7 @@ if [[ ! -e "$archive_path" ]]; then
   echo "Regenerating the iOS project from Expo config..."
   npx expo prebuild --platform ios --no-install
   pod install --project-directory=ios
+  node scripts/ensure-hermes-minimum-os.mjs
 
   workspace_path="$(find ios -maxdepth 1 -type d -name '*.xcworkspace' -print -quit)"
   if [[ -z "$workspace_path" ]]; then
@@ -133,6 +134,17 @@ if [[ "$archived_version" != "$app_version" || "$archived_build" != "$build_numb
   exit 1
 fi
 echo "Archive verified: $archived_bundle $archived_version ($archived_build), encryption exempted."
+hermes_info_plist="$archived_app/Frameworks/hermesvm.framework/Info.plist"
+if [[ ! -f "$hermes_info_plist" ]]; then
+  echo "The archive is missing the Hermes framework Info.plist; refusing to upload." >&2
+  exit 1
+fi
+hermes_minimum_os="$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$hermes_info_plist" 2>/dev/null || true)"
+if [[ -z "$hermes_minimum_os" ]]; then
+  echo "The archived Hermes framework has no MinimumOSVersion; refusing to upload." >&2
+  exit 1
+fi
+echo "Hermes framework MinimumOSVersion verified: $hermes_minimum_os."
 echo "Archive path: $archive_path"
 
 if [[ "${SPLITBEAT_ARCHIVE_ONLY:-0}" == "1" ]]; then
