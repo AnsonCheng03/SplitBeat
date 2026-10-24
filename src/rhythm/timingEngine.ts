@@ -74,6 +74,8 @@ interface MutableAccuracyStats {
 interface MutableCombinationStats {
   leftSubdivision: Subdivision;
   rightSubdivision: Subdivision;
+  leftRest: boolean;
+  rightRest: boolean;
   left: MutableAccuracyStats;
   right: MutableAccuracyStats;
 }
@@ -190,6 +192,7 @@ export class RhythmTimingEngine {
       enabledSubdivisions: options.settings.enabledSubdivisions,
       changeIntervalBeats: options.settings.changeIntervalBeats,
       patternPairs: options.patternPairs,
+      allowHandRests: options.settings.handRestsEnabled && options.settings.trainingMode === 'two-hand',
       random: options.random,
     });
   }
@@ -316,6 +319,8 @@ export class RhythmTimingEngine {
       combinations: Array.from(this.combinations.values(), (combination) => ({
         leftSubdivision: combination.leftSubdivision,
         rightSubdivision: combination.rightSubdivision,
+        leftRest: combination.leftRest,
+        rightRest: combination.rightRest,
         left: toAccuracyStats(combination.left),
         right: toAccuracyStats(combination.right),
       })),
@@ -372,6 +377,7 @@ export class RhythmTimingEngine {
 
       for (const hand of ['left', 'right'] as const) {
         if (this.settings.trainingMode === 'single-hand' && hand !== this.settings.singleHand) continue;
+        if (hand === 'left' ? step.leftRest : step.rightRest) continue;
         const subdivision = hand === 'left' ? step.leftSubdivision : step.rightSubdivision;
         if (isTupletSubdivision(subdivision)) {
           const notesPerBeat = tupletCount(subdivision);
@@ -466,6 +472,8 @@ export class RhythmTimingEngine {
         id: `score-measure-${measureIndex}`,
         leftSubdivision: 'quarter',
         rightSubdivision: 'quarter',
+        leftRest: false,
+        rightRest: false,
         startBeat: Math.floor((measure?.startQuarter ?? 0) * this.quarterNoteMs / this.beatMs),
         durationBeats: measure
           ? Math.max(1, Math.round((measure.durationQuarter * this.quarterNoteMs) / this.beatMs))
@@ -493,6 +501,8 @@ export class RhythmTimingEngine {
     const upcomingSubdivision = hand === 'left'
       ? upcomingStep.leftSubdivision
       : upcomingStep.rightSubdivision;
+    if ((hand === 'left' ? previousStep.leftRest : previousStep.rightRest) ||
+      (hand === 'left' ? upcomingStep.leftRest : upcomingStep.rightRest)) return 0;
     const previousDivisions = SUBDIVISION_COUNTS[previousSubdivision];
     const upcomingDivisions = SUBDIVISION_COUNTS[upcomingSubdivision];
     const previousDurationMs = previousStep.durationBeats * this.beatMs;
@@ -643,12 +653,14 @@ export class RhythmTimingEngine {
       return;
     }
 
-    const key = `${event.step.leftSubdivision}:${event.step.rightSubdivision}`;
+    const key = `${event.step.leftRest ? 'rest' : event.step.leftSubdivision}:${event.step.rightRest ? 'rest' : event.step.rightSubdivision}`;
     let combination = this.combinations.get(key);
     if (!combination) {
       combination = {
         leftSubdivision: event.step.leftSubdivision,
         rightSubdivision: event.step.rightSubdivision,
+        leftRest: event.step.leftRest,
+        rightRest: event.step.rightRest,
         left: createMutableAccuracyStats(),
         right: createMutableAccuracyStats(),
       };
@@ -826,6 +838,8 @@ export class RhythmTimingEngine {
       combinations: Array.from(this.combinations.values(), (combination) => ({
         leftSubdivision: combination.leftSubdivision,
         rightSubdivision: combination.rightSubdivision,
+        leftRest: combination.leftRest,
+        rightRest: combination.rightRest,
         left: toAccuracyStats(combination.left),
         right: toAccuracyStats(combination.right),
       })),

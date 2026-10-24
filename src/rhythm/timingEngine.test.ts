@@ -23,6 +23,7 @@ const settings: ExerciseSettings = {
   durationSeconds: 30,
   changeIntervalBeats: 4,
   restBetweenChanges: false,
+  handRestsEnabled: false,
   enabledSubdivisions: ['quarter', 'eighth'],
   feel: 'straight',
   graceNotesEnabled: false,
@@ -82,6 +83,35 @@ test('reference playback events use the same mixed left and right pattern timest
       ['right', start + 2_500],
     ],
   );
+});
+
+test('independent hand rests leave one lane silent while the other keeps its expected beats', () => {
+  const start = 18_000;
+  const engine = new RhythmTimingEngine({
+    settings: {
+      ...settings,
+      handRestsEnabled: true,
+    },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  const step = engine.advance(start + 1).currentStep;
+  assert.equal(step.leftRest, true);
+  assert.equal(step.rightRest, false);
+  assert.deepEqual(
+    engine.getReferenceEventsThrough(start + 10).map(({ hand, expectedTimeMs }) => [hand, expectedTimeMs]),
+    [['right', start]],
+  );
+  assert.equal(engine.tap('left', start), 'miss');
+  assert.equal(engine.tap('right', start), 'hit');
+
+  const results = engine.getResults(start + 200);
+  assert.equal(results.left.totalExpected, 0);
+  assert.equal(results.right.totalExpected, 1);
+  assert.equal(results.right.totalHit, 1);
+  assert.equal(results.combinations[0].leftRest, true);
+  assert.equal(results.combinations[0].rightRest, false);
 });
 
 test('swing stretches binary offbeats while triplets remain even', () => {
@@ -378,6 +408,27 @@ test('exercise changes occur at configured beat boundaries without immediate rep
     assert.notDeepEqual(
       [steps[index].leftSubdivision, steps[index].rightSubdivision],
       [steps[index - 1].leftSubdivision, steps[index - 1].rightSubdivision],
+    );
+  }
+});
+
+test('optional independent rests alternate with an active rhythm and never silence both hands', () => {
+  const steps = generateExerciseSteps(
+    {
+      enabledSubdivisions: ['quarter', 'eighth'],
+      changeIntervalBeats: 4,
+      allowHandRests: true,
+      random: () => 0.1,
+    },
+    6,
+  );
+
+  assert.ok(steps.some((step) => step.leftRest || step.rightRest));
+  assert.ok(steps.every((step) => !(step.leftRest && step.rightRest)));
+  for (let index = 1; index < steps.length; index += 1) {
+    assert.notDeepEqual(
+      [steps[index].leftSubdivision, steps[index].rightSubdivision, steps[index].leftRest, steps[index].rightRest],
+      [steps[index - 1].leftSubdivision, steps[index - 1].rightSubdivision, steps[index - 1].leftRest, steps[index - 1].rightRest],
     );
   }
 });

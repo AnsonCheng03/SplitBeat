@@ -11,7 +11,7 @@ import { ScoreFocusNote } from '@/components/ScoreFocusNote';
 import { ScrollingScoreRhythm } from '@/components/ScoreRhythmMeasure';
 import { TapZone } from '@/components/TapZone';
 import { findNextScoreEvent, type ScoreDisplayMode } from '@/rhythm/scoreStaff';
-import { pulseQuarterNotes, SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
+import { patternLabel, pulseQuarterNotes } from '@/rhythm/subdivisions';
 import { useRhythmSession } from '@/store/sessionStore';
 import type { Hand, TapFeedback } from '@/types/rhythm';
 import { colors } from '@/theme';
@@ -278,9 +278,12 @@ export default function PracticeScreen() {
                   compact={compact}
                   timeSignature={activeSettings.timeSignature}
                   scale={compact ? 1.35 : 1.8}
+                  rest={focusedHand === 'left' ? step.leftRest : step.rightRest}
                 />
                 <Text style={{ color: colors.text, fontSize: compact ? 13 : 17, fontWeight: '800' }}>
-                  {SUBDIVISION_LABELS[focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision]}
+                  {focusedHand === 'left'
+                    ? patternLabel(step.leftSubdivision, step.leftRest)
+                    : patternLabel(step.rightSubdivision, step.rightRest)}
                 </Text>
               </View>
             ) : (
@@ -289,8 +292,8 @@ export default function PracticeScreen() {
                   {enabledHand('left') && step ? (
                     <>
                       <Text style={{ color: colors.left, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>LEFT</Text>
-                      <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} compact={compact} timeSignature={activeSettings.timeSignature} scale={compact ? 1.35 : 1.8} />
-                      <Text style={{ color: colors.text, fontSize: compact ? 13 : 17, fontWeight: '800' }}>{SUBDIVISION_LABELS[step.leftSubdivision]}</Text>
+                      <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} compact={compact} timeSignature={activeSettings.timeSignature} scale={compact ? 1.35 : 1.8} rest={step.leftRest} />
+                      <Text style={{ color: colors.text, fontSize: compact ? 13 : 17, fontWeight: '800' }}>{patternLabel(step.leftSubdivision, step.leftRest)}</Text>
                     </>
                   ) : null}
                 </View>
@@ -298,8 +301,8 @@ export default function PracticeScreen() {
                   {enabledHand('right') && step ? (
                     <>
                       <Text style={{ color: colors.right, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>RIGHT</Text>
-                      <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} compact={compact} timeSignature={activeSettings.timeSignature} scale={compact ? 1.35 : 1.8} />
-                      <Text style={{ color: colors.text, fontSize: compact ? 13 : 17, fontWeight: '800' }}>{SUBDIVISION_LABELS[step.rightSubdivision]}</Text>
+                      <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} compact={compact} timeSignature={activeSettings.timeSignature} scale={compact ? 1.35 : 1.8} rest={step.rightRest} />
+                      <Text style={{ color: colors.text, fontSize: compact ? 13 : 17, fontWeight: '800' }}>{patternLabel(step.rightSubdivision, step.rightRest)}</Text>
                     </>
                   ) : null}
                 </View>

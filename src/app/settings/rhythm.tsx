@@ -151,6 +151,15 @@ export default function RhythmSettingsScreen() {
         <Text style={helperText}>
           Both hands pause for the last beat before a new pattern. The metronome keeps going; this pause replaces grace pickups.
         </Text>
+        <SettingsToggleRow
+          testID="setup.toggle.handRests"
+          label="Independent hand rests"
+          value={settings.handRestsEnabled}
+          onChange={(handRestsEnabled) => updateSettings({ handRestsEnabled })}
+        />
+        <Text style={helperText}>
+          Occasionally one hand rests while the other keeps playing. Available in generated two-hand practice.
+        </Text>
       </Section>
 
       <Section title="CHALLENGE">

@@ -49,11 +49,12 @@ export interface ExercisePreparationOptions {
 }
 
 export const DEFAULT_SETTINGS: ExerciseSettings = {
-  bpm: 80,
+  bpm: 60,
   timeSignature: '4/4',
   durationSeconds: 60,
   changeIntervalBeats: 4,
   restBetweenChanges: false,
+  handRestsEnabled: false,
   enabledSubdivisions: ['quarter', 'eighth', 'triplet', 'sixteenth'],
   feel: 'straight',
   graceNotesEnabled: false,
@@ -131,6 +132,7 @@ function restoreSettings(raw: string | null): ExerciseSettings {
       durationSeconds,
       changeIntervalBeats,
       restBetweenChanges: parsed.restBetweenChanges === true,
+      handRestsEnabled: parsed.handRestsEnabled === true,
       enabledSubdivisions: validSubdivisions as Subdivision[],
       feel: parsed.feel === 'swing' ? 'swing' : 'straight',
       graceNotesEnabled:

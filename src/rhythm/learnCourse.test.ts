@@ -18,6 +18,7 @@ const preferences: ExerciseSettings = {
   durationSeconds: 60,
   changeIntervalBeats: 4,
   restBetweenChanges: false,
+  handRestsEnabled: false,
   enabledSubdivisions: ['quarter', 'eighth'],
   feel: 'straight',
   graceNotesEnabled: false,

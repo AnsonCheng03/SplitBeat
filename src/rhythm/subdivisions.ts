@@ -33,6 +33,10 @@ export const SUBDIVISION_COUNTS: Record<Subdivision, number> = {
   sixtyFourth: 16,
 };
 
+export function patternLabel(subdivision: Subdivision, rest = false): string {
+  return rest ? 'Rest' : SUBDIVISION_LABELS[subdivision];
+}
+
 export const TUPLET_COUNTS: Record<TupletSubdivision, number> = {
   duplet: 2,
   triplet: 3,

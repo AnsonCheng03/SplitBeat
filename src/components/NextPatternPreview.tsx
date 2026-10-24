@@ -2,7 +2,7 @@ import { useLayoutEffect, useState } from 'react';
 import { Animated, Easing, Text, View } from 'react-native';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
 import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
-import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
+import { patternLabel } from '@/rhythm/subdivisions';
 import { colors } from '@/theme';
 import type { ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
 import type { ExerciseStep, Hand, Subdivision, TimeSignature } from '@/types/rhythm';
@@ -30,13 +30,14 @@ interface NextPatternPreviewProps {
 interface HandPreviewProps {
   hand: Hand;
   subdivision: Subdivision;
+  rest: boolean;
   timeSignature: TimeSignature;
   compact: boolean;
   label?: string;
   colorOverride?: string;
 }
 
-function HandPreview({ hand, subdivision, timeSignature, compact, label = 'NEXT', colorOverride }: HandPreviewProps) {
+function HandPreview({ hand, subdivision, rest, timeSignature, compact, label = 'NEXT', colorOverride }: HandPreviewProps) {
   const color = colorOverride ?? (hand === 'left' ? colors.left : colors.right);
 
   return (
@@ -47,7 +48,7 @@ function HandPreview({ hand, subdivision, timeSignature, compact, label = 'NEXT'
       >
         {label}
       </Text>
-      <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} compact scale={compact ? 0.65 : 0.78} />
+      <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} compact scale={compact ? 0.65 : 0.78} rest={rest} />
       <Text
         numberOfLines={1}
         adjustsFontSizeToFit
@@ -59,7 +60,7 @@ function HandPreview({ hand, subdivision, timeSignature, compact, label = 'NEXT'
           flexShrink: 1,
         }}
       >
-        {SUBDIVISION_LABELS[subdivision]}
+        {patternLabel(subdivision, rest)}
       </Text>
     </View>
   );
@@ -118,10 +119,10 @@ export function NextPatternPreview({
     ? `Next score bar ${scoreMeasureNumber ?? scoreMeasure.index + 1}. Starts in ${countdown} ${countdownLabel.toLowerCase()}.`
     : step
       ? focusedHand
-        ? `Next pattern. Changes in ${countdown} ${countdownLabel.toLowerCase()}. One hand: ${SUBDIVISION_LABELS[focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision]}` + changeDetail
+        ? `Next pattern. Changes in ${countdown} ${countdownLabel.toLowerCase()}. One hand: ${patternLabel(focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision, focusedHand === 'left' ? step.leftRest : step.rightRest)}` + changeDetail
         : `Next pattern. Changes in ${countdown} ${countdownLabel.toLowerCase()}. ` +
-        `Left hand: ${SUBDIVISION_LABELS[step.leftSubdivision]}. ` +
-        `Right hand: ${SUBDIVISION_LABELS[step.rightSubdivision]}` + changeDetail
+        `Left hand: ${patternLabel(step.leftSubdivision, step.leftRest)}. ` +
+        `Right hand: ${patternLabel(step.rightSubdivision, step.rightRest)}` + changeDetail
       : 'Upcoming pattern';
 
   return (
@@ -194,15 +195,16 @@ export function NextPatternPreview({
               <HandPreview
                 hand={focusedHand}
                 subdivision={focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision}
+                rest={focusedHand === 'left' ? step.leftRest : step.rightRest}
                 timeSignature={timeSignature}
                 compact={compact}
                 colorOverride={colors.accent}
               />
             ) : (
               <>
-                <HandPreview hand="left" subdivision={step.leftSubdivision} timeSignature={timeSignature} compact={compact} />
+                <HandPreview hand="left" subdivision={step.leftSubdivision} rest={step.leftRest} timeSignature={timeSignature} compact={compact} />
                 <View style={{ width: 1, height: '82%', backgroundColor: colors.line }} />
-                <HandPreview hand="right" subdivision={step.rightSubdivision} timeSignature={timeSignature} compact={compact} />
+                <HandPreview hand="right" subdivision={step.rightSubdivision} rest={step.rightRest} timeSignature={timeSignature} compact={compact} />
               </>
             )}
           </View>

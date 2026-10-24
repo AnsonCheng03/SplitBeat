@@ -52,6 +52,8 @@ export interface ExerciseStep {
   id: string;
   leftSubdivision: Subdivision;
   rightSubdivision: Subdivision;
+  leftRest: boolean;
+  rightRest: boolean;
   startBeat: number;
   durationBeats: number;
 }
@@ -66,6 +68,8 @@ export interface ReferenceRhythmEvent {
 export interface RhythmPatternPair {
   leftSubdivision: Subdivision;
   rightSubdivision: Subdivision;
+  leftRest?: boolean;
+  rightRest?: boolean;
 }
 
 export interface ExerciseSettings {
@@ -74,6 +78,7 @@ export interface ExerciseSettings {
   durationSeconds: DurationOption;
   changeIntervalBeats: ChangeIntervalBeats;
   restBetweenChanges: boolean;
+  handRestsEnabled: boolean;
   enabledSubdivisions: Subdivision[];
   feel: RhythmicFeel;
   graceNotesEnabled: boolean;
@@ -114,6 +119,8 @@ export interface AccuracyStats {
 export interface CombinationStats {
   leftSubdivision: Subdivision;
   rightSubdivision: Subdivision;
+  leftRest: boolean;
+  rightRest: boolean;
   left: AccuracyStats;
   right: AccuracyStats;
 }

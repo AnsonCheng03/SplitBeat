@@ -40,16 +40,28 @@ function weakestCombination(results: SessionResults) {
       const rightAccuracy = accuracyPercent(combination.right);
       const weakHand = results.trainingMode === 'single-hand'
         ? results.singleHand
-        : leftAccuracy <= rightAccuracy ? 'left' : 'right';
+        : combination.leftRest
+          ? 'right'
+          : combination.rightRest
+            ? 'left'
+            : leftAccuracy <= rightAccuracy ? 'left' : 'right';
       return {
         ...combination,
         weakHand,
         accuracy: results.trainingMode === 'single-hand'
           ? accuracyPercent(combination[results.singleHand])
-          : Math.min(leftAccuracy, rightAccuracy),
+          : combination.leftRest
+            ? rightAccuracy
+            : combination.rightRest
+              ? leftAccuracy
+              : Math.min(leftAccuracy, rightAccuracy),
         sampleSize: results.trainingMode === 'single-hand'
           ? combination[results.singleHand].totalExpected
-          : combination.left.totalExpected + combination.right.totalExpected,
+          : combination.leftRest
+            ? combination.right.totalExpected
+            : combination.rightRest
+              ? combination.left.totalExpected
+              : combination.left.totalExpected + combination.right.totalExpected,
       };
     })
     .sort((a, b) => a.accuracy - b.accuracy || b.sampleSize - a.sampleSize)[0];
@@ -112,6 +124,7 @@ function buildFeedback(results: SessionResults, weak?: ReturnType<typeof weakest
     } else {
       const otherHandName = weak.weakHand === 'left' ? 'right' : 'left';
       const otherSubdivision = weak.weakHand === 'left' ? weak.rightSubdivision : weak.leftSubdivision;
+      const otherHandRests = weak.weakHand === 'left' ? weak.rightRest : weak.leftRest;
       const playedPattern: Record<Subdivision, string> = {
         quarter: 'quarter notes',
         eighth: 'eighth notes',
@@ -130,7 +143,7 @@ function buildFeedback(results: SessionResults, weak?: ReturnType<typeof weakest
       const verb = affectedSubdivision === 'quarter' ? 'is' : 'are';
       messages.push(
         'Your ' + handName.toLowerCase() + '-hand ' + affectedPattern[affectedSubdivision] + ' ' + verb +
-        ' less steady when your ' + otherHandName + ' hand plays ' + playedPattern[otherSubdivision] + '.',
+        ' less steady when your ' + otherHandName + ' hand ' + (otherHandRests ? 'rests' : `plays ${playedPattern[otherSubdivision]}`) + '.',
       );
     }
   }
@@ -203,8 +216,8 @@ function DisclosureHeader({
   );
 }
 
-function weakLabel(subdivision: Subdivision) {
-  return SUBDIVISION_LABELS[subdivision].toUpperCase();
+function weakLabel(subdivision: Subdivision, rest = false) {
+  return rest ? 'REST' : SUBDIVISION_LABELS[subdivision].toUpperCase();
 }
 
 function missedBarGroups(events: readonly MissedEvent[]) {
@@ -480,8 +493,8 @@ export default function ResultsScreen() {
                   <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>{results.trainingMode === 'single-hand' ? 'MOST DIFFICULT PATTERN' : 'MOST DIFFICULT PAIR'}</Text>
                   <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', marginTop: 13 }}>
                     {results.trainingMode === 'single-hand'
-                      ? `ONE HAND · ${SUBDIVISION_LABELS[weakest[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision']]}`
-                      : `Left: ${SUBDIVISION_LABELS[weakest.leftSubdivision]}   ·   Right: ${SUBDIVISION_LABELS[weakest.rightSubdivision]}`}
+                      ? `ONE HAND · ${weakLabel(weakest[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision'], weakest[results.singleHand === 'left' ? 'leftRest' : 'rightRest'])}`
+                      : `Left: ${weakLabel(weakest.leftSubdivision, weakest.leftRest)}   ·   Right: ${weakLabel(weakest.rightSubdivision, weakest.rightRest)}`}
                   </Text>
                   <Text style={{ color: colors.accent, fontSize: 30, fontWeight: '900', marginTop: 5 }}>
                     {results.trainingMode === 'single-hand' ? 'ONE HAND' : weakest.weakHand.toUpperCase()} {percent(weakest.accuracy)}
@@ -493,11 +506,11 @@ export default function ResultsScreen() {
                 <View style={{ marginTop: 22 }}>
                   <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4, marginBottom: 5 }}>{results.trainingMode === 'single-hand' ? 'PATTERN BREAKDOWN' : 'PAIR BREAKDOWN'}</Text>
                   {combinations.map((combination) => (
-                    <View key={combination.leftSubdivision + ':' + combination.rightSubdivision} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line }}>
+                    <View key={`${combination.leftRest ? 'rest' : combination.leftSubdivision}:${combination.rightRest ? 'rest' : combination.rightSubdivision}`} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line }}>
                       <Text style={{ color: colors.muted, flex: 1, fontSize: 12 }}>
                         {results.trainingMode === 'single-hand'
-                          ? `ONE HAND · ${weakLabel(combination[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision'])}`
-                          : `${weakLabel(combination.leftSubdivision)} / ${weakLabel(combination.rightSubdivision)}`}
+                          ? `ONE HAND · ${weakLabel(combination[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision'], combination[results.singleHand === 'left' ? 'leftRest' : 'rightRest'])}`
+                          : `${weakLabel(combination.leftSubdivision, combination.leftRest)} / ${weakLabel(combination.rightSubdivision, combination.rightRest)}`}
                       </Text>
                       {results.trainingMode === 'single-hand' ? (
                         <Text style={{ color: colors.accent, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>
