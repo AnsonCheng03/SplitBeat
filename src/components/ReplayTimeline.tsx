@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Animated, Easing, View } from 'react-native';
+import type { ViewStyle } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
@@ -20,7 +21,8 @@ interface ReplayTimelineProps {
   onPlaybackEnd: (barIndex: number, playbackId: number) => void;
 }
 
-const TIMING_MISS = '#FF7474';
+const TIMING_MISS = colors.danger;
+const TIMING_CORRECT = '#4DE0B2';
 
 export function ReplayTimeline({
   barIndex,
@@ -98,15 +100,19 @@ export function ReplayTimeline({
 
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 12, marginTop: 4 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <View style={{ width: 7, height: 7, borderRadius: 4, borderWidth: 1, borderColor: colors.muted }} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+            {hands.map((hand) => (
+              <View key={hand} style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: hand === 'left' ? colors.left : colors.right }} />
+            ))}
+          </View>
           <Text style={{ color: colors.muted, fontSize: 9 }}>Expected</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: colors.accent }} />
-          <Text style={{ color: colors.muted, fontSize: 9 }}>Tap</Text>
+          <ReplayStatusBadge status="correct" size={10} style={{ position: 'relative' }} />
+          <Text style={{ color: colors.muted, fontSize: 9 }}>Correct</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: TIMING_MISS }} />
+          <ReplayStatusBadge status="miss" size={10} style={{ position: 'relative' }} />
           <Text style={{ color: colors.muted, fontSize: 9 }}>Missed / extra</Text>
         </View>
       </View>
@@ -141,9 +147,11 @@ function ReplayHandLane({
 }) {
   const { t } = useI18n();
   const [trackWidth, setTrackWidth] = useState(0);
-  const plan = useMemo(() => trackWidth > 0 && events.length > 0
+  const orderedEvents = useMemo(() => [...events].sort((first, second) =>
+    first.beatInBar - second.beatInBar || first.expectedTimeMs - second.expectedTimeMs), [events]);
+  const plan = useMemo(() => trackWidth > 0 && orderedEvents.length > 0
     ? createBarNoteNotationPlan(
-      events.map((event) => ({
+      orderedEvents.map((event) => ({
         startQuarter: event.beatInBar * beatQuarterNotes,
         durationQuarter: event.durationQuarter,
         ...(event.tupletNumber === undefined ? {} : { tupletNumber: event.tupletNumber }),
@@ -155,9 +163,11 @@ function ReplayHandLane({
         beamGroupQuarterNotes: beatQuarterNotes,
       },
     )
-    : null, [barDurationQuarter, beatQuarterNotes, events, trackWidth]);
+    : null, [barDurationQuarter, beatQuarterNotes, orderedEvents, trackWidth]);
   const anchorStartX = plan?.anchorStartX ?? 0;
   const anchorWidth = plan?.anchorWidth ?? trackWidth;
+  const laneHeight = Math.max(44, plan?.height ?? 0);
+  const notePlanTop = plan ? (laneHeight - plan.height) / 2 : 0;
   const elapsedAtBarStart = (barIndex - 1) * beatsPerBar * timestampBeatMs;
 
   return (
@@ -167,7 +177,7 @@ function ReplayHandLane({
       </Text>
       <View
         onLayout={({ nativeEvent }) => setTrackWidth(nativeEvent.layout.width)}
-        style={{ position: 'relative', minHeight: 42, justifyContent: 'center' }}
+        style={{ position: 'relative', height: laneHeight, justifyContent: 'center' }}
       >
         <BeatGuides beatsPerBar={beatsPerBar} anchorStartX={anchorStartX} anchorWidth={anchorWidth} />
         {plan ? (
@@ -180,15 +190,23 @@ function ReplayHandLane({
         ) : events.length === 0 ? (
           <Text style={{ color: colors.muted, fontSize: 11, textAlign: 'center', fontWeight: '700' }}>REST</Text>
         ) : null}
-        {events.filter((event) => !event.matched).map((event) => (
-          <View
-            key={event.id}
-            accessibilityLabel={t('{hand} expected note was missed', { hand: t(hand) })}
-            testID={`results.replayMissedNote.${event.id}`}
-            pointerEvents="none"
-            style={{ position: 'absolute', left: anchorStartX + anchorWidth * event.beatInBar / beatsPerBar, bottom: 1, width: 7, height: 7, marginLeft: -3.5, borderRadius: 4, backgroundColor: TIMING_MISS, borderWidth: 1, borderColor: colors.background }}
-          />
-        ))}
+        {plan?.notes.map((note, index) => {
+          const event = orderedEvents[index];
+          if (!event) return null;
+          const size = Math.max(7, Math.min(8, note.headWidth * 0.75));
+          return (
+            <ReplayStatusBadge
+              key={event.id}
+              status={event.matched ? 'correct' : 'miss'}
+              size={size}
+              testID={`results.replayStatus.expected.${event.id}`}
+              style={{
+                left: note.left + note.headWidth / 2 - size / 2,
+                top: notePlanTop + note.headTop + note.headHeight / 2 - size / 2,
+              }}
+            />
+          );
+        })}
       </View>
 
       <Text style={{ color: colors.muted, fontSize: 9, fontWeight: '800', letterSpacing: 0.9, marginTop: 2, marginBottom: 2 }}>
@@ -210,16 +228,18 @@ function ReplayHandLane({
               timing: t(error > 0 ? 'late' : error < 0 ? 'early' : 'on time'),
             });
           return (
-            <View
+            <ReplayStatusBadge
               key={tap.id}
               testID={`results.replayTap.${tap.id}`}
+              status={matched ? 'correct' : 'miss'}
+              size={12}
               accessibilityLabel={t('{hand} hand tap at {time} milliseconds into bar {bar}{timing}', {
                 hand: t(hand),
                 time: Math.round(elapsedInBarMs),
                 bar: barIndex,
                 timing: timingLabel,
               })}
-              style={{ position: 'absolute', left: anchorStartX + anchorWidth * position, width: 9, height: 9, marginLeft: -4.5, borderRadius: 5, backgroundColor: matched ? accent : TIMING_MISS, borderWidth: 1, borderColor: colors.background }}
+              style={{ left: anchorStartX + anchorWidth * position - 6, top: 3 }}
             />
           );
         })}
@@ -229,6 +249,47 @@ function ReplayHandLane({
           <Text key={beat} style={{ color: colors.muted, flex: 1, textAlign: 'center', fontSize: 9, fontVariant: ['tabular-nums'] }}>{beat + 1}</Text>
         ))}
       </View>
+    </View>
+  );
+}
+
+function ReplayStatusBadge({
+  status,
+  size,
+  testID,
+  accessibilityLabel,
+  style,
+}: {
+  status: 'correct' | 'miss';
+  size: number;
+  testID?: string;
+  accessibilityLabel?: string;
+  style?: ViewStyle;
+}) {
+  const { t } = useI18n();
+  const label = accessibilityLabel ?? t(status === 'correct' ? 'Correct' : 'Missed / extra');
+  return (
+    <View
+      pointerEvents="none"
+      accessible={Boolean(accessibilityLabel)}
+      accessibilityLabel={label}
+      testID={testID}
+      style={[{
+        position: 'absolute',
+        zIndex: 2,
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: status === 'correct' ? TIMING_CORRECT : TIMING_MISS,
+        borderWidth: 1,
+        borderColor: colors.background,
+      }, style]}
+    >
+      <Text accessible={false} style={{ color: colors.background, fontSize: Math.max(7, size * 0.72), lineHeight: size, fontWeight: '900', textAlign: 'center' }}>
+        {status === 'correct' ? '✓' : '×'}
+      </Text>
     </View>
   );
 }

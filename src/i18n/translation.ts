@@ -705,6 +705,7 @@ const TRADITIONAL_CHINESE: Record<string, string> = {
   ', extra tap': '，多餘點按',
   ', {error} milliseconds {timing}': '，{timing} {error} 毫秒',
   'Expected': '應有音符',
+  'Correct': '正確',
   'Tap': '點按',
   'Missed / extra': '漏拍／多餘點按',
   'Calibrate {hand} hand timing': '校準{hand}手節奏',
