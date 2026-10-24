@@ -53,7 +53,9 @@ export type RhythmicFeel = 'straight' | 'swing';
 export type DurationOption = 30 | 60 | 120 | 'endless';
 export type ChangeIntervalBeats = 1 | 2 | 4 | 8;
 export type ChallengeAction = 'off' | 'pause' | 'stop';
+export type ChallengeTriggerMode = 'notes' | 'bars';
 export type ChallengeMissStreak = 1 | 2 | 3 | 5;
+export type ChallengeWrongBarStreak = 1 | 2 | 3 | 5;
 
 export interface ExerciseStep {
   id: string;
@@ -108,7 +110,9 @@ export interface ExerciseSettings {
   tapResultFlashEnabled: boolean;
   referenceRhythmEnabled: boolean;
   challengeAction: ChallengeAction;
+  challengeTriggerMode: ChallengeTriggerMode;
   challengeMissStreak: ChallengeMissStreak;
+  challengeWrongBarStreak: ChallengeWrongBarStreak;
   leftTapOffsetMs: number;
   rightTapOffsetMs: number;
   goodWindowMs: number;

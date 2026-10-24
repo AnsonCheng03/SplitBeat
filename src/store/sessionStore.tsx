@@ -13,7 +13,12 @@ import { SOUND_OPTIONS } from '@/audio/soundPresets';
 import { normalizeFlashSource } from '@/rhythm/flashSource';
 import { applyFeatureFlagsToPatternPairs, applyFeatureFlagsToSettings, DEFAULT_FEATURE_FLAGS, parseFeatureFlags } from '@/features/featureFlags';
 import type { FeatureFlagId, FeatureFlags } from '@/features/featureFlags';
-import { applyChallengeOutcomes, challengeMessage, createChallengeStreaks } from '@/rhythm/challenge';
+import {
+  applyChallengeBarOutcomes,
+  applyChallengeOutcomes,
+  challengeMessage,
+  createChallengeStreaks,
+} from '@/rhythm/challenge';
 import { scoreFromMeasure } from '@/rhythm/scoreStaff';
 import { getSessionDurationSeconds, RhythmTimingEngine } from '@/rhythm/timingEngine';
 import {
@@ -32,6 +37,7 @@ import type {
   ExerciseSettings,
   Hand,
   ChallengeMissStreak,
+  ChallengeWrongBarStreak,
   SessionResults,
   SessionSnapshot,
   RhythmPatternPair,
@@ -109,7 +115,9 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   tapResultFlashEnabled: true,
   referenceRhythmEnabled: false,
   challengeAction: 'off',
+  challengeTriggerMode: 'notes',
   challengeMissStreak: 3,
+  challengeWrongBarStreak: 2,
   leftTapOffsetMs: 0,
   rightTapOffsetMs: 0,
   goodWindowMs: DEFAULT_GOOD_WINDOW_MS,
@@ -218,6 +226,10 @@ function restoreSettings(raw: string | null): ExerciseSettings {
       challengeMissStreak: [1, 2, 3, 5].includes(parsed.challengeMissStreak ?? -1)
         ? parsed.challengeMissStreak as ChallengeMissStreak
         : DEFAULT_SETTINGS.challengeMissStreak,
+      challengeTriggerMode: parsed.challengeTriggerMode === 'bars' ? 'bars' : 'notes',
+      challengeWrongBarStreak: [1, 2, 3, 5].includes(parsed.challengeWrongBarStreak ?? -1)
+        ? parsed.challengeWrongBarStreak as ChallengeWrongBarStreak
+        : DEFAULT_SETTINGS.challengeWrongBarStreak,
       leftTapOffsetMs:
         typeof parsed.leftTapOffsetMs === 'number'
           ? normalizeTapOffsetMs(parsed.leftTapOffsetMs)
@@ -266,6 +278,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
   const lastOptionsRef = useRef<ExercisePreparationOptions>({});
   const sessionSettingsRef = useRef<ExerciseSettings>(DEFAULT_SETTINGS);
   const challengeStreaksRef = useRef(createChallengeStreaks());
+  const challengeWrongBarIndexesRef = useRef(new Set<number>());
+  const challengeWrongBarStreakRef = useRef(0);
   const challengePausedRef = useRef(false);
   const [exercisePrepared, setExercisePrepared] = useState(false);
 
@@ -532,15 +546,31 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
 
   const checkChallenge = useCallback((engine: RhythmTimingEngine): boolean => {
     const activeSettings = sessionSettingsRef.current;
-    const processed = applyChallengeOutcomes(
-      challengeStreaksRef.current,
-      engine.takeChallengeOutcomes(),
-      activeSettings.challengeMissStreak,
-    );
-    challengeStreaksRef.current = processed.streaks;
+    const outcomes = engine.takeChallengeOutcomes();
+    let trigger = null;
+    if (activeSettings.challengeTriggerMode === 'bars') {
+      const processed = applyChallengeBarOutcomes(
+        challengeWrongBarStreakRef.current,
+        challengeWrongBarIndexesRef.current,
+        outcomes,
+        engine.takeCompletedChallengeBars(),
+        activeSettings.challengeWrongBarStreak,
+      );
+      challengeWrongBarStreakRef.current = processed.consecutiveWrongBars;
+      challengeWrongBarIndexesRef.current = processed.wrongBarIndexes;
+      trigger = processed.trigger;
+    } else {
+      engine.takeCompletedChallengeBars();
+      const processed = applyChallengeOutcomes(
+        challengeStreaksRef.current,
+        outcomes,
+        activeSettings.challengeMissStreak,
+      );
+      challengeStreaksRef.current = processed.streaks;
+      trigger = processed.trigger;
+    }
     if (activeSettings.challengeAction === 'off') return false;
 
-    const trigger = processed.trigger;
     if (!trigger) return false;
 
     const message = challengeMessage(trigger, activeSettings.challengeAction);
@@ -556,6 +586,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       const nextSnapshot = engine.advance(monotonicNow());
       if (challengePausedRef.current && !nextSnapshot.resumeCountIn) {
         challengeStreaksRef.current = createChallengeStreaks();
+        challengeWrongBarIndexesRef.current.clear();
+        challengeWrongBarStreakRef.current = 0;
         challengePausedRef.current = false;
       }
       if (nextSnapshot.phase === 'finished' && nextSnapshot.results) {
@@ -605,6 +637,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       : configuredSettings;
     sessionSettingsRef.current = activeSettings;
     challengeStreaksRef.current = createChallengeStreaks();
+    challengeWrongBarIndexesRef.current.clear();
+    challengeWrongBarStreakRef.current = 0;
     challengePausedRef.current = false;
     setSessionSettings(activeSettings);
     if (score) setSettings(activeSettings);
@@ -738,6 +772,8 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     const tapResult = engine.tapWithDetails(hand, timestamp);
     if (challengePausedRef.current && !engine.isPaused()) {
       challengeStreaksRef.current = createChallengeStreaks();
+      challengeWrongBarIndexesRef.current.clear();
+      challengeWrongBarStreakRef.current = 0;
       challengePausedRef.current = false;
     }
     if (tapResult.feedback === 'ignored') return 'ignored';

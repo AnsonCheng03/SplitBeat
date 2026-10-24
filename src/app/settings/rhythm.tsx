@@ -235,21 +235,47 @@ export default function RhythmSettingsScreen() {
           onChange={(challengeAction) => updateSettings({ challengeAction })}
         />
         <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700', marginTop: 16, marginBottom: 8 }}>
+          COUNT ERRORS BY
+        </Text>
+        <SettingsChoiceRow
+          testIDPrefix="setup.challenge.triggerMode"
+          options={[
+            { label: t('Notes'), value: 'notes' as const },
+            { label: t('Bars'), value: 'bars' as const },
+          ]}
+          value={settings.challengeTriggerMode}
+          onChange={(challengeTriggerMode) => updateSettings({ challengeTriggerMode })}
+        />
+        <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700', marginTop: 16, marginBottom: 8 }}>
           TRIGGER AFTER
         </Text>
         <SettingsChoiceRow
-          testIDPrefix="setup.challenge.misses"
-          options={[
-            { label: 'Any error', value: 1 as const },
-            { label: '2 in a row', value: 2 as const },
-            { label: '3 in a row', value: 3 as const },
-            { label: '5 in a row', value: 5 as const },
-          ]}
-          value={settings.challengeMissStreak}
-          onChange={(challengeMissStreak) => updateSettings({ challengeMissStreak })}
+          testIDPrefix={settings.challengeTriggerMode === 'bars' ? 'setup.challenge.bars' : 'setup.challenge.misses'}
+          options={settings.challengeTriggerMode === 'bars'
+            ? [
+                { label: t('Any wrong bar'), value: 1 as const },
+                { label: t('2 consecutive bars'), value: 2 as const },
+                { label: t('3 consecutive bars'), value: 3 as const },
+                { label: t('5 consecutive bars'), value: 5 as const },
+              ]
+            : [
+                { label: t('Any error'), value: 1 as const },
+                { label: t('2 in a row'), value: 2 as const },
+                { label: t('3 in a row'), value: 3 as const },
+                { label: t('5 in a row'), value: 5 as const },
+              ]}
+          value={settings.challengeTriggerMode === 'bars'
+            ? settings.challengeWrongBarStreak
+            : settings.challengeMissStreak}
+          onChange={(threshold) => updateSettings(settings.challengeTriggerMode === 'bars'
+            ? { challengeWrongBarStreak: threshold }
+            : { challengeMissStreak: threshold })}
         />
         <Text style={helperText}>
-          Any error reacts to an off-beat tap or missed note. Consecutive misses count separately for each hand; a correct note resets that hand’s streak. A pause can be resumed from the practice screen.
+          {settings.challengeTriggerMode === 'bars'
+            ? 'A bar counts as wrong when either hand misses or adds a tap. Consecutive bars are checked after each bar finishes; a clean bar resets the count.'
+            : 'Any error reacts to an off-beat tap or missed note. Consecutive misses count separately for each hand; a correct note resets that hand’s streak.'}{' '}
+          A pause can be resumed from the practice screen.
         </Text>
         {featureFlags.gameCenter ? <GameCenterChallengeCard testID="setup.challenge.gameCenter" /> : null}
       </Section> : null}

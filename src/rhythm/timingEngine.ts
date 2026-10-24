@@ -167,6 +167,8 @@ export class RhythmTimingEngine {
   private resumeAt: number | null = null;
   private pausedDurationMs = 0;
   private readonly challengeOutcomes: ChallengeOutcome[] = [];
+  private readonly completedChallengeBars: number[] = [];
+  private nextChallengeBarIndex = 1;
 
   constructor(options: TimingEngineOptions) {
     this.settings = options.settings;
@@ -246,6 +248,7 @@ export class RhythmTimingEngine {
         this.finished = true;
       }
     }
+    this.completeChallengeBarsThrough(activeNow);
 
     return this.createSnapshot(activeNow, now);
   }
@@ -279,6 +282,10 @@ export class RhythmTimingEngine {
         || first.hand.localeCompare(second.hand)
         || (first.kind === 'extra-tap' ? 1 : 0) - (second.kind === 'extra-tap' ? 1 : 0),
     );
+  }
+
+  takeCompletedChallengeBars(): number[] {
+    return this.completedChallengeBars.splice(0);
   }
 
   getReferenceEventsThrough(timeMs: number): readonly ReferenceRhythmEvent[] {
@@ -681,6 +688,9 @@ export class RhythmTimingEngine {
       matched: grade !== null,
       expectedTimeMs: event.expectedTimeMs,
       kind: 'expected-note',
+      barIndex: Math.floor(
+        ((event.expectedTimeMs - this.sessionStartTime) / this.beatMs) / this.beatsPerBar + 1e-9,
+      ) + 1,
     });
     const beatPosition = (event.expectedTimeMs - this.sessionStartTime) / this.beatMs;
     const barOffset = Math.floor(beatPosition / this.beatsPerBar);
@@ -761,14 +771,20 @@ export class RhythmTimingEngine {
     const handStats = this.hands[hand];
     handStats.totalExpected += 1;
     handStats.miss += 1;
-    this.challengeOutcomes.push({ hand, matched: false, expectedTimeMs: tapTime, kind: 'extra-tap' });
+    const beatIndex = Math.floor((tapTime - this.sessionStartTime) / this.beatMs + 1e-9);
+    this.challengeOutcomes.push({
+      hand,
+      matched: false,
+      expectedTimeMs: tapTime,
+      kind: 'extra-tap',
+      barIndex: Math.floor(beatIndex / this.beatsPerBar) + 1,
+    });
 
     if (this.importedScore) {
       this.stable.totalExpected += 1;
       return;
     }
 
-    const beatIndex = Math.floor((tapTime - this.sessionStartTime) / this.beatMs + 1e-9);
     const stepIndex = Math.max(0, Math.floor(beatIndex / this.settings.changeIntervalBeats));
     const step = this.getStep(stepIndex);
     this.getCombinationStats(step)[hand].totalExpected += 1;
@@ -1057,6 +1073,16 @@ export class RhythmTimingEngine {
   private elapsedSessionSeconds(now: number): number {
     const end = Math.min(now, this.endTime ?? Number.POSITIVE_INFINITY);
     return Math.max(0, (end - this.sessionStartTime) / 1_000);
+  }
+
+  private completeChallengeBarsThrough(activeNow: number): void {
+    const barDurationMs = this.beatsPerBar * this.beatMs;
+    const elapsedPastSettleWindow = activeNow - this.sessionStartTime - this.sessionSettleWindowMs;
+    const completedBarCount = Math.floor(elapsedPastSettleWindow / barDurationMs + 1e-9);
+    while (this.nextChallengeBarIndex <= completedBarCount) {
+      this.completedChallengeBars.push(this.nextChallengeBarIndex);
+      this.nextChallengeBarIndex += 1;
+    }
   }
 
   private toActiveTime(now: number): number {

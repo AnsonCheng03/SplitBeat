@@ -44,7 +44,9 @@ const settings: ExerciseSettings = {
   tapResultFlashEnabled: true,
   referenceRhythmEnabled: false,
   challengeAction: 'off',
+  challengeTriggerMode: 'notes',
   challengeMissStreak: 3,
+  challengeWrongBarStreak: 2,
   leftTapOffsetMs: 0,
   rightTapOffsetMs: 0,
   goodWindowMs: 100,
@@ -220,8 +222,20 @@ test('extra taps reduce hand, stable, and combination accuracy', () => {
   assert.equal(results.replayTaps?.filter((tap) => !tap.matchedEventId).length, 1);
   assert.deepEqual(
     engine.takeChallengeOutcomes().filter((outcome) => outcome.kind === 'extra-tap'),
-    [{ hand: 'left', matched: false, expectedTimeMs: start + 500, kind: 'extra-tap' }],
+    [{ hand: 'left', matched: false, expectedTimeMs: start + 500, kind: 'extra-tap', barIndex: 1 }],
   );
+});
+
+test('challenge bars complete only after the bar and note timing window settle', () => {
+  const start = 95_000;
+  const engine = new RhythmTimingEngine({ settings, sessionStartTime: start, random: () => 0 });
+
+  engine.advance(start + 4_099);
+  assert.deepEqual(engine.takeCompletedChallengeBars(), []);
+  engine.advance(start + 4_101);
+  assert.deepEqual(engine.takeCompletedChallengeBars(), [1]);
+  engine.advance(start + 5_000);
+  assert.deepEqual(engine.takeCompletedChallengeBars(), []);
 });
 
 test('swing stretches binary offbeats while triplets remain even', () => {

@@ -57,7 +57,7 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 
 - `src/app/` contains the mode-select home, guided course, focused exercise and typed-bar editor, session setup, separate rhythm/audio/timing settings pages, practice, score import, results, and records routes.
 - `src/i18n/` resolves the device language, saves the user's language preference locally, and translates interface copy while leaving imported and user-created score names intact.
-- `src/rhythm/` contains subdivision math, selectable mixed note/rest patterns, non-repeating pair generation with optional independent hand rests, typed-bar validation and combination accuracy aggregation, conversion of generated patterns into pitch-free score bars, the authored 20-lesson course, tap matching, scoring, and per-hand challenge streak rules.
+- `src/rhythm/` contains subdivision math, selectable mixed note/rest patterns, non-repeating pair generation with optional independent hand rests, typed-bar validation and combination accuracy aggregation, conversion of generated patterns into pitch-free score bars, the authored 20-lesson course, tap matching, scoring, and note- or bar-based challenge rules.
 - `src/rhythm/noteNotation.ts` builds repeated subdivision symbols and mixed-duration bar notation with beat-aware beams and flags.
 - `src/rhythm/musicXmlParser.ts` and `src/rhythm/midiParser.ts` convert MusicXML and Standard MIDI files into one- or two-hand rhythm tracks.
 - `src/rhythm/scoreTemplates.ts` contains short built-in public-domain melody practice arrangements; `src/rhythm/importedScoreLibrary.ts` validates and indexes recent and saved score data.
@@ -92,7 +92,7 @@ The home screen offers Two hands and One hand modes, plus a notation choice betw
 
 Guided course results show the lesson's correct-note percentage and a five-star rating: 1 star below 50%, 2 at 50%, 3 at 70%, 4 at 85%, and 5 at 95%. The course path saves each lesson's best accuracy and attempt count locally, while the course overview shows lessons completed and stars earned. Replaying a lesson can improve its saved best rating.
 
-Rhythm & meter settings can add a challenge response. Set it to pause or end the session after any off-beat tap or missed note, or after two, three, or five consecutive errors on one hand. Extra taps and missed notes both advance the error streak; a correct note resets only that hand's streak. Paused sessions stop the audio clock and freeze the exercise clock; Continue gives one bar of tempo count-in, then resumes the same beat, and End Session opens the current results.
+Rhythm & meter settings can add a challenge response. Choose whether to count note errors or incorrect bars, then pause or end the session at the selected threshold. Note errors can trigger on any mistake or after two, three, or five consecutive errors on one hand; a correct note resets only that hand's streak. Bar challenges trigger after one, two, three, or five consecutive bars containing at least one missed or extra tap. Bars are evaluated after their note windows settle, and a clean bar resets the streak. Paused sessions stop the audio clock and freeze the exercise clock; Continue gives one bar of tempo count-in, then resumes the same beat, and End Session opens the current results.
 
 ## Guided learning
 

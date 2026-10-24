@@ -1,10 +1,17 @@
-import type { ChallengeMissStreak, Hand, ReplayExpectedEvent, ReplayTap } from '@/types/rhythm';
+import type {
+  ChallengeMissStreak,
+  ChallengeWrongBarStreak,
+  Hand,
+  ReplayExpectedEvent,
+  ReplayTap,
+} from '@/types/rhythm';
 
 export interface ChallengeOutcome {
   hand: Hand;
   matched: boolean;
   expectedTimeMs: number;
   kind?: 'expected-note' | 'extra-tap';
+  barIndex?: number;
 }
 
 export interface ChallengeStreaks {
@@ -13,9 +20,10 @@ export interface ChallengeStreaks {
 }
 
 export interface ChallengeTrigger {
-  hand: Hand;
-  missStreak: number;
-  reason: 'wrong-tap' | 'miss-streak';
+  hand?: Hand;
+  missStreak?: number;
+  wrongBarStreak?: number;
+  reason: 'wrong-tap' | 'miss-streak' | 'wrong-bars';
 }
 
 interface StreakTimelineEntry {
@@ -101,14 +109,54 @@ export function applyChallengeOutcomes(
   return { streaks: next, trigger: null };
 }
 
+/**
+ * Tracks bars with at least one mistake. A bar is evaluated only after the
+ * timing engine confirms that its note windows have fully settled.
+ */
+export function applyChallengeBarOutcomes(
+  consecutiveWrongBars: number,
+  wrongBarIndexes: ReadonlySet<number>,
+  outcomes: readonly ChallengeOutcome[],
+  completedBarIndexes: readonly number[],
+  threshold: ChallengeWrongBarStreak,
+): {
+  consecutiveWrongBars: number;
+  wrongBarIndexes: Set<number>;
+  trigger: ChallengeTrigger | null;
+} {
+  const wrongBars = new Set(wrongBarIndexes);
+  for (const outcome of outcomes) {
+    if (!outcome.matched && outcome.barIndex !== undefined) wrongBars.add(outcome.barIndex);
+  }
+
+  let streak = consecutiveWrongBars;
+  const orderedCompletedBars = [...completedBarIndexes].sort((first, second) => first - second);
+  for (const barIndex of orderedCompletedBars) {
+    const isWrong = wrongBars.delete(barIndex);
+    streak = isWrong ? streak + 1 : 0;
+    if (streak >= threshold) {
+      return {
+        consecutiveWrongBars: streak,
+        wrongBarIndexes: wrongBars,
+        trigger: { wrongBarStreak: streak, reason: 'wrong-bars' },
+      };
+    }
+  }
+
+  return { consecutiveWrongBars: streak, wrongBarIndexes: wrongBars, trigger: null };
+}
+
 export function createWrongTapTrigger(hand: Hand): ChallengeTrigger {
   return { hand, missStreak: 1, reason: 'wrong-tap' };
 }
 
 export function challengeMessage(trigger: ChallengeTrigger, action: 'pause' | 'stop'): string {
   const outcome = action === 'pause' ? 'Paused' : 'Ended';
-  if (trigger.reason === 'wrong-tap') {
-    return `${outcome} after an off-beat tap on your ${trigger.hand} hand.`;
+  if (trigger.reason === 'wrong-bars') {
+    return `${outcome} after ${trigger.wrongBarStreak} consecutive bars with mistakes.`;
   }
-  return `${outcome} after ${trigger.missStreak} consecutive mistakes on your ${trigger.hand} hand.`;
+  if (trigger.reason === 'wrong-tap') {
+    return `${outcome} after an off-beat tap on your ${trigger.hand ?? 'active'} hand.`;
+  }
+  return `${outcome} after ${trigger.missStreak} consecutive mistakes on your ${trigger.hand ?? 'active'} hand.`;
 }

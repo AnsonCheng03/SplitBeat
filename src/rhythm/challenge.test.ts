@@ -2,7 +2,13 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { applyChallengeOutcomes, createChallengeStreaks, createWrongTapTrigger, longestCorrectNoteStreak } from '@/rhythm/challenge';
+import {
+  applyChallengeBarOutcomes,
+  applyChallengeOutcomes,
+  createChallengeStreaks,
+  createWrongTapTrigger,
+  longestCorrectNoteStreak,
+} from '@/rhythm/challenge';
 
 test('challenge tracks consecutive misses separately for each hand', () => {
   const first = applyChallengeOutcomes(createChallengeStreaks(), [
@@ -53,6 +59,45 @@ test('extra taps count toward consecutive-error challenge thresholds', () => {
 
   assert.deepEqual(result.streaks, { left: 2, right: 0 });
   assert.deepEqual(result.trigger, { hand: 'left', missStreak: 2, reason: 'miss-streak' });
+});
+
+test('bar challenge counts one wrong bar once and triggers after consecutive completed bars', () => {
+  const result = applyChallengeBarOutcomes(
+    0,
+    new Set(),
+    [
+      { hand: 'left', matched: false, expectedTimeMs: 0, barIndex: 1 },
+      { hand: 'right', matched: false, expectedTimeMs: 250, kind: 'extra-tap', barIndex: 1 },
+      { hand: 'right', matched: false, expectedTimeMs: 4_000, barIndex: 2 },
+    ],
+    [1, 2],
+    2,
+  );
+
+  assert.equal(result.consecutiveWrongBars, 2);
+  assert.deepEqual(result.trigger, { wrongBarStreak: 2, reason: 'wrong-bars' });
+  assert.deepEqual(result.wrongBarIndexes, new Set());
+});
+
+test('a clean completed bar resets the wrong-bar streak', () => {
+  const result = applyChallengeBarOutcomes(2, new Set(), [], [3], 3);
+
+  assert.equal(result.consecutiveWrongBars, 0);
+  assert.equal(result.trigger, null);
+});
+
+test('bar challenge keeps errors pending until that bar is complete', () => {
+  const first = applyChallengeBarOutcomes(
+    0,
+    new Set(),
+    [{ hand: 'left', matched: false, expectedTimeMs: 100, barIndex: 1 }],
+    [],
+    1,
+  );
+  const completed = applyChallengeBarOutcomes(first.consecutiveWrongBars, first.wrongBarIndexes, [], [1], 1);
+
+  assert.equal(first.trigger, null);
+  assert.deepEqual(completed.trigger, { wrongBarStreak: 1, reason: 'wrong-bars' });
 });
 
 test('longest clean streak spans hands and resets at a missed or extra note', () => {
