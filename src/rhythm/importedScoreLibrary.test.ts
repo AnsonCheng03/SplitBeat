@@ -29,6 +29,24 @@ test('saved scores stay saved when the file is imported again', () => {
   assert.equal(updated[0]!.lastUsedAt, 2);
 });
 
+test('stores a composed multi-bar score in the same saved score library', () => {
+  const composed = createImportedScoreEntry('created', '4/4 · 2 bars', {
+    ...templateScore,
+    title: 'My composed rhythm',
+    totalQuarterNotes: 8,
+    measures: [
+      { index: 0, startQuarter: 0, durationQuarter: 4, leftEvents: [{ startQuarter: 0, durationQuarter: 4 }], rightEvents: [] },
+      { index: 1, startQuarter: 4, durationQuarter: 4, leftEvents: [{ startQuarter: 0, durationQuarter: 4 }], rightEvents: [] },
+    ],
+  }, 4);
+  const remembered = rememberImportedScore([], composed);
+  const saved = setImportedScoreSaved(remembered, composed.id, true);
+  const restored = parseImportedScoreLibrary(JSON.stringify({ version: 1, entries: saved }));
+  assert.equal(restored[0]!.source, 'created');
+  assert.equal(restored[0]!.saved, true);
+  assert.equal(restored[0]!.score.measures.length, 2);
+});
+
 test('parses saved score entries and discards malformed persisted values', () => {
   const entry = createImportedScoreEntry('template', 'Ode to Joy', SCORE_TEMPLATES[1]!.score, 3);
   const valid = parseImportedScoreLibrary(JSON.stringify({ version: 1, entries: [entry, null, { ...entry, score: {} }] }));

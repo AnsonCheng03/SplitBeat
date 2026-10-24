@@ -2,7 +2,7 @@ import { TIME_SIGNATURES } from '@/types/rhythm';
 import type { Hand } from '@/types/rhythm';
 import type { ImportedRhythmScore, ScoreRhythmEvent } from '@/types/importedScore';
 
-export type ImportedScoreSource = 'midi' | 'musicxml' | 'template';
+export type ImportedScoreSource = 'midi' | 'musicxml' | 'template' | 'created';
 
 export interface ImportedScoreLibraryEntry {
   id: string;
@@ -72,7 +72,7 @@ function isLibraryEntry(value: unknown): value is ImportedScoreLibraryEntry {
   if (!value || typeof value !== 'object') return false;
   const entry = value as Partial<ImportedScoreLibraryEntry>;
   return typeof entry.id === 'string'
-    && (entry.source === 'midi' || entry.source === 'musicxml' || entry.source === 'template')
+    && (entry.source === 'midi' || entry.source === 'musicxml' || entry.source === 'template' || entry.source === 'created')
     && typeof entry.fileName === 'string'
     && finiteNumber(entry.lastUsedAt)
     && typeof entry.saved === 'boolean'

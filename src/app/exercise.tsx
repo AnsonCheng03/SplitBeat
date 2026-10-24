@@ -4,20 +4,26 @@ import { Alert, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
+import { ComposerSymbolButton } from '@/components/ComposerSymbolButton';
 import { generateMixturePattern, patternLabelForHand } from '@/rhythm/mixtures';
 import type { MixturePattern } from '@/rhythm/mixtures';
-import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
+import { pulseQuarterNotes, SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
+import { composeRhythmScore, COMPOSER_TUPLET_SYMBOLS, NOTE_VALUE_SYMBOLS, noteValuesForSymbol } from '@/rhythm/scoreComposer';
+import type { ComposerSymbolId, ComposedNoteValue } from '@/rhythm/scoreComposer';
 import {
   combinationAccuracy,
   combinationHandAccuracy,
   combinationTitle,
   barDurationQuarterNotes,
-  createTypedBarScore,
   filterCombinationProgress,
   practicePairFromProgress,
   practicePairFromSelections,
 } from '@/rhythm/targetedPractice';
 import type { CombinationFilter, CombinationProgress, SavedPracticePair } from '@/rhythm/targetedPractice';
+import { createImportedScoreEntry, rememberImportedScore, setImportedScoreSaved } from '@/rhythm/importedScoreLibrary';
+import type { ImportedScoreLibraryEntry } from '@/rhythm/importedScoreLibrary';
+import { loadImportedScoreLibrary, saveImportedScoreLibrary } from '@/store/importedScoreLibrary';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import { SUBDIVISIONS } from '@/types/rhythm';
@@ -48,13 +54,6 @@ const practiceDurations: { label: string; value: DurationOption }[] = [
   { label: 'Endless', value: 'endless' },
 ];
 
-function defaultBarText(timeSignature: string, unit: 'q' | 'e'): string {
-  const [numerator, denominator] = timeSignature.split('/').map(Number);
-  const quarterNotes = numerator * (4 / denominator);
-  const count = Math.round(quarterNotes * (unit === 'q' ? 1 : 2));
-  return Array.from({ length: count }, () => unit).join(' ');
-}
-
 function noteSelectionLabel(selection: PatternSelection): string {
   return patternLabelForHand(selection.subdivision, selection.rest, selection.mixture);
 }
@@ -82,15 +81,32 @@ export default function ExerciseScreen() {
   const [activeTab, setActiveTab] = useState<ExerciseTab>('review');
   const [leftSelection, setLeftSelection] = useState<PatternSelection>({ subdivision: 'quarter', rest: false });
   const [rightSelection, setRightSelection] = useState<PatternSelection>({ subdivision: 'eighth', rest: false });
-  const [leftText, setLeftText] = useState(() => defaultBarText(settings.timeSignature, 'q'));
-  const [rightText, setRightText] = useState(() => defaultBarText(settings.timeSignature, 'e'));
+  const [leftNoteGroups, setLeftNoteGroups] = useState<ComposedNoteValue[][]>([]);
+  const [rightNoteGroups, setRightNoteGroups] = useState<ComposedNoteValue[][]>([]);
+  const [selectedComposerHand, setSelectedComposerHand] = useState<Hand>('left');
+  const composerHand = settings.trainingMode === 'single-hand' ? settings.singleHand : selectedComposerHand;
+  const [composerMode, setComposerMode] = useState<'note' | 'rest'>('note');
+  const [savedCompositions, setSavedCompositions] = useState<ImportedScoreLibraryEntry[]>([]);
+  const [savingComposition, setSavingComposition] = useState(false);
   const [practiceDuration, setPracticeDuration] = useState<DurationOption>('endless');
   const [starting, setStarting] = useState(false);
+
+  useEffect(() => {
+    if (!featureFlags.savedScoreLibrary) return;
+    let active = true;
+    void loadImportedScoreLibrary().then((entries) => {
+      if (active) setSavedCompositions(entries.filter((entry) => entry.source === 'created' && entry.saved));
+    });
+    return () => { active = false; };
+  }, [featureFlags.savedScoreLibrary]);
 
   const visibleProgress = useMemo(
     () => filterCombinationProgress(combinationProgress, filter, query),
     [combinationProgress, filter, query],
   );
+
+  const leftNotes = useMemo(() => leftNoteGroups.flat(), [leftNoteGroups]);
+  const rightNotes = useMemo(() => rightNoteGroups.flat(), [rightNoteGroups]);
 
   const mixtureExamples = useMemo(() => {
     const values = settings.mixtureNoteValues ?? [];
@@ -171,20 +187,81 @@ export default function ExerciseScreen() {
     }));
   };
 
-  const practiceTypedBar = () => {
-    const result = createTypedBarScore(
-      leftText,
-      rightText,
-      settings.timeSignature,
-      settings.trainingMode,
-      settings.singleHand,
-    );
-    if (!result.ok) {
-      Alert.alert(t('Check the bar'), t(result.error));
+  const composedResult = useMemo(() => composeRhythmScore({
+    title: 'Composed rhythm',
+    timeSignature: settings.timeSignature,
+    trainingMode: settings.trainingMode,
+    singleHand: settings.singleHand,
+    left: leftNotes,
+    right: rightNotes,
+  }), [leftNotes, rightNotes, settings.singleHand, settings.timeSignature, settings.trainingMode]);
+  const composedScore = composedResult.ok ? composedResult.score : null;
+  const compositionFileName = composedScore ? `${composedScore.timeSignature} · ${composedScore.measures.length} bars` : '';
+  const compositionEntryId = composedScore
+    ? createImportedScoreEntry('created', compositionFileName, composedScore, 0).id
+    : null;
+  const compositionAlreadySaved = Boolean(compositionEntryId && savedCompositions.some((entry) => entry.id === compositionEntryId));
+
+  const appendComposerSymbol = (symbolId: ComposerSymbolId) => {
+    const additions = noteValuesForSymbol(symbolId, settings.timeSignature, composerMode === 'rest');
+    const setGroups = composerHand === 'left' ? setLeftNoteGroups : setRightNoteGroups;
+    if (additions.length > 0) setGroups((current) => [...current, additions]);
+  };
+
+  const removeLastComposerSymbol = (hand: Hand) => {
+    const setGroups = hand === 'left' ? setLeftNoteGroups : setRightNoteGroups;
+    setGroups((current) => current.slice(0, -1));
+  };
+
+  const clearComposerHand = (hand: Hand) => {
+    if (hand === 'left') setLeftNoteGroups([]);
+    else setRightNoteGroups([]);
+  };
+
+  const saveComposedScore = async () => {
+    if (!composedScore || savingComposition) {
+      if (!composedScore) Alert.alert(t('Check the bar'), t(composedResult.ok ? 'Add at least one note to the active hand or hands.' : composedResult.error));
       return;
     }
-    return launch(() => prepareExercise(result.score));
+    setSavingComposition(true);
+    try {
+      const existing = await loadImportedScoreLibrary();
+      const created = createImportedScoreEntry('created', compositionFileName, composedScore, Date.now());
+      const remembered = rememberImportedScore(existing, created);
+      const saved = setImportedScoreSaved(remembered, created.id, true);
+      await saveImportedScoreLibrary(saved);
+      setSavedCompositions(saved.filter((entry) => entry.source === 'created' && entry.saved));
+    } catch (error) {
+      const full = error instanceof Error && error.message.includes('up to');
+      Alert.alert(
+        t(full ? 'Score library is full' : 'Could not save score'),
+        t(full ? 'Remove a saved score and try again.' : 'Check available storage and try again.'),
+      );
+    } finally {
+      setSavingComposition(false);
+    }
   };
+
+  const removeComposedScore = async (entry: ImportedScoreLibraryEntry) => {
+    try {
+      const existing = await loadImportedScoreLibrary();
+      const updated = setImportedScoreSaved(existing, entry.id, false);
+      await saveImportedScoreLibrary(updated);
+      setSavedCompositions(updated.filter((item) => item.source === 'created' && item.saved));
+    } catch {
+      Alert.alert(t('Could not save score'), t('Check available storage and try again.'));
+    }
+  };
+
+  const practiceComposedScore = () => {
+    if (!composedScore) {
+      Alert.alert(t('Check the bar'), t(composedResult.ok ? 'Add at least one note to the active hand or hands.' : composedResult.error));
+      return;
+    }
+    return launch(() => prepareExercise(composedScore));
+  };
+
+  const practiceSavedComposition = (entry: ImportedScoreLibraryEntry) => launch(() => prepareExercise(entry.score));
 
   return (
     <SafeAreaView testID="exercise.screen" style={{ flex: 1, backgroundColor: colors.background }}>
@@ -202,7 +279,7 @@ export default function ExerciseScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20, marginBottom: 18 }}>
           <View style={{ flex: 1 }}>
             <Text style={{ color: colors.text, fontSize: 28, fontWeight: '900', letterSpacing: -0.7 }}>Practice a rhythm.</Text>
-            <Text style={{ color: colors.muted, fontSize: 12, marginTop: 5 }}>Review combinations you miss, choose your own pair, or type a bar.</Text>
+            <Text style={{ color: colors.muted, fontSize: 12, marginTop: 5 }}>{t('Review combinations you miss, choose your own pair, or compose a score.')}</Text>
           </View>
           <View style={{ paddingHorizontal: 13, paddingVertical: 9, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
             <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }}>{combinationProgress.length} SAVED PAIRS</Text>
@@ -230,7 +307,7 @@ export default function ExerciseScreen() {
           <ChoiceChip testID="exercise.tab.review" label="Review pairs" selected={activeTab === 'review'} onPress={() => setActiveTab('review')} />
           <ChoiceChip testID="exercise.tab.later" label={t('Saved later')} selected={activeTab === 'later'} onPress={() => setActiveTab('later')} />
           <ChoiceChip testID="exercise.tab.pair" label="Choose a pair" selected={activeTab === 'pair'} onPress={() => setActiveTab('pair')} />
-          <ChoiceChip testID="exercise.tab.bar" label="Type a bar" selected={activeTab === 'bar'} onPress={() => setActiveTab('bar')} />
+          <ChoiceChip testID="exercise.tab.bar" label={t('Compose a score')} selected={activeTab === 'bar'} onPress={() => setActiveTab('bar')} />
         </View>
 
         {activeTab === 'review' ? (
@@ -308,25 +385,134 @@ export default function ExerciseScreen() {
         ) : (
           <>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-              <Text style={sectionTitle}>TYPE A BAR</Text>
+              <Text style={sectionTitle}>{t('COMPOSE A SCORE')}</Text>
               <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900' }}>{settings.timeSignature} · {settings.trainingMode === 'single-hand' ? `${settings.singleHand.toUpperCase()} HAND` : 'BOTH HANDS'}</Text>
             </View>
-            <Text style={{ color: colors.muted, fontSize: 10, marginTop: 5, marginBottom: 10 }}>Type note values in order, separated by spaces. Rests use an “r” prefix. Every active hand must fill one full bar.</Text>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              {settings.trainingMode === 'two-hand' || settings.singleHand === 'left' ? (
-                <BarInput label="LEFT HAND" color={colors.left} value={leftText} onChangeText={setLeftText} testID="exercise.leftBar" />
-              ) : null}
-              {settings.trainingMode === 'two-hand' || settings.singleHand === 'right' ? (
-                <BarInput label="RIGHT HAND" color={colors.right} value={rightText} onChangeText={setRightText} testID="exercise.rightBar" />
+            <Text style={{ color: colors.muted, fontSize: 10, lineHeight: 15, marginTop: 5, marginBottom: 10 }}>{t('Choose a hand, then tap a note symbol to add it in order. The next symbol starts in the next bar automatically.')}</Text>
+
+            {settings.trainingMode === 'two-hand' ? (
+              <View style={{ flexDirection: 'row', gap: 7, marginBottom: 8 }}>
+                <ChoiceChip testID="exercise.composer.hand.left" label={t('LEFT HAND')} selected={composerHand === 'left'} selectedColor={colors.left} onPress={() => setSelectedComposerHand('left')} />
+                <ChoiceChip testID="exercise.composer.hand.right" label={t('RIGHT HAND')} selected={composerHand === 'right'} selectedColor={colors.right} onPress={() => setSelectedComposerHand('right')} />
+              </View>
+            ) : null}
+
+            <View style={{ flexDirection: 'row', gap: 7, marginBottom: 8 }}>
+              <ChoiceChip testID="exercise.composer.mode.note" label={t('Add notes')} selected={composerMode === 'note'} selectedColor={composerHand === 'left' ? colors.left : colors.right} onPress={() => setComposerMode('note')} />
+              <ChoiceChip testID="exercise.composer.mode.rest" label={t('Add rests')} selected={composerMode === 'rest'} selectedColor={colors.accent} onPress={() => setComposerMode('rest')} />
+            </View>
+
+            <Text style={sectionTitle}>{t('NOTE VALUES')}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 7, paddingVertical: 7 }}>
+              {NOTE_VALUE_SYMBOLS.map((symbol) => (
+                <ComposerSymbolButton
+                  key={symbol.id}
+                  testID={`exercise.composer.symbol.${symbol.id}`}
+                  symbolId={symbol.id as ComposerSymbolId}
+                  timeSignature={settings.timeSignature}
+                  color={composerHand === 'left' ? colors.left : colors.right}
+                  isRest={composerMode === 'rest'}
+                  onPress={() => appendComposerSymbol(symbol.id as ComposerSymbolId)}
+                />
+              ))}
+            </ScrollView>
+
+            <Text style={{ ...sectionTitle, marginTop: 3 }}>{t('TUPLET GROUPS')}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 7, paddingVertical: 7 }}>
+              {COMPOSER_TUPLET_SYMBOLS.map((symbol) => (
+                <ComposerSymbolButton
+                  key={symbol.id}
+                  testID={`exercise.composer.symbol.${symbol.id}`}
+                  symbolId={symbol.id}
+                  timeSignature={settings.timeSignature}
+                  color={composerHand === 'left' ? colors.left : colors.right}
+                  isRest={composerMode === 'rest'}
+                  onPress={() => appendComposerSymbol(symbol.id)}
+                />
+              ))}
+            </ScrollView>
+
+            {(() => {
+              const selectedHandNotes = composerHand === 'left' ? leftNotes : rightNotes;
+              const selectedDuration = selectedHandNotes.reduce((total, item) => total + item.durationQuarter, 0);
+              const nextBar = Math.floor((selectedDuration + 0.000001) / barDurationQuarterNotes(settings.timeSignature)) + 1;
+              return (
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 2, marginBottom: 8 }}>
+                  <Text testID="exercise.composer.timeline" style={{ flex: 1, color: composerHand === 'left' ? colors.left : colors.right, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>
+                    {t('HAND TIMELINE · {count} symbols · {duration} quarter notes. Next symbol starts in bar {bar}.', {
+                      count: selectedHandNotes.length,
+                      duration: Number(selectedDuration.toFixed(3)),
+                      bar: nextBar,
+                    })}
+                  </Text>
+                  <Pressable testID="exercise.composer.undo" accessibilityRole="button" accessibilityLabel={t('Undo last symbol')} disabled={selectedHandNotes.length === 0} onPress={() => removeLastComposerSymbol(composerHand)} style={{ paddingHorizontal: 9, paddingVertical: 7, borderRadius: 8, backgroundColor: colors.surface, opacity: selectedHandNotes.length === 0 ? 0.45 : 1 }}>
+                    <Text style={{ color: colors.muted, fontSize: 8, fontWeight: '900' }}>{t('UNDO')}</Text>
+                  </Pressable>
+                  <Pressable testID="exercise.composer.clear" accessibilityRole="button" accessibilityLabel={t('Clear hand')} disabled={selectedHandNotes.length === 0} onPress={() => clearComposerHand(composerHand)} style={{ paddingHorizontal: 9, paddingVertical: 7, borderRadius: 8, backgroundColor: colors.surface, opacity: selectedHandNotes.length === 0 ? 0.45 : 1 }}>
+                    <Text style={{ color: colors.muted, fontSize: 8, fontWeight: '900' }}>{t('CLEAR')}</Text>
+                  </Pressable>
+                </View>
+              );
+            })()}
+
+            {composedScore ? (
+              <>
+                <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1, marginBottom: 5 }}>
+                  {t('{count} bars', { count: composedScore.measures.length })}
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 8, paddingBottom: 7 }}>
+                  {composedScore.measures.slice(0, 12).map((measure) => (
+                    <View key={measure.index} style={{ width: 258, minHeight: 87, justifyContent: 'center', paddingHorizontal: 4, paddingVertical: 5, borderRadius: 11, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
+                      <Text style={{ color: colors.dim, fontSize: 8, fontWeight: '900', letterSpacing: 1, paddingLeft: 4, marginBottom: 1 }}>{t('BAR {bar}', { bar: measure.index + 1 })}</Text>
+                      <ScoreRhythmMeasure
+                        measure={measure}
+                        number={measure.index + 1}
+                        count={composedScore.measures.length}
+                        compact
+                        hideHeader
+                        beamGroupQuarterNotes={pulseQuarterNotes(settings.timeSignature)}
+                        initialNotationWidth={184}
+                        testIdPrefix={`exercise.composer.preview.${measure.index + 1}`}
+                      />
+                    </View>
+                  ))}
+                  {composedScore.measures.length > 12 ? (
+                    <View style={{ width: 110, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800' }}>+ {composedScore.measures.length - 12}</Text>
+                    </View>
+                  ) : null}
+                </ScrollView>
+                <Text style={{ color: colors.dim, fontSize: 9, lineHeight: 14, marginBottom: 3 }}>{t('Notes are grouped inside each bar according to the selected time signature. A note crossing a bar line is tied and is not tapped again.')}</Text>
+              </>
+            ) : (
+              <Text style={{ color: colors.dim, fontSize: 10, paddingVertical: 9 }}>{t(composedResult.ok ? 'Add at least one note to the active hand or hands.' : composedResult.error)}</Text>
+            )}
+
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <PrimaryButton testID="exercise.practiceBar" flex={1} title={starting ? t('PREPARING…') : t('PRACTICE COMPOSITION')} onPress={() => void practiceComposedScore()} disabled={starting || !composedScore} />
+              {featureFlags.savedScoreLibrary ? (
+                <PrimaryButton testID="exercise.saveComposition" flex={1} title={savingComposition ? t('SAVING…') : compositionAlreadySaved ? t('SAVED ✓') : t('SAVE SCORE')} onPress={() => void saveComposedScore()} disabled={savingComposition || compositionAlreadySaved || !composedScore} />
               ) : null}
             </View>
-            <View style={{ paddingHorizontal: 13, paddingVertical: 10, marginTop: 8, borderRadius: 11, backgroundColor: colors.surface }}>
-              <Text style={{ color: colors.muted, fontSize: 9, lineHeight: 15 }}>
-                q quarter · e eighth · de dotted eighth · 16 sixteenth · 32 demisemiquaver · 64 hemidemisemiquaver · dq dotted quarter · r16 sixteenth rest · re eighth rest
-              </Text>
-              <Text style={{ color: colors.dim, fontSize: 9, marginTop: 3 }}>Example in 4/4: q e e 16 16 q q · Mix notes and rests freely.</Text>
-            </View>
-            <PrimaryButton testID="exercise.practiceBar" title={starting ? 'PREPARING…' : 'PRACTICE THIS BAR'} onPress={() => void practiceTypedBar()} disabled={starting} />
+
+            {featureFlags.savedScoreLibrary ? (
+              <View style={{ marginTop: 15 }}>
+                <Text style={{ ...sectionTitle, marginBottom: 7 }}>{t('SAVED COMPOSITIONS')}</Text>
+                {savedCompositions.length === 0 ? (
+                  <Text style={{ color: colors.dim, fontSize: 10, paddingVertical: 6 }}>{t('No saved compositions yet.')}</Text>
+                ) : savedCompositions.map((entry) => (
+                  <View key={entry.id} style={{ flexDirection: 'row', gap: 7, marginBottom: 6 }}>
+                    <Pressable testID={`exercise.composition.${entry.id}`} accessibilityRole="button" accessibilityLabel={t('Practice this score') + `: ${entry.score.title}`} onPress={() => void practiceSavedComposition(entry)} disabled={starting} style={({ pressed }) => ({ flex: 1, minHeight: 47, justifyContent: 'center', paddingHorizontal: 11, borderRadius: 10, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line })}>
+                      <Text raw numberOfLines={1} style={{ color: colors.text, fontSize: 10, fontWeight: '800' }}>{entry.score.title}</Text>
+                      <Text style={{ color: colors.dim, fontSize: 8, marginTop: 3 }}>{entry.score.timeSignature} · {t('{count} bars', { count: entry.score.measures.length })}</Text>
+                    </Pressable>
+                    <Pressable testID={`exercise.composition.remove.${entry.id}`} accessibilityRole="button" accessibilityLabel={t('Remove saved score {title}', { title: entry.score.title })} onPress={() => void removeComposedScore(entry)} style={{ minWidth: 68, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
+                      <Text style={{ color: colors.muted, fontSize: 8, fontWeight: '900' }}>{t('REMOVE')}</Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            ) : null}
           </>
         )}
       </ScrollView>
@@ -424,28 +610,6 @@ function PatternPicker({ hand, selection, mixtures, onChange }: { hand: Hand; se
   );
 }
 
-function BarInput({ label, color, value, onChangeText, testID }: { label: string; color: string; value: string; onChangeText: (value: string) => void; testID: string }) {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  return (
-    <View style={{ flex: 1, minWidth: 0, padding: 11, borderRadius: 13, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
-      <Text style={{ color, fontSize: 9, fontWeight: '900', letterSpacing: 1 }}>{label}</Text>
-      <TextInput
-        testID={testID}
-        accessibilityLabel={t('{hand} bar notes', { hand: t(label.toLowerCase()) })}
-        value={value}
-        onChangeText={onChangeText}
-        autoCapitalize="none"
-        autoCorrect={false}
-        returnKeyType="done"
-        placeholder="q e e 16 16 q"
-        placeholderTextColor={colors.dim}
-        style={{ minHeight: 41, color: colors.text, fontFamily: 'monospace', fontSize: 12, marginTop: 5, paddingHorizontal: 9, borderRadius: 9, backgroundColor: colors.background, borderColor: colors.line, borderWidth: 1 }}
-      />
-    </View>
-  );
-}
-
 function ChoiceChip({ testID, label, selected, selectedColor, onPress }: { testID?: string; label: string; selected: boolean; selectedColor?: string; onPress: () => void }) {
   const { colors } = useTheme();
   const chipColor = selectedColor ?? colors.accent;
@@ -456,10 +620,10 @@ function ChoiceChip({ testID, label, selected, selectedColor, onPress }: { testI
   );
 }
 
-function PrimaryButton({ testID, title, onPress, disabled }: { testID: string; title: string; onPress: () => void; disabled: boolean }) {
+function PrimaryButton({ testID, title, onPress, disabled, flex }: { testID: string; title: string; onPress: () => void; disabled: boolean; flex?: number }) {
   const { colors } = useTheme();
   return (
-    <Pressable testID={testID} accessibilityRole="button" onPress={onPress} disabled={disabled} style={({ pressed }) => ({ minHeight: 44, alignItems: 'center', justifyContent: 'center', marginTop: 9, borderRadius: 12, backgroundColor: pressed || disabled ? colors.surfaceRaised : colors.left, opacity: disabled ? 0.65 : 1 })}>
+    <Pressable testID={testID} accessibilityRole="button" onPress={onPress} disabled={disabled} style={({ pressed }) => ({ flex, minHeight: 44, alignItems: 'center', justifyContent: 'center', marginTop: 9, borderRadius: 12, backgroundColor: pressed || disabled ? colors.surfaceRaised : colors.left, opacity: disabled ? 0.65 : 1 })}>
       <Text style={{ color: disabled ? colors.muted : colors.background, fontSize: 11, fontWeight: '900', letterSpacing: 1 }}>{title}</Text>
     </Pressable>
   );

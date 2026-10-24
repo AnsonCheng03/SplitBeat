@@ -16,10 +16,26 @@ appId: com.splitbeat.twohandrhythm
     id: exercise.screen
 - tapOn:
     id: exercise.tab.bar
+- assertVisible: COMPOSE A SCORE
+- tapOn:
+    id: exercise.composer.symbol.whole
 - assertVisible:
-    id: exercise.leftBar
+    id: exercise.composer.timeline
+- tapOn:
+    id: exercise.composer.symbol.whole
+- tapOn:
+    id: exercise.composer.hand.right
+- tapOn:
+    id: exercise.composer.symbol.whole
+- assertVisible: 2 bars
+- scrollUntilVisible:
+    element:
+      id: exercise.saveComposition
+    direction: DOWN
+- tapOn:
+    id: exercise.saveComposition
 - assertVisible:
-    id: exercise.rightBar
+    id: exercise.composition.*
 - scrollUntilVisible:
     element:
       id: exercise.practiceBar

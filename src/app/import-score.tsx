@@ -9,6 +9,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
 import { scoreTrainingMode, type ScoreDisplayMode } from '@/rhythm/scoreStaff';
 import { createImportedScoreEntry, placeSingleTrackOnHand, rememberImportedScore, setImportedScoreSaved } from '@/rhythm/importedScoreLibrary';
+import type { ImportedScoreSource } from '@/rhythm/importedScoreLibrary';
 import { decodeBase64Bytes, parseMidiRhythm } from '@/rhythm/midiParser';
 import {
   filterScoreTemplates,
@@ -103,7 +104,7 @@ export default function ImportScoreScreen() {
   const [previewMeasureIndex, setPreviewMeasureIndex] = useState(0);
   const [starting, setStarting] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [scoreSource, setScoreSource] = useState<'midi' | 'musicxml' | 'template'>('musicxml');
+  const [scoreSource, setScoreSource] = useState<ImportedScoreSource>('musicxml');
   const [library, setLibrary] = useState<Awaited<ReturnType<typeof loadImportedScoreLibrary>>>([]);
   const libraryRef = useRef(library);
   const libraryLoadPromiseRef = useRef<Promise<Awaited<ReturnType<typeof loadImportedScoreLibrary>>> | null>(null);
@@ -135,7 +136,7 @@ export default function ImportScoreScreen() {
     };
   }, [featureFlags.savedScoreLibrary]);
 
-  const rememberScore = async (loadedScore: ImportedRhythmScore, fileName: string, source: 'midi' | 'musicxml' | 'template') => {
+  const rememberScore = async (loadedScore: ImportedRhythmScore, fileName: string, source: ImportedScoreSource) => {
     if (!featureFlags.savedScoreLibrary) return;
     const entry = createImportedScoreEntry(source, fileName, loadedScore, currentTimestamp());
     setCurrentEntryId(entry.id);
@@ -152,7 +153,7 @@ export default function ImportScoreScreen() {
   const loadScore = (
     loadedScore: ImportedRhythmScore,
     fileName: string,
-    source: 'midi' | 'musicxml' | 'template',
+    source: ImportedScoreSource,
   ) => {
     setScore(loadedScore);
     setScoreFileName(fileName);
@@ -424,7 +425,7 @@ export default function ImportScoreScreen() {
               {!libraryLoaded ? (
                 <Text style={{ color: colors.dim, fontSize: 11, paddingVertical: 7 }}>Loading your score library…</Text>
               ) : savedScores.length === 0 ? (
-                <Text style={{ color: colors.dim, fontSize: 11, paddingVertical: 7 }}>Save a template or imported score to keep it here.</Text>
+                <Text style={{ color: colors.dim, fontSize: 11, paddingVertical: 7 }}>{t('Save a template, imported, or composed score to keep it here.')}</Text>
               ) : savedScores.map((entry) => (
                 <Pressable
                   key={entry.id}
