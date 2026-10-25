@@ -1,0 +1,42 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: LANDSCAPE_LEFT
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
+- tapOn:
+    id: home.setup
+- tapOn:
+    id: setup.card.language
+- tapOn:
+    id: settings.language.choice.zh-Hant
+- assertVisible: 語言
+- tapOn:
+    id: settings.language.back
+- tapOn:
+    id: setup.home
+- tapOn:
+    id: home.activityPicker
+- tapOn:
+    id: home.exercise
+- tapOn:
+    id: home.start
+- extendedWaitUntil:
+    visible:
+      id: exercise.screen
+    timeout: 15000
+- tapOn:
+    id: exercise.tab.pair
+- assertVisible:
+    id: exercise.pair.left.quarter
+- assertVisible:
+    id: exercise.pair.left.eighth
+- assertVisible:
+    id: exercise.pair.right.quarter
+- assertVisible:
+    id: exercise.pair.right.eighth
+- takeScreenshot: pattern-picker-note-symbols-zh-Hant

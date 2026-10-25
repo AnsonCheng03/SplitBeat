@@ -122,6 +122,16 @@ test('dotted quavers receive a beam and visible dot in mixed-value notation', ()
   assert.equal(plan.dots[0]?.key, 'dot-0');
 });
 
+test('engraving plans preserve per-event rests for the note library', () => {
+  const plan = createBarNoteNotationPlan([
+    { startQuarter: 0, durationQuarter: 0.25 },
+    { startQuarter: 0.25, durationQuarter: 0.125, isRest: true },
+    { startQuarter: 0.375, durationQuarter: 0.125 },
+  ], { durationQuarter: 0.5, width: 100 });
+
+  assert.deepEqual(plan.events.map(({ isRest }) => isRest), [undefined, true, undefined]);
+});
+
 test('engraving plans preserve sorted mixed note values and tuplet metadata', () => {
   const plan = createBarNoteNotationPlan(
     [

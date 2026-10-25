@@ -204,6 +204,13 @@ The Rhythm & meter settings flow checks that mixture note values and rests can b
 E2E_MAESTRO_FLOW=mixture-settings.yaml npm run e2e:maestro -- --device DEVICE_ID
 ~~~
 
+The focused-practice pattern picker shows engraved note and rest symbols instead of rhythm names. Its i18n flow selects Traditional Chinese and checks that both hands' choices load:
+
+~~~sh
+npm run e2e:ios
+npm run e2e:pattern-picker -- --device DEVICE_ID
+~~~
+
 The focused-practice flow checks the custom bar editor and its silent score-practice path:
 
 ~~~sh

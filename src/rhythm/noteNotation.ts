@@ -460,10 +460,11 @@ function buildNotationPlan(
     anchorWidth: metrics.anchorWidth,
     durationQuarter: metrics.durationQuarter,
     beamGroupQuarterNotes: metrics.beamGroupQuarterNotes,
-    events: notes.map(({ startQuarter, durationQuarter, beamCount, tupletNumber, tieToNext, tieFromPrevious }) => ({
+    events: notes.map(({ startQuarter, durationQuarter, beamCount, isRest, tupletNumber, tieToNext, tieFromPrevious }) => ({
       startQuarter,
       durationQuarter,
       beamCount,
+      ...(isRest ? { isRest: true } : {}),
       ...(tupletNumber === undefined ? {} : { tupletNumber }),
       ...(tieToNext ? { tieToNext: true } : {}),
       ...(tieFromPrevious ? { tieFromPrevious: true } : {}),

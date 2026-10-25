@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { COMPOSER_TUPLET_SYMBOLS, NOTE_VALUE_SYMBOLS } from '@/rhythm/scoreComposer';
+import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import { resolveLocale, translate } from './translation';
 
 test('system language follows Chinese device locales and falls back to English otherwise', () => {
@@ -38,4 +40,17 @@ test('beat position labels cover every beat count used by supported meters', () 
 test('saved result practice actions are localized and keep their bar number', () => {
   assert.equal(translate('zh-Hant', 'Saved later'), '稍後練習');
   assert.equal(translate('zh-Hant', 'Save bar {bar} for later practice', { bar: 3 }), '儲存第 3 小節以便稍後練習');
+});
+
+test('all rhythm symbols exposed by the pattern picker have Traditional Chinese labels', () => {
+  const labels = [
+    ...Object.values(SUBDIVISION_LABELS),
+    ...NOTE_VALUE_SYMBOLS.map(({ label }) => label),
+    ...NOTE_VALUE_SYMBOLS.map(({ label }) => `${label} rest`),
+    ...COMPOSER_TUPLET_SYMBOLS.map(({ label }) => label),
+    'Rest',
+  ];
+  const untranslated = [...new Set(labels)].filter((label) => translate('zh-Hant', label) === label);
+
+  assert.deepEqual(untranslated, []);
 });

@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { View } from 'react-native';
-import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
 import { createRhythmSymbolNotationPlan, fitNotationScale, type NoteNotationSize } from '@/rhythm/noteNotation';
+import { mixtureNotationEvents } from '@/rhythm/mixtureNotation';
 import { getMixturePattern } from '@/rhythm/mixtures';
 import type { MixturePatternId } from '@/types/rhythm';
 
@@ -15,6 +15,7 @@ export function MixtureSymbol({
   scale = 1,
   maxWidth,
   maxHeight,
+  accessibilityLabel,
   readyTestID,
 }: {
   mixtureId: MixturePatternId;
@@ -24,6 +25,7 @@ export function MixtureSymbol({
   scale?: number;
   maxWidth?: number;
   maxHeight?: number;
+  accessibilityLabel?: string;
   readyTestID?: string;
 }) {
   const { t } = useI18n();
@@ -34,16 +36,7 @@ export function MixtureSymbol({
     : compact
     ? Math.min(112, Math.max(58, pattern.atoms.length * 7))
     : Math.min(220, Math.max(82, pattern.atoms.length * 12));
-  const noteEvents = useMemo(() => {
-    return pattern.atoms.flatMap((atom, index) => atom.kind === 'note'
-      ? [{
-          startQuarter: pattern.atoms
-            .slice(0, index)
-            .reduce((sum, previous) => sum + previous.durationQuarter, 0),
-          durationQuarter: atom.durationQuarter,
-        }]
-      : []);
-  }, [pattern]);
+  const noteEvents = useMemo(() => mixtureNotationEvents(pattern), [pattern]);
   const plan = useMemo(() => createRhythmSymbolNotationPlan(noteEvents, {
     durationQuarter: pattern.durationQuarter,
     width: notationWidth,
@@ -55,25 +48,7 @@ export function MixtureSymbol({
   return (
     <View style={{ width: plan.width * fittedScale, height: plan.height * fittedScale, alignItems: 'center', justifyContent: 'center' }}>
       <View style={{ width: plan.width, height: plan.height, transform: [{ scale: fittedScale }], alignItems: 'center', justifyContent: 'center' }}>
-        <NoteNotation plan={plan} color={color} accessibilityLabel={t(pattern.label)} readyTestID={readyTestID} />
-        {pattern.atoms.map((atom, index) => atom.kind === 'rest' ? (
-          <Text
-            key={`${mixtureId}.rest.${index}`}
-            style={{
-              position: 'absolute',
-              left: plan.anchorStartX + ((pattern.atoms.slice(0, index).reduce((sum, item) => sum + item.durationQuarter, 0) + atom.durationQuarter / 2) / pattern.durationQuarter) * plan.anchorWidth - 11,
-              top: plan.height * 0.45,
-              width: 22,
-              color,
-              fontSize: mini ? 5 : compact ? 6 : 7,
-              fontWeight: '900',
-              letterSpacing: 0.2,
-              textAlign: 'center',
-            }}
-          >
-            R
-          </Text>
-        ) : null)}
+        <NoteNotation plan={plan} color={color} accessibilityLabel={accessibilityLabel ?? t(pattern.label)} readyTestID={readyTestID} />
       </View>
     </View>
   );

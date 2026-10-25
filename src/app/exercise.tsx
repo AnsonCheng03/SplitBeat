@@ -6,9 +6,12 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
 import { ComposerSymbolButton } from '@/components/ComposerSymbolButton';
-import { generateMixturePattern, patternLabelForHand } from '@/rhythm/mixtures';
+import { MixtureSymbol } from '@/components/MixtureSymbol';
+import { RhythmSymbol } from '@/components/RhythmSymbol';
+import { generateMixturePattern } from '@/rhythm/mixtures';
 import type { MixturePattern } from '@/rhythm/mixtures';
-import { pulseQuarterNotes, SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
+import { patternSelectionLabel } from '@/i18n/patternLabels';
+import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import { composerPreviewDimensions } from '@/rhythm/scoreLayout';
 import { composeRhythmScore, COMPOSER_TUPLET_SYMBOLS, NOTE_VALUE_SYMBOLS, noteValuesForSymbol } from '@/rhythm/scoreComposer';
 import type { ComposerSymbolId, ComposedNoteValue } from '@/rhythm/scoreComposer';
@@ -28,7 +31,7 @@ import { loadImportedScoreLibrary, saveImportedScoreLibrary } from '@/store/impo
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import { SUBDIVISIONS } from '@/types/rhythm';
-import type { DurationOption, Hand, MixturePatternId, Subdivision } from '@/types/rhythm';
+import type { DurationOption, Hand, MixturePatternId, Subdivision, TimeSignature } from '@/types/rhythm';
 
 type PatternSelection = { subdivision: Subdivision; mixture?: MixturePatternId; rest: boolean };
 type ExerciseTab = 'review' | 'later' | 'pair' | 'bar';
@@ -40,24 +43,12 @@ const filterOptions: { value: CombinationFilter; label: string }[] = [
   { value: 'rests', label: 'Rests' },
 ];
 
-const subdivisionShortLabels: Partial<Record<Subdivision, string>> = {
-  quarter: 'Quarter',
-  eighth: 'Eighth',
-  sixteenth: '16th',
-  thirtySecond: '32nd',
-  sixtyFourth: '64th',
-};
-
 const practiceDurations: { label: string; value: DurationOption }[] = [
   { label: '30 sec', value: 30 },
   { label: '60 sec', value: 60 },
   { label: '2 min', value: 120 },
   { label: 'Endless', value: 'endless' },
 ];
-
-function noteSelectionLabel(selection: PatternSelection): string {
-  return patternLabelForHand(selection.subdivision, selection.rest, selection.mixture);
-}
 
 export default function ExerciseScreen() {
   const { colors } = useTheme();
@@ -405,8 +396,8 @@ export default function ExerciseScreen() {
           <>
             <Text style={sectionTitle}>CHOOSE A RHYTHM FOR EACH HAND</Text>
             <View style={{ flexDirection: 'row', alignItems: 'stretch', gap: 12, marginTop: 9 }}>
-              <PatternPicker hand="left" selection={leftSelection} mixtures={mixtureExamples} onChange={setLeftSelection} />
-              <PatternPicker hand="right" selection={rightSelection} mixtures={mixtureExamples} onChange={setRightSelection} />
+              <PatternPicker hand="left" selection={leftSelection} mixtures={mixtureExamples} timeSignature={settings.timeSignature} onChange={setLeftSelection} />
+              <PatternPicker hand="right" selection={rightSelection} mixtures={mixtureExamples} timeSignature={settings.timeSignature} onChange={setRightSelection} />
             </View>
             <PrimaryButton testID="exercise.practicePair" title={starting ? 'PREPARING…' : 'PRACTICE THIS PAIR'} onPress={() => void practiceSelectedPair()} disabled={starting} />
           </>
@@ -611,33 +602,88 @@ function CombinationTile({ record, onPress }: { record: CombinationProgress; onP
   );
 }
 
-function PatternPicker({ hand, selection, mixtures, onChange }: { hand: Hand; selection: PatternSelection; mixtures: readonly MixturePattern[]; onChange: (selection: PatternSelection) => void }) {
+function PatternPicker({ hand, selection, mixtures, timeSignature, onChange }: { hand: Hand; selection: PatternSelection; mixtures: readonly MixturePattern[]; timeSignature: TimeSignature; onChange: (selection: PatternSelection) => void }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const color = hand === 'left' ? colors.left : colors.right;
-  const options: { key: string; label: string; subdivision: Subdivision; mixture?: MixturePatternId; rest: boolean }[] = [
-    ...SUBDIVISIONS.map((subdivision) => ({ key: subdivision, label: subdivisionShortLabels[subdivision] ?? SUBDIVISION_LABELS[subdivision], subdivision, rest: false })),
-    ...mixtures.map((mixture) => ({ key: mixture.id, label: mixture.label, subdivision: 'quarter' as const, mixture: mixture.id, rest: false })),
-    { key: 'rest', label: 'Rest', subdivision: 'quarter', rest: true },
+  const options: { key: string; selection: PatternSelection }[] = [
+    ...SUBDIVISIONS.map((subdivision) => ({ key: subdivision, selection: { subdivision, rest: false } })),
+    ...mixtures.map((mixture) => ({ key: mixture.id, selection: { subdivision: 'quarter' as const, mixture: mixture.id, rest: false } })),
+    { key: 'rest', selection: { subdivision: 'quarter', rest: true } },
   ];
   const isSelected = (option: (typeof options)[number]) =>
-    selection.subdivision === option.subdivision && selection.mixture === option.mixture && selection.rest === option.rest;
+    selection.subdivision === option.selection.subdivision && selection.mixture === option.selection.mixture && selection.rest === option.selection.rest;
 
   return (
     <View style={{ flex: 1, minWidth: 0, padding: 12, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
       <Text style={{ color, fontSize: 9, fontWeight: '900', letterSpacing: 1 }}>{hand.toUpperCase()} HAND</Text>
-      <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800', marginTop: 4, marginBottom: 8 }}>{noteSelectionLabel(selection)}</Text>
+      <PatternSelectionSymbol selection={selection} color={color} timeSignature={timeSignature} accessibilityLabel={patternSelectionLabel(selection, t)} selected />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
         {options.map((option) => (
-          <ChoiceChip
+          <PatternOptionButton
             key={option.key}
-            label={option.label}
+            hand={hand}
+            optionKey={option.key}
+            selection={option.selection}
+            timeSignature={timeSignature}
+            color={color}
             selected={isSelected(option)}
-            selectedColor={color}
-            onPress={() => onChange({ subdivision: option.subdivision, ...(option.mixture ? { mixture: option.mixture } : {}), rest: option.rest })}
+            onPress={() => onChange(option.selection)}
           />
         ))}
       </View>
     </View>
+  );
+}
+
+function PatternSelectionSymbol({ selection, color, timeSignature, accessibilityLabel, selected = false }: {
+  selection: PatternSelection;
+  color: string;
+  timeSignature: TimeSignature;
+  accessibilityLabel: string;
+  selected?: boolean;
+}) {
+  if (selection.mixture) {
+    return <MixtureSymbol mixtureId={selection.mixture} color={color} compact={!selected} maxWidth={selected ? 120 : 50} maxHeight={selected ? 38 : 30} accessibilityLabel={accessibilityLabel} />;
+  }
+
+  return <RhythmSymbol subdivision={selection.subdivision} color={color} timeSignature={timeSignature} compact={!selected} maxWidth={selected ? 120 : 50} maxHeight={selected ? 38 : 30} rest={selection.rest} />;
+}
+
+function PatternOptionButton({ hand, optionKey, selection, timeSignature, color, selected, onPress }: {
+  hand: Hand;
+  optionKey: string;
+  selection: PatternSelection;
+  timeSignature: TimeSignature;
+  color: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const label = patternSelectionLabel(selection, t);
+
+  return (
+    <Pressable
+      testID={`exercise.pair.${hand}.${optionKey}`}
+      accessibilityRole="button"
+      accessibilityLabel={t('Select {pattern}', { pattern: label })}
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        minWidth: 62,
+        minHeight: 44,
+        paddingHorizontal: 7,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 9,
+        backgroundColor: selected ? `${color}24` : pressed ? colors.surfaceRaised : colors.background,
+        borderWidth: 1,
+        borderColor: selected ? color : colors.line,
+      })}
+    >
+      <PatternSelectionSymbol selection={selection} color={selected ? color : colors.muted} timeSignature={timeSignature} accessibilityLabel={label} />
+    </Pressable>
   );
 }
 
