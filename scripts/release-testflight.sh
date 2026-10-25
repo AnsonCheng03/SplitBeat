@@ -48,7 +48,12 @@ export_path="$release_dir/export"
 export_options_path="$release_dir/ExportOptions.plist"
 derived_data_path=""
 owns_derived_data_path=0
+generated_info_plist=""
+info_plist_backup=""
 cleanup_release_files() {
+  if [[ -n "$generated_info_plist" && -n "$info_plist_backup" && -f "$info_plist_backup" ]]; then
+    cp "$info_plist_backup" "$generated_info_plist"
+  fi
   rm -rf "$release_dir"
   if (( owns_derived_data_path == 1 )); then
     rm -rf "$derived_data_path"
@@ -72,6 +77,15 @@ if [[ ! -e "$archive_path" ]]; then
 
   echo "Regenerating the iOS project from Expo config..."
   npx expo prebuild --platform ios --no-install
+  generated_info_plist="$(find ios -maxdepth 2 -type f -name Info.plist -not -path '*/Pods/*' -print -quit)"
+  if [[ -z "$generated_info_plist" ]]; then
+    echo "Expo prebuild did not generate the app Info.plist." >&2
+    exit 1
+  fi
+  info_plist_backup="$release_dir/Info.plist.original"
+  cp "$generated_info_plist" "$info_plist_backup"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $build_number" "$generated_info_plist"
+  echo "Set the generated app build number to $build_number for this archive."
   pod install --project-directory=ios
   node scripts/ensure-hermes-minimum-os.mjs
 
@@ -141,6 +155,8 @@ if /usr/libexec/PlistBuddy -c 'Print :NSMicrophoneUsageDescription' "$archived_a
   exit 1
 fi
 if [[ "$archived_version" != "$app_version" || "$archived_build" != "$build_number" || "$archived_bundle" != "$bundle_id" || "$archived_encryption" != "false" ]]; then
+  echo "Expected: version=$app_version build=$build_number bundle=$bundle_id encryption=false" >&2
+  echo "Archived: version=$archived_version build=$archived_build bundle=$archived_bundle encryption=$archived_encryption" >&2
   echo "The archived app metadata does not match the release settings; refusing to upload." >&2
   exit 1
 fi
