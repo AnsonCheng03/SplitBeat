@@ -221,6 +221,8 @@ export default function PracticeScreen() {
   const initialScoreContentWidth = Math.max(0, width - scoreContentMargin * 2);
   const initialScoreViewportWidth = Math.max(0, initialScoreContentWidth - 52);
   const initialScoreFocusWidth = Math.min(620, initialScoreContentWidth * (singleHandMode ? 0.76 : 0.38));
+  const notationMaxWidth = width * (singleHandMode ? 0.82 : 0.42);
+  const notationScale = singleHandMode ? 3.1 : 2.5;
   const step = snapshot?.currentStep;
   const beatFlashToken = snapshot?.phase === 'running' ? snapshot.beatIndex + 1 : 0;
   const importedScoreMeasure = snapshot?.scoreMeasure;
@@ -238,7 +240,7 @@ export default function PracticeScreen() {
   const previewTop = Math.max(insets.top, 8) + (compact ? 46 : 58);
   const previewHeight = isScoreDisplay
     ? Math.min(220, Math.max(112, height * 0.25))
-    : compact ? 88 : 104;
+    : compact ? 124 : 104;
   const changeCountdown = isScoreDisplay ? undefined : snapshot?.beatsUntilChange;
   const scoreHandToShow = singleHandMode ? focusedHand : undefined;
   const scoreHandColor = scoreHandToShow === 'left' ? colors.left : colors.right;
@@ -296,7 +298,13 @@ export default function PracticeScreen() {
         top: scoreDisplayTop,
         height: scoreDisplayHeight,
       }
-    : { top: -insets.top, bottom: -insets.bottom };
+    : showNextPattern
+      ? { top: previewTop + previewHeight, bottom: -insets.bottom }
+      : { top: -insets.top, bottom: -insets.bottom };
+  const notationMaxHeight = Math.max(
+    0,
+    height - Math.max(0, showNextPattern ? previewTop + previewHeight : -insets.top) - insets.bottom - 30,
+  );
 
   const resumeFromChallenge = async () => {
     try {
@@ -410,6 +418,8 @@ export default function PracticeScreen() {
             scoreBeatsUntilChange={snapshot.beatsPerBar - snapshot.beatInBar}
             beamGroupQuarterNotes={pulseQuarterNotes(activeSettings.timeSignature)}
             focusedHand={singleHandMode ? focusedHand : undefined}
+            maxNoteWidth={notationMaxWidth}
+            maxNoteHeight={Math.max(0, previewHeight - 8)}
           />
         ) : null}
 
@@ -487,25 +497,31 @@ export default function PracticeScreen() {
                   <RhythmSymbol
                     subdivision={focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision}
                     color={colors.accent}
-                    compact={compact}
+                    compact={false}
                     timeSignature={activeSettings.timeSignature}
-                    scale={compact ? 1.35 : 1.8}
+                    scale={notationScale}
+                    maxWidth={notationMaxWidth}
+                    maxHeight={notationMaxHeight}
                     rest
                   />
                 ) : (focusedHand === 'left' ? step.leftMixture : step.rightMixture) ? (
                   <MixtureSymbol
                     mixtureId={(focusedHand === 'left' ? step.leftMixture : step.rightMixture)!}
                     color={colors.accent}
-                    compact={compact}
-                    scale={compact ? 1.35 : 1.8}
+                    compact={false}
+                    scale={notationScale}
+                    maxWidth={notationMaxWidth}
+                    maxHeight={notationMaxHeight}
                   />
                 ) : (
                   <RhythmSymbol
                     subdivision={focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision}
                     color={colors.accent}
-                    compact={compact}
+                    compact={false}
                     timeSignature={activeSettings.timeSignature}
-                    scale={compact ? 1.35 : 1.8}
+                    scale={notationScale}
+                    maxWidth={notationMaxWidth}
+                    maxHeight={notationMaxHeight}
                     rest={focusedHand === 'left' ? step.leftRest : step.rightRest}
                   />
                 )}
@@ -516,7 +532,7 @@ export default function PracticeScreen() {
                   {enabledHand('left') && step ? (
                     <>
                       <Text style={{ color: colors.left, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>LEFT</Text>
-                      {step.leftRest ? <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} compact={compact} timeSignature={activeSettings.timeSignature} scale={compact ? 1.35 : 1.8} rest /> : step.leftMixture ? <MixtureSymbol mixtureId={step.leftMixture} color={colors.left} compact={compact} scale={compact ? 1.35 : 1.8} /> : <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} compact={compact} timeSignature={activeSettings.timeSignature} scale={compact ? 1.35 : 1.8} />}
+                      {step.leftRest ? <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} timeSignature={activeSettings.timeSignature} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} rest /> : step.leftMixture ? <MixtureSymbol mixtureId={step.leftMixture} color={colors.left} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} /> : <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} timeSignature={activeSettings.timeSignature} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} />}
                     </>
                   ) : null}
                 </View>
@@ -524,7 +540,7 @@ export default function PracticeScreen() {
                   {enabledHand('right') && step ? (
                     <>
                       <Text style={{ color: colors.right, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>RIGHT</Text>
-                      {step.rightRest ? <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} compact={compact} timeSignature={activeSettings.timeSignature} scale={compact ? 1.35 : 1.8} rest /> : step.rightMixture ? <MixtureSymbol mixtureId={step.rightMixture} color={colors.right} compact={compact} scale={compact ? 1.35 : 1.8} /> : <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} compact={compact} timeSignature={activeSettings.timeSignature} scale={compact ? 1.35 : 1.8} />}
+                      {step.rightRest ? <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} timeSignature={activeSettings.timeSignature} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} rest /> : step.rightMixture ? <MixtureSymbol mixtureId={step.rightMixture} color={colors.right} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} /> : <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} timeSignature={activeSettings.timeSignature} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} />}
                     </>
                   ) : null}
                 </View>

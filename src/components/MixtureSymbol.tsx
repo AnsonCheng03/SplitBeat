@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
-import { createBarNoteNotationPlan, type NoteNotationSize } from '@/rhythm/noteNotation';
+import { createBarNoteNotationPlan, fitNotationScale, type NoteNotationSize } from '@/rhythm/noteNotation';
 import { getMixturePattern } from '@/rhythm/mixtures';
 import type { MixturePatternId } from '@/types/rhythm';
 
@@ -12,11 +12,15 @@ export function MixtureSymbol({
   color,
   compact = false,
   scale = 1,
+  maxWidth,
+  maxHeight,
 }: {
   mixtureId: MixturePatternId;
   color: string;
   compact?: boolean;
   scale?: number;
+  maxWidth?: number;
+  maxHeight?: number;
 }) {
   const { t } = useI18n();
   const pattern = getMixturePattern(mixtureId);
@@ -40,10 +44,11 @@ export function MixtureSymbol({
     size,
     beamGroupQuarterNotes: pattern.durationQuarter,
   }), [notationWidth, noteEvents, pattern.durationQuarter, size]);
+  const fittedScale = fitNotationScale(plan.width, plan.height, scale, maxWidth, maxHeight);
 
   return (
-    <View style={{ width: plan.width * scale, height: plan.height * scale, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ width: plan.width, height: plan.height, transform: [{ scale }], alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: plan.width * fittedScale, height: plan.height * fittedScale, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: plan.width, height: plan.height, transform: [{ scale: fittedScale }], alignItems: 'center', justifyContent: 'center' }}>
         <NoteNotation plan={plan} color={color} accessibilityLabel={t(pattern.label)} />
         {pattern.atoms.map((atom, index) => atom.kind === 'rest' ? (
           <Text

@@ -2,7 +2,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createBarNoteNotationPlan, createNoteNotationPlan, createSharedBarNoteAnchorInsets } from '@/rhythm/noteNotation';
+import { createBarNoteNotationPlan, createNoteNotationPlan, createSharedBarNoteAnchorInsets, fitNotationScale } from '@/rhythm/noteNotation';
 
 function assertNotationFits(plan: ReturnType<typeof createBarNoteNotationPlan>) {
   for (const note of plan.notes) {
@@ -65,6 +65,17 @@ test('note builder creates joined noteheads and stems at each supported subdivis
       assert.ok(note.stemLeft + note.stemWidth > 0, `${subdivision} stem should overlap the notehead`);
     }
   }
+});
+
+test('live notation scales up for readability without exceeding its lane width', () => {
+  const preferredScale = 2.5;
+  const maxWidth = 340;
+  const fittedScale = fitNotationScale(160, 68, preferredScale, maxWidth, 150);
+
+  assert.ok(fittedScale > 1, 'dense notes remain larger than their base engraving size');
+  assert.ok(160 * fittedScale <= maxWidth, 'the fitted notes stay inside the hand lane');
+  assert.ok(68 * fittedScale <= 150, 'the fitted notes stay inside the vertical display lane');
+  assert.equal(fitNotationScale(96, 68, preferredScale, 340), preferredScale);
 });
 
 test('bar note builder beams adjacent notes according to each note duration', () => {

@@ -73,6 +73,19 @@ export interface NoteNotationPlan {
   noteBaselineY: number | null;
 }
 
+export function fitNotationScale(planWidth: number, planHeight: number, preferredScale: number, maxWidth?: number, maxHeight?: number): number {
+  if (!Number.isFinite(planWidth) || planWidth <= 0) throw new RangeError('Notation width must be positive.');
+  if (!Number.isFinite(planHeight) || planHeight <= 0) throw new RangeError('Notation height must be positive.');
+  if (!Number.isFinite(preferredScale) || preferredScale <= 0) throw new RangeError('Notation scale must be positive.');
+  const widthScale = maxWidth !== undefined && Number.isFinite(maxWidth) && maxWidth > 0
+    ? maxWidth / planWidth
+    : preferredScale;
+  const heightScale = maxHeight !== undefined && Number.isFinite(maxHeight) && maxHeight > 0
+    ? maxHeight / planHeight
+    : preferredScale;
+  return Math.min(preferredScale, widthScale, heightScale);
+}
+
 export interface BarNoteNotationOptions {
   /** Full measure length in quarter notes. */
   durationQuarter: number;

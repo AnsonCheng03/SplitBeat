@@ -28,6 +28,8 @@ interface NextPatternPreviewProps {
   scoreBeatsUntilChange?: number;
   beamGroupQuarterNotes?: number;
   focusedHand?: Hand;
+  maxNoteWidth: number;
+  maxNoteHeight: number;
 }
 
 interface HandPreviewProps {
@@ -38,21 +40,23 @@ interface HandPreviewProps {
   timeSignature: TimeSignature;
   compact: boolean;
   colorOverride?: string;
+  maxNoteWidth: number;
+  maxNoteHeight: number;
 }
 
-function HandPreview({ hand, subdivision, mixtureId, rest, timeSignature, compact, colorOverride }: HandPreviewProps) {
+function HandPreview({ hand, subdivision, mixtureId, rest, timeSignature, compact, colorOverride, maxNoteWidth, maxNoteHeight }: HandPreviewProps) {
   const { colors } = useTheme();
   const color = colorOverride ?? (hand === 'left' ? colors.left : colors.right);
-  const symbolScale = compact ? 1.3 : 1.45;
+  const symbolScale = compact ? 1.5 : 1.55;
 
   return (
     <View style={{ flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: compact ? 5 : 12 }}>
       {rest ? (
-        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} compact scale={symbolScale} rest />
+        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} scale={symbolScale} maxWidth={maxNoteWidth} maxHeight={maxNoteHeight} rest />
       ) : mixtureId ? (
-        <MixtureSymbol mixtureId={mixtureId} color={color} compact scale={symbolScale} />
+        <MixtureSymbol mixtureId={mixtureId} color={color} scale={symbolScale} maxWidth={maxNoteWidth} maxHeight={maxNoteHeight} />
       ) : (
-        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} compact scale={symbolScale} />
+        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} scale={symbolScale} maxWidth={maxNoteWidth} maxHeight={maxNoteHeight} />
       )}
     </View>
   );
@@ -76,6 +80,8 @@ export function NextPatternPreview({
   scoreBeatsUntilChange,
   beamGroupQuarterNotes = 1,
   focusedHand,
+  maxNoteWidth,
+  maxNoteHeight,
 }: NextPatternPreviewProps) {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -207,12 +213,14 @@ export function NextPatternPreview({
                 timeSignature={timeSignature}
                 compact={compact}
                 colorOverride={colors.accent}
+                maxNoteWidth={maxNoteWidth}
+                maxNoteHeight={maxNoteHeight}
               />
             ) : (
               <>
-                <HandPreview hand="left" subdivision={step.leftSubdivision} mixtureId={step.leftMixture} rest={step.leftRest} timeSignature={timeSignature} compact={compact} />
+                <HandPreview hand="left" subdivision={step.leftSubdivision} mixtureId={step.leftMixture} rest={step.leftRest} timeSignature={timeSignature} compact={compact} maxNoteWidth={maxNoteWidth} maxNoteHeight={maxNoteHeight} />
                 <View style={{ width: 1, height: '82%', backgroundColor: colors.line }} />
-                <HandPreview hand="right" subdivision={step.rightSubdivision} mixtureId={step.rightMixture} rest={step.rightRest} timeSignature={timeSignature} compact={compact} />
+                <HandPreview hand="right" subdivision={step.rightSubdivision} mixtureId={step.rightMixture} rest={step.rightRest} timeSignature={timeSignature} compact={compact} maxNoteWidth={maxNoteWidth} maxNoteHeight={maxNoteHeight} />
               </>
             )}
           </View>

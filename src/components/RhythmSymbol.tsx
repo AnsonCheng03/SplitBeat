@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { View } from 'react-native';
 import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
-import { createNoteNotationPlan, type NoteNotationSize } from '@/rhythm/noteNotation';
+import { createNoteNotationPlan, fitNotationScale, type NoteNotationSize } from '@/rhythm/noteNotation';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import type { Subdivision, TimeSignature } from '@/types/rhythm';
 
@@ -13,6 +13,8 @@ interface RhythmSymbolProps {
   mini?: boolean;
   timeSignature?: TimeSignature;
   scale?: number;
+  maxWidth?: number;
+  maxHeight?: number;
   rest?: boolean;
 }
 
@@ -21,10 +23,11 @@ function notationSize(compact: boolean, mini: boolean): NoteNotationSize {
   return compact ? 'compact' : 'full';
 }
 
-export function RhythmSymbol({ subdivision, color, compact = false, mini = false, timeSignature = '4/4', scale = 1, rest = false }: RhythmSymbolProps) {
+export function RhythmSymbol({ subdivision, color, compact = false, mini = false, timeSignature = '4/4', scale = 1, maxWidth, maxHeight, rest = false }: RhythmSymbolProps) {
   const { t } = useI18n();
   const size = notationSize(compact, mini);
   const plan = useMemo(() => createNoteNotationPlan(subdivision, size, timeSignature), [size, subdivision, timeSignature]);
+  const fittedScale = fitNotationScale(plan.width, plan.height, scale, maxWidth, maxHeight);
   const notation = <NoteNotation
     plan={plan}
     color={color}
@@ -33,11 +36,11 @@ export function RhythmSymbol({ subdivision, color, compact = false, mini = false
       : t(SUBDIVISION_LABELS[subdivision])}
     restSymbol={rest}
   />;
-  if (scale === 1) return notation;
+  if (fittedScale === 1) return notation;
 
   return (
-    <View style={{ width: plan.width * scale, height: plan.height * scale, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ width: plan.width, height: plan.height, transform: [{ scale }] }}>
+    <View style={{ width: plan.width * fittedScale, height: plan.height * fittedScale, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: plan.width, height: plan.height, transform: [{ scale: fittedScale }] }}>
         {notation}
       </View>
     </View>
