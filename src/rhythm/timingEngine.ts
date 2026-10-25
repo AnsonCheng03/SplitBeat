@@ -13,6 +13,7 @@ import { longestCorrectNoteStreak } from '@/rhythm/challenge';
 import { analyzeSwingFeel } from '@/rhythm/swingFeel';
 import { createPracticeScoreMeasure } from '@/rhythm/practiceScore';
 import { expandMixturePattern } from '@/rhythm/mixtures';
+import { barPositionForBeat } from '@/rhythm/barPosition';
 import type { ChallengeOutcome } from '@/rhythm/challenge';
 import { matchTap, timingWindowsForGoodWindow } from '@/rhythm/tapMatcher';
 import type { TimingWindows } from '@/rhythm/tapMatcher';
@@ -842,8 +843,7 @@ export class RhythmTimingEngine {
     reached: boolean,
   ): ReplayExpectedEvent {
     const beatPosition = (event.expectedTimeMs - this.sessionStartTime) / this.beatMs;
-    const barOffset = Math.floor(beatPosition / this.beatsPerBar);
-    const beatInBar = beatPosition - barOffset * this.beatsPerBar;
+    const { barOffset, beatInBar } = barPositionForBeat(beatPosition, this.beatsPerBar);
     const mixtureId = hand === 'left' ? event.step.leftMixture : event.step.rightMixture;
     const subdivision = event.isScoreEvent || mixtureId
       ? undefined
@@ -917,8 +917,7 @@ export class RhythmTimingEngine {
 
   private beatInBarFor(timestampMs: number): number {
     const beatPosition = (timestampMs - this.sessionStartTime) / this.beatMs;
-    const barOffset = Math.floor(beatPosition / this.beatsPerBar);
-    return beatPosition - barOffset * this.beatsPerBar;
+    return barPositionForBeat(beatPosition, this.beatsPerBar).beatInBar;
   }
 
   private replayPattern(step: ExerciseStep): ReplayPattern {

@@ -206,6 +206,15 @@ test('bar note builder keeps final flags and dots inside the notation viewport',
   assertNotationFits(finalDottedNote);
 });
 
+test('bar note builder accepts valid note positions within floating-point distance of the bar end', () => {
+  const plan = createBarNoteNotationPlan([
+    { startQuarter: 1.499999999996, durationQuarter: 0.5 },
+  ], { durationQuarter: 1.5, width: 240, size: 'compact' });
+
+  assert.equal(plan.notes.length, 1);
+  assertNotationFits(plan);
+});
+
 test('mixed bar notation stays within bounds at dense and narrow layout widths', () => {
   const mixedEvents = [
     { startQuarter: 0, durationQuarter: 0.75 },

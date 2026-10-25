@@ -439,7 +439,11 @@ export default function ResultsScreen() {
     const current = replayAudioRef.current;
     if (!current || (playbackId !== undefined && current.playbackId !== playbackId)) return;
     replayAudioRef.current = null;
-    await current.audio.stop();
+    try {
+      await current.audio.stop();
+    } catch {
+      // Audio teardown is best effort; it must not interrupt visual replay.
+    }
   }, []);
 
   useEffect(() => {
@@ -476,9 +480,9 @@ export default function ResultsScreen() {
       return;
     }
 
-    const audio = new MetronomeAudio();
-    replayAudioRef.current = { playbackId, audio };
     try {
+      const audio = new MetronomeAudio();
+      replayAudioRef.current = { playbackId, audio };
       await audio.prepare();
       await audio.resume();
       if (playbackId !== replaySequenceRef.current) {

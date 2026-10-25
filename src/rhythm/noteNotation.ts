@@ -487,7 +487,7 @@ export function createBarNoteNotationPlan(
     throw new RangeError('Beam groups must have a positive duration.');
   }
   events.forEach((event, index) => {
-    if (!Number.isFinite(event.startQuarter) || event.startQuarter < -EPSILON || event.startQuarter >= options.durationQuarter - EPSILON) {
+    if (!Number.isFinite(event.startQuarter) || event.startQuarter < -EPSILON || event.startQuarter >= options.durationQuarter) {
       throw new RangeError(`Note ${index + 1} must start inside the bar.`);
     }
     if (!Number.isFinite(event.durationQuarter) || event.durationQuarter <= 0) {
