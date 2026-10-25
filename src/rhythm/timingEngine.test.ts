@@ -571,6 +571,35 @@ test('simple eighth-note meters keep quarter-note events two pulses apart', () =
   assert.equal(secondNote.leftStats.totalExpected, 2);
 });
 
+test('3/8 pattern changes stay on bar lines when the selected interval is four beats', () => {
+  const start = 35_000;
+  const engine = new RhythmTimingEngine({
+    settings: {
+      ...settings,
+      bpm: 60,
+      timeSignature: '3/8',
+      changeIntervalBeats: 4,
+      enabledSubdivisions: ['quarter', 'eighth'],
+    },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  const firstBar = engine.advance(start + 100);
+  assert.equal(firstBar.beatsPerBar, 3);
+  assert.equal(firstBar.nextStep?.startBeat, 6);
+  assert.equal(firstBar.beatsUntilChange, 6);
+
+  const beforeBarLine = engine.advance(start + 5_999);
+  assert.equal(beforeBarLine.currentStep.startBeat, 0);
+  assert.equal(beforeBarLine.beatInBar, 2);
+
+  const atBarLine = engine.advance(start + 6_000);
+  assert.equal(atBarLine.currentStep.startBeat, 6);
+  assert.equal(atBarLine.beatInBar, 0);
+  assert.equal(atBarLine.nextStep?.startBeat, 12);
+});
+
 test('long-run timestamps use the origin formula instead of accumulating timer delays', () => {
   const start = 8_500.25;
   const beatIndex = 60_000;

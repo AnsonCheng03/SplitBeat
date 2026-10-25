@@ -135,6 +135,7 @@ const TRADITIONAL_CHINESE: Record<string, string> = {
   'RESET TIMING DEFAULTS': '重設校準',
   'TIME SIGNATURE': '拍號',
   'CHANGE PATTERN': '節奏變化間隔',
+  'In {signature}, {requested} beats is aligned to the next bar line: every {effective} beats ({bars} bars).': '在 {signature} 中，{requested} 拍會對齊至下一小節線：每 {effective} 拍（{bars} 小節）變化一次。',
   'FEEL': '律動',
   'Straight': '直拍',
   'Swing': '搖擺',

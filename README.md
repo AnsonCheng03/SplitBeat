@@ -82,6 +82,8 @@ The **Mixture** section in Rhythm & meter lets you choose note values and option
 
 Choose 2/4, 3/4, 4/4, 5/4, 7/4, 2/2, 3/8, 6/8, 9/8, or 12/8 in Rhythm & meter settings. BPM follows the meter's written beat: denominator-note beats in simple meters, dotted-quarter pulses in 6/8, 9/8, and 12/8. For example, 6/8 at 60 BPM has two metronome pulses per bar, while quarter-note events are spaced about 667 ms apart. Pattern changes and the count-in use those same metronome pulses.
 
+Pattern changes stay on bar lines when the selected beat interval cannot evenly fit the meter. For example, a four-beat interval in 3/8 becomes six beats (two bars), so the next rhythm starts on beat one instead of drifting to a different beat in each bar. Intervals that divide the bar evenly, such as two beats in 4/4, keep their selected timing.
+
 Timed sessions treat the selected length as a minimum and finish at the next bar line, so both hands complete the final bar instead of stopping in the middle of it. The same rule applies to imported scores.
 
 ## Focused practice and typed bars

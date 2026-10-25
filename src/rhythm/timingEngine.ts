@@ -12,6 +12,7 @@ import { accuracyPercent, emptyHandStats, finalizeHandStats } from '@/rhythm/sco
 import { longestCorrectNoteStreak } from '@/rhythm/challenge';
 import { analyzeSwingFeel } from '@/rhythm/swingFeel';
 import { createPracticeScoreMeasure } from '@/rhythm/practiceScore';
+import { alignedPatternChangeIntervalBeats } from '@/rhythm/patternChange';
 import { expandMixturePattern } from '@/rhythm/mixtures';
 import { barPositionForBeat } from '@/rhythm/barPosition';
 import type { ChallengeOutcome } from '@/rhythm/challenge';
@@ -142,6 +143,7 @@ export class RhythmTimingEngine {
   readonly beatMs: number;
   readonly quarterNoteMs: number;
   readonly beatsPerBar: number;
+  readonly patternChangeIntervalBeats: number;
   readonly sessionStartTime: number;
 
   private settings: ExerciseSettings;
@@ -222,6 +224,10 @@ export class RhythmTimingEngine {
     this.beatMs = metrics.beatDurationMs;
     this.quarterNoteMs = metrics.quarterNoteDurationMs;
     this.beatsPerBar = metrics.beatsPerBar;
+    this.patternChangeIntervalBeats = alignedPatternChangeIntervalBeats(
+      options.settings.changeIntervalBeats,
+      metrics.beatsPerBar,
+    );
     const sessionDurationSeconds = getSessionDurationSeconds(options.settings, this.importedScore);
     this.endTime = sessionDurationSeconds === null
       ? null
@@ -232,7 +238,7 @@ export class RhythmTimingEngine {
       mixtureNoteValues: options.settings.mixtureNoteValues,
       mixtureRestsEnabled: options.settings.mixtureRestsEnabled,
       barDurationQuarterNotes: metrics.beatsPerBar * pulseQuarterNotes(options.settings.timeSignature),
-      changeIntervalBeats: options.settings.changeIntervalBeats,
+      changeIntervalBeats: this.patternChangeIntervalBeats,
       patternPairs: options.patternPairs,
       patternPairWeights: options.patternPairWeights,
       allowHandRests: options.settings.handRestsEnabled && options.settings.trainingMode === 'two-hand',
@@ -361,7 +367,7 @@ export class RhythmTimingEngine {
         0,
         Math.floor((calibratedTapTime - this.sessionStartTime) / this.beatMs + 1e-9),
       );
-      const activeStep = this.getStep(Math.floor(activeBeatIndex / this.settings.changeIntervalBeats));
+      const activeStep = this.getStep(Math.floor(activeBeatIndex / this.patternChangeIntervalBeats));
       replayTap.pattern = this.replayPattern(activeStep);
       replayTap.isTransition = activeStep.startBeat > 0 && activeBeatIndex < activeStep.startBeat + 2;
     }
@@ -897,7 +903,7 @@ export class RhythmTimingEngine {
       return;
     }
 
-    const stepIndex = Math.max(0, Math.floor(beatIndex / this.settings.changeIntervalBeats));
+    const stepIndex = Math.max(0, Math.floor(beatIndex / this.patternChangeIntervalBeats));
     const step = this.getStep(stepIndex);
     const tap = this.replayTaps[this.replayTaps.length - 1];
     if (tap?.hand === hand) {
@@ -967,7 +973,7 @@ export class RhythmTimingEngine {
   private createSnapshot(now: number, wallNow: number): SessionSnapshot {
     const elapsed = now - this.sessionStartTime;
     const beatIndex = Math.max(0, Math.floor(elapsed / this.beatMs));
-    const stepIndex = Math.floor(beatIndex / this.settings.changeIntervalBeats);
+    const stepIndex = Math.floor(beatIndex / this.patternChangeIntervalBeats);
     const currentStep = this.getStep(stepIndex);
     const barStartBeat = Math.floor(beatIndex / this.beatsPerBar) * this.beatsPerBar;
     const barEndBeat = barStartBeat + this.beatsPerBar;
@@ -1023,7 +1029,7 @@ export class RhythmTimingEngine {
       barSteps,
       nextStep,
       beatsUntilChange:
-        this.settings.changeIntervalBeats - (beatIndex % this.settings.changeIntervalBeats),
+        this.patternChangeIntervalBeats - (beatIndex % this.patternChangeIntervalBeats),
       secondsUntilChange: nextStep ? Math.max(0, (nextStepTime - now) / 1_000) : null,
       secondsRemaining: remaining,
       leftAccuracy: accuracyPercent(overallLeft),
@@ -1102,7 +1108,7 @@ export class RhythmTimingEngine {
         barIndex,
         beatsPerBar: this.beatsPerBar,
         pulseQuarterNotes: pulseQuarterNotes(this.settings.timeSignature),
-        changeIntervalBeats: this.settings.changeIntervalBeats,
+        changeIntervalBeats: this.patternChangeIntervalBeats,
         restBetweenChanges: this.settings.restBetweenChanges,
         sessionEndBeat,
         getStep: this.getStep,
@@ -1161,20 +1167,20 @@ export class RhythmTimingEngine {
     if (elapsedBeats < 0) return false;
 
     const beatIndex = Math.floor(elapsedBeats + 1e-9);
-    const stepIndex = Math.floor(beatIndex / this.settings.changeIntervalBeats);
-    const beatInStep = beatIndex - stepIndex * this.settings.changeIntervalBeats;
-    if (beatInStep !== this.settings.changeIntervalBeats - 1) return false;
+    const stepIndex = Math.floor(beatIndex / this.patternChangeIntervalBeats);
+    const beatInStep = beatIndex - stepIndex * this.patternChangeIntervalBeats;
+    if (beatInStep !== this.patternChangeIntervalBeats - 1) return false;
 
     const nextStepTime =
       this.sessionStartTime +
-      (stepIndex + 1) * this.settings.changeIntervalBeats * this.beatMs;
+      (stepIndex + 1) * this.patternChangeIntervalBeats * this.beatMs;
     return this.endTime === null || nextStepTime < this.endTime;
   }
 
   private getNotationBarSteps(barStartBeat: number, barEndBeat: number): ExerciseStep[] {
     if (this.cachedNotationBarStartBeat === barStartBeat) return this.cachedNotationBarSteps;
-    const firstStepIndex = Math.floor(barStartBeat / this.settings.changeIntervalBeats);
-    const lastStepIndex = Math.floor(barEndBeat / this.settings.changeIntervalBeats);
+    const firstStepIndex = Math.floor(barStartBeat / this.patternChangeIntervalBeats);
+    const lastStepIndex = Math.floor(barEndBeat / this.patternChangeIntervalBeats);
     this.cachedNotationBarStartBeat = barStartBeat;
     this.cachedNotationBarSteps = Array.from(
       { length: lastStepIndex - firstStepIndex + 1 },

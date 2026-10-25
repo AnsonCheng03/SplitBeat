@@ -29,6 +29,7 @@ import {
   normalizeTapOffsetMs,
 } from '@/rhythm/timingCalibration';
 import { timeSignatureMetrics } from '@/rhythm/subdivisions';
+import { alignedPatternChangeIntervalBeats } from '@/rhythm/patternChange';
 import {
   parseCombinationProgress,
   parseSavedPracticePairs,
@@ -675,6 +676,10 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     }
 
     const metrics = timeSignatureMetrics(activeSettings.bpm, activeSettings.timeSignature);
+    const patternChangeIntervalBeats = alignedPatternChangeIntervalBeats(
+      activeSettings.changeIntervalBeats,
+      metrics.beatsPerBar,
+    );
     const beatMs = metrics.beatDurationMs;
     const performanceNow = monotonicNow();
     const audioNow = audio.currentTime;
@@ -700,7 +705,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       soundEnabled: activeSettings.soundEnabled && !FORCE_SILENT_E2E,
       backgroundMusicEnabled: activeSettings.backgroundMusicEnabled,
       sessionCuesEnabled: activeSettings.sessionCuesEnabled,
-      changeIntervalBeats: activeSettings.changeIntervalBeats,
+      changeIntervalBeats: patternChangeIntervalBeats,
       patternChangesEnabled: !score,
       referenceRhythmEnabled: activeSettings.referenceRhythmEnabled,
       getReferenceEventsThrough: (timeMs) => engine.getReferenceEventsThrough(timeMs),

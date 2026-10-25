@@ -6,8 +6,9 @@ import { GameCenterChallengeCard } from '@/components/GameCenterChallengeCard';
 import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsPage } from '@/components/SettingsPage';
 import { SettingsToggleRow } from '@/components/SettingsToggleRow';
-import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
+import { SUBDIVISION_LABELS, timeSignatureMetrics } from '@/rhythm/subdivisions';
 import { mixtureNoteOptionsForBar } from '@/rhythm/mixtures';
+import { alignedPatternChangeIntervalBeats } from '@/rhythm/patternChange';
 import { barDurationQuarterNotes } from '@/rhythm/targetedPractice';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -27,6 +28,11 @@ export default function RhythmSettingsScreen() {
   const { t } = useI18n();
   const { settings, featureFlags, updateSettings } = useRhythmSession();
   const helperText = { color: colors.dim, fontSize: 12, lineHeight: 17, marginTop: 8 };
+  const beatsPerBar = timeSignatureMetrics(settings.bpm, settings.timeSignature).beatsPerBar;
+  const effectiveChangeIntervalBeats = alignedPatternChangeIntervalBeats(
+    settings.changeIntervalBeats,
+    beatsPerBar,
+  );
   const visibleSubdivisions = featureFlags.rhythmExtensions
     ? SUBDIVISIONS
     : SUBDIVISIONS.filter((subdivision) => BASIC_SUBDIVISIONS.includes(subdivision as (typeof BASIC_SUBDIVISIONS)[number]));
@@ -114,6 +120,16 @@ export default function RhythmSettingsScreen() {
           onChange={(changeIntervalBeats) => updateSettings({ changeIntervalBeats })}
           testIDPrefix="setup.interval"
         />
+        {effectiveChangeIntervalBeats !== settings.changeIntervalBeats ? (
+          <Text style={helperText}>
+            {t('In {signature}, {requested} beats is aligned to the next bar line: every {effective} beats ({bars} bars).', {
+              signature: settings.timeSignature,
+              requested: settings.changeIntervalBeats,
+              effective: effectiveChangeIntervalBeats,
+              bars: effectiveChangeIntervalBeats / beatsPerBar,
+            })}
+          </Text>
+        ) : null}
       </Section>
 
       {featureFlags.rhythmExtensions ? <Section title="FEEL">
