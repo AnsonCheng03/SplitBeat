@@ -60,6 +60,9 @@ export interface NoteDotShape {
 export interface NoteNotationPlan {
   width: number;
   height: number;
+  /** Engraving line weights shared by the VexFlow renderer. */
+  stemWidth: number;
+  beamThickness: number;
   /** Horizontal note-anchor range used to align overlays with rendered noteheads. */
   anchorStartX: number;
   anchorWidth: number;
@@ -143,7 +146,7 @@ interface PositionedNote extends NoteNotationEvent {
 }
 
 const EPSILON = 0.000001;
-const BEAM_SLOPE = -Math.tan((3 * Math.PI) / 180);
+const BEAM_SLOPE = 0;
 const MINI_SLOT_WIDTHS: Record<number, number> = { 1: 15, 2: 15, 3: 12, 4: 11, 8: 8, 16: 6 };
 
 function calculateBarNoteAnchorInsets(
@@ -376,7 +379,7 @@ function buildNotationPlan(
         top: Math.max(0, Math.min(metrics.height - beamHeight, middleY - beamHeight / 2)),
         width: Math.max(beamHeight, right - left),
         height: beamHeight,
-        rotationDegrees: -3,
+        rotationDegrees: 0,
       });
     }
   }
@@ -447,12 +450,14 @@ function buildNotationPlan(
     const lastNote = group.at(-1) ?? firstNote;
     const left = firstNote.anchorX - headWidth / 2;
     const right = lastNote.anchorX + headWidth / 2;
+    const groupCenter = (firstNote.anchorX + lastNote.anchorX) / 2;
+    const labelWidth = Math.min(metrics.width, Math.max(metrics.tupletLabelFontSize + 8, right - left + 8));
     tupletLabels.push({
       key: `tuplet-${tupletGroupIndex}-${tupletNumber}`,
       text: String(tupletNumber),
-      left,
-      width: Math.max(headWidth, right - left),
-      top: 0,
+      left: Math.max(0, Math.min(metrics.width - labelWidth, groupCenter - labelWidth / 2)),
+      width: labelWidth,
+      top: 1,
       fontSize: metrics.tupletLabelFontSize,
     });
     tupletGroupIndex += group.length;
@@ -461,6 +466,8 @@ function buildNotationPlan(
   return {
     width: metrics.width,
     height: metrics.height,
+    stemWidth: metrics.stemWidth,
+    beamThickness: metrics.beamHeight,
     anchorStartX: metrics.anchorStartX,
     anchorWidth: metrics.anchorWidth,
     durationQuarter: metrics.durationQuarter,
@@ -541,7 +548,7 @@ export function createBarNoteNotationPlan(
     ? (size === 'mini' ? 10 : size === 'compact' ? 12 : 14)
     : 0;
   const height = options.notationHeight ?? (size === 'mini' ? 28 : size === 'compact' ? 32 : 44) + tupletPadding;
-  const beamHeight = size === 'mini' ? 1.6 : size === 'compact' ? 1.8 : 2.6;
+  const beamHeight = size === 'mini' ? 1.2 : size === 'compact' ? 1.5 : 2.2;
   const beamGap = beamHeight + (size === 'mini' ? 1 : size === 'compact' ? 1.2 : 1.8);
   const beamTop = options.beamTop ?? (size === 'mini' ? 3 : size === 'compact' ? 4 : 5);
   const flagWidth = Math.max(size === 'mini' ? 5 : 7, headWidth * 0.9);
@@ -573,14 +580,14 @@ export function createBarNoteNotationPlan(
     noteAnchors,
     headWidth,
     headHeight,
-    stemWidth: size === 'mini' ? 1.2 : size === 'compact' ? 1.4 : 1.8,
+    stemWidth: size === 'mini' ? 0.9 : size === 'compact' ? 1.05 : 1.45,
     beamTop: beamTop + tupletPadding,
     beamHeight,
     beamGap,
     flagWidth,
     beamGroupQuarterNotes,
     maxBeamNotesByLevel: options.maxBeamNotesByLevel,
-    tupletLabelFontSize: options.tupletLabelFontSize ?? (size === 'mini' ? 8 : size === 'compact' ? 10 : 12),
+    tupletLabelFontSize: options.tupletLabelFontSize ?? (size === 'mini' ? 6 : size === 'compact' ? 8 : 11),
     noteBaselineY: height - 5,
   });
 }
@@ -591,18 +598,15 @@ export function createRhythmSymbolNotationPlan(
   options: BarNoteNotationOptions,
 ): NoteNotationPlan {
   const size = options.size ?? 'full';
-  const hasTuplets = events.some((event) => event.tupletNumber !== undefined);
-  const noteHeadWidth = size === 'mini' ? 4.2 : size === 'compact' ? 7 : 9.2;
+  const noteHeadWidth = options.noteHeadWidth ?? (size === 'mini' ? 4.2 : size === 'compact' ? 7 : 9.2);
   const notationHeight = size === 'mini' ? 28 : size === 'compact' ? 32 : 44;
 
   return createBarNoteNotationPlan(events, {
     ...options,
     noteHeadWidth,
     notationHeight,
-    beamTop: options.beamTop ?? (hasTuplets
-      ? size === 'mini' ? 10 : size === 'compact' ? 15 : 17
-      : size === 'mini' ? 3 : size === 'compact' ? 4 : 5),
-    tupletLabelFontSize: options.tupletLabelFontSize ?? (size === 'mini' ? 8 : size === 'compact' ? 12 : 14),
+    beamTop: options.beamTop ?? (size === 'mini' ? 9 : size === 'compact' ? 11 : 15),
+    tupletLabelFontSize: options.tupletLabelFontSize ?? (size === 'mini' ? 6 : size === 'compact' ? 8 : 11),
   });
 }
 
@@ -619,6 +623,11 @@ export function createNoteNotationPlan(
   const slotWidth = slotWidthFor(count, size);
   const notationWidth = groupWidth ?? count * slotWidth;
   const noteSlotWidth = notationWidth / count;
+  const baseHeadWidth = size === 'mini' ? 4.2 : size === 'compact' ? 7 : 9.2;
+  const minimumHeadWidth = size === 'full' ? 3.4 : 2.4;
+  const noteHeadWidth = groupWidth === undefined
+    ? baseHeadWidth
+    : Math.max(minimumHeadWidth, Math.min(baseHeadWidth, noteSlotWidth * 0.72));
   const beamCount = isTuplet ? inferredBeamCount(noteDurationQuarter) : beamCountForSubdivision(subdivision);
   const events = Array.from({ length: count }, (_, index) => ({
     startQuarter: index * noteDurationQuarter,
@@ -631,9 +640,10 @@ export function createNoteNotationPlan(
     durationQuarter: count * noteDurationQuarter,
     width: notationWidth,
     size,
+    noteHeadWidth,
     beamGroupQuarterNotes: isTuplet ? pulseQuarterNotes(timeSignature) : 1,
     noteAnchors: Array.from({ length: count }, (_, index) => (index + 0.5) * noteSlotWidth),
     maxBeamNotesByLevel: Array.from({ length: beamCount }, (_, beamIndex) => beamGroupSize(count, beamIndex)),
-    tupletLabelFontSize: size === 'mini' ? 8 : size === 'compact' ? 12 : 14,
+    tupletLabelFontSize: size === 'mini' ? 6 : size === 'compact' ? 8 : 11,
   });
 }

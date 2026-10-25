@@ -40,3 +40,38 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: exercise.pair.right.eighth
 - takeScreenshot: pattern-picker-note-symbols-zh-Hant
+- scrollUntilVisible:
+    element:
+      id: exercise.pair.left.rest
+    direction: DOWN
+- assertVisible:
+    id: exercise.pair.left.sixteenth
+- assertVisible:
+    id: exercise.pair.left.thirtySecond
+- assertVisible:
+    id: exercise.pair.left.sixtyFourth
+- assertVisible:
+    id: exercise.pair.left.duplet
+- assertVisible:
+    id: exercise.pair.left.triplet
+- assertVisible:
+    id: exercise.pair.left.quadruplet
+- assertVisible:
+    id: exercise.pair.left.quintuplet
+- assertVisible:
+    id: exercise.pair.left.sextuplet
+- assertVisible:
+    id: exercise.pair.left.septuplet
+- assertVisible:
+    id: exercise.pair.left.octuplet
+- assertVisible:
+    id: exercise.pair.left.nonuplet
+- assertVisible:
+    id: exercise.pair.left.rest
+- assertVisible:
+    id: exercise.pair.right.sixtyFourth
+- assertVisible:
+    id: exercise.pair.right.nonuplet
+- assertVisible:
+    id: exercise.pair.right.rest
+- takeScreenshot: pattern-picker-all-note-symbols

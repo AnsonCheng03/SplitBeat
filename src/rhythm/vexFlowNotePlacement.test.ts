@@ -2,9 +2,9 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { Dot, Stave, StaveNote, Stem } from 'vexflow';
-import { createBarNoteNotationPlan } from '@/rhythm/noteNotation';
-import { positionVexFlowNote } from '@/rhythm/vexFlowNotePlacement';
+import { Beam, Dot, Stave, StaveNote, Stem } from 'vexflow';
+import { createBarNoteNotationPlan, createNoteNotationPlan } from '@/rhythm/noteNotation';
+import { alignVexFlowStemTop, positionVexFlowNote } from '@/rhythm/vexFlowNotePlacement';
 import { createVexFlowRhythmNote, createVexFlowRhythmTies } from '@/rhythm/vexFlowRhythmNote';
 
 test('VexFlow note placement registers each note and centers its glyph', () => {
@@ -51,6 +51,63 @@ test('VexFlow noteheads stay on the intended baseline inside the notation viewpo
 
   assert.equal(note.noteHeads[0]?.getY(), noteCenterY);
   assert.ok((note.noteHeads[0]?.getY() ?? Infinity) < 44, 'notehead stays inside the 44px notation viewport');
+});
+
+test('VexFlow stem tops align across every picker note value and beam count', () => {
+  const subdivisions = [
+    'quarter', 'eighth', 'duplet', 'triplet', 'quadruplet', 'quintuplet', 'sextuplet',
+    'septuplet', 'octuplet', 'nonuplet', 'sixteenth', 'thirtySecond', 'sixtyFourth',
+  ] as const;
+  const expectedStemTop = 12.5;
+
+  for (const subdivision of subdivisions) {
+    const plan = createNoteNotationPlan(subdivision, 'compact', '4/4', 52);
+    const noteCenterY = plan.noteBaselineY ?? plan.height - 7;
+    const stave = new Stave(0, noteCenterY - 24, plan.width, {
+      spacing_between_lines_px: 6,
+      line_config: Array.from({ length: 5 }, () => ({ visible: false })),
+    });
+    const glyphScale = Math.max(8, Math.min(56, (plan.notes[0]?.headWidth ?? 8) / 0.306));
+    const notes = plan.events.map((event, index) => {
+      const shape = plan.notes[index];
+      assert.ok(shape, `${subdivision} note ${index + 1} has geometry`);
+      const note = createVexFlowRhythmNote(event, {
+        color: '#ffffff',
+        glyphScale,
+        stemLength: noteCenterY - shape.stemTop,
+      });
+      note.setStave(stave);
+      positionVexFlowNote(note, shape.left + shape.headWidth / 2);
+      return note;
+    });
+    const beams = plan.beams
+      .filter((shape) => shape.kind === 'beam' && shape.level === 0)
+      .flatMap((shape) => {
+        const beamNotes = notes.slice(shape.startIndex, shape.endIndex + 1)
+          .filter((note, index) => !plan.events[shape.startIndex + index]?.isRest);
+        if (beamNotes.length < 2) return [];
+        const beam = new Beam(beamNotes, false);
+        beam.render_options.beam_width = plan.beamThickness;
+        beam.render_options.flat_beams = true;
+        beam.render_options.flat_beam_offset = plan.notes[shape.startIndex]?.stemTop ?? expectedStemTop;
+        return [beam];
+      });
+
+    notes.forEach((note, index) => {
+      const shape = plan.notes[index];
+      assert.ok(shape);
+      alignVexFlowStemTop(note, shape.stemTop);
+    });
+    beams.forEach((beam) => beam.postFormat());
+
+    notes.forEach((note, index) => {
+      const actualStemTop = note.getStemExtents().topY;
+      assert.ok(
+        Math.abs(actualStemTop - expectedStemTop) < 0.01,
+        `${subdivision} note ${index + 1} stem begins at ${actualStemTop}, expected ${expectedStemTop}`,
+      );
+    });
+  }
 });
 
 test('VexFlow keeps mixed bar noteheads inside the viewport, including the final flagged note', () => {

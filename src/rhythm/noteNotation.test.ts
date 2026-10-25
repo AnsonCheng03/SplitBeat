@@ -369,16 +369,16 @@ test('note builder groups beams into the expected number of levels', () => {
   const sixteenths = createNoteNotationPlan('sixteenth');
   assert.equal(sixteenths.beams.filter((beam) => beam.key.startsWith('beam-0-')).length, 1);
   assert.equal(sixteenths.beams.filter((beam) => beam.key.startsWith('beam-1-')).length, 1);
-  assert.ok(sixteenths.beams.every((beam) => beam.rotationDegrees < 0), 'beams should rise toward the right');
+  assert.ok(sixteenths.beams.every((beam) => beam.rotationDegrees === 0), 'same-pitch rhythm beams stay level');
 });
 
 test('triplets include a visible group label and all display sizes keep their note geometry', () => {
   const fullTriplet = createNoteNotationPlan('triplet');
   assert.equal(fullTriplet.tupletLabels[0]?.text, '3');
-  assert.equal(fullTriplet.tupletLabels[0]?.fontSize, 14);
+  assert.equal(fullTriplet.tupletLabels[0]?.fontSize, 11);
 
-  assert.equal(createNoteNotationPlan('triplet', 'compact').tupletLabels[0]?.fontSize, 12);
-  assert.equal(createNoteNotationPlan('triplet', 'mini').tupletLabels[0]?.fontSize, 8);
+  assert.equal(createNoteNotationPlan('triplet', 'compact').tupletLabels[0]?.fontSize, 8);
+  assert.equal(createNoteNotationPlan('triplet', 'mini').tupletLabels[0]?.fontSize, 6);
 
   for (const subdivision of [
     'quarter', 'eighth', 'duplet', 'triplet', 'quadruplet', 'quintuplet', 'sextuplet',
@@ -405,6 +405,32 @@ test('triplets include a visible group label and all display sizes keep their no
       assert.equal(plan.height, plans[0]?.height, `${size} rhythm symbols share one canvas height`);
       assert.equal(plan.notes[0]?.headWidth, firstNote.headWidth, `${size} rhythm symbols share one notehead width`);
       assert.equal(plan.notes[0]?.headHeight, firstNote.headHeight, `${size} rhythm symbols share one notehead height`);
+    }
+  }
+});
+
+test('picker symbols share one padded viewport and keep note stems at the same height', () => {
+  const subdivisions = [
+    'quarter', 'eighth', 'duplet', 'triplet', 'quadruplet', 'quintuplet', 'sextuplet',
+    'septuplet', 'octuplet', 'nonuplet', 'sixteenth', 'thirtySecond', 'sixtyFourth',
+  ] as const;
+  const plans = subdivisions.map((subdivision) => createNoteNotationPlan(subdivision, 'compact', '4/4', 52));
+  const stemTops = plans.map((plan) => plan.notes.reduce((total, note) => total + note.stemTop, 0) / plan.notes.length);
+  const expectedStemTop = stemTops[0];
+  assert.ok(expectedStemTop !== undefined);
+
+  for (const [index, plan] of plans.entries()) {
+    assert.equal(plan.width, 52, subdivisions[index]);
+    assert.equal(plan.height, 32, subdivisions[index]);
+    const stemTopRange = Math.max(...plan.notes.map((note) => note.stemTop)) - Math.min(...plan.notes.map((note) => note.stemTop));
+    assert.ok(stemTopRange < 1.5, `${subdivisions[index]} stems stay visually level`);
+    assert.ok(Math.abs((stemTops[index] ?? 0) - expectedStemTop) < 1.5, `${subdivisions[index]} stem height`);
+    assert.ok(plan.notes.every((note) => note.headTop + note.headHeight <= plan.height), `${subdivisions[index]} noteheads stay visible`);
+    assert.ok(plan.stemWidth <= 1.05, `${subdivisions[index]} stems use a light line weight`);
+    assert.ok(plan.beamThickness <= 1.5, `${subdivisions[index]} beams use a light line weight`);
+    for (const label of plan.tupletLabels) {
+      assert.ok(label.width >= label.fontSize + 8, `${subdivisions[index]} tuplet label has side padding`);
+      assert.ok(Math.abs(label.left + label.width / 2 - plan.width / 2) < 0.01, `${subdivisions[index]} tuplet number is centered`);
     }
   }
 });

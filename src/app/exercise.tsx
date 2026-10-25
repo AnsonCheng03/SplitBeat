@@ -618,7 +618,7 @@ function PatternPicker({ hand, selection, mixtures, timeSignature, onChange }: {
     <View style={{ flex: 1, minWidth: 0, padding: 12, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
       <Text style={{ color, fontSize: 9, fontWeight: '900', letterSpacing: 1 }}>{hand.toUpperCase()} HAND</Text>
       <PatternSelectionSymbol selection={selection} color={color} timeSignature={timeSignature} accessibilityLabel={patternSelectionLabel(selection, t)} selected />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {options.map((option) => (
           <PatternOptionButton
             key={option.key}
@@ -643,11 +643,38 @@ function PatternSelectionSymbol({ selection, color, timeSignature, accessibility
   accessibilityLabel: string;
   selected?: boolean;
 }) {
-  if (selection.mixture) {
-    return <MixtureSymbol mixtureId={selection.mixture} color={color} compact={!selected} maxWidth={selected ? 120 : 50} maxHeight={selected ? 38 : 30} accessibilityLabel={accessibilityLabel} />;
-  }
+  const symbolWidth = selected ? 120 : 52;
+  const symbolHeight = selected ? 38 : 30;
+  const slot = selected
+    ? { width: 132, height: 54, paddingHorizontal: 6, marginBottom: 8 }
+    : { width: 58, height: 36, paddingHorizontal: 3, marginBottom: 0 };
 
-  return <RhythmSymbol subdivision={selection.subdivision} color={color} timeSignature={timeSignature} compact={!selected} maxWidth={selected ? 120 : 50} maxHeight={selected ? 38 : 30} rest={selection.rest} />;
+  return (
+    <View style={{ width: slot.width, height: slot.height, marginBottom: slot.marginBottom, paddingHorizontal: slot.paddingHorizontal, alignItems: 'center', justifyContent: 'center' }}>
+      {selection.mixture ? (
+        <MixtureSymbol
+          mixtureId={selection.mixture}
+          color={color}
+          compact={!selected}
+          groupWidth={symbolWidth}
+          maxWidth={symbolWidth}
+          maxHeight={symbolHeight}
+          accessibilityLabel={accessibilityLabel}
+        />
+      ) : (
+        <RhythmSymbol
+          subdivision={selection.subdivision}
+          color={color}
+          timeSignature={timeSignature}
+          compact={!selected}
+          groupWidth={symbolWidth}
+          maxWidth={symbolWidth}
+          maxHeight={symbolHeight}
+          rest={selection.rest}
+        />
+      )}
+    </View>
+  );
 }
 
 function PatternOptionButton({ hand, optionKey, selection, timeSignature, color, selected, onPress }: {
@@ -671,9 +698,9 @@ function PatternOptionButton({ hand, optionKey, selection, timeSignature, color,
       accessibilityState={{ selected }}
       onPress={onPress}
       style={({ pressed }) => ({
-        minWidth: 62,
-        minHeight: 44,
-        paddingHorizontal: 7,
+        minWidth: 70,
+        minHeight: 52,
+        paddingHorizontal: 5,
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: 9,

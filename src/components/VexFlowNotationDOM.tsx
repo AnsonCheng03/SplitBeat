@@ -4,7 +4,7 @@ import { useLayoutEffect, useRef } from 'react';
 import { Beam, Renderer, Stave } from 'vexflow';
 import type { StaveNote } from 'vexflow';
 import type { NoteNotationPlan } from '@/rhythm/noteNotation';
-import { positionVexFlowNote } from '@/rhythm/vexFlowNotePlacement';
+import { alignVexFlowStemTop, positionVexFlowNote } from '@/rhythm/vexFlowNotePlacement';
 import { createVexFlowRhythmNote, createVexFlowRhythmTies } from '@/rhythm/vexFlowRhythmNote';
 
 interface VexFlowNotationDOMProps {
@@ -30,17 +30,16 @@ function drawNotation(container: HTMLDivElement, plan: NoteNotationPlan, color: 
     line_config: Array.from({ length: 5 }, () => ({ visible: false })),
   });
   const targetHeadWidth = plan.notes[0]?.headWidth ?? 8;
-  const glyphScale = Math.max(12, Math.min(56, targetHeadWidth / 0.306));
-  const beamTop = plan.beams
-    .filter((beam) => beam.kind === 'beam' && beam.level === 0)
-    .reduce((top, beam) => Math.min(top, beam.top), plan.height * 0.28);
-  const stemLength = Math.max(12, Math.min(60, noteCenterY - beamTop));
+  const glyphScale = Math.max(8, Math.min(56, targetHeadWidth / 0.306));
+  const stemTop = plan.notes[0]?.stemTop ?? plan.height * 0.28;
+  const stemLength = Math.max(8, Math.min(60, noteCenterY - stemTop));
 
   const notes = plan.events.map((event, index) => {
     const shape = plan.notes[index];
     if (!shape) throw new Error(`Missing engraved note geometry for event ${index + 1}.`);
 
     const note = createVexFlowRhythmNote(event, { color, glyphScale, stemLength, rest: restSymbol });
+    note.setStemStyle({ fillStyle: color, strokeStyle: color, lineWidth: plan.stemWidth });
     note.setStave(stave);
     const centerX = shape.left + shape.headWidth / 2;
     positionVexFlowNote(note, centerX);
@@ -66,11 +65,19 @@ function drawNotation(container: HTMLDivElement, plan: NoteNotationPlan, color: 
       if (group.length > 1) groups.push(group);
       return groups.map((beamNotes) => {
         const beam = new Beam(beamNotes, false);
+        beam.render_options.beam_width = plan.beamThickness;
+        beam.render_options.flat_beams = true;
+        beam.render_options.flat_beam_offset = plan.notes[beamShape.startIndex]?.stemTop ?? stemTop;
         beam.setStyle({ fillStyle: color, strokeStyle: color });
         beam.setContext(context);
         return beam;
       });
     });
+
+  notes.forEach((note, index) => {
+    const shape = plan.notes[index];
+    if (shape) alignVexFlowStemTop(note, shape.stemTop);
+  });
 
   const ties = restSymbol ? [] : createVexFlowRhythmTies(notes, plan.events);
 

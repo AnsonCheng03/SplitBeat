@@ -40,12 +40,18 @@ export function MixtureSymbol({
     ? Math.min(112, Math.max(58, pattern.atoms.length * 7))
     : Math.min(220, Math.max(82, pattern.atoms.length * 12));
   const noteEvents = useMemo(() => mixtureNotationEvents(pattern), [pattern]);
+  const symbolWidth = groupWidth ?? notationWidth;
+  const shortestEvent = noteEvents.reduce((shortest, event) => Math.min(shortest, event.durationQuarter), pattern.durationQuarter);
+  const noteSpacing = symbolWidth * shortestEvent / pattern.durationQuarter;
+  const baseHeadWidth = size === 'mini' ? 4.2 : size === 'compact' ? 7 : 9.2;
+  const noteHeadWidth = Math.max(size === 'full' ? 3.4 : 2.4, Math.min(baseHeadWidth, noteSpacing * 0.72));
   const plan = useMemo(() => createRhythmSymbolNotationPlan(noteEvents, {
     durationQuarter: pattern.durationQuarter,
-    width: groupWidth ?? notationWidth,
+    width: symbolWidth,
     size,
+    noteHeadWidth,
     beamGroupQuarterNotes: pattern.durationQuarter,
-  }), [groupWidth, notationWidth, noteEvents, pattern.durationQuarter, size]);
+  }), [noteEvents, noteHeadWidth, pattern.durationQuarter, size, symbolWidth]);
   const fittedScale = fitNotationScale(plan.width, plan.height, scale, maxWidth, maxHeight);
 
   return (

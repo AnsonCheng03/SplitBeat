@@ -12,3 +12,13 @@ export function positionVexFlowNote(note: StaveNote, centerX: number): TickConte
 
   return tickContext;
 }
+
+/** Apply a measured top position after the note has been placed on its stave. */
+export function alignVexFlowStemTop(note: StaveNote, topY: number): void {
+  if (!Number.isFinite(topY)) throw new RangeError('A stem top must be finite.');
+  if (!note.hasStem()) return;
+
+  const stemBaseY = note.getStemExtents().baseY;
+  note.setStemLength(stemBaseY - topY);
+  note.getStem()?.setExtension(note.getStemExtension());
+}
