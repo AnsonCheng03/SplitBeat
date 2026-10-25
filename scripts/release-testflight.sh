@@ -34,7 +34,12 @@ if [[ -n "$auth_key_id$auth_issuer_id$auth_key_path" ]]; then
 fi
 
 app_version="$(node -p "require('./app.json').expo.version")"
-build_number="$(node -p "require('./app.json').expo.ios.buildNumber")"
+configured_build_number="$(node -p "require('./app.json').expo.ios.buildNumber")"
+build_number="${SPLITBEAT_BUILD_NUMBER:-$configured_build_number}"
+if [[ ! "$build_number" =~ ^[0-9]+([.][0-9]+){0,2}$ ]]; then
+  echo "The iOS build number must contain one to three numeric components: $build_number" >&2
+  exit 1
+fi
 team_id="$(node -p "require('./app.json').expo.ios.appleTeamId")"
 bundle_id="$(node -p "require('./app.json').expo.ios.bundleIdentifier")"
 archive_path="${SPLITBEAT_ARCHIVE_PATH:-/private/tmp/SplitBeat-TestFlight-${app_version}-${build_number}.xcarchive}"
@@ -53,8 +58,14 @@ trap cleanup_release_files EXIT
 
 if [[ ! -e "$archive_path" ]]; then
   available_kb="$(df -Pk /private/tmp | awk 'NR == 2 { print $4 }')"
-  if [[ ! "$available_kb" =~ ^[0-9]+$ ]] || (( available_kb < 20971520 )); then
-    echo "At least 20 GiB of free space is required for a local iOS Release archive." >&2
+  minimum_free_space_gib="${SPLITBEAT_MIN_FREE_SPACE_GIB:-20}"
+  if [[ ! "$minimum_free_space_gib" =~ ^[0-9]+$ ]]; then
+    echo "SPLITBEAT_MIN_FREE_SPACE_GIB must be a non-negative integer." >&2
+    exit 1
+  fi
+  minimum_free_space_kb=$((minimum_free_space_gib * 1024 * 1024))
+  if [[ ! "$available_kb" =~ ^[0-9]+$ ]] || (( available_kb < minimum_free_space_kb )); then
+    echo "At least ${minimum_free_space_gib} GiB of free space is required for an iOS Release archive." >&2
     echo "Current free space on /private/tmp: ${available_kb:-unknown} KiB." >&2
     exit 1
   fi

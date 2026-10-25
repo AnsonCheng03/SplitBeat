@@ -36,15 +36,17 @@ An iOS build can also be offered on Apple silicon Macs as an iPhone/iPad app. Th
 
 ## iOS release and TestFlight
 
-TestFlight builds use a local Xcode archive and upload, following TechQ's `release:testflight` workflow. This does not use EAS Build. On the Mac, sign in to Xcode with the Apple Developer account for team `538FVU496F`, then run:
+TestFlight builds use a local Xcode archive and upload, following TechQ's `release:testflight` workflow. This does not use EAS Build. Every GitHub push runs the type check, lint, and unit tests, then archives and uploads a uniquely numbered iOS build to TestFlight. A failed check blocks the upload. The release uses GitHub Actions on the Xcode 27 macOS runner and does not need an interactive Xcode login on the Mac.
 
 ~~~sh
-npm run release:testflight
+npm run release:testflight # optional local archive/upload using the saved API key
 ~~~
 
-This requires macOS, Xcode, CocoaPods, and at least 20 GiB free on `/private/tmp`. To create and validate an archive without uploading it, run `npm run ios:archive`; set `SPLITBEAT_ARCHIVE_PATH` to choose another `.xcarchive` location. The archive is retained if signing or upload fails.
+The GitHub repository must have these encrypted **Actions repository secrets**: `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID`, and `ASC_API_KEY_P8`. The `.p8` key is written only to the runner's temporary directory during upload and removed when the step ends. Repository collaborators who can change or run workflows can use these secrets; keep workflow changes reviewed and revoke/replace the App Store Connect key if access changes. The key is a Team Admin API key so Xcode can manage the team's signing assets non-interactively.
 
-The release script uses Xcode automatic signing with the configured Apple team. It can also use an App Store Connect API key when `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID`, and optionally `ASC_API_KEY_PATH` are set; the default key location is `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8`. Keep API keys out of the repository. The configured iOS build number is `14`; increment `ios.buildNumber` in `app.json` for each subsequent upload. Before archiving, the release script adds a final app build phase that writes the app's iOS deployment target into the embedded Hermes framework's `MinimumOSVersion`, then checks that the archived Hermes plist contains a non-empty value before attempting an upload.
+For a local upload, keep the API key at `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8` and set `ASC_API_KEY_ID` and `ASC_API_ISSUER_ID`; no Xcode account sign-in is needed. Set `SPLITBEAT_BUILD_NUMBER` to a new build number when uploading locally after a GitHub build. To create and validate an archive without uploading it, run `npm run ios:archive`; set `SPLITBEAT_ARCHIVE_PATH` to choose another `.xcarchive` location. The default local free-space preflight is 20 GiB and can be adjusted with `SPLITBEAT_MIN_FREE_SPACE_GIB`. The archive is retained if signing or upload fails.
+
+The workflow assigns a numeric three-part build number from the workflow run and attempt, starting after the already uploaded build 15, so a retry does not reuse an already uploaded build. The release script uses Xcode automatic signing with the configured Apple team. Before archiving, it adds a final app build phase that writes the app's iOS deployment target into the embedded Hermes framework's `MinimumOSVersion`, then checks that the archived Hermes plist contains a non-empty value before attempting an upload.
 
 The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.plist` is checked for `ITSAppUsesNonExemptEncryption=false` and for absence of a microphone purpose string before upload. The app synthesizes sound and does not use the microphone. App Store Connect still processes each accepted upload before it appears in TestFlight.
 
