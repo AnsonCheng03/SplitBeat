@@ -4,6 +4,7 @@ import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
 import { createBarNoteNotationPlan, createSharedBarNoteAnchorInsets, type NoteNotationSize } from '@/rhythm/noteNotation';
+import { scoreBarWidth } from '@/rhythm/scoreLayout';
 import { scoreNotationEvents } from '@/rhythm/scoreStaff';
 import type { ScoreRhythmEvent, ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
 import type { Hand } from '@/types/rhythm';
@@ -348,7 +349,7 @@ export function ScrollingScoreRhythm({
   const [translateX] = useState(() => new Animated.Value(0));
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
   const visibleSequenceRef = useRef(sequence);
-  const barWidth = viewportWidth > 0 ? Math.max(160, Math.min(320, viewportWidth / 3)) : 0;
+  const barWidth = scoreBarWidth(viewportWidth, count);
   const initialNotationWidth = Math.max(0, barWidth - 8);
   const followingMeasures = upcomingMeasures?.length ? upcomingMeasures : [measure, nextMeasure];
   const upcomingBars = followingMeasures.map((item, offset) => scoreBar(item, count, sequence + offset));
