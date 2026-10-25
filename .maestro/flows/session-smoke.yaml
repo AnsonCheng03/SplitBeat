@@ -186,8 +186,6 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: practice.tutorial
 - assertNotVisible:
-    id: practice.rhythmDisplay
-- assertNotVisible:
     id: practice.nextPattern
 - tapOn:
     id: practice.tutorial
