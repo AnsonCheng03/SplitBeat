@@ -129,6 +129,7 @@ if [[ ! -e "$archive_path" ]]; then
   fi
   xcodebuild_args+=(
     CODE_SIGN_STYLE=Automatic
+    'CODE_SIGN_IDENTITY=Apple Distribution'
     DEVELOPMENT_TEAM="$team_id"
     MARKETING_VERSION="$app_version"
     CURRENT_PROJECT_VERSION="$build_number"
