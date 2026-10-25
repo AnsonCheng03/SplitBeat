@@ -411,6 +411,40 @@ export const LEARN_COURSE: readonly LearnLesson[] = AUTHORED_LEARN_COURSE.map((l
   };
 });
 
+function fnv1a32(value: string, seed: number): number {
+  let hash = seed >>> 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = Math.imul(hash ^ value.charCodeAt(index), 0x01000193) >>> 0;
+  }
+  return hash;
+}
+
+function stableSerialize(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableSerialize).join(',')}]`;
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    const entries = Object.keys(record)
+      .filter((key) => record[key] !== undefined)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${stableSerialize(record[key])}`);
+    return `{${entries.join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
+}
+
+function createCourseRevision(serialized: string): string {
+  const forwardHash = fnv1a32(serialized, 0x811c9dc5).toString(16).padStart(8, '0');
+  const reverseHash = fnv1a32([...serialized].reverse().join(''), 0x9747b28c).toString(16).padStart(8, '0');
+  return `r-${forwardHash}${reverseHash}`;
+}
+
+/** Fingerprints the full course definition so saves never cross content revisions. */
+export function learnCourseContentRevision(lessons: readonly LearnLesson[]): string {
+  return createCourseRevision(stableSerialize(lessons));
+}
+
+export const LEARN_COURSE_REVISION = learnCourseContentRevision(LEARN_COURSE);
+
 export function lessonOffersHandSwaps(
   lesson: Pick<LearnLesson, 'trainingMode' | 'patternPairs'>,
 ): boolean {

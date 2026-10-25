@@ -21,7 +21,11 @@ import { getMixturePattern } from '@/rhythm/mixtures';
 import { SUBDIVISION_LABELS, timeSignatureMetrics } from '@/rhythm/subdivisions';
 import { replayPatternsForPractice } from '@/rhythm/targetedPractice';
 import { createSessionDiagnosticLog } from '@/rhythm/sessionDiagnostic';
-import { completeLearnLesson, recordLearnLessonResult } from '@/store/learnProgress';
+import {
+  completeLearnLesson,
+  recordLearnLessonResult,
+  syncLearnProgressIfEnabled,
+} from '@/store/learnProgress';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { HandStats, MixturePatternId, MissedEvent, ReplayPattern, ReplayTap, RhythmicFeel, SessionResults, Subdivision } from '@/types/rhythm';
@@ -455,6 +459,7 @@ export default function ResultsScreen() {
     ]).then(([completedIds, rating]) => {
       setLessonCompleted(completedIds.includes(courseLesson.id));
       setLessonRating(rating);
+      void syncLearnProgressIfEnabled().catch(() => {});
     });
   }, [courseLesson, lessonAccuracy, results]);
 
@@ -696,7 +701,7 @@ export default function ResultsScreen() {
           </View>
         )}
 
-        {featureFlags.gameCenter && viewResults.challengeMode ? (
+        {featureFlags.gameCenter && viewResults.challengeMode && !courseLesson ? (
           <GameCenterChallengeCard
             testID="results.gameCenter"
             challengeMode

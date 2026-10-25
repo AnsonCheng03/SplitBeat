@@ -12,6 +12,8 @@ interface GameCenterNativeModule {
   getStatus: () => GameCenterStatus;
   authenticate: () => void;
   submitLongestStreak: (score: number) => Promise<void>;
+  loadLearnCourseProgress: (revision: string) => Promise<string[]>;
+  saveLearnCourseProgress: (revision: string, installId: string, snapshot: string) => Promise<void>;
   showLeaderboard: () => boolean;
   addListener: (
     eventName: 'onAuthenticationChanged',
@@ -45,6 +47,20 @@ export function subscribeToGameCenterStatus(
 export async function submitLongestStreak(score: number): Promise<void> {
   if (!nativeModule) throw new Error('Game Center is not available on this platform.');
   await nativeModule.submitLongestStreak(score);
+}
+
+export async function loadLearnCourseProgress(revision: string): Promise<string[]> {
+  if (!nativeModule) throw new Error('Game Center is not available on this platform.');
+  return nativeModule.loadLearnCourseProgress(revision);
+}
+
+export async function saveLearnCourseProgress(
+  revision: string,
+  installId: string,
+  snapshot: string,
+): Promise<void> {
+  if (!nativeModule) throw new Error('Game Center is not available on this platform.');
+  await nativeModule.saveLearnCourseProgress(revision, installId, snapshot);
 }
 
 export function showGameCenterLeaderboard(): void {

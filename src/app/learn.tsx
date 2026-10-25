@@ -18,7 +18,13 @@ import {
 import { starsForAccuracy, totalLearnStars } from '@/rhythm/learnRating';
 import { requiresLearnCourseUnlock } from '@/rhythm/learnCourseAccess';
 import { useLearnCoursePurchase } from '@/hooks/useLearnCoursePurchase';
-import { readLearnProgress, readLearnRatings } from '@/store/learnProgress';
+import {
+  readLearnProgress,
+  readLearnRatings,
+  syncLearnProgressIfEnabled,
+} from '@/store/learnProgress';
+import { GameCenterCourseProgressButton } from '@/components/GameCenterCourseProgressButton';
+import type { LearnCourseProgressSnapshot } from '@/rhythm/learnProgressSync';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { LearnLesson } from '@/rhythm/learnCourse';
@@ -276,6 +282,18 @@ export default function LearnScreen() {
       setSelectedLessonId(selection.id);
       setProgressLoaded(true);
     });
+    void syncLearnProgressIfEnabled().then(async () => {
+      if (!active) return;
+      const [completed, ratings] = await Promise.all([readLearnProgress(), readLearnRatings()]);
+      if (!active) return;
+      setCompletedLessonIds(completed);
+      setLessonRatings(ratings);
+      setSelectedLessonId((current) => (
+        completed.includes(current)
+          ? LEARN_COURSE.find((lesson) => !completed.includes(lesson.id))?.id ?? LEARN_COURSE.at(-1)!.id
+          : current
+      ));
+    }).catch(() => {});
     return () => {
       active = false;
     };
@@ -312,6 +330,16 @@ export default function LearnScreen() {
       setStarting(false);
     }
   };
+
+  const handleProgressSynced = useCallback((snapshot: LearnCourseProgressSnapshot) => {
+    setCompletedLessonIds(snapshot.completedLessonIds);
+    setLessonRatings(snapshot.ratings);
+    const requested = LEARN_COURSE.find((lesson) => lesson.id === routeLessonId);
+    const nextLesson = LEARN_COURSE.find((lesson) => !snapshot.completedLessonIds.includes(lesson.id));
+    setSelectedLessonId((requested && !snapshot.completedLessonIds.includes(requested.id)
+      ? requested
+      : nextLesson ?? LEARN_COURSE.at(-1)!).id);
+  }, [routeLessonId]);
 
   return (
     <FullBleedSafeArea
@@ -384,6 +412,9 @@ export default function LearnScreen() {
               </Text>
             </Pressable>
           )}
+          {featureFlags.gameCenter ? (
+            <GameCenterCourseProgressButton onProgressSynced={handleProgressSynced} />
+          ) : null}
         </View>
 
         <View style={{ marginTop: compact ? 14 : 23 }}>

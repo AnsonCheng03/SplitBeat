@@ -17,6 +17,7 @@
       "expo-router",
       "./plugins/withSplitBeatBranding",
       "./plugins/withSplitBeatHardwareKeyboard",
+      "./plugins/withICloudCapability",
       [
         "expo-build-properties",
         {
@@ -54,7 +55,16 @@
       },
       "bundleIdentifier": "com.splitbeat.twohandrhythm",
       "entitlements": {
-        "com.apple.developer.game-center": true
+        "com.apple.developer.game-center": true,
+        "com.apple.developer.icloud-container-identifiers": [
+          "iCloud.com.splitbeat.twohandrhythm"
+        ],
+        "com.apple.developer.icloud-services": [
+          "CloudDocuments"
+        ],
+        "com.apple.developer.ubiquity-container-identifiers": [
+          "iCloud.com.splitbeat.twohandrhythm"
+        ]
       }
     },
     "android": {
