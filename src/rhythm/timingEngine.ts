@@ -299,6 +299,15 @@ export class RhythmTimingEngine {
     this.resumeAt = now + Math.max(0, durationMs);
   }
 
+  cancelResumeCountIn(now: number): void {
+    if (this.resumeAt === null) return;
+    if (now >= this.resumeAt) {
+      this.completeResumeCountIn(now);
+      return;
+    }
+    this.resumeAt = null;
+  }
+
   takeChallengeOutcomes(): ChallengeOutcome[] {
     const outcomes = this.challengeOutcomes.splice(0);
     return outcomes.sort(

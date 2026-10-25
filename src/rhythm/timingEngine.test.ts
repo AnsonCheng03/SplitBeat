@@ -1227,6 +1227,30 @@ test('continuing resumes after a half-bar count-in and preserves the paused beat
   assert.equal(engine.tap('left', start + 11_080), 'hit');
 });
 
+test('canceling a resume count-in keeps the exercise paused for backgrounding', () => {
+  const start = 92_000;
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, enabledSubdivisions: ['quarter'], trainingMode: 'single-hand', singleHand: 'left' },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+
+  assert.equal(engine.tap('left', start), 'hit');
+  engine.pause(start + 500);
+  engine.beginResumeCountIn(start + 8_500, 2_080);
+  engine.cancelResumeCountIn(start + 9_000);
+
+  assert.equal(engine.isPaused(), true);
+  assert.equal(engine.advance(start + 10_000).resumeCountIn, undefined);
+  assert.equal(engine.tap('left', start + 10_000), 'ignored');
+
+  engine.beginResumeCountIn(start + 12_000, 1_040);
+  const resumed = engine.advance(start + 13_040);
+  assert.equal(resumed.resumeCountIn, undefined);
+  assert.equal(resumed.beatIndex, 0);
+  assert.equal(engine.isPaused(), false);
+});
+
 test('typed score rests remain visible notation but do not create expected taps', () => {
   const score: ImportedRhythmScore = {
     formatVersion: 1,

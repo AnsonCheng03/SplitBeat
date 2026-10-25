@@ -545,8 +545,9 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
 
   const pauseExercise = useCallback(() => {
     const engine = engineRef.current;
-    if (!engine || snapshot?.phase === 'paused' || snapshot?.phase === 'finished' || snapshot?.resumeCountIn) return;
+    if (!engine || snapshot?.phase === 'paused' || snapshot?.phase === 'finished') return;
     const now = monotonicNow();
+    if (snapshot?.resumeCountIn) engine.cancelResumeCountIn(now);
     engine.pause(now);
     const pausedSnapshot = engine.advance(now);
     if (pausedSnapshot.phase === 'finished') {

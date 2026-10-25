@@ -1,8 +1,8 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Slider from '@react-native-community/slider';
 import { BlurTargetView } from 'expo-blur';
-import { Alert, Pressable, useWindowDimensions, View } from 'react-native';
+import { Alert, AppState, Pressable, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -67,6 +67,13 @@ export default function PracticeScreen() {
   const blurTargetRef = useRef<View>(null);
   const hasStartedExitRef = useRef(false);
   const swingWarningDismissedRef = useRef(false);
+  const lifecyclePhaseRef = useRef(snapshot?.phase);
+  const pauseExerciseRef = useRef(pauseExercise);
+  const appStateRef = useRef(AppState.currentState);
+  useLayoutEffect(() => {
+    lifecyclePhaseRef.current = snapshot?.phase;
+    pauseExerciseRef.current = pauseExercise;
+  });
   const [endingVisible, setEndingVisible] = useState(false);
   const [tutorialVisible, setTutorialVisible] = useState(true);
   const [starting, setStarting] = useState(false);
@@ -79,6 +86,24 @@ export default function PracticeScreen() {
     left: { token: 0, feedback: null },
     right: { token: 0, feedback: null },
   });
+
+  useFocusEffect(useCallback(() => {
+    appStateRef.current = AppState.currentState;
+    const pauseActiveSession = () => {
+      const phase = lifecyclePhaseRef.current;
+      if (phase === 'running' || phase === 'countdown') pauseExerciseRef.current();
+    };
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      const previousState = appStateRef.current;
+      appStateRef.current = nextState;
+      if (previousState === 'active' && nextState !== 'active') pauseActiveSession();
+    });
+
+    return () => {
+      subscription.remove();
+      pauseActiveSession();
+    };
+  }, []));
 
   const showEnding = useCallback(() => {
     if (hasStartedExitRef.current) return;
@@ -514,7 +539,7 @@ export default function PracticeScreen() {
             testID="practice.pause"
             accessibilityRole="button"
             accessibilityLabel={t('Pause practice')}
-            disabled={!snapshot || snapshot.phase === 'paused' || snapshot.phase === 'finished' || snapshot.resumeCountIn}
+            disabled={!snapshot || snapshot.phase === 'paused' || snapshot.phase === 'finished'}
             onPress={openPauseMenu}
             hitSlop={12}
           >
