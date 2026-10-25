@@ -219,7 +219,7 @@ export default function PracticeScreen() {
   const focusedHand = activeSettings.singleHand;
   const scoreContentMargin = Math.max(16, insets.left + 18, insets.right + 18);
   const initialScoreContentWidth = Math.max(0, width - scoreContentMargin * 2);
-  const initialScoreViewportWidth = Math.max(0, initialScoreContentWidth - 52);
+  const initialScoreViewportWidth = initialScoreContentWidth;
   const initialScoreFocusWidth = Math.min(620, initialScoreContentWidth * (singleHandMode ? 0.76 : 0.38));
   const notationMaxWidth = width * (singleHandMode ? 0.82 : 0.42);
   const notationScale = singleHandMode ? 3.1 : 2.5;

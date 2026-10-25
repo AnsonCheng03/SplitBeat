@@ -4,7 +4,7 @@ import { NoteNotation } from '@/components/NoteNotation';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { createBarNoteNotationPlan } from '@/rhythm/noteNotation';
-import { centerScoreBeatEvents, scoreBeatEvents, scoreNotationEvents } from '@/rhythm/scoreStaff';
+import { centerScoreBeatEvents, scoreBeatEvents, scoreNotationEventsForSpan } from '@/rhythm/scoreStaff';
 import type { ScoreRhythmMeasure, ScoreRhythmEvent } from '@/types/importedScore';
 import type { Hand } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -43,9 +43,10 @@ function eventLabel(event: ScoreRhythmEvent): string {
 }
 
 function scoreBeatLabel(events: readonly ScoreRhythmEvent[], t: (source: string) => string): string {
-  if (events.length === 0) return t('Rest');
+  const visibleEvents = events.filter((event) => !event.isRest && !event.isCrossBarTieContinuation);
+  if (visibleEvents.length === 0) return '';
   const counts = new Map<string, number>();
-  events.forEach((event) => {
+  visibleEvents.forEach((event) => {
     const label = eventLabel(event);
     counts.set(label, (counts.get(label) ?? 0) + 1);
   });
@@ -88,12 +89,7 @@ export function ScoreBeatFocus({
     () => oneHand ? centerScoreBeatEvents(events, beatDurationQuarter) : events,
     [beatDurationQuarter, events, oneHand],
   );
-  const notes = useMemo(
-    () => scoreNotationEvents(notationEvents).map((notationEvent, index) =>
-      notationEvents[index]?.isCrossBarTieContinuation ? { ...notationEvent, isRest: true } : notationEvent,
-    ),
-    [notationEvents],
-  );
+  const notes = useMemo(() => scoreNotationEventsForSpan(notationEvents, beatDurationQuarter), [beatDurationQuarter, notationEvents]);
   const plan = useMemo(() => notes.length > 0 && notationWidth > 0
     ? createBarNoteNotationPlan(notes, {
       durationQuarter: beatDurationQuarter,
@@ -103,12 +99,13 @@ export function ScoreBeatFocus({
     })
     : null,
   [beatDurationQuarter, notes, notationScale, notationWidth]);
+  const visualBeatLabel = scoreBeatLabel(events, t);
   return (
     <View
       testID={`practice.scoreBeat.${hand}`}
       accessibilityLabel={t('{hand} rhythm for this beat: {pattern}', {
         hand: t(hand),
-        pattern: scoreBeatLabel(events, t),
+        pattern: visualBeatLabel || t('Rest'),
       })}
       style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: compact ? 7 : 11 }}
     >
@@ -126,18 +123,17 @@ export function ScoreBeatFocus({
             </View>
           </View>
         ) : null}
-        {!plan ? (
-          <Text style={{ color, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 1.3 }}>{t('REST')}</Text>
-        ) : null}
       </View>
-      <Text
-        numberOfLines={2}
-        adjustsFontSizeToFit
-        minimumFontScale={0.65}
-        style={{ width: '88%', color: colors.text, fontSize: compact ? 12 : 16, lineHeight: compact ? 16 : 20, fontWeight: '800', textAlign: 'center' }}
-      >
-        {scoreBeatLabel(events, t)}
-      </Text>
+      {visualBeatLabel ? (
+        <Text
+          numberOfLines={2}
+          adjustsFontSizeToFit
+          minimumFontScale={0.65}
+          style={{ width: '88%', color: colors.text, fontSize: compact ? 12 : 16, lineHeight: compact ? 16 : 20, fontWeight: '800', textAlign: 'center' }}
+        >
+          {visualBeatLabel}
+        </Text>
+      ) : null}
     </View>
   );
 }

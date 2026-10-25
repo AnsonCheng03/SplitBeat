@@ -51,11 +51,29 @@ export function scoreNotationEvents(events: readonly ScoreRhythmEvent[]): NoteNo
   return events.map((event) => ({
     startQuarter: event.startQuarter,
     durationQuarter: event.notationDurationQuarter ?? event.durationQuarter,
-    ...(event.isRest ? { isRest: true } : {}),
+    ...(event.isRest || event.isCrossBarTieContinuation ? { isRest: true } : {}),
     ...(event.tupletNumber === undefined ? {} : { tupletNumber: event.tupletNumber }),
     ...(event.tieToNext ? { tieToNext: true } : {}),
     ...(event.tieFromPrevious ? { tieFromPrevious: true } : {}),
   }));
+}
+
+const SCORE_REST_DURATIONS = [4, 3, 2, 1.5, 1, 0.75, 0.5, 0.375, 0.25, 0.1875, 0.125, 0.09375, 0.0625] as const;
+
+/** Keep an otherwise empty score span visible as one centered, engraved rest glyph. */
+export function scoreNotationEventsForSpan(
+  events: readonly ScoreRhythmEvent[],
+  spanQuarter: number,
+): NoteNotationEvent[] {
+  const notationEvents = scoreNotationEvents(events);
+  if (notationEvents.length > 0 || !Number.isFinite(spanQuarter) || spanQuarter <= 0) return notationEvents;
+
+  const restDurationQuarter = SCORE_REST_DURATIONS.find((duration) => duration <= spanQuarter + 0.000001) ?? spanQuarter;
+  return [{
+    startQuarter: spanQuarter / 2,
+    durationQuarter: restDurationQuarter,
+    isRest: true,
+  }];
 }
 
 /** Centers a beat's note onsets in a single-hand notation lane without changing their spacing. */

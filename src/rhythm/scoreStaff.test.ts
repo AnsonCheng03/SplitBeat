@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { centerScoreBeatEvents, findNextScoreEvent, scoreBeatEvents, scoreHandPresence, scoreNotationEvents, scoreTrainingMode } from '@/rhythm/scoreStaff';
+import { centerScoreBeatEvents, findNextScoreEvent, scoreBeatEvents, scoreHandPresence, scoreNotationEvents, scoreNotationEventsForSpan, scoreTrainingMode } from '@/rhythm/scoreStaff';
 import type { ImportedRhythmScore, ScoreRhythmMeasure } from '@/types/importedScore';
 
 const firstBar: ScoreRhythmMeasure = {
@@ -135,8 +135,25 @@ test('staff notation preserves explicit rests for library engraving', () => {
   assert.deepEqual(scoreNotationEvents([
     { startQuarter: 0, durationQuarter: 1, isRest: true },
     { startQuarter: 1, durationQuarter: 1 },
+    { startQuarter: 2, durationQuarter: 1, isCrossBarTieContinuation: true, tieFromPrevious: true },
   ]), [
     { startQuarter: 0, durationQuarter: 1, isRest: true },
     { startQuarter: 1, durationQuarter: 1 },
+    { startQuarter: 2, durationQuarter: 1, isRest: true, tieFromPrevious: true },
+  ]);
+});
+
+test('score spans with no events render a centered rest glyph using a supported duration', () => {
+  assert.deepEqual(scoreNotationEventsForSpan([], 1.5), [
+    { startQuarter: 0.75, durationQuarter: 1.5, isRest: true },
+  ]);
+  assert.deepEqual(scoreNotationEventsForSpan([], 3), [
+    { startQuarter: 1.5, durationQuarter: 3, isRest: true },
+  ]);
+  assert.deepEqual(scoreNotationEventsForSpan([], 5), [
+    { startQuarter: 2.5, durationQuarter: 4, isRest: true },
+  ]);
+  assert.deepEqual(scoreNotationEventsForSpan([{ startQuarter: 0, durationQuarter: 1 }], 4), [
+    { startQuarter: 0, durationQuarter: 1 },
   ]);
 });
