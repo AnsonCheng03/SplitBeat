@@ -82,6 +82,7 @@ if [[ ! -e "$archive_path" ]]; then
     echo "Expo prebuild did not generate the app Info.plist." >&2
     exit 1
   fi
+  node scripts/prepare-ios-release-signing.mjs "$(find ios -maxdepth 1 -type d -name '*.xcodeproj' -print -quit)/project.pbxproj"
   info_plist_backup="$release_dir/Info.plist.original"
   cp "$generated_info_plist" "$info_plist_backup"
   /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $build_number" "$generated_info_plist"
@@ -129,7 +130,6 @@ if [[ ! -e "$archive_path" ]]; then
   fi
   xcodebuild_args+=(
     CODE_SIGN_STYLE=Automatic
-    'CODE_SIGN_IDENTITY=Apple Distribution'
     DEVELOPMENT_TEAM="$team_id"
     MARKETING_VERSION="$app_version"
     CURRENT_PROJECT_VERSION="$build_number"

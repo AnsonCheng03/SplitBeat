@@ -36,7 +36,7 @@ An iOS build can also be offered on Apple silicon Macs as an iPhone/iPad app. Th
 
 ## iOS release and TestFlight
 
-TestFlight builds use a local Xcode archive and upload, following TechQ's `release:testflight` workflow. This does not use EAS Build. Every GitHub push runs the type check, lint, and unit tests, then archives and uploads a uniquely numbered iOS build to TestFlight. A failed check blocks the upload. The release uses GitHub Actions on the Xcode 27 macOS runner and does not need an interactive Xcode login on the Mac.
+TestFlight builds use a local Xcode archive and upload, following TechQ's `release:testflight` workflow. This does not use EAS Build. Every GitHub push runs the type check, lint, and unit tests, then archives and uploads a uniquely numbered iOS build to TestFlight. A failed check blocks the upload. The release uses GitHub Actions on the Xcode 27 macOS runner and does not need an interactive Xcode login on the Mac. Before archiving, the release script removes Expo's legacy `iPhone Developer` identity overrides from the generated Xcode project so automatic signing can select App Store distribution credentials for the archive.
 
 ~~~sh
 npm run release:testflight # optional local archive/upload using the saved API key
