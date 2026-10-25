@@ -128,6 +128,85 @@ test('beams each composed bar in the selected simple or compound meter groups', 
   assert.deepEqual(compoundNotation.beams.filter(({ level }) => level === 0).map(({ startIndex, endIndex }) => [startIndex, endIndex]), [[0, 2], [3, 5]]);
 });
 
+test('mixed note combinations keep each beam group inside its 4/4 beat', () => {
+  const result = composeRhythmScore({
+    timeSignature: '4/4',
+    trainingMode: 'single-hand',
+    singleHand: 'left',
+    left: [
+      { durationQuarter: 0.75 }, { durationQuarter: 0.25 },
+      { durationQuarter: 0.5 }, { durationQuarter: 0.5 },
+      { durationQuarter: 0.5 }, { durationQuarter: 0.25 }, { durationQuarter: 0.25 },
+      { durationQuarter: 1 },
+    ],
+    right: [],
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+
+  const measure = result.score.measures[0]!;
+  assert.equal(measure.durationQuarter, 4);
+  assert.deepEqual(measure.leftEvents.map(({ startQuarter, durationQuarter }) => [startQuarter, durationQuarter]), [
+    [0, 0.75], [0.75, 0.25], [1, 0.5], [1.5, 0.5],
+    [2, 0.5], [2.5, 0.25], [2.75, 0.25], [3, 1],
+  ]);
+
+  const notation = createBarNoteNotationPlan(scoreNotationEvents(measure.leftEvents), {
+    durationQuarter: measure.durationQuarter,
+    width: 360,
+    beamGroupQuarterNotes: pulseQuarterNotes('4/4'),
+  });
+  const primaryBeamGroups = notation.beams
+    .filter(({ kind, level }) => kind === 'beam' && level === 0)
+    .map(({ startIndex, endIndex }) => [startIndex, endIndex]);
+
+  assert.deepEqual(primaryBeamGroups, [[0, 1], [2, 3], [4, 6]]);
+  for (const [startIndex, endIndex] of primaryBeamGroups) {
+    const first = notation.events[startIndex];
+    const last = notation.events[endIndex];
+    assert.ok(first && last);
+    assert.equal(Math.floor(first.startQuarter), Math.floor(last.startQuarter), 'a beam group must not cross a beat');
+  }
+});
+
+test('composed bars match beat counts across simple, half-note, and compound meters', () => {
+  const cases = [
+    ['2/4', 2], ['3/4', 3], ['4/4', 4], ['5/4', 5], ['7/4', 7],
+    ['2/2', 4], ['3/8', 1.5], ['6/8', 3], ['9/8', 4.5], ['12/8', 6],
+  ] as const;
+
+  for (const [timeSignature, expectedBarQuarterNotes] of cases) {
+    const oneBar = composeRhythmScore({
+      timeSignature,
+      trainingMode: 'single-hand',
+      singleHand: 'left',
+      left: [{ durationQuarter: expectedBarQuarterNotes }],
+      right: [],
+    });
+    assert.equal(oneBar.ok, true, `${timeSignature} should accept one complete bar`);
+    if (!oneBar.ok) continue;
+    assert.equal(oneBar.score.measures.length, 1, `${timeSignature} should end after one complete bar`);
+    assert.equal(oneBar.score.measures[0]?.durationQuarter, expectedBarQuarterNotes, `${timeSignature} bar duration`);
+    assert.equal(oneBar.score.totalQuarterNotes, expectedBarQuarterNotes, `${timeSignature} score duration`);
+
+    const crossingBarline = composeRhythmScore({
+      timeSignature,
+      trainingMode: 'single-hand',
+      singleHand: 'left',
+      left: [{ durationQuarter: expectedBarQuarterNotes }, { durationQuarter: 0.25 }],
+      right: [],
+    });
+    assert.equal(crossingBarline.ok, true, `${timeSignature} should start the next note on the next bar`);
+    if (!crossingBarline.ok) continue;
+    assert.deepEqual(
+      crossingBarline.score.measures.map(({ startQuarter, durationQuarter }) => [startQuarter, durationQuarter]),
+      [[0, expectedBarQuarterNotes], [expectedBarQuarterNotes, expectedBarQuarterNotes]],
+      `${timeSignature} measure starts and lengths`,
+    );
+  }
+});
+
 test('creates an implicit second bar when only one hand continues and rejects rest-only scores', () => {
   const score = composeRhythmScore({
     timeSignature: '3/4',

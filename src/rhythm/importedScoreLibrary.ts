@@ -30,6 +30,7 @@ function isScoreEvent(value: unknown): value is ScoreRhythmEvent {
     && (event.notationDurationQuarter === undefined || (finiteNumber(event.notationDurationQuarter)
       && event.notationDurationQuarter > 0
       && event.notationDurationQuarter <= event.durationQuarter + 0.000001))
+    && (event.isRest === undefined || typeof event.isRest === 'boolean')
     && (event.tieToNext === undefined || typeof event.tieToNext === 'boolean')
     && (event.tieFromPrevious === undefined || typeof event.tieFromPrevious === 'boolean')
     && (event.isTieContinuation === undefined || typeof event.isTieContinuation === 'boolean')

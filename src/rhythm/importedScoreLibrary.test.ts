@@ -36,7 +36,7 @@ test('stores a composed multi-bar score in the same saved score library', () => 
     totalQuarterNotes: 8,
     measures: [
       { index: 0, startQuarter: 0, durationQuarter: 4, leftEvents: [{ startQuarter: 0, durationQuarter: 4 }], rightEvents: [] },
-      { index: 1, startQuarter: 4, durationQuarter: 4, leftEvents: [{ startQuarter: 0, durationQuarter: 4 }], rightEvents: [] },
+      { index: 1, startQuarter: 4, durationQuarter: 4, leftEvents: [{ startQuarter: 0, durationQuarter: 4 }], rightEvents: [{ startQuarter: 1, durationQuarter: 1, isRest: true }] },
     ],
   }, 4);
   const remembered = rememberImportedScore([], composed);
@@ -45,6 +45,7 @@ test('stores a composed multi-bar score in the same saved score library', () => 
   assert.equal(restored[0]!.source, 'created');
   assert.equal(restored[0]!.saved, true);
   assert.equal(restored[0]!.score.measures.length, 2);
+  assert.equal(restored[0]!.score.measures[1]!.rightEvents[0]!.isRest, true);
 });
 
 test('parses saved score entries and discards malformed persisted values', () => {

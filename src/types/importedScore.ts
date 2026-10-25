@@ -11,7 +11,7 @@ export interface ScoreRhythmEvent {
   midiPitches?: number[];
   /** Actual note count in the MusicXML tuplet group, when explicitly marked. */
   tupletNumber?: number;
-  /** An explicit rest included in generated mixture notation. */
+  /** A written rest displayed in the score without creating an expected tap. */
   isRest?: boolean;
   /** This written segment is connected to the following segment by a tie. */
   tieToNext?: boolean;

@@ -24,6 +24,8 @@ appId: com.splitbeat.twohandrhythm
     id: home.activityPicker
 - tapOn:
     id: home.importScore
+- tapOn:
+    id: home.start
 - assertVisible:
     id: scoreImport.screen
 - assertVisible:
@@ -34,8 +36,9 @@ appId: com.splitbeat.twohandrhythm
     id: scoreImport.loadSample
 - assertVisible:
     id: scoreImport.summary
-- assertVisible: E2E Two Bar Score
-- assertVisible: 4 left-hand notes · 4 right-hand notes
+- assertVisible: 2 tracks · two hands · 4 bars · 4/4 · 60 BPM
+- assertVisible: E2E Mixed Rhythm
+- assertVisible: 33 left-hand notes · 46 right-hand notes
 - scrollUntilVisible:
     element: { id: scoreImport.display.staff }
     direction: DOWN
@@ -45,6 +48,8 @@ appId: com.splitbeat.twohandrhythm
     id: scoreImport.display.focus
 - tapOn:
     id: scoreImport.display.staff
+- assertVisible: left bar with 10 notes and 1 rest
+- takeScreenshot: imported-score-preview
 - scrollUntilVisible:
     element:
       id: scoreImport.start
@@ -68,19 +73,14 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: practice.scoreMeasure
 - assertVisible:
+    id: practice.scoreMeasure.barline.0
+- assertVisible:
+    id: practice.scoreMeasure.barline.1
+- assertVisible:
     id: practice.scoreMeasure.bar.0.leftNotation
 - assertVisible:
-    id: practice.scoreMeasure.bar.0.leftNotation.note.0
-- assertVisible:
     id: practice.scoreMeasure.bar.0.rightNotation
-- assertVisible:
-    id: practice.scoreMeasure.bar.0.rightNotation.note.0
-- assertVisible:
-    id: practice.scoreMeasure.bar.1.leftNotation.note.0
-- assertVisible:
-    id: practice.scoreMeasure.bar.1.rightNotation.note.0
-- assertNotVisible:
-    id: practice.scoreMeasure.bar.2.leftNotation.note.0
+- takeScreenshot: practice-score-combinations
 - assertVisible:
     id: practice.tap.left.label
 - assertVisible:
@@ -106,4 +106,4 @@ appId: com.splitbeat.twohandrhythm
       id: results.screen
     timeout: 15000
 - assertVisible: SCORE SESSION COMPLETE
-- assertVisible: 60 BPM · 2/4 · E2E Two Bar Score
+- assertVisible: 60 BPM · 4/4 · E2E Mixed Rhythm

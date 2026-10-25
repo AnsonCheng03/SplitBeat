@@ -64,6 +64,8 @@ function RhythmTrack({
     })
     : undefined, [alignedNotationEventGroups, durationQuarter, notationWidth, size]);
   const noteCount = useMemo(() => events.filter((event) => !event.isRest).length, [events]);
+  const restCount = events.length === 0 ? 1 : events.filter((event) => event.isRest).length;
+  const restDescription = t(restCount === 1 ? '{count} rest' : '{count} rests', { count: restCount });
   const plan = useMemo(() => notationWidth > 0
     ? createBarNoteNotationPlan(notationEvents, {
       durationQuarter,
@@ -89,10 +91,10 @@ function RhythmTrack({
               showStaffLines={showStaffLines}
               staffLineColor={colors.dim}
               testID={`${testIdPrefix}.${label.toLowerCase()}Notation`}
-              accessibilityLabel={t('{hand} bar with {notes} notes and {rests} rests', {
+              accessibilityLabel={t('{hand} bar with {notes} notes and {restDescription}', {
                 hand: t(label.toLowerCase()),
                 notes: noteCount,
-                rests: events.length === 0 ? 1 : events.filter((event) => event.isRest).length,
+                restDescription,
               })}
             />
           </View>

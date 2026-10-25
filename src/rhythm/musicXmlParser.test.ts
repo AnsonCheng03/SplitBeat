@@ -98,11 +98,16 @@ test('merges tied note durations without expecting a second tap', () => {
   );
 
   const score = parseMusicXmlRhythm(xml);
-  assert.equal(score.measures[0].rightEvents.length, 1);
-  assert.equal(score.measures[0].rightEvents[0].durationQuarter, 2);
-  assert.equal(score.measures[0].rightEvents[0].notationDurationQuarter, 1);
-  assert.equal(score.measures[0].rightEvents[0].tieToNext, true);
-  assert.deepEqual(score.measures[0].rightEvents[0].midiPitches, [60]);
+  assert.equal(score.measures[0].rightEvents.length, 2);
+  assert.deepEqual(score.measures[0].rightEvents[0], {
+    startQuarter: 0,
+    durationQuarter: 3,
+    isRest: true,
+  });
+  assert.equal(score.measures[0].rightEvents[1]?.durationQuarter, 2);
+  assert.equal(score.measures[0].rightEvents[1]?.notationDurationQuarter, 1);
+  assert.equal(score.measures[0].rightEvents[1]?.tieToNext, true);
+  assert.deepEqual(score.measures[0].rightEvents[1]?.midiPitches, [60]);
   assert.deepEqual(score.measures[1].rightEvents[0], {
     startQuarter: 0,
     durationQuarter: 1,

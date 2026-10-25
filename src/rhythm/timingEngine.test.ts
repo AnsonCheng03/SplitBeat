@@ -981,6 +981,28 @@ test('normal practice score notation is preloaded and advances at bar boundaries
   assert.equal(onBarLine.practiceScoreSequence, 1);
 });
 
+test('score bars advance after the configured number of metronome beats', () => {
+  const cases = [
+    { timeSignature: '4/4' as const, beatsPerBar: 4, barQuarterNotes: 4 },
+    { timeSignature: '6/8' as const, beatsPerBar: 2, barQuarterNotes: 3 },
+  ];
+
+  for (const { timeSignature, beatsPerBar, barQuarterNotes } of cases) {
+    const start = 51_000;
+    const engine = new RhythmTimingEngine({
+      settings: { ...settings, timeSignature, practiceDisplayMode: 'score' },
+      sessionStartTime: start,
+      random: () => 0,
+    });
+    const barDurationMs = beatsPerBar * beatDurationMs(60);
+
+    assert.equal(engine.advance(start + barDurationMs - 1).practiceScoreMeasure?.index, 0, `${timeSignature} remains in bar 1 before its final beat ends`);
+    const nextBar = engine.advance(start + barDurationMs);
+    assert.equal(nextBar.practiceScoreMeasure?.durationQuarter, barQuarterNotes, `${timeSignature} stores the full bar length`);
+    assert.equal(nextBar.practiceScoreMeasure?.index, 1, `${timeSignature} advances on the bar line`);
+  }
+});
+
 test('score taps return imported pitch while visual replay records expected note positions', () => {
   const start = 66_000;
   const importedScore: ImportedRhythmScore = {

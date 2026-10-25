@@ -289,6 +289,7 @@ function copyScoreEvent(event: ScoreRhythmEvent): ScoreRhythmEvent {
     ...(event.notationDurationQuarter === undefined ? {} : { notationDurationQuarter: event.notationDurationQuarter }),
     ...(event.midiPitches === undefined ? {} : { midiPitches: [...event.midiPitches] }),
     ...(event.tupletNumber === undefined ? {} : { tupletNumber: event.tupletNumber }),
+    ...(event.isRest ? { isRest: true } : {}),
     ...(event.tieToNext ? { tieToNext: true } : {}),
     ...(event.tieFromPrevious ? { tieFromPrevious: true } : {}),
     ...(event.isTieContinuation ? { isTieContinuation: true } : {}),
@@ -394,9 +395,16 @@ function scanStaff(
 
       if (!isChordTone) previousChordStartQuarter = cursorQuarter;
 
-      if (staff === selection.staff && !isRest) {
+      if (staff === selection.staff) {
         if (isGraceNote) {
           graceCount += 1;
+        } else if (isRest) {
+          events.push({
+            startQuarter,
+            durationQuarter,
+            isRest: true,
+            ...(noteTupletNumber === undefined ? {} : { tupletNumber: noteTupletNumber }),
+          });
         } else {
           const ties = tieTypes(element);
           const key = pitchKey(element);
@@ -528,7 +536,8 @@ export function parseMusicXmlRhythm(xml: string): ImportedRhythmScore {
     };
   });
   const totalQuarterNotes = measures.reduce((total, measure) => total + measure.durationQuarter, 0);
-  if (measures.every((measure) => measure.leftEvents.length + measure.rightEvents.length === 0)) {
+  if (measures.every((measure) => [...measure.leftEvents, ...measure.rightEvents]
+    .every((event) => event.isRest || event.isTieContinuation))) {
     throw new Error('No playable notes were found in the selected staves.');
   }
   const quarterTempo = readQuarterNoteTempo(root);
