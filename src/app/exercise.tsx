@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -79,6 +79,7 @@ export default function ExerciseScreen() {
   const [filter, setFilter] = useState<CombinationFilter>('all');
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState<ExerciseTab>('review');
+  const exerciseScrollRef = useRef<ScrollView>(null);
   const [leftSelection, setLeftSelection] = useState<PatternSelection>({ subdivision: 'quarter', rest: false });
   const [rightSelection, setRightSelection] = useState<PatternSelection>({ subdivision: 'eighth', rest: false });
   const [leftNoteGroups, setLeftNoteGroups] = useState<ComposedNoteValue[][]>([]);
@@ -107,6 +108,11 @@ export default function ExerciseScreen() {
 
   const leftNotes = useMemo(() => leftNoteGroups.flat(), [leftNoteGroups]);
   const rightNotes = useMemo(() => rightNoteGroups.flat(), [rightNoteGroups]);
+
+  const selectTab = (tab: ExerciseTab) => {
+    exerciseScrollRef.current?.scrollTo({ y: 0, animated: false });
+    setActiveTab(tab);
+  };
 
   const mixtureExamples = useMemo(() => {
     const values = settings.mixtureNoteValues ?? [];
@@ -286,6 +292,7 @@ export default function ExerciseScreen() {
   return (
     <SafeAreaView testID="exercise.screen" style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
+        ref={exerciseScrollRef}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ width: '100%', maxWidth: 1100, alignSelf: 'center', paddingHorizontal: 24, paddingVertical: 14, paddingBottom: 30 }}
       >
@@ -324,10 +331,10 @@ export default function ExerciseScreen() {
         ) : null}
 
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 17 }}>
-          <ChoiceChip testID="exercise.tab.review" label="Review pairs" selected={activeTab === 'review'} onPress={() => setActiveTab('review')} />
-          <ChoiceChip testID="exercise.tab.later" label={t('Saved later')} selected={activeTab === 'later'} onPress={() => setActiveTab('later')} />
-          <ChoiceChip testID="exercise.tab.pair" label="Choose a pair" selected={activeTab === 'pair'} onPress={() => setActiveTab('pair')} />
-          <ChoiceChip testID="exercise.tab.bar" label={t('Compose a score')} selected={activeTab === 'bar'} onPress={() => setActiveTab('bar')} />
+          <ChoiceChip testID="exercise.tab.review" label="Review pairs" selected={activeTab === 'review'} onPress={() => selectTab('review')} />
+          <ChoiceChip testID="exercise.tab.later" label={t('Saved later')} selected={activeTab === 'later'} onPress={() => selectTab('later')} />
+          <ChoiceChip testID="exercise.tab.pair" label="Choose a pair" selected={activeTab === 'pair'} onPress={() => selectTab('pair')} />
+          <ChoiceChip testID="exercise.tab.bar" label={t('Compose a score')} selected={activeTab === 'bar'} onPress={() => selectTab('bar')} />
         </View>
 
         {activeTab === 'review' ? (
