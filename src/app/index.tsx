@@ -1,6 +1,6 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Alert, Modal, Pressable, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Modal, Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,6 +22,8 @@ export default function HomeScreen() {
   const { settings, featureFlags, updateSettings, audioStatus, prepareAudio, prepareExercise } = useRhythmSession();
   const { t } = useI18n();
   const [starting, setStarting] = useState(false);
+  const [openingActivity, setOpeningActivity] = useState<HomeActivity | null>(null);
+  const openingActivityRef = useRef(false);
   const [activityPickerVisible, setActivityPickerVisible] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<HomeActivity>('practice');
   const router = useRouter();
@@ -60,20 +62,44 @@ export default function HomeScreen() {
   ];
   const currentActivity = activityOptions.find((option) => option.id === selectedActivity) ?? activityOptions[0];
   const isFreePractice = currentActivity.id === 'practice';
-  const buttonStatus = isFreePractice ? (starting ? 'loading' : audioStatus) : 'ready';
+  const loadingActivityTitle = activityOptions.find((option) => option.id === openingActivity)?.title ?? 'Focus practice';
+  const loadingMessage = openingActivity
+    ? t('Loading {activity}…', { activity: t(loadingActivityTitle) })
+    : '';
+
+  useFocusEffect(useCallback(() => {
+    setStarting(false);
+    setOpeningActivity(null);
+    openingActivityRef.current = false;
+  }, []));
+
+  const buttonStatus = openingActivity || starting ? 'loading' : isFreePractice ? audioStatus : 'ready';
   const startPractice = async () => {
     if (!isFreePractice) {
-      switch (currentActivity.id) {
-        case 'focus':
-          router.push('/exercise');
-          return;
-        case 'score':
-          router.push('/import-score');
-          return;
-        case 'learn':
-          router.push('/learn');
-          return;
+      if (openingActivityRef.current) return;
+      openingActivityRef.current = true;
+      setOpeningActivity(currentActivity.id);
+
+      // Let the loading screen render before navigation starts.
+      await new Promise<void>((resolve) => setTimeout(resolve, 350));
+      try {
+        switch (currentActivity.id) {
+          case 'focus':
+            router.push('/exercise');
+            return;
+          case 'score':
+            router.push('/import-score');
+            return;
+          case 'learn':
+            router.push('/learn');
+            return;
+        }
+      } catch {
+        openingActivityRef.current = false;
+        setOpeningActivity(null);
+        Alert.alert(t('Could not open practice'), t('Please try again.'));
       }
+      return;
     }
 
     if (starting || audioStatus === 'loading') return;
@@ -92,7 +118,9 @@ export default function HomeScreen() {
     }
   };
 
-  const startTitle = starting
+  const startTitle = openingActivity
+    ? 'OPENING…'
+    : starting
     ? 'STARTING…'
     : isFreePractice
       ? audioStatus === 'ready'
@@ -106,7 +134,9 @@ export default function HomeScreen() {
           ? 'CHOOSE A SCORE'
           : 'OPEN LEARN RHYTHM';
 
-  const startSubtitle = isFreePractice
+  const startSubtitle = openingActivity
+    ? loadingMessage
+    : isFreePractice
     ? audioStatus === 'ready'
       ? 'Audio ready · tap to begin'
       : audioStatus === 'error'
@@ -114,7 +144,9 @@ export default function HomeScreen() {
         : 'PREPARING THE METRONOME'
     : currentActivity.description;
 
-  const startAccessibilityLabel = isFreePractice
+  const startAccessibilityLabel = openingActivity
+    ? t('Loading {activity}', { activity: t(loadingActivityTitle) })
+    : isFreePractice
     ? audioStatus === 'ready'
       ? t('Start practice')
       : audioStatus === 'error'
@@ -215,7 +247,7 @@ export default function HomeScreen() {
               testID="home.start"
               variant="wide"
               status={buttonStatus}
-              disabled={isFreePractice && (starting || audioStatus === 'loading')}
+              disabled={Boolean(openingActivity) || (isFreePractice && (starting || audioStatus === 'loading'))}
               onPress={() => void startPractice()}
               subtitleTestID="home.audioStatus"
               accessibilityLabel={startAccessibilityLabel}
@@ -290,6 +322,32 @@ export default function HomeScreen() {
           </View>
         </View>
       </Modal>
+
+      {openingActivity ? (
+        <View
+          testID="home.activityLoading"
+          accessibilityViewIsModal
+          accessibilityState={{ busy: true }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            zIndex: 20,
+            elevation: 20,
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 16,
+            backgroundColor: colors.background,
+          }}
+        >
+          <ActivityIndicator size="large" color={colors.accent} />
+          <Text accessibilityLiveRegion="polite" style={{ color: colors.text, fontSize: 17, fontWeight: '800' }}>
+            {loadingMessage}
+          </Text>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
