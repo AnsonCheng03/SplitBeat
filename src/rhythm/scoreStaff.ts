@@ -58,6 +58,22 @@ export function scoreNotationEvents(events: readonly ScoreRhythmEvent[]): NoteNo
   }));
 }
 
+/** Centers a beat's note onsets in a single-hand notation lane without changing their spacing. */
+export function centerScoreBeatEvents(
+  events: readonly ScoreRhythmEvent[],
+  beatDurationQuarter: number,
+): ScoreRhythmEvent[] {
+  if (events.length === 0 || !Number.isFinite(beatDurationQuarter) || beatDurationQuarter <= 0) {
+    return [...events];
+  }
+
+  const firstStart = Math.min(...events.map((event) => event.startQuarter));
+  const lastStart = Math.max(...events.map((event) => event.startQuarter));
+  const offset = (beatDurationQuarter - (lastStart - firstStart)) / 2 - firstStart;
+
+  return events.map((event) => ({ ...event, startQuarter: event.startQuarter + offset }));
+}
+
 export function scoreFromMeasure(
   score: ImportedRhythmScore,
   startMeasureIndex: number,

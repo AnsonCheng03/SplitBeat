@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { findNextScoreEvent, scoreBeatEvents, scoreHandPresence, scoreNotationEvents, scoreTrainingMode } from '@/rhythm/scoreStaff';
+import { centerScoreBeatEvents, findNextScoreEvent, scoreBeatEvents, scoreHandPresence, scoreNotationEvents, scoreTrainingMode } from '@/rhythm/scoreStaff';
 import type { ImportedRhythmScore, ScoreRhythmMeasure } from '@/types/importedScore';
 
 const firstBar: ScoreRhythmMeasure = {
@@ -75,6 +75,28 @@ test('one-note view carries a compound pulse across a bar line', () => {
     scoreBeatEvents(shortBar, followingBar, 2.1, 1.5, 'right').map((event) => event.startQuarter),
     [0.75, 1.25],
   );
+});
+
+test('single-hand score focus centers note onsets without changing their spacing', () => {
+  const singleNote = centerScoreBeatEvents([{ startQuarter: 0, durationQuarter: 0.5 }], 1);
+  assert.equal(singleNote[0]?.startQuarter, 0.5);
+
+  const mixedRhythm = centerScoreBeatEvents([
+    { startQuarter: 0.125, durationQuarter: 0.125 },
+    { startQuarter: 0.375, durationQuarter: 0.125 },
+    { startQuarter: 0.625, durationQuarter: 0.25 },
+  ], 1);
+  assert.deepEqual(mixedRhythm.map((event) => event.startQuarter), [0.25, 0.5, 0.75]);
+  assert.deepEqual(
+    mixedRhythm.slice(1).map((event, index) => event.startQuarter - mixedRhythm[index]!.startQuarter),
+    [0.25, 0.25],
+  );
+});
+
+test('centering leaves empty beats and invalid durations unchanged', () => {
+  assert.deepEqual(centerScoreBeatEvents([], 1), []);
+  const events = [{ startQuarter: 0.25, durationQuarter: 0.25 }];
+  assert.deepEqual(centerScoreBeatEvents(events, 0), events);
 });
 
 test('score hand presence ignores empty and continuation-only lanes', () => {

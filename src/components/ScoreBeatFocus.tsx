@@ -4,7 +4,7 @@ import { NoteNotation } from '@/components/NoteNotation';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { createBarNoteNotationPlan } from '@/rhythm/noteNotation';
-import { scoreBeatEvents, scoreNotationEvents } from '@/rhythm/scoreStaff';
+import { centerScoreBeatEvents, scoreBeatEvents, scoreNotationEvents } from '@/rhythm/scoreStaff';
 import type { ScoreRhythmMeasure, ScoreRhythmEvent } from '@/types/importedScore';
 import type { Hand } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -84,11 +84,15 @@ export function ScoreBeatFocus({
     () => scoreBeatEvents(measure, nextMeasure, quarterInMeasure, beatDurationQuarter, hand),
     [beatDurationQuarter, hand, measure, nextMeasure, quarterInMeasure],
   );
+  const notationEvents = useMemo(
+    () => oneHand ? centerScoreBeatEvents(events, beatDurationQuarter) : events,
+    [beatDurationQuarter, events, oneHand],
+  );
   const notes = useMemo(
-    () => scoreNotationEvents(events).map((notationEvent, index) =>
-      events[index]?.isCrossBarTieContinuation ? { ...notationEvent, isRest: true } : notationEvent,
+    () => scoreNotationEvents(notationEvents).map((notationEvent, index) =>
+      notationEvents[index]?.isCrossBarTieContinuation ? { ...notationEvent, isRest: true } : notationEvent,
     ),
-    [events],
+    [notationEvents],
   );
   const plan = useMemo(() => notes.length > 0 && notationWidth > 0
     ? createBarNoteNotationPlan(notes, {
