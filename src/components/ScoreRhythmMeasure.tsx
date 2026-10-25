@@ -11,7 +11,7 @@ import type { Hand } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
 
 function scoreLaneHeight(size: NoteNotationSize): number {
-  return size === 'compact' ? 50 : 64;
+  return size === 'compact' ? 48 : 60;
 }
 
 function RhythmTrack({
@@ -338,7 +338,7 @@ export function ScrollingScoreRhythm({
   const { t } = useI18n();
   const [measuredViewportWidth, setMeasuredViewportWidth] = useState(0);
   const showLaneLabels = !minimal || showHandLabels;
-  const labelColumnWidth = showLaneLabels ? 52 : 0;
+  const labelColumnWidth = showLaneLabels ? 46 : 0;
   const viewportWidth = measuredViewportWidth || Math.max(0, initialViewportWidth - labelColumnWidth);
   const size: NoteNotationSize = compact ? 'compact' : 'full';
   const laneHeight = scoreLaneHeight(size);
@@ -387,12 +387,12 @@ export function ScrollingScoreRhythm({
         <View style={{ width: labelColumnWidth, gap: laneGap }}>
           {(!visibleHand || visibleHand === 'left') ? (
             <View style={{ height: laneHeight, justifyContent: 'center' }}>
-              <Text style={{ color: visibleHand ? focusedColor ?? colors.left : colors.left, fontSize: compact ? 10 : 11, fontWeight: '900', letterSpacing: 0.8 }}>{t('LEFT')}</Text>
+              <Text style={{ color: visibleHand ? focusedColor ?? colors.left : colors.left, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 0.6 }}>{t('LEFT')}</Text>
             </View>
           ) : null}
           {(!visibleHand || visibleHand === 'right') ? (
             <View style={{ height: laneHeight, justifyContent: 'center' }}>
-              <Text style={{ color: visibleHand ? focusedColor ?? colors.right : colors.right, fontSize: compact ? 10 : 11, fontWeight: '900', letterSpacing: 0.8 }}>{t('RIGHT')}</Text>
+              <Text style={{ color: visibleHand ? focusedColor ?? colors.right : colors.right, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 0.6 }}>{t('RIGHT')}</Text>
             </View>
           ) : null}
         </View>

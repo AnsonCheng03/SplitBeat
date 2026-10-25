@@ -12,6 +12,7 @@ interface VexFlowNotationDOMProps {
   color: string;
   noteCenterY: number;
   restSymbol?: boolean;
+  onReady?: () => void;
   dom?: import('expo/dom').DOMProps;
 }
 
@@ -81,12 +82,14 @@ function drawNotation(container: HTMLDivElement, plan: NoteNotationPlan, color: 
   });
 }
 
-export default function VexFlowNotationDOM({ plan, color, noteCenterY, restSymbol = false }: VexFlowNotationDOMProps) {
+export default function VexFlowNotationDOM({ plan, color, noteCenterY, restSymbol = false, onReady }: VexFlowNotationDOMProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    if (containerRef.current) drawNotation(containerRef.current, plan, color, noteCenterY, restSymbol);
-  }, [color, noteCenterY, plan, restSymbol]);
+    if (!containerRef.current) return;
+    drawNotation(containerRef.current, plan, color, noteCenterY, restSymbol);
+    onReady?.();
+  }, [color, noteCenterY, onReady, plan, restSymbol]);
 
   return (
     <div

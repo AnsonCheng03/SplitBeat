@@ -96,6 +96,18 @@ export interface BarNoteNotationOptions {
   beamGroupQuarterNotes?: number;
   /** Shared horizontal padding keeps both hands' beat positions aligned. */
   anchorInsets?: NoteNotationAnchorInsets;
+  /** Optional fixed notehead width for symbols that should keep the same engraving scale. */
+  noteHeadWidth?: number;
+  /** Optional fixed canvas height for symbols that should align across rhythm values. */
+  notationHeight?: number;
+  /** Optional beam or flag top position for a fixed-height symbol canvas. */
+  beamTop?: number;
+  /** Optional explicit note centers, used by repeated beat symbols. */
+  noteAnchors?: number[];
+  /** Optional beam grouping limits used by repeated subdivision symbols. */
+  maxBeamNotesByLevel?: number[];
+  /** Optional tuplet number size for repeated rhythm symbols. */
+  tupletLabelFontSize?: number;
 }
 
 export interface NoteNotationAnchorInsets {
@@ -136,14 +148,14 @@ const MINI_SLOT_WIDTHS: Record<number, number> = { 1: 15, 2: 15, 3: 12, 4: 11, 8
 
 function calculateBarNoteAnchorInsets(
   events: readonly NoteNotationEvent[],
-  { durationQuarter, width, size = 'full' }: Pick<BarNoteNotationOptions, 'durationQuarter' | 'width' | 'size'>,
+  { durationQuarter, width, size = 'full', noteHeadWidth }: Pick<BarNoteNotationOptions, 'durationQuarter' | 'width' | 'size' | 'noteHeadWidth'>,
 ): NoteNotationAnchorInsets {
   const shortestNote = events.length > 0
     ? Math.min(...events.map((event) => event.durationQuarter))
     : durationQuarter;
   const noteSpacing = width * shortestNote / durationQuarter;
   const sizeMaximum = size === 'mini' ? 6.4 : size === 'compact' ? 10.5 : 16;
-  const headWidth = Math.max(size === 'mini' ? 3.5 : 5, Math.min(sizeMaximum, noteSpacing * 0.62));
+  const headWidth = noteHeadWidth ?? Math.max(size === 'mini' ? 3.5 : 5, Math.min(sizeMaximum, noteSpacing * 0.62));
   const left = Math.min(width / 2, headWidth / 2 + 4);
   const hasFlags = events.some((event) => (event.beamCount ?? inferredBeamCount(event.durationQuarter)) > 0);
   const dotSize = Math.max(2, headWidth * 0.66 * 0.24);
@@ -486,6 +498,23 @@ export function createBarNoteNotationPlan(
   if (!Number.isFinite(beamGroupQuarterNotes) || beamGroupQuarterNotes <= 0) {
     throw new RangeError('Beam groups must have a positive duration.');
   }
+  if (options.noteHeadWidth !== undefined && (!Number.isFinite(options.noteHeadWidth) || options.noteHeadWidth <= 0)) {
+    throw new RangeError('A fixed notehead width must be positive.');
+  }
+  if (options.notationHeight !== undefined && (!Number.isFinite(options.notationHeight) || options.notationHeight <= 0)) {
+    throw new RangeError('A fixed notation height must be positive.');
+  }
+  if (options.beamTop !== undefined && (!Number.isFinite(options.beamTop) || options.beamTop < 0)) {
+    throw new RangeError('A beam top position must be non-negative.');
+  }
+  if (options.noteAnchors && options.noteAnchors.length !== events.length) {
+    throw new RangeError('Every note must have a matching explicit anchor.');
+  }
+  options.noteAnchors?.forEach((anchor, index) => {
+    if (!Number.isFinite(anchor) || anchor < 0 || anchor > options.width) {
+      throw new RangeError(`Note ${index + 1} must have an anchor inside the notation viewport.`);
+    }
+  });
   events.forEach((event, index) => {
     if (!Number.isFinite(event.startQuarter) || event.startQuarter < -EPSILON || event.startQuarter >= options.durationQuarter) {
       throw new RangeError(`Note ${index + 1} must start inside the bar.`);
@@ -500,14 +529,16 @@ export function createBarNoteNotationPlan(
     : options.durationQuarter;
   const noteSpacing = options.width * shortestNote / options.durationQuarter;
   const sizeMaximum = size === 'mini' ? 6.4 : size === 'compact' ? 10.5 : 16;
-  const headWidth = Math.max(size === 'mini' ? 3.5 : 5, Math.min(sizeMaximum, noteSpacing * 0.62));
+  const headWidth = options.noteHeadWidth ?? Math.max(size === 'mini' ? 3.5 : 5, Math.min(sizeMaximum, noteSpacing * 0.62));
   const headHeight = headWidth * 0.66;
   const containsTuplets = events.some((event) => event.tupletNumber !== undefined);
-  const tupletPadding = containsTuplets ? (size === 'mini' ? 10 : size === 'compact' ? 12 : 14) : 0;
-  const height = (size === 'mini' ? 28 : size === 'compact' ? 32 : 44) + tupletPadding;
+  const tupletPadding = containsTuplets && options.notationHeight === undefined
+    ? (size === 'mini' ? 10 : size === 'compact' ? 12 : 14)
+    : 0;
+  const height = options.notationHeight ?? (size === 'mini' ? 28 : size === 'compact' ? 32 : 44) + tupletPadding;
   const beamHeight = size === 'mini' ? 1.6 : size === 'compact' ? 1.8 : 2.6;
   const beamGap = beamHeight + (size === 'mini' ? 1 : size === 'compact' ? 1.2 : 1.8);
-  const beamTop = size === 'mini' ? 3 : size === 'compact' ? 4 : 5;
+  const beamTop = options.beamTop ?? (size === 'mini' ? 3 : size === 'compact' ? 4 : 5);
   const flagWidth = Math.max(size === 'mini' ? 5 : 7, headWidth * 0.9);
   const ownInsets = calculateBarNoteAnchorInsets(events, options);
   if (options.anchorInsets && (
@@ -516,15 +547,16 @@ export function createBarNoteNotationPlan(
   )) {
     throw new RangeError('Shared note-anchor insets must be finite and non-negative.');
   }
-  const leftInset = Math.max(ownInsets.left, options.anchorInsets?.left ?? 0);
-  const rightInset = Math.max(ownInsets.right, options.anchorInsets?.right ?? 0);
+  const leftInset = options.noteAnchors ? 0 : Math.max(ownInsets.left, options.anchorInsets?.left ?? 0);
+  const rightInset = options.noteAnchors ? 0 : Math.max(ownInsets.right, options.anchorInsets?.right ?? 0);
   const usableWidth = Math.max(0, options.width - leftInset - rightInset);
-  const orderedEvents = Array.from(events)
+  const orderedEntries = Array.from(events)
     .map((event, originalIndex) => ({ event, originalIndex }))
     .sort((left, right) => left.event.startQuarter - right.event.startQuarter || left.originalIndex - right.originalIndex)
-    .map(({ event }) => event);
-  const noteAnchors = orderedEvents.map(
-    (event) => leftInset + (event.startQuarter / options.durationQuarter) * usableWidth,
+  const orderedEvents = orderedEntries.map(({ event }) => event);
+  const noteAnchors = orderedEntries.map(
+    ({ event, originalIndex }) => options.noteAnchors?.[originalIndex]
+      ?? leftInset + (event.startQuarter / options.durationQuarter) * usableWidth,
   );
 
   return buildNotationPlan(orderedEvents, {
@@ -542,8 +574,30 @@ export function createBarNoteNotationPlan(
     beamGap,
     flagWidth,
     beamGroupQuarterNotes,
-    tupletLabelFontSize: size === 'mini' ? 8 : size === 'compact' ? 10 : 12,
+    maxBeamNotesByLevel: options.maxBeamNotesByLevel,
+    tupletLabelFontSize: options.tupletLabelFontSize ?? (size === 'mini' ? 8 : size === 'compact' ? 10 : 12),
     noteBaselineY: height - 5,
+  });
+}
+
+/** Shared engraving plan for standalone rhythms and mixed patterns. */
+export function createRhythmSymbolNotationPlan(
+  events: readonly NoteNotationEvent[],
+  options: BarNoteNotationOptions,
+): NoteNotationPlan {
+  const size = options.size ?? 'full';
+  const hasTuplets = events.some((event) => event.tupletNumber !== undefined);
+  const noteHeadWidth = size === 'mini' ? 4.2 : size === 'compact' ? 7 : 9.2;
+  const notationHeight = size === 'mini' ? 28 : size === 'compact' ? 32 : 44;
+
+  return createBarNoteNotationPlan(events, {
+    ...options,
+    noteHeadWidth,
+    notationHeight,
+    beamTop: options.beamTop ?? (hasTuplets
+      ? size === 'mini' ? 10 : size === 'compact' ? 15 : 17
+      : size === 'mini' ? 3 : size === 'compact' ? 4 : 5),
+    tupletLabelFontSize: options.tupletLabelFontSize ?? (size === 'mini' ? 8 : size === 'compact' ? 12 : 14),
   });
 }
 
@@ -556,23 +610,7 @@ export function createNoteNotationPlan(
   const isTuplet = isTupletSubdivision(subdivision);
   const count = isTuplet ? tupletCount(subdivision) : SUBDIVISION_COUNTS[subdivision];
   const noteDurationQuarter = isTuplet ? pulseQuarterNotes(timeSignature) / count : 1 / count;
-  const compact = size === 'compact';
-  const mini = size === 'mini';
   const slotWidth = slotWidthFor(count, size);
-  const headWidth = mini
-    ? count >= 8 ? 4.2 : 6.4
-    : count >= 8
-      ? compact ? 5.5 : 6.5
-      : count >= 4
-        ? compact ? 10.5 : 13
-        : compact ? 12.5 : 16;
-  const headHeight = mini
-    ? count >= 8 ? 3 : 5.5
-    : count >= 8
-      ? compact ? 4 : 4.7
-      : count >= 4
-        ? compact ? 7.3 : 9
-        : compact ? 8 : 10.5;
   const beamCount = isTuplet ? inferredBeamCount(noteDurationQuarter) : beamCountForSubdivision(subdivision);
   const events = Array.from({ length: count }, (_, index) => ({
     startQuarter: index * noteDurationQuarter,
@@ -581,23 +619,13 @@ export function createNoteNotationPlan(
     ...(isTuplet ? { tupletNumber: count } : {}),
   }));
 
-  return buildNotationPlan(events, {
-    width: count * slotWidth,
-    height: mini ? 34 : compact ? 56 : 68,
-    anchorStartX: 0,
-    anchorWidth: count * slotWidth,
+  return createRhythmSymbolNotationPlan(events, {
     durationQuarter: count * noteDurationQuarter,
-    noteAnchors: Array.from({ length: count }, (_, index) => (index + 0.5) * slotWidth),
-    headWidth,
-    headHeight,
-    stemWidth: count >= 8 ? mini ? 1 : 1.5 : mini ? 1.2 : 2,
-    beamTop: isTuplet ? mini ? 10 : compact ? 15 : 17 : mini ? 3 : compact ? 4 : 5,
-    beamHeight: mini ? 1.6 : count >= 8 ? compact ? 2 : 2.5 : compact ? 4 : 5,
-    beamGap: (mini ? 1.6 : count >= 8 ? compact ? 2 : 2.5 : compact ? 4 : 5) + (mini ? 1 : compact ? 2 : 3),
-    flagWidth: Math.max(slotWidth * 0.7, headWidth),
+    width: count * slotWidth,
+    size,
     beamGroupQuarterNotes: isTuplet ? pulseQuarterNotes(timeSignature) : 1,
+    noteAnchors: Array.from({ length: count }, (_, index) => (index + 0.5) * slotWidth),
     maxBeamNotesByLevel: Array.from({ length: beamCount }, (_, beamIndex) => beamGroupSize(count, beamIndex)),
-    tupletLabelFontSize: mini ? 8 : compact ? 12 : 14,
-    noteBaselineY: null,
+    tupletLabelFontSize: size === 'mini' ? 8 : size === 'compact' ? 12 : 14,
   });
 }

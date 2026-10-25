@@ -223,8 +223,18 @@ export default function PracticeScreen() {
   const initialScoreViewportWidth = initialScoreContentWidth;
   const initialScoreFocusWidth = Math.min(620, initialScoreContentWidth * (singleHandMode ? 0.76 : 0.38));
   const notationMaxWidth = width * (singleHandMode ? 0.82 : 0.42);
-  const notationScale = singleHandMode ? 3.1 : 2.5;
+  const notationScale = 1;
   const step = snapshot?.currentStep;
+  const preloadSubdivision = activeSettings.enabledSubdivisions[0] ?? 'quarter';
+  const displayStep = step ?? (tutorialVisible ? {
+    id: 'notation-preload',
+    leftSubdivision: preloadSubdivision,
+    rightSubdivision: preloadSubdivision,
+    leftRest: false,
+    rightRest: false,
+    startBeat: 0,
+    durationBeats: 1,
+  } : undefined);
   const beatFlashToken = snapshot?.phase === 'running' ? snapshot.beatIndex + 1 : 0;
   const importedScoreMeasure = snapshot?.scoreMeasure;
   const practiceScoreMeasure = activeSettings.practiceDisplayMode === 'score'
@@ -424,7 +434,7 @@ export default function PracticeScreen() {
           />
         ) : null}
 
-        {!tutorialVisible && snapshot ? (
+        {(tutorialVisible || snapshot) ? (
           <View
             testID="practice.rhythmDisplay"
             pointerEvents="none"
@@ -490,64 +500,67 @@ export default function PracticeScreen() {
                     />
                   </View>
                 )
-              ) : singleHandMode && step ? (
+              ) : singleHandMode && displayStep ? (
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: compact ? 6 : 10 }}>
                 <Text style={{ color: colors.accent, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>
                   {focusedHand.toUpperCase()}
                 </Text>
-                {(focusedHand === 'left' ? step.leftRest : step.rightRest) ? (
+                {(focusedHand === 'left' ? displayStep.leftRest : displayStep.rightRest) ? (
                   <RhythmSymbol
-                    subdivision={focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision}
+                    subdivision={focusedHand === 'left' ? displayStep.leftSubdivision : displayStep.rightSubdivision}
                     color={colors.accent}
                     compact={false}
                     timeSignature={activeSettings.timeSignature}
                     scale={notationScale}
                     maxWidth={notationMaxWidth}
                     maxHeight={notationMaxHeight}
+                    readyTestID={`practice.rhythmNote.${focusedHand}.ready`}
                     rest
                   />
-                ) : (focusedHand === 'left' ? step.leftMixture : step.rightMixture) ? (
+                ) : (focusedHand === 'left' ? displayStep.leftMixture : displayStep.rightMixture) ? (
                   <MixtureSymbol
-                    mixtureId={(focusedHand === 'left' ? step.leftMixture : step.rightMixture)!}
+                    mixtureId={(focusedHand === 'left' ? displayStep.leftMixture : displayStep.rightMixture)!}
                     color={colors.accent}
                     compact={false}
                     scale={notationScale}
                     maxWidth={notationMaxWidth}
                     maxHeight={notationMaxHeight}
+                    readyTestID={`practice.rhythmNote.${focusedHand}.ready`}
                   />
                 ) : (
                   <RhythmSymbol
-                    subdivision={focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision}
+                    subdivision={focusedHand === 'left' ? displayStep.leftSubdivision : displayStep.rightSubdivision}
                     color={colors.accent}
                     compact={false}
                     timeSignature={activeSettings.timeSignature}
                     scale={notationScale}
                     maxWidth={notationMaxWidth}
                     maxHeight={notationMaxHeight}
-                    rest={focusedHand === 'left' ? step.leftRest : step.rightRest}
+                    readyTestID={`practice.rhythmNote.${focusedHand}.ready`}
+                    rest={focusedHand === 'left' ? displayStep.leftRest : displayStep.rightRest}
                   />
                 )}
               </View>
-            ) : (
+            ) : displayStep ? (
               <>
                 <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: compact ? 6 : 10, opacity: enabledHand('left') ? 1 : 0.12 }}>
-                  {enabledHand('left') && step ? (
+                  {enabledHand('left') ? (
                     <>
                       <Text style={{ color: colors.left, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>LEFT</Text>
-                      {step.leftRest ? <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} timeSignature={activeSettings.timeSignature} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} rest /> : step.leftMixture ? <MixtureSymbol mixtureId={step.leftMixture} color={colors.left} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} /> : <RhythmSymbol subdivision={step.leftSubdivision} color={colors.left} timeSignature={activeSettings.timeSignature} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} />}
+                      {displayStep.leftRest ? <RhythmSymbol subdivision={displayStep.leftSubdivision} color={colors.left} timeSignature={activeSettings.timeSignature} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.left.ready" rest /> : displayStep.leftMixture ? <MixtureSymbol mixtureId={displayStep.leftMixture} color={colors.left} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.left.ready" /> : <RhythmSymbol subdivision={displayStep.leftSubdivision} color={colors.left} timeSignature={activeSettings.timeSignature} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.left.ready" />}
                     </>
                   ) : null}
                 </View>
                 <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: compact ? 6 : 10, opacity: enabledHand('right') ? 1 : 0.12 }}>
-                  {enabledHand('right') && step ? (
+                  {enabledHand('right') ? (
                     <>
                       <Text style={{ color: colors.right, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>RIGHT</Text>
-                      {step.rightRest ? <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} timeSignature={activeSettings.timeSignature} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} rest /> : step.rightMixture ? <MixtureSymbol mixtureId={step.rightMixture} color={colors.right} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} /> : <RhythmSymbol subdivision={step.rightSubdivision} color={colors.right} timeSignature={activeSettings.timeSignature} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} />}
+                      {displayStep.rightRest ? <RhythmSymbol subdivision={displayStep.rightSubdivision} color={colors.right} timeSignature={activeSettings.timeSignature} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.right.ready" rest /> : displayStep.rightMixture ? <MixtureSymbol mixtureId={displayStep.rightMixture} color={colors.right} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.right.ready" /> : <RhythmSymbol subdivision={displayStep.rightSubdivision} color={colors.right} timeSignature={activeSettings.timeSignature} scale={notationScale} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.right.ready" />}
                     </>
                   ) : null}
                 </View>
               </>
-              )}
+            ) : null}
             </View>
           </View>
         ) : null}

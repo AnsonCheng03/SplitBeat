@@ -47,7 +47,7 @@ interface HandPreviewProps {
 function HandPreview({ hand, subdivision, mixtureId, rest, timeSignature, compact, colorOverride, maxNoteWidth, maxNoteHeight }: HandPreviewProps) {
   const { colors } = useTheme();
   const color = colorOverride ?? (hand === 'left' ? colors.left : colors.right);
-  const symbolScale = compact ? 1.5 : 1.55;
+  const symbolScale = 1;
 
   return (
     <View style={{ flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: compact ? 5 : 12 }}>

@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import type { NoteNotationPlan } from '@/rhythm/noteNotation';
@@ -8,6 +9,7 @@ export function NoteNotation({
   color,
   accessibilityLabel,
   testID,
+  readyTestID,
   restSymbol = false,
   showStaffLines = false,
   staffLineColor,
@@ -17,11 +19,15 @@ export function NoteNotation({
   color: string;
   accessibilityLabel?: string;
   testID?: string;
+  readyTestID?: string;
   restSymbol?: boolean;
   showStaffLines?: boolean;
   staffLineColor?: string;
   onReady?: () => void;
 }) {
+  const [ready, setReady] = useState(false);
+  const handleReady = useCallback(() => setReady(true), []);
+
   return (
     <View
       testID={testID}
@@ -47,18 +53,25 @@ export function NoteNotation({
         plan={plan}
         color={color}
         restSymbol={restSymbol}
+        onReady={handleReady}
         noteCenterY={restSymbol
           ? plan.height / 2
           : showStaffLines
           ? (plan.height - 24) / 2 + 24
           : plan.noteBaselineY ?? plan.height - 7}
         dom={{
-          onLoadEnd: onReady,
           scrollEnabled: false,
           bounces: false,
           style: { position: 'absolute', left: 0, top: 0, width: plan.width, height: plan.height, backgroundColor: 'transparent' },
         }}
       />
+      {ready && readyTestID ? (
+        <View
+          testID={readyTestID}
+          pointerEvents="none"
+          style={{ position: 'absolute', right: 0, bottom: 0, width: 1, height: 1, opacity: 0.01 }}
+        />
+      ) : null}
       {plan.tupletLabels.map((label, index) => (
         <Text
           key={label.key}

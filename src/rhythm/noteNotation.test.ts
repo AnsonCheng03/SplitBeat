@@ -68,14 +68,14 @@ test('note builder creates joined noteheads and stems at each supported subdivis
 });
 
 test('live notation scales up for readability without exceeding its lane width', () => {
-  const preferredScale = 2.5;
+  const preferredScale = 1.8;
   const maxWidth = 340;
-  const fittedScale = fitNotationScale(160, 68, preferredScale, maxWidth, 150);
+  const fittedScale = fitNotationScale(160, 44, preferredScale, maxWidth, 100);
 
   assert.ok(fittedScale > 1, 'dense notes remain larger than their base engraving size');
   assert.ok(160 * fittedScale <= maxWidth, 'the fitted notes stay inside the hand lane');
-  assert.ok(68 * fittedScale <= 150, 'the fitted notes stay inside the vertical display lane');
-  assert.equal(fitNotationScale(96, 68, preferredScale, 340), preferredScale);
+  assert.ok(44 * fittedScale <= 100, 'the fitted notes stay inside the vertical display lane');
+  assert.equal(fitNotationScale(96, 44, preferredScale, 340), preferredScale);
 });
 
 test('bar note builder beams adjacent notes according to each note duration', () => {
@@ -339,6 +339,21 @@ test('triplets include a visible group label and all display sizes keep their no
     assert.equal(mini.notes.length, full.notes.length, subdivision);
     assert.ok(compact.height < full.height, subdivision);
     assert.ok(mini.height < compact.height, subdivision);
+  }
+
+  const symbolPlans = [
+    'quarter', 'eighth', 'duplet', 'triplet', 'quadruplet', 'quintuplet', 'sextuplet',
+    'septuplet', 'octuplet', 'nonuplet', 'sixteenth', 'thirtySecond', 'sixtyFourth',
+  ] as const;
+  for (const size of ['full', 'compact', 'mini'] as const) {
+    const plans = symbolPlans.map((subdivision) => createNoteNotationPlan(subdivision, size));
+    const firstNote = plans[0]?.notes[0];
+    assert.ok(firstNote);
+    for (const plan of plans) {
+      assert.equal(plan.height, plans[0]?.height, `${size} rhythm symbols share one canvas height`);
+      assert.equal(plan.notes[0]?.headWidth, firstNote.headWidth, `${size} rhythm symbols share one notehead width`);
+      assert.equal(plan.notes[0]?.headHeight, firstNote.headHeight, `${size} rhythm symbols share one notehead height`);
+    }
   }
 });
 

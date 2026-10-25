@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
-import { createBarNoteNotationPlan, fitNotationScale, type NoteNotationSize } from '@/rhythm/noteNotation';
+import { createRhythmSymbolNotationPlan, fitNotationScale, type NoteNotationSize } from '@/rhythm/noteNotation';
 import { getMixturePattern } from '@/rhythm/mixtures';
 import type { MixturePatternId } from '@/types/rhythm';
 
@@ -14,6 +14,7 @@ export function MixtureSymbol({
   scale = 1,
   maxWidth,
   maxHeight,
+  readyTestID,
 }: {
   mixtureId: MixturePatternId;
   color: string;
@@ -21,6 +22,7 @@ export function MixtureSymbol({
   scale?: number;
   maxWidth?: number;
   maxHeight?: number;
+  readyTestID?: string;
 }) {
   const { t } = useI18n();
   const pattern = getMixturePattern(mixtureId);
@@ -38,7 +40,7 @@ export function MixtureSymbol({
         }]
       : []);
   }, [pattern]);
-  const plan = useMemo(() => createBarNoteNotationPlan(noteEvents, {
+  const plan = useMemo(() => createRhythmSymbolNotationPlan(noteEvents, {
     durationQuarter: pattern.durationQuarter,
     width: notationWidth,
     size,
@@ -49,13 +51,13 @@ export function MixtureSymbol({
   return (
     <View style={{ width: plan.width * fittedScale, height: plan.height * fittedScale, alignItems: 'center', justifyContent: 'center' }}>
       <View style={{ width: plan.width, height: plan.height, transform: [{ scale: fittedScale }], alignItems: 'center', justifyContent: 'center' }}>
-        <NoteNotation plan={plan} color={color} accessibilityLabel={t(pattern.label)} />
+        <NoteNotation plan={plan} color={color} accessibilityLabel={t(pattern.label)} readyTestID={readyTestID} />
         {pattern.atoms.map((atom, index) => atom.kind === 'rest' ? (
           <Text
             key={`${mixtureId}.rest.${index}`}
             style={{
               position: 'absolute',
-              left: ((pattern.atoms.slice(0, index).reduce((sum, item) => sum + item.durationQuarter, 0) + atom.durationQuarter / 2) / pattern.durationQuarter) * plan.width - 11,
+              left: plan.anchorStartX + ((pattern.atoms.slice(0, index).reduce((sum, item) => sum + item.durationQuarter, 0) + atom.durationQuarter / 2) / pattern.durationQuarter) * plan.anchorWidth - 11,
               top: plan.height * 0.45,
               width: 22,
               color,

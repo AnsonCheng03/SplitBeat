@@ -16,6 +16,7 @@ interface RhythmSymbolProps {
   maxWidth?: number;
   maxHeight?: number;
   rest?: boolean;
+  readyTestID?: string;
 }
 
 function notationSize(compact: boolean, mini: boolean): NoteNotationSize {
@@ -23,7 +24,7 @@ function notationSize(compact: boolean, mini: boolean): NoteNotationSize {
   return compact ? 'compact' : 'full';
 }
 
-export function RhythmSymbol({ subdivision, color, compact = false, mini = false, timeSignature = '4/4', scale = 1, maxWidth, maxHeight, rest = false }: RhythmSymbolProps) {
+export function RhythmSymbol({ subdivision, color, compact = false, mini = false, timeSignature = '4/4', scale = 1, maxWidth, maxHeight, rest = false, readyTestID }: RhythmSymbolProps) {
   const { t } = useI18n();
   const size = notationSize(compact, mini);
   const plan = useMemo(() => createNoteNotationPlan(subdivision, size, timeSignature), [size, subdivision, timeSignature]);
@@ -34,6 +35,7 @@ export function RhythmSymbol({ subdivision, color, compact = false, mini = false
     accessibilityLabel={rest
       ? t('{note} rest', { note: t(SUBDIVISION_LABELS[subdivision]) })
       : t(SUBDIVISION_LABELS[subdivision])}
+    readyTestID={readyTestID}
     restSymbol={rest}
   />;
   if (fittedScale === 1) return notation;

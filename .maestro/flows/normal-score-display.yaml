@@ -50,3 +50,4 @@ appId: com.splitbeat.twohandrhythm
     timeout: 10000
 - assertVisible:
     id: practice.scoreMeasure.bar.0
+- takeScreenshot: practice-score-display
