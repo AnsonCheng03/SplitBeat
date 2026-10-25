@@ -1,4 +1,5 @@
-import type { ExerciseSettings, RhythmPatternPair, Subdivision } from '@/types/rhythm';
+import type { ExerciseSettings, MixtureNoteValue, RhythmPatternPair, Subdivision } from '@/types/rhythm';
+import { getMixturePattern, isMixturePatternId } from '@/rhythm/mixtures';
 
 export const FEATURE_FLAG_IDS = [
   'oneHandMode',
@@ -9,6 +10,7 @@ export const FEATURE_FLAG_IDS = [
   'savedScoreLibrary',
   'learnCourse',
   'rhythmExtensions',
+  'sixtyFourthNotes',
   'mixtures',
   'restsAndGrace',
   'soundEffects',
@@ -27,19 +29,29 @@ export const FEATURE_FLAG_IDS = [
 export type FeatureFlagId = (typeof FEATURE_FLAG_IDS)[number];
 export type FeatureFlags = Record<FeatureFlagId, boolean>;
 
-export const DEFAULT_FEATURE_FLAGS: FeatureFlags = Object.fromEntries(
-  FEATURE_FLAG_IDS.map((id) => [id, true]),
-) as FeatureFlags;
+export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
+  ...Object.fromEntries(FEATURE_FLAG_IDS.map((id) => [id, true])),
+  sixtyFourthNotes: false,
+} as FeatureFlags;
 
 const SIMPLE_TIME_SIGNATURES = ['2/4', '3/4', '4/4', '5/4', '7/4', '2/2', '3/8'] as const;
 export const BASIC_SUBDIVISIONS = ['quarter', 'eighth', 'sixteenth'] as const satisfies readonly Subdivision[];
+
+export function subdivisionIsAvailable(subdivision: Subdivision, flags: FeatureFlags): boolean {
+  if (subdivision === 'sixtyFourth' && !flags.sixtyFourthNotes) return false;
+  return flags.rhythmExtensions || BASIC_SUBDIVISIONS.includes(subdivision as (typeof BASIC_SUBDIVISIONS)[number]);
+}
+
+export function mixtureNoteValueIsAvailable(value: MixtureNoteValue, flags: FeatureFlags): boolean {
+  return value !== 'sixtyFourth' || flags.sixtyFourthNotes;
+}
 
 export function parseFeatureFlags(raw: string | null | undefined): FeatureFlags {
   if (!raw) return { ...DEFAULT_FEATURE_FLAGS };
   try {
     const parsed = JSON.parse(raw) as Partial<Record<FeatureFlagId, unknown>>;
     return Object.fromEntries(
-      FEATURE_FLAG_IDS.map((id) => [id, typeof parsed[id] === 'boolean' ? parsed[id] : true]),
+      FEATURE_FLAG_IDS.map((id) => [id, typeof parsed[id] === 'boolean' ? parsed[id] : DEFAULT_FEATURE_FLAGS[id]]),
     ) as FeatureFlags;
   } catch {
     return { ...DEFAULT_FEATURE_FLAGS };
@@ -53,9 +65,9 @@ export function applyFeatureFlagsToSettings(
   settings: ExerciseSettings,
   flags: FeatureFlags,
 ): ExerciseSettings {
-  const enabledSubdivisions = flags.rhythmExtensions
-    ? settings.enabledSubdivisions
-    : settings.enabledSubdivisions.filter((subdivision) => BASIC_SUBDIVISIONS.includes(subdivision as (typeof BASIC_SUBDIVISIONS)[number]));
+  const enabledSubdivisions = settings.enabledSubdivisions.filter((subdivision) =>
+    subdivisionIsAvailable(subdivision, flags),
+  );
   const safeSubdivisions = enabledSubdivisions.length >= 2
     ? enabledSubdivisions
     : [...BASIC_SUBDIVISIONS];
@@ -71,7 +83,9 @@ export function applyFeatureFlagsToSettings(
     feel: flags.rhythmExtensions ? settings.feel : 'straight',
     enabledSubdivisions: safeSubdivisions,
     enabledMixtures: flags.mixtures ? settings.enabledMixtures : [],
-    mixtureNoteValues: flags.mixtures ? settings.mixtureNoteValues ?? [] : [],
+    mixtureNoteValues: flags.mixtures
+      ? (settings.mixtureNoteValues ?? []).filter((value) => mixtureNoteValueIsAvailable(value, flags))
+      : [],
     mixtureRestsEnabled: flags.mixtures && settings.mixtureRestsEnabled === true,
     graceNotesEnabled: flags.restsAndGrace && settings.graceNotesEnabled,
     restBetweenChanges: flags.restsAndGrace && settings.restBetweenChanges,
@@ -93,17 +107,23 @@ export function applyFeatureFlagsToPatternPairs(
 ): readonly RhythmPatternPair[] | undefined {
   if (!pairs) return pairs;
   const fallback = enabledSubdivisions[0] ?? 'quarter';
-  const subdivisionIsAvailable = (subdivision: RhythmPatternPair['leftSubdivision']) =>
-    flags.rhythmExtensions || BASIC_SUBDIVISIONS.includes(subdivision as (typeof BASIC_SUBDIVISIONS)[number]);
   const applySubdivision = (subdivision: RhythmPatternPair['leftSubdivision']) =>
-    subdivisionIsAvailable(subdivision) ? subdivision : fallback;
+    subdivisionIsAvailable(subdivision, flags) ? subdivision : fallback;
+  const applyMixture = (mixtureId: RhythmPatternPair['leftMixture']) => {
+    if (!flags.mixtures || !mixtureId) return undefined;
+    if (flags.sixtyFourthNotes || !isMixturePatternId(mixtureId)) return mixtureId;
+    const includesSixtyFourth = getMixturePattern(mixtureId).atoms.some((atom) =>
+      atom.subdivision === 'sixtyFourth' || atom.noteValue === 'sixtyFourth',
+    );
+    return includesSixtyFourth ? undefined : mixtureId;
+  };
 
   return pairs.map((pair) => ({
     ...pair,
     leftSubdivision: applySubdivision(pair.leftSubdivision),
     rightSubdivision: applySubdivision(pair.rightSubdivision),
-    leftMixture: flags.mixtures ? pair.leftMixture : undefined,
-    rightMixture: flags.mixtures ? pair.rightMixture : undefined,
+    leftMixture: applyMixture(pair.leftMixture),
+    rightMixture: applyMixture(pair.rightMixture),
     leftRest: flags.restsAndGrace ? pair.leftRest : false,
     rightRest: flags.restsAndGrace ? pair.rightRest : false,
   }));

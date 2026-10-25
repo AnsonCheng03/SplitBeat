@@ -142,13 +142,13 @@ During practice, an external QWERTY keyboard can tap either hand. Keys on the le
 
 ## Build-time feature availability
 
-Feature availability is fixed when the JavaScript bundle is built and is not user-configurable in the app. Set `EXPO_PUBLIC_FEATURE_FLAGS` to a JSON object in `.env` or the build environment. Unlisted flags default to enabled; invalid JSON also falls back to all enabled. For example, to ship a build without the Learn course or Game Center:
+Feature availability is fixed when the JavaScript bundle is built and is not user-configurable in the app. Set `EXPO_PUBLIC_FEATURE_FLAGS` to a JSON object in `.env` or the build environment. Unlisted flags default to enabled except `sixtyFourthNotes`, which defaults to disabled so generated practice, mixture choices, and course content stop at 32nd notes. Invalid JSON falls back to those defaults. To opt a build into 64th notes, set `sixtyFourthNotes` to `true`; for example:
 
 ~~~sh
-EXPO_PUBLIC_FEATURE_FLAGS='{"learnCourse":false,"gameCenter":false}' npm run ios:archive
+EXPO_PUBLIC_FEATURE_FLAGS='{"sixtyFourthNotes":true}' npm run ios:archive
 ~~~
 
-For EAS builds, add the same variable to the selected `preview` or `production` environment. The supported keys are `oneHandMode`, `scoreNotation`, `focusPractice`, `timingCalibration`, `scoreImport`, `savedScoreLibrary`, `learnCourse`, `rhythmExtensions`, `mixtures`, `restsAndGrace`, `soundEffects`, `backgroundMusic`, `sessionCues`, `shownRhythmPlayback`, `tapHaptics`, `tapFeedback`, `challengeMode`, `gameCenter`, `sessionRecords`, `missedNoteReplay`, and `externalKeyboard`. User preferences inside an enabled feature, such as whether accompaniment is audible, remain stored separately.
+For EAS builds, add the same variable to the selected `preview` or `production` environment. The supported keys are `oneHandMode`, `scoreNotation`, `focusPractice`, `timingCalibration`, `scoreImport`, `savedScoreLibrary`, `learnCourse`, `rhythmExtensions`, `sixtyFourthNotes`, `mixtures`, `restsAndGrace`, `soundEffects`, `backgroundMusic`, `sessionCues`, `shownRhythmPlayback`, `tapHaptics`, `tapFeedback`, `challengeMode`, `gameCenter`, `sessionRecords`, `missedNoteReplay`, and `externalKeyboard`. User preferences inside an enabled feature, such as whether accompaniment is audible, remain stored separately.
 
 ## End-to-end checks
 

@@ -104,9 +104,11 @@ function optionForValue(value: MixtureNoteValue): MixtureNoteOption | undefined 
   return NOTE_OPTIONS_BY_VALUE.get(value);
 }
 
-export function mixtureNoteOptionsForBar(maximumQuarterNotes: number): MixtureNoteOption[] {
+export function mixtureNoteOptionsForBar(maximumQuarterNotes: number, includeSixtyFourth = true): MixtureNoteOption[] {
   if (!Number.isFinite(maximumQuarterNotes) || maximumQuarterNotes <= 0) return [];
-  return MIXTURE_NOTE_OPTIONS.filter((option) => option.durationQuarter <= maximumQuarterNotes);
+  return MIXTURE_NOTE_OPTIONS.filter((option) =>
+    option.durationQuarter <= maximumQuarterNotes && (includeSixtyFourth || option.value !== 'sixtyFourth'),
+  );
 }
 
 function atomLabel(atom: MixtureAtom): string {

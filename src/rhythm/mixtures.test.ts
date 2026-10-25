@@ -114,6 +114,13 @@ test('mixture note selection only offers values no longer than the selected bar'
   assert.deepEqual(mixtureNoteOptionsForBar(0), []);
 });
 
+test('64th-note mixture options are exposed only when the build flag enables them', () => {
+  const regularOptions = mixtureNoteOptionsForBar(4, false);
+  assert.ok(regularOptions.some((option) => option.value === 'thirtySecond'));
+  assert.ok(regularOptions.every((option) => option.value !== 'sixtyFourth'));
+  assert.ok(mixtureNoteOptionsForBar(4, true).some((option) => option.value === 'sixtyFourth'));
+});
+
 test('mixture choices can be assigned independently to both hands and do not repeat the exact pair immediately', () => {
   const mixtureIds: MixturePatternId[] = [
     'dottedQuaverSemiquaver',

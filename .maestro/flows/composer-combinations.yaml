@@ -35,10 +35,14 @@ appId: com.splitbeat.twohandrhythm
 - swipe:
     start: 90%, 85%
     end: 10%, 85%
-- assertVisible:
+- assertNotVisible:
     id: exercise.composer.symbol.sixtyFourth
+- scrollUntilVisible:
+    element:
+      id: exercise.composer.symbol.thirtySecond
+    direction: DOWN
 - tapOn:
-    id: exercise.composer.symbol.sixtyFourth
+    id: exercise.composer.symbol.thirtySecond
 - scrollUntilVisible:
     element:
       id: exercise.composer.symbol.triplet

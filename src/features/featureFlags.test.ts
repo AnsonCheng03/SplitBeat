@@ -46,19 +46,49 @@ const settings: ExerciseSettings = {
   hapticsEnabled: true,
 };
 
-test('build feature defaults enable every defined flag', () => {
+test('build feature defaults enable every defined flag except optional 64th notes', () => {
   assert.equal(FEATURE_FLAG_IDS.length, Object.keys(DEFAULT_FEATURE_FLAGS).length);
-  assert.ok(FEATURE_FLAG_IDS.every((id) => DEFAULT_FEATURE_FLAGS[id]));
+  assert.ok(FEATURE_FLAG_IDS.every((id) => id === 'sixtyFourthNotes' ? !DEFAULT_FEATURE_FLAGS[id] : DEFAULT_FEATURE_FLAGS[id]));
 });
 
-test('build feature environment overrides explicit flags and defaults unspecified flags to enabled', () => {
+test('build feature environment overrides explicit flags and defaults unspecified flags safely', () => {
   assert.deepEqual(parseFeatureFlags(null), DEFAULT_FEATURE_FLAGS);
   assert.deepEqual(parseFeatureFlags(undefined), DEFAULT_FEATURE_FLAGS);
   assert.deepEqual(parseFeatureFlags('{broken'), DEFAULT_FEATURE_FLAGS);
   assert.equal(parseFeatureFlags('{"gameCenter":false}').gameCenter, false);
   assert.equal(parseFeatureFlags('{"gameCenter":false}').backgroundMusic, true);
   assert.equal(parseFeatureFlags('{"gameCenter":"false"}').gameCenter, true);
+  assert.equal(parseFeatureFlags('{"sixtyFourthNotes":true}').sixtyFourthNotes, true);
+  assert.equal(parseFeatureFlags('{"sixtyFourthNotes":false}').sixtyFourthNotes, false);
   assert.deepEqual(BUILD_FEATURE_FLAGS, parseFeatureFlags(process.env.EXPO_PUBLIC_FEATURE_FLAGS));
+});
+
+test('64th-note selection is off by default and can be enabled by the build flag', () => {
+  const fastSettings = {
+    ...settings,
+    enabledSubdivisions: ['quarter', 'thirtySecond', 'sixtyFourth'],
+    mixtureNoteValues: ['thirtySecond', 'sixtyFourth'],
+  } as ExerciseSettings;
+  const limited = applyFeatureFlagsToSettings(fastSettings, DEFAULT_FEATURE_FLAGS);
+  assert.deepEqual(limited.enabledSubdivisions, ['quarter', 'thirtySecond']);
+  assert.deepEqual(limited.mixtureNoteValues, ['thirtySecond']);
+
+  const enabledFlags = { ...DEFAULT_FEATURE_FLAGS, sixtyFourthNotes: true };
+  const enabled = applyFeatureFlagsToSettings(fastSettings, enabledFlags);
+  assert.deepEqual(enabled.enabledSubdivisions, ['quarter', 'thirtySecond', 'sixtyFourth']);
+  assert.deepEqual(enabled.mixtureNoteValues, ['thirtySecond', 'sixtyFourth']);
+
+  assert.deepEqual(applyFeatureFlagsToPatternPairs([
+    { leftSubdivision: 'sixtyFourth', rightSubdivision: 'thirtySecond', leftMixture: 'mix1-n4-n8' },
+  ], DEFAULT_FEATURE_FLAGS, limited.enabledSubdivisions), [
+    { leftSubdivision: 'quarter', rightSubdivision: 'thirtySecond', leftMixture: undefined, rightMixture: undefined, leftRest: undefined, rightRest: undefined },
+  ]);
+  assert.equal(applyFeatureFlagsToPatternPairs([
+    { leftSubdivision: 'sixtyFourth', rightSubdivision: 'thirtySecond', leftMixture: 'mix1-n4-n8' },
+  ], enabledFlags, enabled.enabledSubdivisions)?.[0].leftSubdivision, 'sixtyFourth');
+  assert.equal(applyFeatureFlagsToPatternPairs([
+    { leftSubdivision: 'quarter', rightSubdivision: 'quarter', leftMixture: 'mix1-n4-n8' },
+  ], enabledFlags, enabled.enabledSubdivisions)?.[0].leftMixture, 'mix1-n4-n8');
 });
 
 test('disabled feature groups are removed from effective session settings', () => {

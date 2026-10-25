@@ -48,7 +48,7 @@ appId: com.splitbeat.twohandrhythm
     id: exercise.pair.left.sixteenth
 - assertVisible:
     id: exercise.pair.left.thirtySecond
-- assertVisible:
+- assertNotVisible:
     id: exercise.pair.left.sixtyFourth
 - assertVisible:
     id: exercise.pair.left.duplet
@@ -68,7 +68,7 @@ appId: com.splitbeat.twohandrhythm
     id: exercise.pair.left.nonuplet
 - assertVisible:
     id: exercise.pair.left.rest
-- assertVisible:
+- assertNotVisible:
     id: exercise.pair.right.sixtyFourth
 - assertVisible:
     id: exercise.pair.right.nonuplet

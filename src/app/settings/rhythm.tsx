@@ -36,6 +36,9 @@ export default function RhythmSettingsScreen() {
   const visibleSubdivisions = featureFlags.rhythmExtensions
     ? SUBDIVISIONS
     : SUBDIVISIONS.filter((subdivision) => BASIC_SUBDIVISIONS.includes(subdivision as (typeof BASIC_SUBDIVISIONS)[number]));
+  const selectableSubdivisions = visibleSubdivisions.filter((subdivision) =>
+    featureFlags.sixtyFourthNotes || subdivision !== 'sixtyFourth',
+  );
   const visibleTimeSignatures = featureFlags.rhythmExtensions
     ? TIME_SIGNATURES
     : TIME_SIGNATURES.filter((signature) => ['2/4', '3/4', '4/4', '5/4', '7/4', '2/2', '3/8'].includes(signature));
@@ -62,7 +65,7 @@ export default function RhythmSettingsScreen() {
   const updateTimeSignature = (timeSignature: TimeSignature) => {
     const barLength = barDurationQuarterNotes(timeSignature);
     const mixtureNoteValues = (settings.mixtureNoteValues ?? []).filter((value) =>
-      mixtureNoteOptionsForBar(barLength).some((option) => option.value === value),
+      mixtureNoteOptionsForBar(barLength, featureFlags.sixtyFourthNotes).some((option) => option.value === value),
     );
     updateSettings({ timeSignature, mixtureNoteValues });
   };
@@ -149,7 +152,7 @@ export default function RhythmSettingsScreen() {
 
       <Section title="ALLOWED SUBDIVISIONS">
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-          {visibleSubdivisions.map((subdivision) => {
+          {selectableSubdivisions.map((subdivision) => {
             const selected = settings.enabledSubdivisions.includes(subdivision);
             return (
               <Pressable
@@ -187,7 +190,7 @@ export default function RhythmSettingsScreen() {
           Choose note values that Split Beat may combine for either hand. It generates a fresh pattern for each change and keeps the pattern within one bar.
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 12 }}>
-          {mixtureNoteOptionsForBar(barDurationQuarterNotes(settings.timeSignature)).map((option) => {
+          {mixtureNoteOptionsForBar(barDurationQuarterNotes(settings.timeSignature), featureFlags.sixtyFourthNotes).map((option) => {
             const selected = (settings.mixtureNoteValues ?? []).includes(option.value);
             return (
               <Pressable

@@ -107,7 +107,9 @@ export default function ExerciseScreen() {
   };
 
   const mixtureExamples = useMemo(() => {
-    const values = settings.mixtureNoteValues ?? [];
+    const values = (settings.mixtureNoteValues ?? []).filter((value) =>
+      featureFlags.sixtyFourthNotes || value !== 'sixtyFourth',
+    );
     if (values.length === 0) return [];
 
     const barLength = barDurationQuarterNotes(settings.timeSignature);
@@ -125,7 +127,7 @@ export default function ExerciseScreen() {
       }
     }
     return examples;
-  }, [settings.mixtureNoteValues, settings.mixtureRestsEnabled, settings.timeSignature]);
+  }, [featureFlags.sixtyFourthNotes, settings.mixtureNoteValues, settings.mixtureRestsEnabled, settings.timeSignature]);
 
   const launch = async (prepare: () => Promise<void>) => {
     if (starting) return;
@@ -396,8 +398,8 @@ export default function ExerciseScreen() {
           <>
             <Text style={sectionTitle}>CHOOSE A RHYTHM FOR EACH HAND</Text>
             <View style={{ flexDirection: 'row', alignItems: 'stretch', gap: 12, marginTop: 9 }}>
-              <PatternPicker hand="left" selection={leftSelection} mixtures={mixtureExamples} timeSignature={settings.timeSignature} onChange={setLeftSelection} />
-              <PatternPicker hand="right" selection={rightSelection} mixtures={mixtureExamples} timeSignature={settings.timeSignature} onChange={setRightSelection} />
+              <PatternPicker hand="left" selection={leftSelection} mixtures={mixtureExamples} includeSixtyFourth={featureFlags.sixtyFourthNotes} timeSignature={settings.timeSignature} onChange={setLeftSelection} />
+              <PatternPicker hand="right" selection={rightSelection} mixtures={mixtureExamples} includeSixtyFourth={featureFlags.sixtyFourthNotes} timeSignature={settings.timeSignature} onChange={setRightSelection} />
             </View>
             <PrimaryButton testID="exercise.practicePair" title={starting ? 'PREPARING…' : 'PRACTICE THIS PAIR'} onPress={() => void practiceSelectedPair()} disabled={starting} />
           </>
@@ -423,7 +425,7 @@ export default function ExerciseScreen() {
 
             <Text style={sectionTitle}>{t('NOTE VALUES')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 7, paddingVertical: 7 }}>
-              {NOTE_VALUE_SYMBOLS.map((symbol) => (
+              {NOTE_VALUE_SYMBOLS.filter((symbol) => featureFlags.sixtyFourthNotes || symbol.id !== 'sixtyFourth').map((symbol) => (
                 <ComposerSymbolButton
                   key={symbol.id}
                   testID={`exercise.composer.symbol.${symbol.id}`}
@@ -602,12 +604,13 @@ function CombinationTile({ record, onPress }: { record: CombinationProgress; onP
   );
 }
 
-function PatternPicker({ hand, selection, mixtures, timeSignature, onChange }: { hand: Hand; selection: PatternSelection; mixtures: readonly MixturePattern[]; timeSignature: TimeSignature; onChange: (selection: PatternSelection) => void }) {
+function PatternPicker({ hand, selection, mixtures, includeSixtyFourth, timeSignature, onChange }: { hand: Hand; selection: PatternSelection; mixtures: readonly MixturePattern[]; includeSixtyFourth: boolean; timeSignature: TimeSignature; onChange: (selection: PatternSelection) => void }) {
   const { colors } = useTheme();
   const { t } = useI18n();
   const color = hand === 'left' ? colors.left : colors.right;
   const options: { key: string; selection: PatternSelection }[] = [
-    ...SUBDIVISIONS.map((subdivision) => ({ key: subdivision, selection: { subdivision, rest: false } })),
+    ...SUBDIVISIONS.filter((subdivision) => includeSixtyFourth || subdivision !== 'sixtyFourth')
+      .map((subdivision) => ({ key: subdivision, selection: { subdivision, rest: false } })),
     ...mixtures.map((mixture) => ({ key: mixture.id, selection: { subdivision: 'quarter' as const, mixture: mixture.id, rest: false } })),
     { key: 'rest', selection: { subdivision: 'quarter', rest: true } },
   ];

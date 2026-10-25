@@ -2,9 +2,12 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { BUILD_FEATURE_FLAGS } from '@/features/featureFlags';
 import {
+  createLearnCourse,
   getLessonAvailability,
   LEARN_COURSE,
+  learnCourseContentRevision,
   lessonHandPatternOptions,
   lessonOffersHandSwaps,
   lessonProgressPercent,
@@ -55,8 +58,17 @@ test('the course advances from a pulse through subdivisions, tuplets, and mixed 
   assert.equal(LEARN_COURSE[1].patternPairs[0].leftSubdivision, 'quarter');
   assert.ok(LEARN_COURSE.some((lesson) => lesson.timeSignature === '6/8'));
   assert.ok(LEARN_COURSE.some((lesson) => lesson.feel === 'swing'));
-  assert.ok(LEARN_COURSE.some((lesson) => lesson.patternPairs.some((pair) => pair.leftSubdivision === 'sixtyFourth' || pair.rightSubdivision === 'sixtyFourth')));
+  assert.ok(LEARN_COURSE.some((lesson) => lesson.patternPairs.some((pair) => pair.leftSubdivision === 'thirtySecond' || pair.rightSubdivision === 'thirtySecond')));
+  assert.equal(LEARN_COURSE.some((lesson) => lesson.patternPairs.some((pair) => pair.leftSubdivision === 'sixtyFourth' || pair.rightSubdivision === 'sixtyFourth')), BUILD_FEATURE_FLAGS.sixtyFourthNotes);
   assert.equal(LEARN_COURSE.at(-1)?.restBetweenChanges, true);
+});
+
+test('the 64th-note course content is build-gated and course revisions stay separate', () => {
+  const limitedCourse = createLearnCourse({ sixtyFourthNotes: false });
+  const enabledCourse = createLearnCourse({ sixtyFourthNotes: true });
+  assert.ok(limitedCourse.every((lesson) => lesson.patternPairs.every((pair) => pair.leftSubdivision !== 'sixtyFourth' && pair.rightSubdivision !== 'sixtyFourth')));
+  assert.ok(enabledCourse.some((lesson) => lesson.patternPairs.some((pair) => pair.leftSubdivision === 'sixtyFourth' || pair.rightSubdivision === 'sixtyFourth')));
+  assert.notEqual(learnCourseContentRevision(limitedCourse), learnCourseContentRevision(enabledCourse));
 });
 
 test('two-hand lessons let either hand play each authored rhythm', () => {
@@ -111,10 +123,16 @@ test('early lessons keep a shared pulse before later lessons introduce per-hand 
   }
 });
 
+test('the limited fine-control lesson folds 64th-note weight into 32nd notes', () => {
+  const fineControl = createLearnCourse({ sixtyFourthNotes: false }).find((lesson) => lesson.id === 'fast-subdivisions');
+  assert.equal(fineControl?.handSubdivisionWeights?.thirtySecond, 15);
+  assert.equal(fineControl?.handSubdivisionWeights?.sixtyFourth, undefined);
+});
+
 test('course previews expose every subdivision and rest each hand can receive', () => {
   const fineControl = LEARN_COURSE.find((lesson) => lesson.id === 'fast-subdivisions');
   assert.ok(fineControl);
-  const expectedFastNotes = ['quarter', 'eighth', 'sixteenth', 'thirtySecond', 'sixtyFourth'];
+  const expectedFastNotes = ['quarter', 'eighth', 'sixteenth', 'thirtySecond', ...(BUILD_FEATURE_FLAGS.sixtyFourthNotes ? ['sixtyFourth'] : [])];
   for (const hand of ['left', 'right'] as const) {
     const options = lessonHandPatternOptions(fineControl, hand);
     assert.deepEqual(options.subdivisions, expectedFastNotes);

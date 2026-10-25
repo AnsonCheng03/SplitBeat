@@ -5,6 +5,8 @@ import type {
   TimeSignature,
   TrainingMode,
 } from '@/types/rhythm';
+import { BUILD_FEATURE_FLAGS } from '@/features/featureFlags';
+import type { FeatureFlags } from '@/features/featureFlags';
 
 export interface LearnLesson {
   id: string;
@@ -398,18 +400,56 @@ function addHandSwappedPatterns(
   };
 }
 
-export const LEARN_COURSE: readonly LearnLesson[] = AUTHORED_LEARN_COURSE.map((lesson) => {
-  const authoredPatterns = lesson.handSubdivisionWeights
-    ? createWeightedHandPatterns(lesson.handSubdivisionWeights)
-    : { patternPairs: lesson.patternPairs, patternPairWeights: lesson.patternPairWeights };
-  const patternSet = lesson.trainingMode === 'two-hand'
-    ? addHandSwappedPatterns(authoredPatterns.patternPairs, authoredPatterns.patternPairWeights)
-    : authoredPatterns;
+function restrictLessonToFeatureFlags(
+  lesson: LearnLesson,
+  flags: Pick<FeatureFlags, 'sixtyFourthNotes'>,
+): LearnLesson {
+  if (flags.sixtyFourthNotes) return lesson;
+
+  const handSubdivisionWeights = lesson.handSubdivisionWeights
+    ? { ...lesson.handSubdivisionWeights }
+    : undefined;
+  if (handSubdivisionWeights) {
+    const sixtyFourthWeight = handSubdivisionWeights.sixtyFourth ?? 0;
+    delete handSubdivisionWeights.sixtyFourth;
+    if (sixtyFourthWeight > 0) {
+      handSubdivisionWeights.thirtySecond = (handSubdivisionWeights.thirtySecond ?? 0) + sixtyFourthWeight;
+    }
+  }
+  const replaceSixtyFourthText = (text: string) => text
+    .replace(/64th/g, '32nd')
+    .replace(/sixty-fourths/g, 'thirty-second notes');
+
   return {
     ...lesson,
-    ...patternSet,
+    skill: replaceSixtyFourthText(lesson.skill),
+    instruction: replaceSixtyFourthText(lesson.instruction),
+    ...(handSubdivisionWeights ? { handSubdivisionWeights } : {}),
+    patternPairs: lesson.patternPairs.map((pattern) => ({
+      ...pattern,
+      leftSubdivision: pattern.leftSubdivision === 'sixtyFourth' ? 'thirtySecond' : pattern.leftSubdivision,
+      rightSubdivision: pattern.rightSubdivision === 'sixtyFourth' ? 'thirtySecond' : pattern.rightSubdivision,
+    })),
   };
-});
+}
+
+export function createLearnCourse(flags: Pick<FeatureFlags, 'sixtyFourthNotes'>): readonly LearnLesson[] {
+  return AUTHORED_LEARN_COURSE.map((authoredLesson) => {
+    const lesson = restrictLessonToFeatureFlags(authoredLesson, flags);
+    const authoredPatterns = lesson.handSubdivisionWeights
+      ? createWeightedHandPatterns(lesson.handSubdivisionWeights)
+      : { patternPairs: lesson.patternPairs, patternPairWeights: lesson.patternPairWeights };
+    const patternSet = lesson.trainingMode === 'two-hand'
+      ? addHandSwappedPatterns(authoredPatterns.patternPairs, authoredPatterns.patternPairWeights)
+      : authoredPatterns;
+    return {
+      ...lesson,
+      ...patternSet,
+    };
+  });
+}
+
+export const LEARN_COURSE: readonly LearnLesson[] = createLearnCourse(BUILD_FEATURE_FLAGS);
 
 function fnv1a32(value: string, seed: number): number {
   let hash = seed >>> 0;
