@@ -207,7 +207,7 @@ export function LivePracticeSettings({
 function SectionTitle({ title, compact }: { title: string; compact: boolean }) {
   const { colors } = useTheme();
   return (
-    <Text style={{ color: colors.dim, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 1.2, marginTop: compact ? 14 : 18, marginBottom: 2 }}>
+    <Text style={{ color: colors.dim, fontSize: compact ? 10 : 11, fontWeight: '900', letterSpacing: 1.1, marginTop: compact ? 14 : 18, marginBottom: 3 }}>
       {title}
     </Text>
   );
@@ -227,7 +227,7 @@ function SoundChoice({
   const { colors } = useTheme();
   return (
     <View style={{ marginTop: 13 }}>
-      <Text style={{ color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 0.8, marginBottom: 7 }}>{title}</Text>
+      <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 0.7, marginBottom: 7 }}>{title}</Text>
       <SettingsChoiceRow options={SOUND_OPTIONS} value={value} onChange={onChange} testIDPrefix={testIDPrefix} />
     </View>
   );
@@ -247,7 +247,7 @@ function FlashChoice({
   const { colors } = useTheme();
   return (
     <View style={{ marginTop: 12 }}>
-      <Text style={{ color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 0.8, marginBottom: 7 }}>{title}</Text>
+      <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 0.7, marginBottom: 7 }}>{title}</Text>
       <SettingsChoiceRow options={FLASH_SOURCE_OPTIONS} value={value} onChange={onChange} testIDPrefix={testIDPrefix} />
     </View>
   );
