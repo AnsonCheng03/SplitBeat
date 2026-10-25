@@ -144,7 +144,7 @@ function calculateBarNoteAnchorInsets(
   const noteSpacing = width * shortestNote / durationQuarter;
   const sizeMaximum = size === 'mini' ? 6.4 : size === 'compact' ? 10.5 : 16;
   const headWidth = Math.max(size === 'mini' ? 3.5 : 5, Math.min(sizeMaximum, noteSpacing * 0.62));
-  const left = Math.min(width / 2, headWidth / 2 + 2);
+  const left = Math.min(width / 2, headWidth / 2 + 4);
   const hasFlags = events.some((event) => (event.beamCount ?? inferredBeamCount(event.durationQuarter)) > 0);
   const dotSize = Math.max(2, headWidth * 0.66 * 0.24);
   const flagWidth = Math.max(size === 'mini' ? 5 : 7, headWidth * 0.9);
@@ -155,7 +155,7 @@ function calculateBarNoteAnchorInsets(
 
   return {
     left,
-    right: Math.min(width / 2, Math.max(headWidth / 2 + 2, flagOverhang, dotOverhang)),
+    right: Math.min(width / 2, Math.max(headWidth / 2 + 2, flagOverhang, dotOverhang) + 3),
   };
 }
 

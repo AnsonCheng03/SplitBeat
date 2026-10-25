@@ -38,6 +38,7 @@ export default function PracticeScreen() {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const compact = height < 520;
+  const safeTopInset = Math.max(insets.top, 12);
   const router = useRouter();
   const { lessonId: rawLessonId, scoreDisplayMode: rawScoreDisplayMode } = useLocalSearchParams<{
     lessonId?: string;
@@ -217,7 +218,7 @@ export default function PracticeScreen() {
   const enabledHand = (hand: Hand) => activeSettings.trainingMode !== 'single-hand' || activeSettings.singleHand === hand;
   const singleHandMode = activeSettings.trainingMode === 'single-hand';
   const focusedHand = activeSettings.singleHand;
-  const scoreContentMargin = Math.max(16, insets.left + 18, insets.right + 18);
+  const scoreContentMargin = Math.max(24, insets.left + 24, insets.right + 24);
   const initialScoreContentWidth = Math.max(0, width - scoreContentMargin * 2);
   const initialScoreViewportWidth = initialScoreContentWidth;
   const initialScoreFocusWidth = Math.min(620, initialScoreContentWidth * (singleHandMode ? 0.76 : 0.38));
@@ -232,12 +233,12 @@ export default function PracticeScreen() {
   const displayScoreMeasure = importedScoreMeasure ?? practiceScoreMeasure;
   const isScoreDisplay = Boolean(displayScoreMeasure);
   const isScoreFocusDisplay = Boolean(importedScoreMeasure && scoreDisplayMode === 'focus');
-  const scoreDisplayTop = Math.max(insets.top, 8) + (compact ? 46 : 58);
+  const scoreDisplayTop = safeTopInset + (compact ? 46 : 58);
   const scoreDisplayHeight = compact
     ? Math.min(180, Math.max(110, height * 0.25))
     : Math.min(200, Math.max(136, height * 0.27));
   const showNextPattern = Boolean(!isScoreDisplay && snapshot?.nextStep);
-  const previewTop = Math.max(insets.top, 8) + (compact ? 46 : 58);
+  const previewTop = safeTopInset + (compact ? 46 : 58);
   const previewHeight = isScoreDisplay
     ? Math.min(220, Math.max(112, height * 0.25))
     : compact ? 124 : 104;
@@ -482,6 +483,7 @@ export default function PracticeScreen() {
                       compact={compact}
                       beamGroupQuarterNotes={pulseQuarterNotes(activeSettings.timeSignature)}
                       minimal
+                      showHandLabels
                       visibleHand={scoreHandToShow}
                       focusedColor={singleHandMode ? scoreHandColor : undefined}
                       initialViewportWidth={initialScoreViewportWidth}
@@ -550,7 +552,7 @@ export default function PracticeScreen() {
           </View>
         ) : null}
 
-        <View pointerEvents="box-none" style={{ position: 'absolute', top: insets.top, left: 0, right: 0, minHeight: snapshot?.resumeCountIn ? (compact ? 48 : 58) : compact ? 42 : 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: Math.max(compact ? 13 : 22, insets.left + 12), paddingRight: Math.max(compact ? 13 : 22, insets.right + 12) }}>
+        <View pointerEvents="box-none" style={{ position: 'absolute', top: safeTopInset, left: 0, right: 0, minHeight: snapshot?.resumeCountIn ? (compact ? 48 : 58) : compact ? 42 : 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: Math.max(compact ? 13 : 22, insets.left + 12), paddingRight: Math.max(compact ? 13 : 22, insets.right + 12) }}>
           <Pressable
             testID="practice.pause"
             accessibilityRole="button"

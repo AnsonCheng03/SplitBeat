@@ -11,7 +11,7 @@ import type { Hand } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
 
 function scoreLaneHeight(size: NoteNotationSize): number {
-  return size === 'compact' ? 44 : 58;
+  return size === 'compact' ? 50 : 64;
 }
 
 function RhythmTrack({
@@ -222,6 +222,7 @@ interface ScrollingScoreRhythmProps {
   visibleHand?: Hand;
   focusedColor?: string;
   showStaffLines?: boolean;
+  showHandLabels?: boolean;
   initialViewportWidth?: number;
 }
 
@@ -330,11 +331,15 @@ export function ScrollingScoreRhythm({
   visibleHand,
   focusedColor,
   showStaffLines = false,
+  showHandLabels = false,
   initialViewportWidth = 0,
 }: ScrollingScoreRhythmProps) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [measuredViewportWidth, setMeasuredViewportWidth] = useState(0);
-  const viewportWidth = measuredViewportWidth || Math.max(0, initialViewportWidth - (minimal ? 0 : 52));
+  const showLaneLabels = !minimal || showHandLabels;
+  const labelColumnWidth = showLaneLabels ? 52 : 0;
+  const viewportWidth = measuredViewportWidth || Math.max(0, initialViewportWidth - labelColumnWidth);
   const size: NoteNotationSize = compact ? 'compact' : 'full';
   const laneHeight = scoreLaneHeight(size);
   const visibleLaneCount = visibleHand ? 1 : 2;
@@ -378,16 +383,16 @@ export function ScrollingScoreRhythm({
       testID="practice.scoreMeasure"
       style={{ flex: 1, flexDirection: 'row', alignItems: 'center', overflow: 'hidden' }}
     >
-      {!minimal ? (
-        <View style={{ width: 52, gap: laneGap }}>
+      {showLaneLabels ? (
+        <View style={{ width: labelColumnWidth, gap: laneGap }}>
           {(!visibleHand || visibleHand === 'left') ? (
             <View style={{ height: laneHeight, justifyContent: 'center' }}>
-              <Text style={{ color: visibleHand ? focusedColor ?? colors.left : colors.left, fontSize: 9, fontWeight: '900', letterSpacing: 1 }}>LEFT</Text>
+              <Text style={{ color: visibleHand ? focusedColor ?? colors.left : colors.left, fontSize: compact ? 10 : 11, fontWeight: '900', letterSpacing: 0.8 }}>{t('LEFT')}</Text>
             </View>
           ) : null}
           {(!visibleHand || visibleHand === 'right') ? (
             <View style={{ height: laneHeight, justifyContent: 'center' }}>
-              <Text style={{ color: visibleHand ? focusedColor ?? colors.right : colors.right, fontSize: 9, fontWeight: '900', letterSpacing: 1 }}>RIGHT</Text>
+              <Text style={{ color: visibleHand ? focusedColor ?? colors.right : colors.right, fontSize: compact ? 10 : 11, fontWeight: '900', letterSpacing: 0.8 }}>{t('RIGHT')}</Text>
             </View>
           ) : null}
         </View>
