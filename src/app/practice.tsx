@@ -223,7 +223,7 @@ export default function PracticeScreen() {
   const initialScoreViewportWidth = initialScoreContentWidth;
   const initialScoreFocusWidth = Math.min(620, initialScoreContentWidth * (singleHandMode ? 0.76 : 0.38));
   const notationMaxWidth = width * (singleHandMode ? 0.82 : 0.42);
-  const notationScale = 1;
+  const notationScale = 1.2;
   const step = snapshot?.currentStep;
   const preloadSubdivision = activeSettings.enabledSubdivisions[0] ?? 'quarter';
   const displayStep = step ?? (tutorialVisible ? {
@@ -309,12 +309,10 @@ export default function PracticeScreen() {
         top: scoreDisplayTop,
         height: scoreDisplayHeight,
       }
-    : showNextPattern
-      ? { top: previewTop + previewHeight, bottom: -insets.bottom }
-      : { top: -insets.top, bottom: -insets.bottom };
+    : { top: previewTop + previewHeight, bottom: -insets.bottom };
   const notationMaxHeight = Math.max(
     0,
-    height - Math.max(0, showNextPattern ? previewTop + previewHeight : -insets.top) - insets.bottom - 30,
+    height - Math.max(0, previewTop + previewHeight) - insets.bottom - 30,
   );
 
   const resumeFromChallenge = async () => {

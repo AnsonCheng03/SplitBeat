@@ -11,6 +11,7 @@ export function MixtureSymbol({
   mixtureId,
   color,
   compact = false,
+  mini = false,
   scale = 1,
   maxWidth,
   maxHeight,
@@ -19,6 +20,7 @@ export function MixtureSymbol({
   mixtureId: MixturePatternId;
   color: string;
   compact?: boolean;
+  mini?: boolean;
   scale?: number;
   maxWidth?: number;
   maxHeight?: number;
@@ -26,8 +28,10 @@ export function MixtureSymbol({
 }) {
   const { t } = useI18n();
   const pattern = getMixturePattern(mixtureId);
-  const size: NoteNotationSize = compact ? 'compact' : 'full';
-  const notationWidth = compact
+  const size: NoteNotationSize = mini ? 'mini' : compact ? 'compact' : 'full';
+  const notationWidth = mini
+    ? Math.min(120, Math.max(42, pattern.atoms.length * 6))
+    : compact
     ? Math.min(112, Math.max(58, pattern.atoms.length * 7))
     : Math.min(220, Math.max(82, pattern.atoms.length * 12));
   const noteEvents = useMemo(() => {
@@ -61,7 +65,7 @@ export function MixtureSymbol({
               top: plan.height * 0.45,
               width: 22,
               color,
-              fontSize: compact ? 6 : 7,
+              fontSize: mini ? 5 : compact ? 6 : 7,
               fontWeight: '900',
               letterSpacing: 0.2,
               textAlign: 'center',
