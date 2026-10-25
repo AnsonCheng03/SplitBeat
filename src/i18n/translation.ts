@@ -307,6 +307,7 @@ const TRADITIONAL_CHINESE: Record<string, string> = {
   'Choose which hand to edit': '選擇要編輯的手',
   'LENGTH': '長度',
   '{count} bars': '{count} 小節',
+  '1 bar': '1 小節',
   'Save this composition': '儲存此編曲',
   'SAVED COMPOSITIONS': '已儲存的編曲',
   'No saved compositions yet.': '尚未儲存編曲。',

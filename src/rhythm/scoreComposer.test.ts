@@ -1,9 +1,57 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { composeRhythmScore, noteValuesForSymbol } from '@/rhythm/scoreComposer';
-import { createBarNoteNotationPlan } from '@/rhythm/noteNotation';
-import { scoreNotationEvents } from '@/rhythm/scoreStaff';
+import {
+  COMPOSER_TUPLET_SYMBOLS,
+  composeRhythmScore,
+  NOTE_VALUE_SYMBOLS,
+  noteValuesForSymbol,
+} from '@/rhythm/scoreComposer';
+import type { ComposerSymbolId } from '@/rhythm/scoreComposer';
+import { createBarNoteNotationPlan, createSharedBarNoteAnchorInsets } from '@/rhythm/noteNotation';
+import { scoreNotationEvents, scoreNotationEventsForSpan } from '@/rhythm/scoreStaff';
+import { composerPreviewDimensions } from '@/rhythm/scoreLayout';
 import { pulseQuarterNotes } from '@/rhythm/subdivisions';
+import { TIME_SIGNATURES } from '@/types/rhythm';
+
+const composerSymbolIds: ComposerSymbolId[] = [
+  ...NOTE_VALUE_SYMBOLS.map(({ id }) => id as ComposerSymbolId),
+  ...COMPOSER_TUPLET_SYMBOLS.map(({ id }) => id),
+];
+
+function assertNotationFits(plan: ReturnType<typeof createBarNoteNotationPlan>, description: string) {
+  const epsilon = 0.001;
+  assert.ok(Number.isFinite(plan.width) && plan.width > 0, `${description}: notation width`);
+  assert.ok(Number.isFinite(plan.height) && plan.height > 0, `${description}: notation height`);
+  for (const [index, note] of plan.notes.entries()) {
+    assert.ok(note.left >= -epsilon, `${description}: notehead starts inside the viewport`);
+    assert.ok(note.left + note.headWidth <= plan.width + epsilon, `${description}: notehead ends inside the viewport`);
+    assert.ok(note.headTop >= -epsilon, `${description}: notehead top is visible`);
+    assert.ok(note.headTop + note.headHeight <= plan.height + epsilon, `${description}: notehead bottom is visible`);
+    assert.ok(note.stemTop >= -epsilon, `${description}: stem top is visible`);
+    assert.ok(note.stemTop + note.stemHeight <= plan.height + epsilon, `${description}: stem bottom is visible`);
+    const previous = plan.notes[index - 1];
+    if (previous) {
+      const previousCenter = previous.left + previous.headWidth / 2;
+      const currentCenter = note.left + note.headWidth / 2;
+      assert.ok(currentCenter - previousCenter >= (previous.headWidth + note.headWidth) / 2 - epsilon, `${description}: adjacent noteheads do not overlap`);
+    }
+  }
+  for (const beam of plan.beams) {
+    assert.ok(beam.left >= -epsilon, `${description}: beam starts inside the viewport`);
+    assert.ok(beam.left + beam.width <= plan.width + epsilon, `${description}: beam ends inside the viewport`);
+    assert.ok(beam.top >= -epsilon && beam.top + beam.height <= plan.height + epsilon, `${description}: beam is visible vertically`);
+  }
+  for (const dot of plan.dots) {
+    assert.ok(dot.left >= -epsilon, `${description}: dot starts inside the viewport`);
+    assert.ok(dot.left + dot.size <= plan.width + epsilon, `${description}: dot ends inside the viewport`);
+    assert.ok(dot.top >= -epsilon && dot.top + dot.size <= plan.height + epsilon, `${description}: dot is visible vertically`);
+  }
+  for (const label of plan.tupletLabels) {
+    assert.ok(label.left >= -epsilon, `${description}: tuplet label starts inside the viewport`);
+    assert.ok(label.left + label.width <= plan.width + epsilon, `${description}: tuplet label ends inside the viewport`);
+    assert.ok(label.top >= -epsilon && label.top + label.fontSize <= plan.height + epsilon, `${description}: tuplet label is visible vertically`);
+  }
+}
 
 test('composes mixed note lengths into successive bars without requiring one value per bar', () => {
   const result = composeRhythmScore({
@@ -229,4 +277,115 @@ test('creates an implicit second bar when only one hand continues and rejects re
     left: [{ durationQuarter: 4, isRest: true }],
     right: [],
   }), { ok: false, error: 'Add at least one note to the active hand or hands.' });
+});
+
+test('every pair of note, rest, and tuplet symbols stays writable and visible across supported meters', () => {
+  const restStates = [false, true];
+  const context = (meter: string, left: ComposerSymbolId, right: ComposerSymbolId, leftRest: boolean, rightRest: boolean) =>
+    `${meter}: left ${left}${leftRest ? ' rest' : ''} + right ${right}${rightRest ? ' rest' : ''}`;
+
+  for (const timeSignature of TIME_SIGNATURES) {
+    for (const leftSymbol of composerSymbolIds) {
+      for (const rightSymbol of composerSymbolIds) {
+        for (const leftRest of restStates) {
+          for (const rightRest of restStates) {
+            if (leftRest && rightRest) continue;
+            const description = context(timeSignature, leftSymbol, rightSymbol, leftRest, rightRest);
+            const leftInput = noteValuesForSymbol(leftSymbol, timeSignature, leftRest);
+            const rightInput = noteValuesForSymbol(rightSymbol, timeSignature, rightRest);
+            const result = composeRhythmScore({
+              timeSignature,
+              trainingMode: 'two-hand',
+              singleHand: 'left',
+              left: leftInput,
+              right: rightInput,
+            });
+
+            assert.equal(result.ok, true, `${description}: score should compose`);
+            if (!result.ok) continue;
+
+            const barLength = result.score.measures[0]?.durationQuarter ?? 0;
+            assert.ok(barLength > 0, `${description}: score should include a bar`);
+            assert.equal(result.score.totalQuarterNotes, result.score.measures.length * barLength, `${description}: total duration uses full bars`);
+
+            for (const hand of ['left', 'right'] as const) {
+              const expectedInput = hand === 'left' ? leftInput : rightInput;
+              const expectedDuration = expectedInput.reduce((total, item) => total + item.durationQuarter, 0);
+              const placedEvents = result.score.measures.flatMap((measure) =>
+                measure[`${hand}Events`].map((event) => ({
+                  ...event,
+                  absoluteStart: measure.startQuarter + event.startQuarter,
+                  writtenDuration: event.notationDurationQuarter ?? event.durationQuarter,
+                })),
+              );
+              let cursor = 0;
+              for (const event of placedEvents) {
+                assert.ok(Math.abs(event.absoluteStart - cursor) < 0.00001, `${description}: ${hand} timeline has no gaps or overlaps`);
+                assert.ok(event.writtenDuration > 0, `${description}: ${hand} event has positive written duration`);
+                assert.ok(event.startQuarter >= -0.000001, `${description}: ${hand} event starts inside its bar`);
+                assert.ok(event.startQuarter + event.writtenDuration <= barLength + 0.000001, `${description}: ${hand} event ends inside its bar`);
+                cursor = event.absoluteStart + event.writtenDuration;
+              }
+              assert.ok(Math.abs(cursor - expectedDuration) < 0.00001, `${description}: ${hand} written duration matches selected symbols`);
+
+              for (const measure of result.score.measures) {
+                const preview = composerPreviewDimensions(measure);
+                const notationByHand = {
+                  left: scoreNotationEventsForSpan(measure.leftEvents, measure.durationQuarter),
+                  right: scoreNotationEventsForSpan(measure.rightEvents, measure.durationQuarter),
+                };
+                const anchorInsets = createSharedBarNoteAnchorInsets(
+                  [notationByHand.left, notationByHand.right],
+                  { durationQuarter: measure.durationQuarter, width: preview.notationWidth, size: 'compact' },
+                );
+                const plan = createBarNoteNotationPlan(notationByHand[hand], {
+                  durationQuarter: measure.durationQuarter,
+                  width: preview.notationWidth,
+                  size: 'compact',
+                  beamGroupQuarterNotes: pulseQuarterNotes(timeSignature),
+                  anchorInsets,
+                });
+                assertNotationFits(plan, `${description}: ${hand} bar ${measure.index + 1}`);
+                for (const beam of plan.beams.filter((item) => item.kind === 'beam' && item.level === 0)) {
+                  const first = plan.events[beam.startIndex];
+                  const last = plan.events[beam.endIndex];
+                  assert.ok(first && last, `${description}: beam indexes refer to notes`);
+                  if (!first || !last) continue;
+                  assert.equal(
+                    Math.floor((first.startQuarter + 0.000001) / pulseQuarterNotes(timeSignature)),
+                    Math.floor((last.startQuarter + 0.000001) / pulseQuarterNotes(timeSignature)),
+                    `${description}: beam group stays inside the selected beat`,
+                  );
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+});
+
+test('dense 64th-note bars produce complete note geometry without clipped noteheads', () => {
+  const result = composeRhythmScore({
+    timeSignature: '4/4',
+    trainingMode: 'single-hand',
+    singleHand: 'left',
+    left: Array.from({ length: 64 }, () => ({ durationQuarter: 1 / 16 })),
+    right: [],
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.score.measures.length, 1);
+  const events = scoreNotationEvents(result.score.measures[0]!.leftEvents);
+  const preview = composerPreviewDimensions(result.score.measures[0]!);
+  const plan = createBarNoteNotationPlan(events, {
+    durationQuarter: result.score.measures[0]!.durationQuarter,
+    width: preview.notationWidth,
+    size: 'compact',
+    beamGroupQuarterNotes: pulseQuarterNotes('4/4'),
+  });
+  assert.equal(plan.notes.length, 64);
+  assertNotationFits(plan, '64 sixteenth-note events in one compact bar');
 });

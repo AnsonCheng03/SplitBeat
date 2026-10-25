@@ -1,0 +1,113 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: LANDSCAPE_LEFT
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
+- tapOn:
+    id: home.activityPicker
+- tapOn:
+    id: home.exercise
+- tapOn:
+    id: home.start
+- extendedWaitUntil:
+    visible:
+      id: exercise.screen
+    timeout: 15000
+- tapOn:
+    id: exercise.tab.bar
+- scrollUntilVisible:
+    element:
+      id: exercise.composer.mode.note
+    direction: DOWN
+- assertVisible:
+    id: exercise.composer.mode.note
+- scrollUntilVisible:
+    element:
+      id: exercise.composer.symbol.eighth
+    direction: DOWN
+- tapOn:
+    id: exercise.composer.symbol.eighth
+- swipe:
+    start: 90%, 85%
+    end: 10%, 85%
+- assertVisible:
+    id: exercise.composer.symbol.sixtyFourth
+- tapOn:
+    id: exercise.composer.symbol.sixtyFourth
+- scrollUntilVisible:
+    element:
+      id: exercise.composer.symbol.triplet
+    direction: DOWN
+- tapOn:
+    id: exercise.composer.symbol.triplet
+- swipe:
+    start: 90%, 85%
+    end: 10%, 85%
+- tapOn:
+    id: exercise.composer.symbol.nonuplet
+- scrollUntilVisible:
+    element:
+      id: exercise.composer.mode.rest
+    direction: UP
+- tapOn:
+    id: exercise.composer.mode.rest
+- swipe:
+    start: 10%, 85%
+    end: 90%, 85%
+- tapOn:
+    id: exercise.composer.symbol.eighth
+- scrollUntilVisible:
+    element:
+      id: exercise.composer.hand.right
+    direction: UP
+- tapOn:
+    id: exercise.composer.hand.right
+- scrollUntilVisible:
+    element:
+      id: exercise.composer.mode.note
+    direction: DOWN
+- tapOn:
+    id: exercise.composer.mode.note
+- tapOn:
+    id: exercise.composer.symbol.quarter
+- scrollUntilVisible:
+    element:
+      id: exercise.composer.symbol.duplet
+    direction: DOWN
+- swipe:
+    start: 10%, 85%
+    end: 90%, 85%
+- tapOn:
+    id: exercise.composer.symbol.duplet
+- scrollUntilVisible:
+    element:
+      id: exercise.composer.preview.1.leftNotation
+    direction: DOWN
+- extendedWaitUntil:
+    visible:
+      id: exercise.composer.preview.1.leftNotation
+    timeout: 10000
+- extendedWaitUntil:
+    visible:
+      id: exercise.composer.preview.1.rightNotation
+    timeout: 10000
+- assertVisible: 1 bar
+- swipe:
+    start: 90%, 75%
+    end: 90%, 60%
+- takeScreenshot: composer-mixed-notes-rests-tuplets
+- scrollUntilVisible:
+    element:
+      id: exercise.practiceBar
+    direction: DOWN
+- tapOn:
+    id: exercise.practiceBar
+- extendedWaitUntil:
+    visible:
+      id: practice.screen
+    timeout: 15000

@@ -173,6 +173,36 @@ test('bar note builder labels imported duplet, sextuplet, and mixed tuplet group
   assert.ok(plan.height > 44, 'tuplet labels get room above the beams');
 });
 
+test('tuplet labels stay grouped when beams split at beat lines', () => {
+  const events = [
+    ...Array.from({ length: 3 }, (_, index) => ({
+      startQuarter: 0.5 + index / 3,
+      durationQuarter: 1 / 3,
+      tupletNumber: 3,
+    })),
+    ...Array.from({ length: 3 }, (_, index) => ({
+      startQuarter: 1.5 + index / 3,
+      durationQuarter: 1 / 3,
+      tupletNumber: 3,
+    })),
+    ...Array.from({ length: 9 }, (_, index) => ({
+      startQuarter: 2.5 + index / 9,
+      durationQuarter: 1 / 9,
+      tupletNumber: 9,
+    })),
+  ];
+  const plan = createBarNoteNotationPlan(events, {
+    durationQuarter: 4,
+    width: 448,
+    size: 'compact',
+    beamGroupQuarterNotes: 1,
+  });
+
+  assert.deepEqual(plan.tupletLabels.map(({ text }) => text), ['3', '3', '9']);
+  assert.equal(plan.beams.filter(({ kind, level }) => kind === 'beam' && level === 0).length, 4);
+  assertNotationFits(plan);
+});
+
 test('bar note builder flags isolated short notes and splits beams at beat groups', () => {
   const isolated = createBarNoteNotationPlan(
     [

@@ -433,7 +433,6 @@ function buildNotationPlan(
         !previous ||
         !next ||
         next.tupletNumber !== tupletNumber ||
-        next.beamGroupIndex !== firstNote.beamGroupIndex ||
         !isContiguous(previous, next)
       ) break;
       group.push(next);

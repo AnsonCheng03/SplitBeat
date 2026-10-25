@@ -211,6 +211,16 @@ npm run e2e:ios
 npm run e2e:exercise -- --device DEVICE_ID
 ~~~
 
+The score-composer coverage checks every ordered pair of note, rest, and tuplet symbols in all supported meters, verifies bar placement and notation bounds, and runs a device flow with a mixed two-hand score:
+
+~~~sh
+npm test
+npm run e2e:ios
+npm run e2e:composer -- --device DEVICE_ID
+~~~
+
+The device flow saves a screenshot named `composer-mixed-notes-rests-tuplets` during the preview check.
+
 The MusicXML import flow has a separate Maestro test:
 
 ~~~sh

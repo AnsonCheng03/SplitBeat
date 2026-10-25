@@ -9,6 +9,7 @@ import { ComposerSymbolButton } from '@/components/ComposerSymbolButton';
 import { generateMixturePattern, patternLabelForHand } from '@/rhythm/mixtures';
 import type { MixturePattern } from '@/rhythm/mixtures';
 import { pulseQuarterNotes, SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
+import { composerPreviewDimensions } from '@/rhythm/scoreLayout';
 import { composeRhythmScore, COMPOSER_TUPLET_SYMBOLS, NOTE_VALUE_SYMBOLS, noteValuesForSymbol } from '@/rhythm/scoreComposer';
 import type { ComposerSymbolId, ComposedNoteValue } from '@/rhythm/scoreComposer';
 import {
@@ -485,24 +486,27 @@ export default function ExerciseScreen() {
             {composedScore ? (
               <>
                 <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1, marginBottom: 5 }}>
-                  {t('{count} bars', { count: composedScore.measures.length })}
+                  {composedScore.measures.length === 1 ? t('1 bar') : t('{count} bars', { count: composedScore.measures.length })}
                 </Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 8, paddingBottom: 7 }}>
-                  {composedScore.measures.slice(0, 12).map((measure) => (
-                    <View key={measure.index} style={{ width: 258, minHeight: 87, justifyContent: 'center', paddingHorizontal: 4, paddingVertical: 5, borderRadius: 11, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
-                      <Text style={{ color: colors.dim, fontSize: 8, fontWeight: '900', letterSpacing: 1, paddingLeft: 4, marginBottom: 1 }}>{t('BAR {bar}', { bar: measure.index + 1 })}</Text>
-                      <ScoreRhythmMeasure
-                        measure={measure}
-                        number={measure.index + 1}
-                        count={composedScore.measures.length}
-                        compact
-                        hideHeader
-                        beamGroupQuarterNotes={pulseQuarterNotes(settings.timeSignature)}
-                        initialNotationWidth={184}
-                        testIdPrefix={`exercise.composer.preview.${measure.index + 1}`}
-                      />
-                    </View>
-                  ))}
+                  {composedScore.measures.slice(0, 12).map((measure) => {
+                    const preview = composerPreviewDimensions(measure);
+                    return (
+                      <View key={measure.index} style={{ width: preview.cardWidth, minHeight: 87, justifyContent: 'center', paddingHorizontal: 4, paddingVertical: 5, borderRadius: 11, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
+                        <Text style={{ color: colors.dim, fontSize: 8, fontWeight: '900', letterSpacing: 1, paddingLeft: 4, marginBottom: 1 }}>{t('BAR {bar}', { bar: measure.index + 1 })}</Text>
+                        <ScoreRhythmMeasure
+                          measure={measure}
+                          number={measure.index + 1}
+                          count={composedScore.measures.length}
+                          compact
+                          hideHeader
+                          beamGroupQuarterNotes={pulseQuarterNotes(settings.timeSignature)}
+                          initialNotationWidth={preview.notationWidth}
+                          testIdPrefix={`exercise.composer.preview.${measure.index + 1}`}
+                        />
+                      </View>
+                    );
+                  })}
                   {composedScore.measures.length > 12 ? (
                     <View style={{ width: 110, alignItems: 'center', justifyContent: 'center' }}>
                       <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800' }}>+ {composedScore.measures.length - 12}</Text>
