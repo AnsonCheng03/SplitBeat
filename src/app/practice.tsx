@@ -312,7 +312,10 @@ export default function PracticeScreen() {
         top: scoreDisplayTop,
         height: scoreDisplayHeight,
       }
-    : { top: previewTop + previewHeight, bottom: -insets.bottom };
+    : {
+        top: safeTopInset,
+        bottom: compact ? 0 : height * 0.18,
+      };
   const notationMaxHeight = Math.max(
     0,
     height - Math.max(0, previewTop + previewHeight) - insets.bottom - 30,
@@ -442,7 +445,7 @@ export default function PracticeScreen() {
             pointerEvents="none"
             style={[{ position: 'absolute', left: -insets.left, right: -insets.right, flexDirection: 'row', alignItems: 'center', backgroundColor: isScoreDisplay && !isScoreFocusDisplay ? colors.surface : 'transparent' }, rhythmDisplayStyle]}
           >
-            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginHorizontal: isScoreDisplay ? scoreContentMargin : 0 }}>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginHorizontal: isScoreDisplay ? scoreContentMargin : singleHandMode ? 0 : '10%' }}>
               {displayScoreMeasure ? (
                 importedScoreMeasure && scoreDisplayMode === 'focus' ? (
                   singleHandMode ? (
@@ -515,7 +518,6 @@ export default function PracticeScreen() {
                     timeSignature={activeSettings.timeSignature}
                     scale={notationScale}
                     groupWidth={currentPatternGroupWidth}
-                    showDurationGuide
                     maxWidth={notationMaxWidth}
                     maxHeight={notationMaxHeight}
                     readyTestID={`practice.rhythmNote.${focusedHand}.ready`}
@@ -528,7 +530,6 @@ export default function PracticeScreen() {
                     compact={false}
                     scale={notationScale}
                     groupWidth={currentPatternGroupWidth}
-                    showDurationGuide
                     maxWidth={notationMaxWidth}
                     maxHeight={notationMaxHeight}
                     readyTestID={`practice.rhythmNote.${focusedHand}.ready`}
@@ -541,7 +542,6 @@ export default function PracticeScreen() {
                     timeSignature={activeSettings.timeSignature}
                     scale={notationScale}
                     groupWidth={currentPatternGroupWidth}
-                    showDurationGuide
                     maxWidth={notationMaxWidth}
                     maxHeight={notationMaxHeight}
                     readyTestID={`practice.rhythmNote.${focusedHand}.ready`}
@@ -555,7 +555,7 @@ export default function PracticeScreen() {
                   {enabledHand('left') ? (
                     <>
                       <Text style={{ color: colors.left, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>LEFT</Text>
-                      {displayStep.leftRest ? <RhythmSymbol subdivision={displayStep.leftSubdivision} color={colors.left} timeSignature={activeSettings.timeSignature} scale={notationScale} groupWidth={currentPatternGroupWidth} showDurationGuide maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.left.ready" rest /> : displayStep.leftMixture ? <MixtureSymbol mixtureId={displayStep.leftMixture} color={colors.left} scale={notationScale} groupWidth={currentPatternGroupWidth} showDurationGuide maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.left.ready" /> : <RhythmSymbol subdivision={displayStep.leftSubdivision} color={colors.left} timeSignature={activeSettings.timeSignature} scale={notationScale} groupWidth={currentPatternGroupWidth} showDurationGuide maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.left.ready" />}
+                      {displayStep.leftRest ? <RhythmSymbol subdivision={displayStep.leftSubdivision} color={colors.left} timeSignature={activeSettings.timeSignature} scale={notationScale} groupWidth={currentPatternGroupWidth} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.left.ready" rest /> : displayStep.leftMixture ? <MixtureSymbol mixtureId={displayStep.leftMixture} color={colors.left} scale={notationScale} groupWidth={currentPatternGroupWidth} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.left.ready" /> : <RhythmSymbol subdivision={displayStep.leftSubdivision} color={colors.left} timeSignature={activeSettings.timeSignature} scale={notationScale} groupWidth={currentPatternGroupWidth} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.left.ready" />}
                     </>
                   ) : null}
                 </View>
@@ -563,7 +563,7 @@ export default function PracticeScreen() {
                   {enabledHand('right') ? (
                     <>
                       <Text style={{ color: colors.right, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>RIGHT</Text>
-                      {displayStep.rightRest ? <RhythmSymbol subdivision={displayStep.rightSubdivision} color={colors.right} timeSignature={activeSettings.timeSignature} scale={notationScale} groupWidth={currentPatternGroupWidth} showDurationGuide maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.right.ready" rest /> : displayStep.rightMixture ? <MixtureSymbol mixtureId={displayStep.rightMixture} color={colors.right} scale={notationScale} groupWidth={currentPatternGroupWidth} showDurationGuide maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.right.ready" /> : <RhythmSymbol subdivision={displayStep.rightSubdivision} color={colors.right} timeSignature={activeSettings.timeSignature} scale={notationScale} groupWidth={currentPatternGroupWidth} showDurationGuide maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.right.ready" />}
+                      {displayStep.rightRest ? <RhythmSymbol subdivision={displayStep.rightSubdivision} color={colors.right} timeSignature={activeSettings.timeSignature} scale={notationScale} groupWidth={currentPatternGroupWidth} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.right.ready" rest /> : displayStep.rightMixture ? <MixtureSymbol mixtureId={displayStep.rightMixture} color={colors.right} scale={notationScale} groupWidth={currentPatternGroupWidth} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.right.ready" /> : <RhythmSymbol subdivision={displayStep.rightSubdivision} color={colors.right} timeSignature={activeSettings.timeSignature} scale={notationScale} groupWidth={currentPatternGroupWidth} maxWidth={notationMaxWidth} maxHeight={notationMaxHeight} readyTestID="practice.rhythmNote.right.ready" />}
                     </>
                   ) : null}
                 </View>

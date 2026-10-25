@@ -46,5 +46,13 @@ appId: com.splitbeat.twohandrhythm
     visible:
       id: practice.rhythmNote.right.ready
     timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: practice.nextPattern
+    timeout: 15000
+- assertVisible:
+    id: practice.nextPattern.left.ready
+- assertVisible:
+    id: practice.nextPattern.right.ready
 - waitForAnimationToEnd
 - takeScreenshot: paired-hand-equal-beat-width

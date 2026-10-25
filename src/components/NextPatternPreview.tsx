@@ -159,8 +159,8 @@ export function NextPatternPreview({
       <View
         style={{
           flex: 1,
-          width: '100%',
-          maxWidth: 1120,
+          width: isScorePreview ? '100%' : focusedHand ? '100%' : '80%',
+          maxWidth: isScorePreview ? 1120 : undefined,
           alignSelf: 'center',
           justifyContent: 'center',
         }}
