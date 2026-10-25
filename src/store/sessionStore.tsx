@@ -21,6 +21,7 @@ import {
 } from '@/rhythm/challenge';
 import { scoreFromMeasure } from '@/rhythm/scoreStaff';
 import { getSessionDurationSeconds, RhythmTimingEngine } from '@/rhythm/timingEngine';
+import { waitForNotationReady } from '@/rhythm/notationReadiness';
 import { legacyMixturesIncludeRests, mixtureNoteValuesFromLegacyIds } from '@/rhythm/mixtures';
 import {
   DEFAULT_GOOD_WINDOW_MS,
@@ -766,7 +767,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
     const activeFlags = featureFlagsRef.current;
     pendingOptionsRef.current = options;
     setSessionSettings(applyFeatureFlagsToSettings({ ...settings, ...options.settings }, activeFlags));
-    await prepareAudio();
+    await Promise.all([prepareAudio(), waitForNotationReady()]);
     pendingScoreRef.current = score;
     setExercisePrepared(true);
   }, [prepareAudio, settings]);

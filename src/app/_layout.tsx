@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
+import { NotationPreloader } from '@/components/NotationPreloader';
 import { SessionProvider } from '@/store/sessionStore';
 import { I18nProvider } from '@/i18n/I18nProvider';
 import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
@@ -11,7 +12,10 @@ export default function RootLayout() {
       <ThemeProvider>
         <I18nProvider>
           <SessionProvider>
-            <RootNavigator />
+            <>
+              <RootNavigator />
+              <NotationPreloader />
+            </>
           </SessionProvider>
         </I18nProvider>
       </ThemeProvider>

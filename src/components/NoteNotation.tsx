@@ -11,6 +11,7 @@ export function NoteNotation({
   restSymbol = false,
   showStaffLines = false,
   staffLineColor,
+  onReady,
 }: {
   plan: NoteNotationPlan;
   color: string;
@@ -19,6 +20,7 @@ export function NoteNotation({
   restSymbol?: boolean;
   showStaffLines?: boolean;
   staffLineColor?: string;
+  onReady?: () => void;
 }) {
   return (
     <View
@@ -51,6 +53,7 @@ export function NoteNotation({
           ? (plan.height - 24) / 2 + 24
           : plan.noteBaselineY ?? plan.height - 7}
         dom={{
+          onLoadEnd: onReady,
           scrollEnabled: false,
           bounces: false,
           style: { position: 'absolute', left: 0, top: 0, width: plan.width, height: plan.height, backgroundColor: 'transparent' },

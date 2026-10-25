@@ -61,6 +61,7 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 
 - `src/app/` contains the mode-select home, guided course, focused exercise and typed-bar editor, session setup, separate rhythm/audio/appearance/timing settings pages, practice, score import, results, and records routes.
 - `src/theme/ThemeProvider.tsx` loads and saves the appearance choice and provides the active palette to screens and components; `src/theme.ts` defines dark and light tokens.
+- The root layout warms VexFlow's DOM renderer on app launch, and exercise preparation waits for that notation preload before opening practice.
 - `src/i18n/` resolves the device language, saves the user's language preference locally, and translates interface copy while leaving imported and user-created score names intact.
 - `src/rhythm/` contains subdivision math, selectable mixed note/rest patterns, non-repeating pair generation with optional independent hand rests, typed-bar validation and combination accuracy aggregation, conversion of generated patterns into pitch-free score bars, the authored 20-lesson course, tap matching, scoring, and note- or bar-based challenge rules.
 - `src/rhythm/noteNotation.ts` calculates positions for repeated subdivisions and mixed-duration bars, including beat-aware beam groups and safe bar-edge spacing.
