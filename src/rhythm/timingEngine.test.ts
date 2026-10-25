@@ -16,6 +16,7 @@ import {
 import { matchTap } from '@/rhythm/tapMatcher';
 import { getExerciseStartTime, getSessionDurationSeconds, RhythmTimingEngine } from '@/rhythm/timingEngine';
 import { findNextScoreEvent, scoreFromMeasure } from '@/rhythm/scoreStaff';
+import { TIME_SIGNATURES } from '@/types/rhythm';
 import type { ExerciseSettings } from '@/types/rhythm';
 import type { ImportedRhythmScore } from '@/types/importedScore';
 
@@ -598,6 +599,67 @@ test('3/8 pattern changes stay on bar lines when the selected interval is four b
   assert.equal(atBarLine.currentStep.startBeat, 6);
   assert.equal(atBarLine.beatInBar, 0);
   assert.equal(atBarLine.nextStep?.startBeat, 12);
+});
+
+test('3/4 bar position and next-pattern countdown remain distinct and accurate', () => {
+  const start = 36_000;
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, timeSignature: '3/4', changeIntervalBeats: 4 },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+  const beatDurationMs = timeSignatureMetrics(60, '3/4').beatDurationMs;
+
+  const thirdBeat = engine.advance(start + (2 * beatDurationMs) + 1);
+
+  assert.equal(thirdBeat.beatsPerBar, 3);
+  assert.equal(thirdBeat.beatInBar, 2);
+  assert.equal(thirdBeat.beatsUntilChange, 4);
+});
+
+test('every supported meter reports each beat position and pattern countdown across two bars', () => {
+  const start = 72_000;
+  const bpm = 60;
+  const meters = [
+    { timeSignature: '2/4', beatsPerBar: 2 },
+    { timeSignature: '3/4', beatsPerBar: 3 },
+    { timeSignature: '4/4', beatsPerBar: 4 },
+    { timeSignature: '5/4', beatsPerBar: 5 },
+    { timeSignature: '7/4', beatsPerBar: 7 },
+    { timeSignature: '2/2', beatsPerBar: 2 },
+    { timeSignature: '3/8', beatsPerBar: 3 },
+    { timeSignature: '6/8', beatsPerBar: 2 },
+    { timeSignature: '9/8', beatsPerBar: 3 },
+    { timeSignature: '12/8', beatsPerBar: 4 },
+  ] as const;
+
+  assert.deepEqual(meters.map(({ timeSignature }) => timeSignature), TIME_SIGNATURES);
+
+  for (const { timeSignature, beatsPerBar: expectedBeatsPerBar } of meters) {
+    const engine = new RhythmTimingEngine({
+      settings: { ...settings, bpm, timeSignature, durationSeconds: 'endless' },
+      sessionStartTime: start,
+      random: () => 0,
+    });
+    const { beatsPerBar, beatDurationMs } = timeSignatureMetrics(bpm, timeSignature);
+    assert.equal(beatsPerBar, expectedBeatsPerBar, `${timeSignature} beats per bar`);
+
+    for (let beatIndex = 0; beatIndex < beatsPerBar * 2; beatIndex += 1) {
+      const snapshot = engine.advance(start + (beatIndex * beatDurationMs) + 1);
+      const expectedBeatInBar: number = beatIndex % expectedBeatsPerBar;
+      const beatsUntilChange =
+        engine.patternChangeIntervalBeats - (beatIndex % engine.patternChangeIntervalBeats);
+
+      assert.equal(snapshot.phase, 'running', `${timeSignature} beat ${beatIndex + 1} should be active`);
+      assert.equal(snapshot.beatInBar, expectedBeatInBar, `${timeSignature} beat ${beatIndex + 1} position`);
+      assert.equal(snapshot.beatsPerBar, beatsPerBar, `${timeSignature} beats per bar`);
+      assert.equal(
+        snapshot.beatsUntilChange,
+        beatsUntilChange,
+        `${timeSignature} beat ${beatIndex + 1} change countdown`,
+      );
+    }
+  }
 });
 
 test('long-run timestamps use the origin formula instead of accumulating timer delays', () => {

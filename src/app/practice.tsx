@@ -618,7 +618,25 @@ export default function PracticeScreen() {
                 {remainingLabel}
               </Text>
             ) : null}
-            <View testID="practice.changeCountdown" style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'flex-end', minHeight: compact ? 25 : 34, gap: compact ? 4 : 7 }}>
+            {snapshot && showNextPattern && snapshot.phase === 'running' && changeCountdown !== undefined ? (
+              <Text
+                testID="practice.changeCountdown.label"
+                style={{ color: colors.muted, fontSize: compact ? 7 : 9, lineHeight: compact ? 9 : 11, fontWeight: '900', letterSpacing: compact ? 0.5 : 0.8 }}
+              >
+                {t('NEXT CHANGE')}
+              </Text>
+            ) : null}
+            <View
+              testID="practice.changeCountdown"
+              accessibilityRole="text"
+              accessibilityLabel={snapshot && showNextPattern && snapshot.phase === 'running' && changeCountdown !== undefined
+                ? t('Next pattern change in {count} {unit}', {
+                  count: changeCountdown,
+                  unit: t(changeCountdown === 1 ? 'beat' : 'beats'),
+                })
+                : undefined}
+              style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'flex-end', minHeight: compact ? 25 : 34, gap: compact ? 4 : 7 }}
+            >
               {snapshot && showNextPattern && snapshot.phase === 'running' && changeCountdown !== undefined ? (
                 <>
                   <Text testID="practice.nextPattern.countdown" style={{ color: colors.accent, fontSize: compact ? 21 : 30, lineHeight: compact ? 25 : 34, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
