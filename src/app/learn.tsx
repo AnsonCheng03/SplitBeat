@@ -380,7 +380,7 @@ export default function LearnScreen() {
               style={({ pressed }) => ({ alignSelf: 'flex-end', minHeight: 44, marginTop: compact ? 10 : 12, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, opacity: !purchase.connected || purchase.isRestoring ? 0.5 : pressed ? 0.7 : 1 })}
             >
               <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>
-                {purchase.isRestoring ? 'RESTORING…' : 'RESTORE PURCHASE'}
+                {purchase.isRestoring ? t('RESTORING…') : t('RESTORE PURCHASE')}
               </Text>
             </Pressable>
           )}
@@ -404,7 +404,7 @@ export default function LearnScreen() {
 
         {requiresPurchase ? (
           <View testID="learn.purchase.offer" style={{ marginTop: 14, paddingHorizontal: 11, paddingVertical: 9, borderRadius: 12, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.line }}>
-            <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.9 }}>FULL COURSE · ONE-TIME UNLOCK</Text>
+            <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.9 }}>{t('FULL COURSE · ONE-TIME UNLOCK')}</Text>
             <Text style={{ color: colors.muted, fontSize: 10, lineHeight: 14, marginTop: 4 }}>{t('Try the first 3 lessons free, then unlock all {count} lessons with one purchase.', { count: LEARN_COURSE.length })}</Text>
           </View>
         ) : lessonSequenceLocked ? (
@@ -426,10 +426,10 @@ export default function LearnScreen() {
           >
             <View>
               <Text style={{ color: colors.background, fontSize: 12, fontWeight: '900', letterSpacing: 0.4 }}>
-                {purchase.isCheckingStoreEnvironment ? 'CHECKING ACCESS…' : !purchase.entitlementLoaded ? 'CHECKING ACCESS…' : !purchase.connected ? 'CONNECTING TO STORE…' : !purchase.productLookupFinished ? 'LOADING OFFER…' : purchase.isPurchasing ? 'PURCHASING…' : purchase.unlockProduct ? t('UNLOCK FULL COURSE · {price}', { price: purchase.unlockProduct.displayPrice }) : 'OFFER UNAVAILABLE'}
+                {purchase.isCheckingStoreEnvironment ? t('CHECKING ACCESS…') : !purchase.entitlementLoaded ? t('CHECKING ACCESS…') : !purchase.connected ? t('CONNECTING TO STORE…') : !purchase.productLookupFinished ? t('LOADING OFFER…') : purchase.isPurchasing ? t('PURCHASING…') : purchase.unlockProduct ? t('UNLOCK FULL COURSE · {price}', { price: purchase.unlockProduct.displayPrice }) : t('OFFER UNAVAILABLE')}
               </Text>
               <Text style={{ color: colors.background, fontSize: 10, fontWeight: '700', marginTop: 2 }}>
-                One-time purchase · 3 lessons free
+                {t('One-time purchase · 3 lessons free')}
               </Text>
             </View>
             <Text style={{ color: colors.background, fontSize: 22, fontWeight: '700' }}>›</Text>
@@ -458,19 +458,19 @@ export default function LearnScreen() {
 
         {purchase.errorMessage ? (
           <Text accessibilityLiveRegion="polite" numberOfLines={2} style={{ color: colors.right, fontSize: 9, lineHeight: 13, marginTop: 6 }}>
-            {purchase.errorMessage}
+            {t(purchase.errorMessage)}
           </Text>
         ) : purchase.storeErrorMessage ? (
           <Text accessibilityLiveRegion="polite" numberOfLines={2} style={{ color: colors.right, fontSize: 9, lineHeight: 13, marginTop: 6 }}>
-            {purchase.storeErrorMessage}
+            {t(purchase.storeErrorMessage)}
           </Text>
         ) : purchase.notice ? (
           <Text accessibilityLiveRegion="polite" numberOfLines={2} style={{ color: colors.left, fontSize: 9, lineHeight: 13, marginTop: 6 }}>
-            {purchase.notice}
+            {t(purchase.notice)}
           </Text>
         ) : purchase.connected && purchase.productLookupFinished && !purchase.unlockProduct ? (
           <Text accessibilityLiveRegion="polite" numberOfLines={2} style={{ color: colors.muted, fontSize: 9, lineHeight: 13, marginTop: 6 }}>
-            The course offer is not available in the store yet. Check the in-app purchase setup and try again.
+            {t('The course offer is not available in the store yet. Check the in-app purchase setup and try again.')}
           </Text>
         ) : null}
         {purchase.storeErrorMessage || (purchase.connected && purchase.productLookupFinished && !purchase.unlockProduct) ? (
@@ -482,7 +482,7 @@ export default function LearnScreen() {
             onPress={() => void purchase.retryStoreConnection()}
             style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', paddingHorizontal: 8, opacity: purchase.isRetryingStore ? 0.55 : pressed ? 0.7 : 1 })}
           >
-            <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.6 }}>{purchase.isRetryingStore ? 'CHECKING STORE…' : purchase.connected ? 'RELOAD STORE OFFER' : 'RETRY STORE CONNECTION'}</Text>
+            <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.6 }}>{purchase.isRetryingStore ? t('CHECKING STORE…') : purchase.connected ? t('RELOAD STORE OFFER') : t('RETRY STORE CONNECTION')}</Text>
           </Pressable>
         ) : null}
       </ScrollView>

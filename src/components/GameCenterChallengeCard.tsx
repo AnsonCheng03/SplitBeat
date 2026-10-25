@@ -103,7 +103,7 @@ export function GameCenterChallengeCard({
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.7 }}>GAME CENTER</Text>
+          <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.7 }}>{t('GAME CENTER')}</Text>
           <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: 5 }}>
             {hasScore
               ? t('Longest clean run · {count} notes', { count: longestCorrectStreak ?? 0 })
@@ -118,13 +118,13 @@ export function GameCenterChallengeCard({
       </View>
 
       <Text style={{ color: colors.dim, fontSize: 11, lineHeight: 16, marginTop: 8 }}>
-        {Platform.OS !== 'ios'
+        {t(Platform.OS !== 'ios'
           ? 'Game Center is available on iOS. Your best clean streak is saved in My Records on this device.'
           : hasScore
             ? status.authenticated
               ? 'A correct note adds one. A missed note or off-beat tap resets the run.'
               : 'Sign in to send this challenge score. Your local record is saved either way.'
-            : 'Challenge scores count consecutive correct notes across both hands. A miss or extra tap breaks the run.'}
+            : 'Challenge scores count consecutive correct notes across both hands. A miss or extra tap breaks the run.')}
       </Text>
 
       {status.available ? (
@@ -137,7 +137,7 @@ export function GameCenterChallengeCard({
           style={({ pressed }) => ({ minHeight: 44, alignSelf: 'flex-start', justifyContent: 'center', paddingHorizontal: 14, marginTop: 13, borderRadius: 12, backgroundColor: pressed ? colors.surfaceRaised : colors.background, borderWidth: 1, borderColor: colors.line, opacity: submitting ? 0.6 : 1 })}
         >
           <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '900', letterSpacing: 0.7 }}>
-            {submitting ? 'SUBMITTING…' : actionLabel}
+            {t(submitting ? 'SUBMITTING…' : actionLabel)}
           </Text>
         </Pressable>
       ) : null}
