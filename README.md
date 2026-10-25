@@ -172,6 +172,13 @@ E2E_MAESTRO_FLOW=practice-pause.yaml npm run e2e:maestro -- --device DEVICE_ID
 E2E_MAESTRO_FLOW=normal-score-display.yaml npm run e2e:maestro -- --device DEVICE_ID
 ~~~
 
+The paired-width flow selects a quarter-note hand and an eighth-note hand, then captures the live display to check that both patterns occupy the same beat width:
+
+~~~sh
+npm run e2e:ios
+npm run e2e:paired-width -- --device DEVICE_ID
+~~~
+
 The challenge flow checks that an off-beat tap pauses silently, then resumes on the same exercise:
 
 ~~~sh

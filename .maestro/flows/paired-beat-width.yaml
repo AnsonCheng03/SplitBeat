@@ -1,0 +1,50 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: LANDSCAPE_LEFT
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
+- tapOn:
+    id: home.activityPicker
+- tapOn:
+    id: home.exercise
+- tapOn:
+    id: home.start
+- extendedWaitUntil:
+    visible:
+      id: exercise.screen
+    timeout: 15000
+- tapOn:
+    id: exercise.tab.pair
+- tapOn:
+    id: exercise.pair.left.quarter
+- tapOn:
+    id: exercise.pair.right.eighth
+- scrollUntilVisible:
+    element:
+      id: exercise.practicePair
+    direction: DOWN
+- tapOn:
+    id: exercise.practicePair
+- extendedWaitUntil:
+    visible:
+      id: practice.screen
+    timeout: 15000
+- assertVisible:
+    id: practice.tutorial
+- tapOn:
+    id: practice.tutorial
+- extendedWaitUntil:
+    visible:
+      id: practice.rhythmNote.left.ready
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: practice.rhythmNote.right.ready
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: paired-hand-equal-beat-width

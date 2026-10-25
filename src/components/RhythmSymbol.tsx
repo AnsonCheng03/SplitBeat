@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { View } from 'react-native';
 import { useI18n } from '@/i18n/I18nProvider';
+import { BeatDurationGuide } from '@/components/BeatDurationGuide';
 import { NoteNotation } from '@/components/NoteNotation';
 import { createNoteNotationPlan, fitNotationScale, type NoteNotationSize } from '@/rhythm/noteNotation';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
@@ -15,6 +16,10 @@ interface RhythmSymbolProps {
   scale?: number;
   maxWidth?: number;
   maxHeight?: number;
+  /** Common visual span for paired hands whose patterns contain different note counts. */
+  groupWidth?: number;
+  /** Show the shared beat span beneath live practice notation. */
+  showDurationGuide?: boolean;
   rest?: boolean;
   readyTestID?: string;
 }
@@ -24,10 +29,10 @@ function notationSize(compact: boolean, mini: boolean): NoteNotationSize {
   return compact ? 'compact' : 'full';
 }
 
-export function RhythmSymbol({ subdivision, color, compact = false, mini = false, timeSignature = '4/4', scale = 1, maxWidth, maxHeight, rest = false, readyTestID }: RhythmSymbolProps) {
+export function RhythmSymbol({ subdivision, color, compact = false, mini = false, timeSignature = '4/4', scale = 1, maxWidth, maxHeight, groupWidth, showDurationGuide = false, rest = false, readyTestID }: RhythmSymbolProps) {
   const { t } = useI18n();
   const size = notationSize(compact, mini);
-  const plan = useMemo(() => createNoteNotationPlan(subdivision, size, timeSignature), [size, subdivision, timeSignature]);
+  const plan = useMemo(() => createNoteNotationPlan(subdivision, size, timeSignature, groupWidth), [groupWidth, size, subdivision, timeSignature]);
   const fittedScale = fitNotationScale(plan.width, plan.height, scale, maxWidth, maxHeight);
   const notation = <NoteNotation
     plan={plan}
@@ -38,6 +43,19 @@ export function RhythmSymbol({ subdivision, color, compact = false, mini = false
     readyTestID={readyTestID}
     restSymbol={rest}
   />;
+  if (showDurationGuide) {
+    return (
+      <View style={{ width: plan.width * fittedScale, height: (plan.height + 12) * fittedScale, alignItems: 'center' }}>
+        <View style={{ width: plan.width, height: plan.height, transform: [{ scale: fittedScale }] }}>
+          {notation}
+        </View>
+        <View style={{ transform: [{ scale: fittedScale }], marginTop: 3 }}>
+          <BeatDurationGuide width={plan.width} color={color} />
+        </View>
+      </View>
+    );
+  }
+
   if (fittedScale === 1) return notation;
 
   return (

@@ -137,7 +137,7 @@ test('score rewind starts at the chosen bar and keeps original bar numbering', (
   assert.throws(() => scoreFromMeasure(score, 3), RangeError);
 });
 
-test('reference playback events use the same mixed left and right pattern timestamps', () => {
+test('quarter and eighth patterns fill the same four-beat interval', () => {
   const start = 12_000;
   const engine = new RhythmTimingEngine({
     settings,
@@ -145,21 +145,23 @@ test('reference playback events use the same mixed left and right pattern timest
     patternPairs: [{ leftSubdivision: 'quarter', rightSubdivision: 'eighth' }],
   });
 
-  const events = engine.getReferenceEventsThrough(start + 2_500);
-  assert.deepEqual(
-    events.map(({ hand, expectedTimeMs }) => [hand, expectedTimeMs]),
-    [
-      ['left', start],
-      ['left', start + 1_000],
-      ['left', start + 2_000],
-      ['right', start],
-      ['right', start + 500],
-      ['right', start + 1_000],
-      ['right', start + 1_500],
-      ['right', start + 2_000],
-      ['right', start + 2_500],
-    ],
-  );
+  const events = engine.getReferenceEventsThrough(start + 3_999);
+  assert.deepEqual(events.filter(({ hand }) => hand === 'left').map(({ expectedTimeMs }) => expectedTimeMs), [
+    start,
+    start + 1_000,
+    start + 2_000,
+    start + 3_000,
+  ]);
+  assert.deepEqual(events.filter(({ hand }) => hand === 'right').map(({ expectedTimeMs }) => expectedTimeMs), [
+    start,
+    start + 500,
+    start + 1_000,
+    start + 1_500,
+    start + 2_000,
+    start + 2_500,
+    start + 3_000,
+    start + 3_500,
+  ]);
 });
 
 test('independent hand rests leave one lane silent while the other keeps its expected beats', () => {

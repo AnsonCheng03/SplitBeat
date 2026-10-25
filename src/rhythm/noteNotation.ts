@@ -246,6 +246,11 @@ function slotWidthFor(count: number, size: NoteNotationSize): number {
   return size === 'compact' ? 19 : 24;
 }
 
+/** Width needed to show the densest supported subdivision without overlapping noteheads. */
+export function maxRhythmSymbolWidth(size: NoteNotationSize = 'full'): number {
+  return 16 * slotWidthFor(16, size);
+}
+
 function beamCountForSubdivision(subdivision: Subdivision): number {
   const count = SUBDIVISION_COUNTS[subdivision];
   return Math.log2(count);
@@ -606,11 +611,14 @@ export function createNoteNotationPlan(
   subdivision: Subdivision,
   size: NoteNotationSize = 'full',
   timeSignature: TimeSignature = '4/4',
+  groupWidth?: number,
 ): NoteNotationPlan {
   const isTuplet = isTupletSubdivision(subdivision);
   const count = isTuplet ? tupletCount(subdivision) : SUBDIVISION_COUNTS[subdivision];
   const noteDurationQuarter = isTuplet ? pulseQuarterNotes(timeSignature) / count : 1 / count;
   const slotWidth = slotWidthFor(count, size);
+  const notationWidth = groupWidth ?? count * slotWidth;
+  const noteSlotWidth = notationWidth / count;
   const beamCount = isTuplet ? inferredBeamCount(noteDurationQuarter) : beamCountForSubdivision(subdivision);
   const events = Array.from({ length: count }, (_, index) => ({
     startQuarter: index * noteDurationQuarter,
@@ -621,10 +629,10 @@ export function createNoteNotationPlan(
 
   return createRhythmSymbolNotationPlan(events, {
     durationQuarter: count * noteDurationQuarter,
-    width: count * slotWidth,
+    width: notationWidth,
     size,
     beamGroupQuarterNotes: isTuplet ? pulseQuarterNotes(timeSignature) : 1,
-    noteAnchors: Array.from({ length: count }, (_, index) => (index + 0.5) * slotWidth),
+    noteAnchors: Array.from({ length: count }, (_, index) => (index + 0.5) * noteSlotWidth),
     maxBeamNotesByLevel: Array.from({ length: beamCount }, (_, beamIndex) => beamGroupSize(count, beamIndex)),
     tupletLabelFontSize: size === 'mini' ? 8 : size === 'compact' ? 12 : 14,
   });

@@ -28,6 +28,7 @@ interface NextPatternPreviewProps {
   scoreBeatsUntilChange?: number;
   beamGroupQuarterNotes?: number;
   focusedHand?: Hand;
+  groupWidth: number;
   maxNoteWidth: number;
   maxNoteHeight: number;
 }
@@ -40,22 +41,23 @@ interface HandPreviewProps {
   timeSignature: TimeSignature;
   compact: boolean;
   colorOverride?: string;
+  groupWidth: number;
   maxNoteWidth: number;
   maxNoteHeight: number;
   readyTestID: string;
 }
 
-function HandPreview({ hand, subdivision, mixtureId, rest, timeSignature, compact, colorOverride, maxNoteWidth, maxNoteHeight, readyTestID }: HandPreviewProps) {
+function HandPreview({ hand, subdivision, mixtureId, rest, timeSignature, compact, colorOverride, groupWidth, maxNoteWidth, maxNoteHeight, readyTestID }: HandPreviewProps) {
   const { colors } = useTheme();
   const color = colorOverride ?? (hand === 'left' ? colors.left : colors.right);
   return (
     <View style={{ flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: compact ? 5 : 12 }}>
       {rest ? (
-        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} mini scale={1} maxWidth={maxNoteWidth} maxHeight={maxNoteHeight} readyTestID={readyTestID} rest />
+        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} mini scale={1} groupWidth={groupWidth} maxWidth={maxNoteWidth} maxHeight={maxNoteHeight} readyTestID={readyTestID} rest />
       ) : mixtureId ? (
-        <MixtureSymbol mixtureId={mixtureId} color={color} mini scale={1} maxWidth={maxNoteWidth} maxHeight={maxNoteHeight} readyTestID={readyTestID} />
+        <MixtureSymbol mixtureId={mixtureId} color={color} mini scale={1} groupWidth={groupWidth} maxWidth={maxNoteWidth} maxHeight={maxNoteHeight} readyTestID={readyTestID} />
       ) : (
-        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} mini scale={1} maxWidth={maxNoteWidth} maxHeight={maxNoteHeight} readyTestID={readyTestID} />
+        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} mini scale={1} groupWidth={groupWidth} maxWidth={maxNoteWidth} maxHeight={maxNoteHeight} readyTestID={readyTestID} />
       )}
     </View>
   );
@@ -79,6 +81,7 @@ export function NextPatternPreview({
   scoreBeatsUntilChange,
   beamGroupQuarterNotes = 1,
   focusedHand,
+  groupWidth,
   maxNoteWidth,
   maxNoteHeight,
 }: NextPatternPreviewProps) {
@@ -212,15 +215,16 @@ export function NextPatternPreview({
                 timeSignature={timeSignature}
                 compact={compact}
                 colorOverride={colors.accent}
+                groupWidth={groupWidth}
                 maxNoteWidth={maxNoteWidth}
                 maxNoteHeight={maxNoteHeight}
                 readyTestID={`practice.nextPattern.${focusedHand}.ready`}
               />
             ) : (
               <>
-                <HandPreview hand="left" subdivision={step.leftSubdivision} mixtureId={step.leftMixture} rest={step.leftRest} timeSignature={timeSignature} compact={compact} maxNoteWidth={maxNoteWidth} maxNoteHeight={maxNoteHeight} readyTestID="practice.nextPattern.left.ready" />
+                <HandPreview hand="left" subdivision={step.leftSubdivision} mixtureId={step.leftMixture} rest={step.leftRest} timeSignature={timeSignature} compact={compact} groupWidth={groupWidth} maxNoteWidth={maxNoteWidth} maxNoteHeight={maxNoteHeight} readyTestID="practice.nextPattern.left.ready" />
                 <View style={{ width: 1, height: '82%', backgroundColor: colors.line }} />
-                <HandPreview hand="right" subdivision={step.rightSubdivision} mixtureId={step.rightMixture} rest={step.rightRest} timeSignature={timeSignature} compact={compact} maxNoteWidth={maxNoteWidth} maxNoteHeight={maxNoteHeight} readyTestID="practice.nextPattern.right.ready" />
+                <HandPreview hand="right" subdivision={step.rightSubdivision} mixtureId={step.rightMixture} rest={step.rightRest} timeSignature={timeSignature} compact={compact} groupWidth={groupWidth} maxNoteWidth={maxNoteWidth} maxNoteHeight={maxNoteHeight} readyTestID="practice.nextPattern.right.ready" />
               </>
             )}
           </View>

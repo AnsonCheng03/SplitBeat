@@ -2,7 +2,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createBarNoteNotationPlan, createNoteNotationPlan, createSharedBarNoteAnchorInsets, fitNotationScale } from '@/rhythm/noteNotation';
+import { createBarNoteNotationPlan, createNoteNotationPlan, createSharedBarNoteAnchorInsets, fitNotationScale, maxRhythmSymbolWidth } from '@/rhythm/noteNotation';
 
 function assertNotationFits(plan: ReturnType<typeof createBarNoteNotationPlan>) {
   for (const note of plan.notes) {
@@ -76,6 +76,18 @@ test('live notation scales up for readability without exceeding its lane width',
   assert.ok(160 * fittedScale <= maxWidth, 'the fitted notes stay inside the hand lane');
   assert.ok(44 * fittedScale <= 100, 'the fitted notes stay inside the vertical display lane');
   assert.equal(fitNotationScale(96, 44, preferredScale, 340), preferredScale);
+});
+
+test('paired rhythm symbols can share one full-beat display width', () => {
+  const groupWidth = maxRhythmSymbolWidth('full');
+  const subdivisions = ['quarter', 'eighth', 'triplet', 'sixteenth', 'sixtyFourth'] as const;
+  const plans = subdivisions.map((subdivision) => createNoteNotationPlan(subdivision, 'full', '4/4', groupWidth));
+
+  assert.ok(plans.every((plan) => plan.width === groupWidth));
+  assert.ok(plans.every((plan) => plan.durationQuarter === 1));
+  assert.ok(plans.every((plan) => plan.notes[0]!.left >= 0));
+  assert.ok(plans.every((plan) => plan.notes.at(-1)!.left + plan.notes.at(-1)!.headWidth <= groupWidth));
+  assert.equal(plans[0]!.notes[0]!.left + plans[0]!.notes[0]!.headWidth / 2, groupWidth / 2);
 });
 
 test('bar note builder beams adjacent notes according to each note duration', () => {
