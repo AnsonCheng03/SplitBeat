@@ -65,6 +65,7 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 - `src/i18n/` resolves the device language, saves the user's language preference locally, and translates interface copy while leaving imported and user-created score names intact.
 - `src/rhythm/` contains subdivision math, selectable mixed note/rest patterns, non-repeating pair generation with optional independent hand rests, typed-bar validation and combination accuracy aggregation, conversion of generated patterns into pitch-free score bars, the authored 20-lesson course, tap matching, scoring, and note- or bar-based challenge rules.
 - `src/rhythm/noteNotation.ts` calculates positions for repeated subdivisions and mixed-duration bars, including beat-aware beam groups and safe bar-edge spacing.
+- The complete generated-practice and score-to-notation paths, including meter semantics and current grouping rules, are described in [`docs/rhythm-generation-and-notation.md`](docs/rhythm-generation-and-notation.md).
 - `src/rhythm/musicXmlParser.ts` and `src/rhythm/midiParser.ts` convert MusicXML and Standard MIDI files into one- or two-hand rhythm tracks.
 - `src/rhythm/scoreTemplates.ts` contains built-in practice arrangements with Pop, Classical, and Traditional categories plus combinable difficulty and hand-count tags; `src/rhythm/importedScoreLibrary.ts` validates and indexes recent and saved score data.
 - `src/rhythm/timingCalibration.ts` normalizes per-hand timing calibration and the selectable scoring window.
