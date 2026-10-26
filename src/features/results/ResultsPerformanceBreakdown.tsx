@@ -5,6 +5,28 @@ import { accuracyPercent } from '@/rhythm/scoring';
 import { percent, timingNote, timingText, weakLabel, weakestCombination } from '@/features/results/resultPresentation';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { SessionResults } from '@/types/rhythm';
+import {
+  ResultsPerformanceBreakdownStyle1,
+  ResultsPerformanceBreakdownStyle2,
+  ResultsPerformanceBreakdownStyle3,
+  ResultsPerformanceBreakdownStyle4,
+  ResultsPerformanceBreakdownStyle5,
+  ResultsPerformanceBreakdownStyle6,
+  ResultsPerformanceBreakdownStyle7,
+  ResultsPerformanceBreakdownStyle8,
+  ResultsPerformanceBreakdownStyle9,
+  ResultsPerformanceBreakdownStyle10,
+  ResultsPerformanceBreakdownStyle11,
+  ResultsPerformanceBreakdownStyle12,
+  ResultsPerformanceBreakdownStyle13,
+  ResultsPerformanceBreakdownStyle14,
+  ResultsPerformanceBreakdownStyle15,
+  ResultsPerformanceBreakdownStyle16,
+  ResultsPerformanceBreakdownStyle17,
+  ResultsPerformanceBreakdownStyle18,
+  ResultsPerformanceBreakdownStyle19,
+  ResultsPerformanceBreakdownStyle20
+} from '@/styles/results';
 
 export function ResultsPerformanceBreakdown({
   results,
@@ -30,7 +52,7 @@ export function ResultsPerformanceBreakdown({
   );
 
   return (
-    <View style={{ marginTop: 25 }}>
+    <View style={ResultsPerformanceBreakdownStyle1()}>
       <ResultsDisclosureHeader
         testID="results.breakdown"
         title="PERFORMANCE BREAKDOWN"
@@ -38,21 +60,21 @@ export function ResultsPerformanceBreakdown({
         onPress={onToggle}
       />
       {expanded ? (
-        <View style={{ paddingTop: 16 }}>
-          <Text testID="results.breakdown.details" style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4, marginBottom: 3 }}>
+        <View style={ResultsPerformanceBreakdownStyle2()}>
+          <Text testID="results.breakdown.details" style={ResultsPerformanceBreakdownStyle3({ colors })}>
             {results.trainingMode === 'single-hand' ? 'ONE-HAND TIMING' : 'HAND TIMING'}
           </Text>
           {displayedHands.map((hand) => {
             const stats = results[hand];
             return (
-              <View key={hand} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: colors.line }}>
+              <View key={hand} style={ResultsPerformanceBreakdownStyle4({ colors })}>
                 <View>
-                  <Text style={{ color: hand === 'left' ? colors.left : colors.right, fontWeight: '800', fontSize: 12, letterSpacing: 1 }}>
+                  <Text style={ResultsPerformanceBreakdownStyle5({ hand, colors })}>
                     {results.trainingMode === 'single-hand' ? 'ONE HAND' : `${hand.toUpperCase()} HAND`}
                   </Text>
-                  <Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>{timingNote(stats)}</Text>
+                  <Text style={ResultsPerformanceBreakdownStyle6({ colors })}>{timingNote(stats)}</Text>
                 </View>
-                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                <Text style={ResultsPerformanceBreakdownStyle7({ colors })}>
                   {timingText(stats)}
                 </Text>
               </View>
@@ -60,39 +82,39 @@ export function ResultsPerformanceBreakdown({
           })}
 
           {weakest && results.source !== 'score' ? (
-            <View style={{ backgroundColor: colors.surface, borderColor: colors.line, borderWidth: 1, borderRadius: 18, padding: 17, marginTop: 22 }}>
-              <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>{results.trainingMode === 'single-hand' ? 'MOST DIFFICULT PATTERN' : 'MOST DIFFICULT PAIR'}</Text>
-              <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', marginTop: 13 }}>
+            <View style={ResultsPerformanceBreakdownStyle8({ colors })}>
+              <Text style={ResultsPerformanceBreakdownStyle9({ colors })}>{results.trainingMode === 'single-hand' ? 'MOST DIFFICULT PATTERN' : 'MOST DIFFICULT PAIR'}</Text>
+              <Text style={ResultsPerformanceBreakdownStyle10({ colors })}>
                 {results.trainingMode === 'single-hand'
                   ? `ONE HAND · ${weakLabel(weakest[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision'], weakest[results.singleHand === 'left' ? 'leftRest' : 'rightRest'], weakest[results.singleHand === 'left' ? 'leftMixture' : 'rightMixture'])}`
                   : `Left: ${weakLabel(weakest.leftSubdivision, weakest.leftRest, weakest.leftMixture)}   ·   Right: ${weakLabel(weakest.rightSubdivision, weakest.rightRest, weakest.rightMixture)}`}
               </Text>
-              <Text style={{ color: colors.accent, fontSize: 30, fontWeight: '900', marginTop: 5 }}>
+              <Text style={ResultsPerformanceBreakdownStyle11({ colors })}>
                 {results.trainingMode === 'single-hand' ? 'ONE HAND' : weakest.weakHand.toUpperCase()} {percent(weakest.accuracy)}
               </Text>
             </View>
           ) : null}
 
           {combinations.length > 0 && results.source !== 'score' ? (
-            <View style={{ marginTop: 22 }}>
-              <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4, marginBottom: 5 }}>{results.trainingMode === 'single-hand' ? 'PATTERN BREAKDOWN' : 'PAIR BREAKDOWN'}</Text>
+            <View style={ResultsPerformanceBreakdownStyle12()}>
+              <Text style={ResultsPerformanceBreakdownStyle13({ colors })}>{results.trainingMode === 'single-hand' ? 'PATTERN BREAKDOWN' : 'PAIR BREAKDOWN'}</Text>
               {combinations.map((combination) => (
-                <View key={`${combination.leftRest ? 'rest' : combination.leftMixture ?? combination.leftSubdivision}:${combination.rightRest ? 'rest' : combination.rightMixture ?? combination.rightSubdivision}`} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line }}>
-                  <Text style={{ color: colors.muted, flex: 1, fontSize: 12 }}>
+                <View key={`${combination.leftRest ? 'rest' : combination.leftMixture ?? combination.leftSubdivision}:${combination.rightRest ? 'rest' : combination.rightMixture ?? combination.rightSubdivision}`} style={ResultsPerformanceBreakdownStyle14({ colors })}>
+                  <Text style={ResultsPerformanceBreakdownStyle15({ colors })}>
                     {results.trainingMode === 'single-hand'
                       ? `ONE HAND · ${weakLabel(combination[results.singleHand === 'left' ? 'leftSubdivision' : 'rightSubdivision'], combination[results.singleHand === 'left' ? 'leftRest' : 'rightRest'], combination[results.singleHand === 'left' ? 'leftMixture' : 'rightMixture'])}`
                       : `${weakLabel(combination.leftSubdivision, combination.leftRest, combination.leftMixture)} / ${weakLabel(combination.rightSubdivision, combination.rightRest, combination.rightMixture)}`}
                   </Text>
                   {results.trainingMode === 'single-hand' ? (
-                    <Text style={{ color: colors.accent, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>
+                    <Text style={ResultsPerformanceBreakdownStyle16({ colors })}>
                       {percent(accuracyPercent(combination[results.singleHand]))}
                     </Text>
                   ) : (
                     <>
-                      <Text style={{ color: colors.left, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>
+                      <Text style={ResultsPerformanceBreakdownStyle17({ colors })}>
                         {percent(accuracyPercent(combination.left))}
                       </Text>
-                      <Text style={{ color: colors.right, width: 58, textAlign: 'right', fontSize: 12, fontWeight: '800' }}>
+                      <Text style={ResultsPerformanceBreakdownStyle18({ colors })}>
                         {percent(accuracyPercent(combination.right))}
                       </Text>
                     </>
@@ -102,9 +124,9 @@ export function ResultsPerformanceBreakdown({
             </View>
           ) : null}
 
-          <View style={{ marginTop: 23, gap: 9 }}>
+          <View style={ResultsPerformanceBreakdownStyle19()}>
             {feedback.map((message) => (
-              <Text key={message} style={{ color: colors.muted, fontSize: 14, lineHeight: 21 }}>{message}</Text>
+              <Text key={message} style={ResultsPerformanceBreakdownStyle20({ colors })}>{message}</Text>
             ))}
           </View>
         </View>

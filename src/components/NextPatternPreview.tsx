@@ -9,6 +9,20 @@ import { patternLabelForHand } from '@/rhythm/mixtures';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
 import type { ExerciseStep, Hand, MixturePatternId, Subdivision, TimeSignature } from '@/types/rhythm';
+import {
+  NextPatternPreviewStyle1,
+  NextPatternPreviewStyle2,
+  NextPatternPreviewStyle3,
+  NextPatternPreviewStyle4,
+  NextPatternPreviewStyle5,
+  NextPatternPreviewStyle6,
+  NextPatternPreviewStyle7,
+  NextPatternPreviewStyle8,
+  NextPatternPreviewStyle9,
+  NextPatternPreviewStyle10,
+  NextPatternPreviewStyle11,
+  NextPatternPreviewStyle12
+} from '@/styles/notation';
 
 interface NextPatternPreviewProps {
   step: ExerciseStep | null;
@@ -51,7 +65,7 @@ function HandPreview({ hand, subdivision, mixtureId, rest, timeSignature, compac
   const { colors } = useTheme();
   const color = colorOverride ?? (hand === 'left' ? colors.left : colors.right);
   return (
-    <View style={{ flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: compact ? 5 : 12 }}>
+    <View style={NextPatternPreviewStyle1({ compact })}>
       {rest ? (
         <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} mini scale={1} groupWidth={groupWidth} maxWidth={maxNoteWidth} maxHeight={maxNoteHeight} readyTestID={readyTestID} rest />
       ) : mixtureId ? (
@@ -145,46 +159,29 @@ export function NextPatternPreview({
       testID="practice.nextPattern"
       pointerEvents="none"
       accessibilityLabel={accessibleDescription}
-      style={{
-        position: 'absolute',
-        top,
-        left: 0,
-        right: 0,
-        height,
-        // Rhythm lanes use the same full-screen halves as the current notes.
-        // Score headers keep safe-area padding because they contain edge labels.
-        paddingHorizontal: isScorePreview ? Math.max(16, leftInset + 18, rightInset + 18) : 0,
-        opacity: slideProgress,
-        transform: [{ translateX: slideProgress.interpolate({ inputRange: [0, 1], outputRange: [26, 0] }) }],
-      }}
+      style={NextPatternPreviewStyle2({ top, height, isScorePreview, leftInset, rightInset, slideProgress })}
     >
       <View
-        style={{
-          flex: 1,
-          width: '100%',
-          maxWidth: isScorePreview ? 1120 : undefined,
-          alignSelf: 'center',
-          justifyContent: 'center',
-        }}
+        style={NextPatternPreviewStyle3({ isScorePreview })}
       >
         {isScorePreview ? (
-          <View style={{ minHeight: compact ? 18 : 23, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: compact ? 4 : 6 }}>
-            <Text style={{ color: colors.muted, fontSize: compact ? 9 : 11, fontWeight: '900', letterSpacing: 1.2 }}>
+          <View style={NextPatternPreviewStyle4({ compact })}>
+            <Text style={NextPatternPreviewStyle5({ colors, compact })}>
               {title}
             </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5 }}>
+            <View style={NextPatternPreviewStyle6()}>
               {scoreMeasureNumber !== undefined && scoreMeasureCount !== undefined ? (
-                <Text style={{ color: colors.text, fontSize: compact ? 10 : 12, fontWeight: '800', marginRight: 3 }}>
+                <Text style={NextPatternPreviewStyle7({ colors, compact })}>
                   {scoreMeasureNumber}/{scoreMeasureCount}
                 </Text>
               ) : null}
               <Text
                 testID="practice.nextScore.countdown"
-                style={{ color: colors.accent, fontSize: compact ? 18 : 22, lineHeight: compact ? 20 : 24, fontWeight: '900', fontVariant: ['tabular-nums'] }}
+                style={NextPatternPreviewStyle8({ colors, compact })}
               >
                 {countdown}
               </Text>
-              <Text style={{ color: colors.accent, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 0.5 }}>
+              <Text style={NextPatternPreviewStyle9({ colors, compact })}>
                 {countdownLabel}
               </Text>
             </View>
@@ -192,7 +189,7 @@ export function NextPatternPreview({
         ) : null}
 
         {scoreMeasure ? (
-          <View style={{ flex: 1, justifyContent: 'center' }}>
+          <View style={NextPatternPreviewStyle10()}>
             <ScoreRhythmMeasure
               measure={scoreMeasure}
               number={scoreMeasureNumber ?? scoreMeasure.index + 1}
@@ -207,7 +204,7 @@ export function NextPatternPreview({
             />
           </View>
         ) : step ? (
-          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+          <View style={NextPatternPreviewStyle11()}>
             {focusedHand ? (
               <HandPreview
                 hand={focusedHand}
@@ -225,7 +222,7 @@ export function NextPatternPreview({
             ) : (
               <>
                 <HandPreview hand="left" subdivision={step.leftSubdivision} mixtureId={step.leftMixture} rest={step.leftRest} timeSignature={timeSignature} compact={compact} groupWidth={groupWidth} maxNoteWidth={maxNoteWidth} maxNoteHeight={maxNoteHeight} readyTestID="practice.nextPattern.left.ready" />
-                <View style={{ width: 1, height: '82%', backgroundColor: colors.line }} />
+                <View style={NextPatternPreviewStyle12({ colors })} />
                 <HandPreview hand="right" subdivision={step.rightSubdivision} mixtureId={step.rightMixture} rest={step.rightRest} timeSignature={timeSignature} compact={compact} groupWidth={groupWidth} maxNoteWidth={maxNoteWidth} maxNoteHeight={maxNoteHeight} readyTestID="practice.nextPattern.right.ready" />
               </>
             )}

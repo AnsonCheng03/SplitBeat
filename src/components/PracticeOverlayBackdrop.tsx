@@ -2,6 +2,7 @@ import type { ReactNode, RefObject } from 'react';
 import { BlurView } from 'expo-blur';
 import { Platform, StyleSheet, View, type View as NativeView, type ViewStyle } from 'react-native';
 import { useTheme } from '@/theme/ThemeProvider';
+import { PracticeOverlayBackdropStyle1, practiceOverlayContentStyle } from '@/styles/practice';
 
 export function PracticeOverlayBackdrop({
   testID,
@@ -29,19 +30,11 @@ export function PracticeOverlayBackdrop({
       />
       <View
         pointerEvents="none"
-        style={[StyleSheet.absoluteFill, { backgroundColor: light ? 'rgba(248, 248, 245, 0.56)' : 'rgba(7, 10, 14, 0.32)' }]}
+        style={[StyleSheet.absoluteFill, PracticeOverlayBackdropStyle1({ light })]}
       />
-      <View style={[styles.content, contentStyle]}>
+      <View style={[practiceOverlayContentStyle, contentStyle]}>
         {children}
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

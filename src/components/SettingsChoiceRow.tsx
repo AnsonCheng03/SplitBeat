@@ -1,6 +1,7 @@
 import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useTheme } from '@/theme/ThemeProvider';
+import { SettingsChoiceRowStyle1, SettingsChoiceRowStyle2, SettingsChoiceRowStyle3 } from '@/styles/settings';
 
 export function SettingsChoiceRow<T extends string | number>({
   options,
@@ -15,7 +16,7 @@ export function SettingsChoiceRow<T extends string | number>({
 }) {
   const { colors } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+    <View style={SettingsChoiceRowStyle1()}>
       {options.map((option) => {
         const selected = option.value === value;
         return (
@@ -25,20 +26,9 @@ export function SettingsChoiceRow<T extends string | number>({
             accessibilityRole="radio"
             accessibilityState={{ selected }}
             onPress={() => onChange(option.value)}
-            style={{
-              flex: 1,
-              minWidth: 88,
-              minHeight: 50,
-              paddingHorizontal: 10,
-              borderRadius: 12,
-              justifyContent: 'center',
-              alignItems: 'center',
-              backgroundColor: selected ? colors.text : colors.surface,
-              borderWidth: 1,
-              borderColor: selected ? colors.text : colors.line,
-            }}
+            style={SettingsChoiceRowStyle2({ selected, colors })}
           >
-            <Text style={{ color: selected ? colors.background : colors.muted, fontSize: 12, fontWeight: '700' }}>
+            <Text style={SettingsChoiceRowStyle3({ selected, colors })}>
               {option.label}
             </Text>
           </Pressable>

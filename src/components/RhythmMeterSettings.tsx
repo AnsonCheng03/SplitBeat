@@ -11,6 +11,7 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { TIME_SIGNATURES } from '@/types/rhythm';
 import type { ExerciseSettings, TimeSignature } from '@/types/rhythm';
 import type { FeatureFlags } from '@/features/featureFlags';
+import { RhythmMeterSettingsStyle1, RhythmMeterSettingsStyle2, RhythmMeterSettingsStyle3, rhythmSettingsHelperTextStyle } from '@/styles/settings';
 
 const intervals: { label: string; value: ExerciseSettings['changeIntervalBeats'] }[] = [
   { label: '8 beats', value: 8 }, { label: '4 beats', value: 4 }, { label: '2 beats', value: 2 }, { label: '1 beat', value: 1 },
@@ -27,7 +28,7 @@ export function RhythmMeterSettings({
 }) {
   const { colors } = useTheme();
   const { t } = useI18n();
-  const helperText = { color: colors.dim, fontSize: 12, lineHeight: 17, marginTop: 8 };
+  const helperText = rhythmSettingsHelperTextStyle(colors);
   const beatsPerBar = timeSignatureMetrics(settings.bpm, settings.timeSignature).beatsPerBar;
   const effectiveChangeIntervalBeats = alignedPatternChangeIntervalBeats(settings.changeIntervalBeats, beatsPerBar);
   const visibleTimeSignatures = featureFlags.rhythmExtensions
@@ -45,7 +46,7 @@ export function RhythmMeterSettings({
   return (
     <>
       <SettingsSection title="TIME SIGNATURE">
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+        <View style={RhythmMeterSettingsStyle1()}>
           {visibleTimeSignatures.map((timeSignature: TimeSignature) => {
             const selected = settings.timeSignature === timeSignature;
             return (
@@ -56,9 +57,9 @@ export function RhythmMeterSettings({
                 accessibilityState={{ selected }}
                 accessibilityLabel={t('{signature} time', { signature: timeSignature })}
                 onPress={() => updateTimeSignature(timeSignature)}
-                style={{ flexGrow: 1, flexBasis: '18%', minWidth: 76, minHeight: 48, paddingHorizontal: 10, borderRadius: 12, justifyContent: 'center', alignItems: 'center', backgroundColor: selected ? colors.text : colors.surface, borderWidth: 1, borderColor: selected ? colors.text : colors.line }}
+                style={RhythmMeterSettingsStyle2({ selected, colors })}
               >
-                <Text style={{ color: selected ? colors.background : colors.muted, fontSize: 13, fontWeight: '800' }}>{timeSignature}</Text>
+                <Text style={RhythmMeterSettingsStyle3({ selected, colors })}>{timeSignature}</Text>
               </Pressable>
             );
           })}

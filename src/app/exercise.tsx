@@ -27,6 +27,7 @@ import { loadImportedScoreLibrary, saveImportedScoreLibrary } from '@/store/impo
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { DurationOption, Hand } from '@/types/rhythm';
+import { exerciseStyle1, exerciseStyle2 } from '@/styles/exercise';
 
 const practiceDurations: ExerciseDurationOption[] = [
   { label: '30 sec', value: 30 },
@@ -252,11 +253,11 @@ export default function ExerciseScreen() {
   }
 
   return (
-    <SafeAreaView testID="exercise.screen" style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView testID="exercise.screen" style={exerciseStyle1({ colors })}>
       <ScrollView
         ref={exerciseScrollRef}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ width: '100%', maxWidth: 1100, alignSelf: 'center', paddingHorizontal: 24, paddingVertical: 14, paddingBottom: 30 }}
+        contentContainerStyle={exerciseStyle2()}
       >
         <ExerciseHeader
           progressCount={combinationProgress.length}

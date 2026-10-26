@@ -25,6 +25,48 @@ import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import { LearnPatternPreview } from '@/components/LearnPatternPreview';
 import { LearnCoursePath } from '@/components/LearnCoursePath';
+import { learnStyle1,
+  learnStyle2,
+  learnStyle3,
+  learnStyle4,
+  learnStyle5,
+  learnStyle6,
+  learnStyle7,
+  learnStyle8,
+  learnStyle9,
+  learnStyle10,
+  learnStyle11,
+  learnStyle12,
+  learnStyle13,
+  learnStyle14,
+  learnStyle15,
+  learnStyle16,
+  learnStyle17,
+  learnStyle18,
+  learnStyle19,
+  learnStyle20,
+  learnStyle21,
+  learnStyle22,
+  learnStyle23,
+  learnStyle24,
+  learnStyle25,
+  learnStyle26,
+  learnStyle27,
+  learnStyle28,
+  learnStyle29,
+  learnStyle30,
+  learnStyle31,
+  learnStyle32,
+  learnStyle33,
+  learnStyle34,
+  learnStyle35,
+  learnStyle36,
+  learnStyle37,
+  learnStyle38,
+  learnStyle39,
+  learnStyle40,
+  learnStyle41,
+  learnStyle42, learnStyle43, learnStyle44 } from '@/styles/learn';
 
 export default function LearnScreen() {
   const { colors } = useTheme();
@@ -124,57 +166,48 @@ export default function LearnScreen() {
     <FullBleedSafeArea
       testID="learn.screen"
       backgroundColor={colors.background}
-      contentStyle={{ flexDirection: 'row' }}
+      contentStyle={learnStyle43()}
       underlay={(
         <View
           pointerEvents="none"
-          style={{
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            left: 0,
-            width: detailWidth + insets.left,
-            borderRightWidth: 1,
-            borderRightColor: colors.line,
-            backgroundColor: colors.surface,
-          }}
+          style={learnStyle1({ detailWidth, insets, colors })}
         />
       )}
     >
       <ScrollView
-        style={{ width: detailWidth, flexGrow: 0, backgroundColor: 'transparent' }}
-        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: compact ? 16 : 24, paddingVertical: compact ? 10 : 18 }}
+        style={learnStyle2({ detailWidth })}
+        contentContainerStyle={learnStyle44({ compact })}
         showsVerticalScrollIndicator={false}
       >
-        <Pressable testID="learn.home" onPress={() => router.replace('/')} hitSlop={8} style={{ minHeight: 44, justifyContent: 'center' }}>
-          <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 0.9 }}>‹  HOME</Text>
+        <Pressable testID="learn.home" onPress={() => router.replace('/')} hitSlop={8} style={learnStyle3()}>
+          <Text style={learnStyle4({ colors })}>‹  HOME</Text>
         </Pressable>
-        <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 1.5, marginTop: compact ? 7 : 15 }}>
+        <Text style={learnStyle5({ colors, compact })}>
           GUIDED COURSE
         </Text>
-        <Text style={{ color: colors.text, fontSize: compact ? 24 : 30, fontWeight: '900', letterSpacing: -0.8, marginTop: 4 }}>
+        <Text style={learnStyle6({ colors, compact })}>
           Learn rhythm.
         </Text>
-        <Text style={{ color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 4 }}>
+        <Text style={learnStyle7({ colors })}>
           A simple path from steady pulse to independent rhythms.
         </Text>
 
-        <View style={{ marginTop: compact ? 13 : 20 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ color: colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }}>YOUR PROGRESS</Text>
-            <Text testID="learn.progress.count" style={{ color: colors.accent, fontSize: 11, fontWeight: '900' }}>
+        <View style={learnStyle8({ compact })}>
+          <View style={learnStyle9()}>
+            <Text style={learnStyle10({ colors })}>YOUR PROGRESS</Text>
+            <Text testID="learn.progress.count" style={learnStyle11({ colors })}>
               {completedCount} / {LEARN_COURSE.length}
             </Text>
           </View>
-          <View style={{ height: 5, borderRadius: 4, backgroundColor: colors.line, marginTop: 8, overflow: 'hidden' }}>
-            <View style={{ width: `${lessonProgressPercent(completedLessonIds)}%`, height: 5, borderRadius: 4, backgroundColor: colors.left }} />
+          <View style={learnStyle12({ colors })}>
+            <View style={learnStyle13({ lessonProgressPercent, completedLessonIds, colors })} />
           </View>
-          <Text testID="learn.progress.stars" style={{ color: colors.muted, fontSize: 9, fontWeight: '800', marginTop: 6 }}>
+          <Text testID="learn.progress.stars" style={learnStyle14({ colors })}>
               {totalLearnStars(lessonRatings)} / {LEARN_COURSE.length * 5} {t('course stars earned')}
           </Text>
           {purchase.isTestFlightFreeAccess ? (
-            <View testID="learn.testflight-free" style={{ alignSelf: 'flex-start', minHeight: 44, marginTop: compact ? 10 : 12, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 10, backgroundColor: colors.surfaceRaised }}>
-              <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>{t('TESTFLIGHT · FULL COURSE FREE')}</Text>
+            <View testID="learn.testflight-free" style={learnStyle15({ compact, colors })}>
+              <Text style={learnStyle16({ colors })}>{t('TESTFLIGHT · FULL COURSE FREE')}</Text>
             </View>
           ) : (
             <Pressable
@@ -184,9 +217,9 @@ export default function LearnScreen() {
               accessibilityState={{ disabled: !purchase.connected || purchase.isRestoring }}
               disabled={!purchase.connected || purchase.isRestoring}
               onPress={() => void purchase.restoreFullCourse()}
-              style={({ pressed }) => ({ alignSelf: 'flex-end', minHeight: 44, marginTop: compact ? 10 : 12, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, opacity: !purchase.connected || purchase.isRestoring ? 0.5 : pressed ? 0.7 : 1 })}
+              style={({ pressed }) => (learnStyle17({ compact, colors, purchase, pressed }))}
             >
-              <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>
+              <Text style={learnStyle18({ colors })}>
                 {purchase.isRestoring ? t('RESTORING…') : t('RESTORE PURCHASE')}
               </Text>
             </Pressable>
@@ -196,34 +229,34 @@ export default function LearnScreen() {
           ) : null}
         </View>
 
-        <View style={{ marginTop: compact ? 14 : 23 }}>
-          <Text style={{ color: colors.dim, fontSize: 9, fontWeight: '900', letterSpacing: 1.2 }}>
+        <View style={learnStyle19({ compact })}>
+          <Text style={learnStyle20({ colors })}>
             {t('LESSON {number} · {level}', { number: String(selectedLesson.number).padStart(2, '0'), level: t(selectedLesson.level) })}
           </Text>
-          <Text testID="learn.selected.title" style={{ color: colors.text, fontSize: compact ? 18 : 22, fontWeight: '900', marginTop: 5 }}>
+          <Text testID="learn.selected.title" style={learnStyle21({ colors, compact })}>
             {selectedLesson.title}
           </Text>
-          <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '800', marginTop: 3 }}>
+          <Text style={learnStyle22({ colors })}>
             {t(selectedLesson.skill)} · {selectedLesson.timeSignature}
           </Text>
-          <Text numberOfLines={compact ? 2 : 3} style={{ color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 7 }}>
+          <Text numberOfLines={compact ? 2 : 3} style={learnStyle23({ colors })}>
             {selectedLesson.instruction}
           </Text>
           <LearnPatternPreview lesson={selectedLesson} />
         </View>
 
         {requiresPurchase ? (
-          <View testID="learn.purchase.offer" style={{ marginTop: 14, paddingHorizontal: 11, paddingVertical: 9, borderRadius: 12, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.line }}>
-            <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.9 }}>{t('FULL COURSE · ONE-TIME UNLOCK')}</Text>
-            <Text style={{ color: colors.muted, fontSize: 10, lineHeight: 14, marginTop: 4 }}>{t('Try the first 3 lessons free, then unlock all {count} lessons with one purchase.', { count: LEARN_COURSE.length })}</Text>
+          <View testID="learn.purchase.offer" style={learnStyle24({ colors })}>
+            <Text style={learnStyle25({ colors })}>{t('FULL COURSE · ONE-TIME UNLOCK')}</Text>
+            <Text style={learnStyle26({ colors })}>{t('Try the first 3 lessons free, then unlock all {count} lessons with one purchase.', { count: LEARN_COURSE.length })}</Text>
           </View>
         ) : lessonSequenceLocked ? (
-          <Text style={{ color: colors.muted, fontSize: 10, lineHeight: 14, marginTop: 12 }}>
+          <Text style={learnStyle27({ colors })}>
             {t('Complete Lesson {number} first to open this lesson.', { number: String(selectedLesson.number - 1).padStart(2, '0') })}
           </Text>
         ) : null}
 
-        <View style={{ flex: 1, minHeight: compact ? 8 : 18 }} />
+        <View style={learnStyle28({ compact })} />
         {requiresPurchase ? (
           <Pressable
             testID="learn.purchase"
@@ -232,17 +265,17 @@ export default function LearnScreen() {
             accessibilityState={{ disabled: !purchase.connected || !purchase.unlockProduct || purchase.isPurchasing || !purchase.entitlementLoaded }}
             disabled={!purchase.connected || !purchase.unlockProduct || purchase.isPurchasing || !purchase.entitlementLoaded}
             onPress={() => void purchase.buyFullCourse()}
-            style={({ pressed }) => ({ minHeight: compact ? 50 : 58, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, borderRadius: 15, backgroundColor: colors.accent, opacity: !purchase.connected || !purchase.unlockProduct || purchase.isPurchasing || !purchase.entitlementLoaded ? 0.6 : pressed ? 0.82 : 1 })}
+            style={({ pressed }) => (learnStyle29({ compact, colors, purchase, pressed }))}
           >
             <View>
-              <Text style={{ color: colors.background, fontSize: 12, fontWeight: '900', letterSpacing: 0.4 }}>
+              <Text style={learnStyle30({ colors })}>
                 {purchase.isCheckingStoreEnvironment ? t('CHECKING ACCESS…') : !purchase.entitlementLoaded ? t('CHECKING ACCESS…') : !purchase.connected ? t('CONNECTING TO STORE…') : !purchase.productLookupFinished ? t('LOADING OFFER…') : purchase.isPurchasing ? t('PURCHASING…') : purchase.unlockProduct ? t('UNLOCK FULL COURSE · {price}', { price: purchase.unlockProduct.displayPrice }) : t('OFFER UNAVAILABLE')}
               </Text>
-              <Text style={{ color: colors.background, fontSize: 10, fontWeight: '700', marginTop: 2 }}>
+              <Text style={learnStyle31({ colors })}>
                 {t('One-time purchase · 3 lessons free')}
               </Text>
             </View>
-            <Text style={{ color: colors.background, fontSize: 22, fontWeight: '700' }}>›</Text>
+            <Text style={learnStyle32({ colors })}>›</Text>
           </Pressable>
         ) : (
           <Pressable
@@ -252,34 +285,34 @@ export default function LearnScreen() {
             accessibilityState={{ disabled: starting || !progressLoaded || lessonSequenceLocked || audioStatus === 'loading' }}
             disabled={starting || !progressLoaded || lessonSequenceLocked || audioStatus === 'loading'}
             onPress={() => void startLesson()}
-            style={({ pressed }) => ({ minHeight: compact ? 50 : 58, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, borderRadius: 15, backgroundColor: colors.left, opacity: starting || !progressLoaded || lessonSequenceLocked || audioStatus === 'loading' ? 0.65 : pressed ? 0.84 : 1 })}
+            style={({ pressed }) => (learnStyle33({ compact, colors, starting, progressLoaded, lessonSequenceLocked, audioStatus, pressed }))}
           >
             <View>
-              <Text style={{ color: colors.background, fontSize: 13, fontWeight: '900', letterSpacing: 0.5 }}>
+              <Text style={learnStyle34({ colors })}>
                 {lessonSequenceLocked ? t('COMPLETE LESSON {number} FIRST', { number: String(selectedLesson.number - 1).padStart(2, '0') }) : starting ? 'PREPARING…' : !progressLoaded ? 'LOADING COURSE…' : audioStatus === 'loading' ? 'PREPARING AUDIO…' : audioStatus === 'error' ? 'RETRY AUDIO & START' : 'START LESSON'}
               </Text>
-              <Text style={{ color: '#18352C', fontSize: 10, fontWeight: '700', marginTop: 2 }}>
+              <Text style={learnStyle35()}>
                 {t('{bpm} BPM · about 30 seconds', { bpm: selectedLesson.bpm })}
               </Text>
             </View>
-            <Text style={{ color: colors.background, fontSize: 22, fontWeight: '700' }}>›</Text>
+            <Text style={learnStyle36({ colors })}>›</Text>
           </Pressable>
         )}
 
         {purchase.errorMessage ? (
-          <Text accessibilityLiveRegion="polite" numberOfLines={2} style={{ color: colors.right, fontSize: 9, lineHeight: 13, marginTop: 6 }}>
+          <Text accessibilityLiveRegion="polite" numberOfLines={2} style={learnStyle37({ colors })}>
             {t(purchase.errorMessage)}
           </Text>
         ) : purchase.storeErrorMessage ? (
-          <Text accessibilityLiveRegion="polite" numberOfLines={2} style={{ color: colors.right, fontSize: 9, lineHeight: 13, marginTop: 6 }}>
+          <Text accessibilityLiveRegion="polite" numberOfLines={2} style={learnStyle38({ colors })}>
             {t(purchase.storeErrorMessage)}
           </Text>
         ) : purchase.notice ? (
-          <Text accessibilityLiveRegion="polite" numberOfLines={2} style={{ color: colors.left, fontSize: 9, lineHeight: 13, marginTop: 6 }}>
+          <Text accessibilityLiveRegion="polite" numberOfLines={2} style={learnStyle39({ colors })}>
             {t(purchase.notice)}
           </Text>
         ) : purchase.connected && purchase.productLookupFinished && !purchase.unlockProduct ? (
-          <Text accessibilityLiveRegion="polite" numberOfLines={2} style={{ color: colors.muted, fontSize: 9, lineHeight: 13, marginTop: 6 }}>
+          <Text accessibilityLiveRegion="polite" numberOfLines={2} style={learnStyle40({ colors })}>
             {t('The course offer is not available in the store yet. Check the in-app purchase setup and try again.')}
           </Text>
         ) : null}
@@ -290,9 +323,9 @@ export default function LearnScreen() {
             accessibilityLabel={t(purchase.connected ? 'Reload course offer from the store' : 'Retry app store connection')}
             disabled={purchase.isRetryingStore}
             onPress={() => void purchase.retryStoreConnection()}
-            style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', paddingHorizontal: 8, opacity: purchase.isRetryingStore ? 0.55 : pressed ? 0.7 : 1 })}
+            style={({ pressed }) => (learnStyle41({ purchase, pressed }))}
           >
-            <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.6 }}>{purchase.isRetryingStore ? t('CHECKING STORE…') : purchase.connected ? t('RELOAD STORE OFFER') : t('RETRY STORE CONNECTION')}</Text>
+            <Text style={learnStyle42({ colors })}>{purchase.isRetryingStore ? t('CHECKING STORE…') : purchase.connected ? t('RELOAD STORE OFFER') : t('RETRY STORE CONNECTION')}</Text>
           </Pressable>
         ) : null}
       </ScrollView>

@@ -10,6 +10,37 @@ import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ImportedRhythmScore } from '@/types/importedScore';
 import type { Hand } from '@/types/rhythm';
+import {
+  ImportedScorePreviewStyle1,
+  ImportedScorePreviewStyle2,
+  ImportedScorePreviewStyle3,
+  ImportedScorePreviewStyle4,
+  ImportedScorePreviewStyle5,
+  ImportedScorePreviewStyle6,
+  ImportedScorePreviewStyle7,
+  ImportedScorePreviewStyle8,
+  ImportedScorePreviewStyle9,
+  ImportedScorePreviewStyle10,
+  ImportedScorePreviewStyle11,
+  ImportedScorePreviewStyle12,
+  ImportedScorePreviewStyle13,
+  ImportedScorePreviewStyle14,
+  ImportedScorePreviewStyle15,
+  ImportedScorePreviewStyle16,
+  ImportedScorePreviewStyle17,
+  ImportedScorePreviewStyle18,
+  ImportedScorePreviewStyle19,
+  ImportedScorePreviewStyle20,
+  ImportedScorePreviewStyle21,
+  ImportedScorePreviewStyle22,
+  ImportedScorePreviewStyle23,
+  ImportedScorePreviewStyle24,
+  ImportedScorePreviewStyle25,
+  ImportedScorePreviewStyle26,
+  ImportedScorePreviewStyle27,
+  ImportedScorePreviewStyle28,
+  ImportedScorePreviewStyle29
+} from '@/styles/exercise';
 
 export function ImportedScorePreview({
   score,
@@ -68,10 +99,10 @@ export function ImportedScorePreview({
 
   return (
     <>
-      <View style={{ paddingHorizontal: 2, paddingTop: 2, paddingBottom: 8 }}>
-        <Text raw style={{ color: colors.text, fontSize: 19, fontWeight: '900' }}>{score.title}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 3 }}>
-          <Text raw numberOfLines={1} style={{ flex: 1, color: colors.dim, fontSize: 10 }}>{fileName}</Text>
+      <View style={ImportedScorePreviewStyle1()}>
+        <Text raw style={ImportedScorePreviewStyle2({ colors })}>{score.title}</Text>
+        <View style={ImportedScorePreviewStyle3()}>
+          <Text raw numberOfLines={1} style={ImportedScorePreviewStyle4({ colors })}>{fileName}</Text>
           {savedLibraryEnabled ? (
             <Pressable
               testID="scoreImport.save"
@@ -79,32 +110,32 @@ export function ImportedScorePreview({
               accessibilityLabel={t(currentEntry?.saved ? 'Remove score from saved scores' : 'Save this score')}
               disabled={!currentEntry}
               onPress={() => onSave(!currentEntry?.saved)}
-              style={({ pressed }) => ({ minHeight: 34, justifyContent: 'center', paddingHorizontal: 10, marginLeft: 8, borderRadius: 9, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: currentEntry?.saved ? colors.accent : colors.line, opacity: currentEntry ? 1 : 0.6 })}
+              style={({ pressed }) => (ImportedScorePreviewStyle5({ pressed, colors, currentEntry }))}
             >
-              <Text style={{ color: currentEntry?.saved ? colors.accent : colors.left, fontSize: 9, fontWeight: '900', letterSpacing: 0.5 }}>{!currentEntry ? 'SAVING…' : currentEntry.saved ? 'SAVED ✓' : 'SAVE SCORE'}</Text>
+              <Text style={ImportedScorePreviewStyle6({ currentEntry, colors })}>{!currentEntry ? 'SAVING…' : currentEntry.saved ? 'SAVED ✓' : 'SAVE SCORE'}</Text>
             </Pressable>
           ) : null}
         </View>
-        <Text style={{ color: colors.dim, fontSize: 9, marginTop: 4 }}>{source.toUpperCase()} · {savedLibraryEnabled ? 'STORED ON THIS DEVICE' : 'SESSION ONLY'}</Text>
-        <Text testID="scoreImport.summary" style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>
+        <Text style={ImportedScorePreviewStyle7({ colors })}>{source.toUpperCase()} · {savedLibraryEnabled ? 'STORED ON THIS DEVICE' : 'SESSION ONLY'}</Text>
+        <Text testID="scoreImport.summary" style={ImportedScorePreviewStyle8({ colors })}>
           {t('{tracks} · {measures} · {meter} · {tempo}', { tracks: scoreTrackDescription, measures: scoreMeasureDescription, meter: score.timeSignature, tempo: scoreTempoDescription })}
         </Text>
-        <Text style={{ color: colors.dim, fontSize: 11, marginTop: 3 }}>{scoreNoteDescription}</Text>
+        <Text style={ImportedScorePreviewStyle9({ colors })}>{scoreNoteDescription}</Text>
       </View>
       {score.warnings.map((warning) => (
-        <Text key={warning} style={{ color: colors.accent, fontSize: 11, lineHeight: 15, marginBottom: 6 }}>{warning}</Text>
+        <Text key={warning} style={ImportedScorePreviewStyle10({ colors })}>{warning}</Text>
       ))}
-      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 14, marginTop: 5, paddingVertical: 5 }}>
+      <View style={ImportedScorePreviewStyle11({ colors })}>
         <Pressable
           testID="scoreImport.previousMeasure"
           disabled={previewMeasureIndex === 0}
           onPress={() => onMeasureChange(Math.max(0, previewMeasureIndex - 1))}
           accessibilityLabel={t('Previous score measure')}
-          style={{ width: 36, alignItems: 'center', justifyContent: 'center', opacity: previewMeasureIndex === 0 ? 0.35 : 1 }}
+          style={ImportedScorePreviewStyle12({ previewMeasureIndex })}
         >
-          <Text style={{ color: colors.text, fontSize: 26 }}>‹</Text>
+          <Text style={ImportedScorePreviewStyle13({ colors })}>‹</Text>
         </Pressable>
-        <View style={{ flex: 1 }}>
+        <View style={ImportedScorePreviewStyle14()}>
           <ScoreRhythmMeasure
             measure={previewScore.measures[previewMeasureIndex]}
             number={previewMeasureIndex + 1}
@@ -119,15 +150,15 @@ export function ImportedScorePreview({
           disabled={previewMeasureIndex >= score.measures.length - 1}
           onPress={() => onMeasureChange(Math.min(score.measures.length - 1, previewMeasureIndex + 1))}
           accessibilityLabel={t('Next score measure')}
-          style={{ width: 36, alignItems: 'center', justifyContent: 'center', opacity: previewMeasureIndex >= score.measures.length - 1 ? 0.35 : 1 }}
+          style={ImportedScorePreviewStyle15({ previewMeasureIndex, score })}
         >
-          <Text style={{ color: colors.text, fontSize: 26 }}>›</Text>
+          <Text style={ImportedScorePreviewStyle16({ colors })}>›</Text>
         </Pressable>
       </View>
-      <Text style={{ color: colors.dim, fontSize: 10, lineHeight: 14, marginTop: 7 }}>Check the extracted rhythms against your score before you start.</Text>
-      {scoreNotationEnabled ? <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1, marginTop: 12, marginBottom: 6 }}>PRACTICE DISPLAY</Text> : null}
+      <Text style={ImportedScorePreviewStyle17({ colors })}>Check the extracted rhythms against your score before you start.</Text>
+      {scoreNotationEnabled ? <Text style={ImportedScorePreviewStyle18({ colors })}>PRACTICE DISPLAY</Text> : null}
       {scoreNotationEnabled ? (
-        <View style={{ flexDirection: 'row', gap: 8 }}>
+        <View style={ImportedScorePreviewStyle19()}>
           {([
             { value: 'focus', label: 'ONE NOTE', detail: 'Current beat · large hand panels' },
             { value: 'staff', label: 'MOVING SCORE', detail: 'Both hand lanes · slides at each bar' },
@@ -140,26 +171,26 @@ export function ImportedScorePreview({
                 accessibilityRole="radio"
                 accessibilityState={{ selected }}
                 onPress={() => onDisplayModeChange(option.value)}
-                style={{ flex: 1, minHeight: 54, justifyContent: 'center', paddingHorizontal: 11, borderRadius: 12, borderWidth: 1, borderColor: selected ? colors.accent : colors.line, backgroundColor: selected ? `${colors.accent}18` : colors.surface }}
+                style={ImportedScorePreviewStyle20({ selected, colors })}
               >
-                <Text style={{ color: selected ? colors.accent : colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 }}>{option.label}</Text>
-                <Text style={{ color: colors.muted, fontSize: 9, marginTop: 3 }}>{option.detail}</Text>
+                <Text style={ImportedScorePreviewStyle21({ selected, colors })}>{option.label}</Text>
+                <Text style={ImportedScorePreviewStyle22({ colors })}>{option.detail}</Text>
               </Pressable>
             );
           })}
         </View>
       ) : null}
-      <View style={{ flexDirection: 'row', gap: 9, marginTop: 11 }}>
+      <View style={ImportedScorePreviewStyle23()}>
         {savedLibraryEnabled ? (
-          <Pressable testID="scoreImport.library" onPress={onOpenLibrary} style={{ minHeight: 56, width: 94, borderRadius: 14, borderWidth: 1, borderColor: colors.line, justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800' }}>MY SCORES</Text>
+          <Pressable testID="scoreImport.library" onPress={onOpenLibrary} style={ImportedScorePreviewStyle24({ colors })}>
+            <Text style={ImportedScorePreviewStyle25({ colors })}>MY SCORES</Text>
           </Pressable>
         ) : null}
-        <Pressable testID="scoreImport.changeFile" onPress={onImport} disabled={importing} style={{ minHeight: 56, width: 108, borderRadius: 14, borderWidth: 1, borderColor: colors.line, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800' }}>{importing ? 'OPENING…' : 'IMPORT FILE'}</Text>
+        <Pressable testID="scoreImport.changeFile" onPress={onImport} disabled={importing} style={ImportedScorePreviewStyle26({ colors })}>
+          <Text style={ImportedScorePreviewStyle27({ colors })}>{importing ? 'OPENING…' : 'IMPORT FILE'}</Text>
         </Pressable>
-        <Pressable testID="scoreImport.start" disabled={starting} onPress={onStart} style={{ flex: 1, minHeight: 56, borderRadius: 14, backgroundColor: colors.left, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ color: colors.background, fontSize: 15, fontWeight: '900', letterSpacing: 0.7 }}>{starting ? 'STARTING…' : 'PRACTISE THIS SCORE'}</Text>
+        <Pressable testID="scoreImport.start" disabled={starting} onPress={onStart} style={ImportedScorePreviewStyle28({ colors })}>
+          <Text style={ImportedScorePreviewStyle29({ colors })}>{starting ? 'STARTING…' : 'PRACTISE THIS SCORE'}</Text>
         </Pressable>
       </View>
     </>

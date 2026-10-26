@@ -12,6 +12,26 @@ import { DEFAULT_GOOD_WINDOW_MS } from '@/rhythm/timingCalibration';
 import type { FeatureFlags } from '@/features/featureFlags';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ExerciseSettings, FlashSource, SoundPreset } from '@/types/rhythm';
+import { LivePracticeSettingsStyle1,
+  LivePracticeSettingsStyle2,
+  LivePracticeSettingsStyle3,
+  LivePracticeSettingsStyle4,
+  LivePracticeSettingsStyle5,
+  LivePracticeSettingsStyle6,
+  LivePracticeSettingsStyle7,
+  LivePracticeSettingsStyle8,
+  LivePracticeSettingsStyle9,
+  LivePracticeSettingsStyle10,
+  LivePracticeSettingsStyle11,
+  LivePracticeSettingsStyle12,
+  LivePracticeSettingsStyle13,
+  LivePracticeSettingsStyle14,
+  LivePracticeSettingsStyle15,
+  LivePracticeSettingsStyle16,
+  LivePracticeSettingsStyle17,
+  LivePracticeSettingsStyle18,
+  LivePracticeSettingsStyle19,
+  LivePracticeSettingsStyle20, LivePracticeSettingsStyle21 } from '@/styles/settings';
 
 const FLASH_SOURCE_OPTIONS: readonly { label: string; value: FlashSource }[] = [
   { label: 'On tap', value: 'tap' },
@@ -48,22 +68,22 @@ export function LivePracticeSettings({
       blurTarget={blurTarget}
       contentStyle={contentStyle}
     >
-      <View style={{ width: '100%', maxWidth: 820, maxHeight: '100%', flex: 1, paddingHorizontal: compact ? 8 : 18, paddingVertical: compact ? 4 : 12 }}>
-        <View style={{ minHeight: compact ? 38 : 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: compact ? 4 : 10 }}>
+      <View style={LivePracticeSettingsStyle1({ compact })}>
+        <View style={LivePracticeSettingsStyle2({ compact })}>
           <Pressable
             testID="practice.liveSettings.back"
             accessibilityRole="button"
             accessibilityLabel={t('Back to pause menu')}
             onPress={onBack}
-            style={{ minHeight: 40, justifyContent: 'center', paddingRight: 14 }}
+            style={LivePracticeSettingsStyle3()}
           >
-            <Text style={{ color: colors.muted, fontSize: compact ? 10 : 11, fontWeight: '900', letterSpacing: 0.7 }}>‹  PAUSED</Text>
+            <Text style={LivePracticeSettingsStyle4({ colors, compact })}>‹  PAUSED</Text>
           </Pressable>
-          <Text style={{ color: colors.text, fontSize: compact ? 15 : 19, fontWeight: '900', letterSpacing: 0.8 }}>LIVE SETTINGS</Text>
-          <View style={{ width: 62 }} />
+          <Text style={LivePracticeSettingsStyle5({ colors, compact })}>LIVE SETTINGS</Text>
+          <View style={LivePracticeSettingsStyle6()} />
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 12 }} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={LivePracticeSettingsStyle21()} showsVerticalScrollIndicator={false}>
           {featureFlags.soundEffects ? (
             <>
               <SectionTitle title="SOUND" compact={compact} />
@@ -80,8 +100,8 @@ export function LivePracticeSettings({
                 value={settings.metronomeSound}
                 onChange={(metronomeSound) => onSettingsChange({ metronomeSound })}
               />
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
-                <View style={{ flex: 1, minWidth: 220 }}>
+              <View style={LivePracticeSettingsStyle7()}>
+                <View style={LivePracticeSettingsStyle8()}>
                   <SoundChoice
                     title="LEFT-HAND CLICK"
                     testIDPrefix="practice.liveSettings.sound.left"
@@ -89,7 +109,7 @@ export function LivePracticeSettings({
                     onChange={(leftHandSound) => onSettingsChange({ leftHandSound })}
                   />
                 </View>
-                <View style={{ flex: 1, minWidth: 220 }}>
+                <View style={LivePracticeSettingsStyle9()}>
                   <SoundChoice
                     title="RIGHT-HAND CLICK"
                     testIDPrefix="practice.liveSettings.sound.right"
@@ -165,10 +185,10 @@ export function LivePracticeSettings({
           {featureFlags.timingCalibration ? (
             <>
               <SectionTitle title="TIMING CALIBRATION" compact={compact} />
-              <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 7 }}>
+              <Text style={LivePracticeSettingsStyle10({ colors })}>
                 Calibration runs while this session is paused. Its offsets and timing range will apply when you continue.
               </Text>
-              <View style={{ marginTop: 12 }}>
+              <View style={LivePracticeSettingsStyle11()}>
                 <TimingCalibration
                   bpm={settings.bpm}
                   timeSignature={settings.timeSignature}
@@ -182,9 +202,9 @@ export function LivePracticeSettings({
                   testID="practice.liveSettings.calibrationReset"
                   accessibilityRole="button"
                   onPress={() => onSettingsChange({ leftTapOffsetMs: 0, rightTapOffsetMs: 0, goodWindowMs: DEFAULT_GOOD_WINDOW_MS })}
-                  style={{ minHeight: 42, alignSelf: 'flex-start', justifyContent: 'center', paddingHorizontal: 12, marginTop: 8, borderRadius: 11, borderWidth: 1, borderColor: colors.line }}
+                  style={LivePracticeSettingsStyle12({ colors })}
                 >
-                  <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 }}>RESET CALIBRATION</Text>
+                  <Text style={LivePracticeSettingsStyle13({ colors })}>RESET CALIBRATION</Text>
                 </Pressable>
               </View>
             </>
@@ -195,9 +215,9 @@ export function LivePracticeSettings({
           testID="practice.liveSettings.done"
           accessibilityRole="button"
           onPress={onBack}
-          style={{ minHeight: compact ? 42 : 48, alignItems: 'center', justifyContent: 'center', marginTop: 8, borderRadius: 13, backgroundColor: colors.accent }}
+          style={LivePracticeSettingsStyle14({ compact, colors })}
         >
-          <Text style={{ color: colors.background, fontSize: 12, fontWeight: '900', letterSpacing: 1 }}>DONE</Text>
+          <Text style={LivePracticeSettingsStyle15({ colors })}>DONE</Text>
         </Pressable>
       </View>
     </PracticeOverlayBackdrop>
@@ -207,7 +227,7 @@ export function LivePracticeSettings({
 function SectionTitle({ title, compact }: { title: string; compact: boolean }) {
   const { colors } = useTheme();
   return (
-    <Text style={{ color: colors.dim, fontSize: compact ? 10 : 11, fontWeight: '900', letterSpacing: 1.1, marginTop: compact ? 14 : 18, marginBottom: 3 }}>
+    <Text style={LivePracticeSettingsStyle16({ colors, compact })}>
       {title}
     </Text>
   );
@@ -226,8 +246,8 @@ function SoundChoice({
 }) {
   const { colors } = useTheme();
   return (
-    <View style={{ marginTop: 13 }}>
-      <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 0.7, marginBottom: 7 }}>{title}</Text>
+    <View style={LivePracticeSettingsStyle17()}>
+      <Text style={LivePracticeSettingsStyle18({ colors })}>{title}</Text>
       <SettingsChoiceRow options={SOUND_OPTIONS} value={value} onChange={onChange} testIDPrefix={testIDPrefix} />
     </View>
   );
@@ -246,8 +266,8 @@ function FlashChoice({
 }) {
   const { colors } = useTheme();
   return (
-    <View style={{ marginTop: 12 }}>
-      <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 0.7, marginBottom: 7 }}>{title}</Text>
+    <View style={LivePracticeSettingsStyle19()}>
+      <Text style={LivePracticeSettingsStyle20({ colors })}>{title}</Text>
       <SettingsChoiceRow options={FLASH_SOURCE_OPTIONS} value={value} onChange={onChange} testIDPrefix={testIDPrefix} />
     </View>
   );

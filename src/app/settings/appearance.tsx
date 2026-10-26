@@ -5,6 +5,7 @@ import { PracticeDisplayPicker } from '@/components/PracticeDisplayPicker';
 import { Text } from '@/i18n/LocalizedText';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
+import { appearanceStyle1, appearanceStyle2, appearanceStyle3, appearanceStyle4, appearanceStyle5 } from '@/styles/settings';
 
 export default function AppearanceSettingsScreen() {
   const { mode, setMode, colors } = useTheme();
@@ -18,7 +19,7 @@ export default function AppearanceSettingsScreen() {
       title="Appearance"
       description="Choose the look that feels clearest while you practise."
     >
-      <View style={{ marginTop: 18, borderTopWidth: 1, borderTopColor: colors.line }}>
+      <View style={appearanceStyle1({ colors })}>
         <SettingsToggleRow
           testID="settings.appearance.lightMode"
           label="Light mode"
@@ -27,14 +28,14 @@ export default function AppearanceSettingsScreen() {
           onChange={(enabled) => setMode(enabled ? 'light' : 'dark')}
         />
       </View>
-      <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
+      <Text style={appearanceStyle2({ colors })}>
         Your choice is saved on this device. The practice tempo remains in the pause controls.
       </Text>
-      {featureFlags.scoreNotation ? <View style={{ marginTop: 24 }}>
-        <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.7, marginBottom: 5 }}>
+      {featureFlags.scoreNotation ? <View style={appearanceStyle3()}>
+        <Text style={appearanceStyle4({ colors })}>
           PRACTICE DISPLAY
         </Text>
-        <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 17 }}>
+        <Text style={appearanceStyle5({ colors })}>
           Choose how rhythm is shown during free practice.
         </Text>
         <PracticeDisplayPicker

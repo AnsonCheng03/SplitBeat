@@ -12,6 +12,18 @@ import {
 } from '@/rhythm/timingCalibration';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
+import {
+  timingStyle1,
+  timingStyle2,
+  timingStyle3,
+  timingStyle4,
+  timingStyle5,
+  timingStyle6,
+  timingStyle7,
+  timingStyle8,
+  timingStyle9,
+  timingStyle10
+} from '@/styles/settings';
 
 function signedMilliseconds(value: number): string {
   return `${value > 0 ? '+' : ''}${value} ms`;
@@ -40,9 +52,9 @@ export default function TimingSettingsScreen() {
       title="Timing calibration"
       description="Fine-tune how close a tap must be and correct consistent early or late taps."
     >
-      <View style={{ marginTop: 15, padding: 16, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
-        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>CALIBRATE BOTH HANDS</Text>
-        <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 6, marginBottom: 12 }}>
+      <View style={timingStyle1({ colors })}>
+        <Text style={timingStyle2({ colors })}>CALIBRATE BOTH HANDS</Text>
+        <Text style={timingStyle3({ colors })}>
           Tap with each hand on the click to measure and save your timing offset.
         </Text>
         <TimingCalibration
@@ -60,9 +72,9 @@ export default function TimingSettingsScreen() {
         testID="setup.calibration.reset"
         accessibilityRole="button"
         onPress={reset}
-        style={{ minHeight: 48, alignSelf: 'flex-start', justifyContent: 'center', marginTop: 12, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface }}
+        style={timingStyle4({ colors })}
       >
-        <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '900', letterSpacing: 0.4 }}>
+        <Text style={timingStyle5({ colors })}>
           RESET TIMING DEFAULTS
         </Text>
       </Pressable>
@@ -126,8 +138,8 @@ function SettingSlider({
 }) {
   const { colors } = useTheme();
   return (
-    <View style={{ marginTop: 20 }}>
-      <Text style={{ color: colors.text, fontSize: 12, fontWeight: '900', letterSpacing: 0.4 }}>
+    <View style={timingStyle6()}>
+      <Text style={timingStyle7({ colors })}>
         {title}
       </Text>
       <Slider
@@ -142,9 +154,9 @@ function SettingSlider({
         thumbTintColor={colors.text}
       />
       {endpoints ? (
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: -4 }}>
-          <Text style={{ color: colors.dim, fontSize: 10 }}>{endpoints[0]}</Text>
-          <Text style={{ color: colors.dim, fontSize: 10 }}>{endpoints[1]}</Text>
+        <View style={timingStyle8()}>
+          <Text style={timingStyle9({ colors })}>{endpoints[0]}</Text>
+          <Text style={timingStyle10({ colors })}>{endpoints[1]}</Text>
         </View>
       ) : null}
     </View>

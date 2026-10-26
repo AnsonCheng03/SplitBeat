@@ -3,18 +3,19 @@ import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme/ThemeProvider';
+import { ExerciseLoadingStateStyle1, ExerciseLoadingStateStyle2, ExerciseLoadingStateStyle3, ExerciseLoadingStateStyle4 } from '@/styles/exercise';
 
 export function ExerciseLoadingState() {
   const { colors } = useTheme();
   const { t } = useI18n();
   return (
-    <SafeAreaView testID="exercise.loading" accessibilityState={{ busy: true }} style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24 }}>
+    <SafeAreaView testID="exercise.loading" accessibilityState={{ busy: true }} style={ExerciseLoadingStateStyle1({ colors })}>
+      <View style={ExerciseLoadingStateStyle2()}>
         <ActivityIndicator size="large" color={colors.accent} />
-        <Text accessibilityLiveRegion="polite" style={{ color: colors.text, fontSize: 17, fontWeight: '800' }}>
+        <Text accessibilityLiveRegion="polite" style={ExerciseLoadingStateStyle3({ colors })}>
           {t('Loading {activity}…', { activity: t('Focus practice') })}
         </Text>
-        <Text style={{ color: colors.muted, fontSize: 13, textAlign: 'center' }}>{t('Preparing your practice history.')}</Text>
+        <Text style={ExerciseLoadingStateStyle4({ colors })}>{t('Preparing your practice history.')}</Text>
       </View>
     </SafeAreaView>
   );

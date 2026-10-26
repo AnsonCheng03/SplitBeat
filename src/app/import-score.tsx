@@ -21,6 +21,18 @@ import { useRhythmSession } from '@/store/sessionStore';
 import { loadImportedScoreLibrary, saveImportedScoreLibrary } from '@/store/importedScoreLibrary';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ImportedRhythmScore } from '@/types/importedScore';
+import { importscoreStyle1,
+  importscoreStyle2,
+  importscoreStyle3,
+  importscoreStyle4,
+  importscoreStyle5,
+  importscoreStyle6,
+  importscoreStyle7,
+  importscoreStyle8,
+  importscoreStyle9,
+  importscoreStyle10,
+  importscoreStyle11,
+  importscoreStyle12, importscoreStyle13 } from '@/styles/exercise';
 
 const IS_SILENT_E2E_BUILD = process.env.EXPO_PUBLIC_E2E_SILENT === '1';
 
@@ -220,17 +232,17 @@ export default function ImportScoreScreen() {
   };
 
   return (
-    <SafeAreaView testID="scoreImport.screen" style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 9, paddingBottom: 24, maxWidth: 850, width: '100%', alignSelf: 'center' }} keyboardShouldPersistTaps="handled">
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+    <SafeAreaView testID="scoreImport.screen" style={importscoreStyle1({ colors })}>
+      <ScrollView contentContainerStyle={importscoreStyle13()} keyboardShouldPersistTaps="handled">
+        <View style={importscoreStyle2()}>
           <Link href="/" asChild>
-            <Pressable accessibilityRole="button" accessibilityLabel={t('Go back')} hitSlop={8} style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ color: colors.muted, fontSize: 13, fontWeight: '800' }}>‹  BACK</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('Go back')} hitSlop={8} style={importscoreStyle3()}><Text style={importscoreStyle4({ colors })}>‹  BACK</Text></Pressable>
           </Link>
-          <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1.7 }}>SCORE TRAINING</Text>
+          <Text style={importscoreStyle5({ colors })}>SCORE TRAINING</Text>
         </View>
 
-        <Text style={{ color: colors.text, fontSize: 32, fontWeight: '900', letterSpacing: -0.8 }}>Bring a score.</Text>
-        <Text style={{ color: colors.muted, fontSize: 14, marginTop: 5, marginBottom: 13 }}>
+        <Text style={importscoreStyle6({ colors })}>Bring a score.</Text>
+        <Text style={importscoreStyle7({ colors })}>
           Import MIDI or MusicXML. One active hand uses the full screen; two active hands train side by side.
         </Text>
 
@@ -241,16 +253,16 @@ export default function ImportScoreScreen() {
               disabled={importing}
               onPress={() => void importScoreFile()}
               accessibilityRole="button"
-              style={{ minHeight: 58, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginTop: 2, backgroundColor: colors.left, opacity: importing ? 0.7 : 1 }}
+              style={importscoreStyle8({ colors, importing })}
             >
-              <Text style={{ color: colors.background, fontSize: 14, fontWeight: '900', letterSpacing: 0.7 }}>{importing ? 'OPENING FILE…' : 'IMPORT MIDI OR MUSICXML'}</Text>
+              <Text style={importscoreStyle9({ colors })}>{importing ? 'OPENING FILE…' : 'IMPORT MIDI OR MUSICXML'}</Text>
             </Pressable>
-            <Text style={{ color: colors.dim, fontSize: 11, lineHeight: 16, marginTop: 8 }}>
+            <Text style={importscoreStyle10({ colors })}>
               .mid, .midi, .musicxml, and .xml files are read on this device. PDF and image recognition are not available yet.
             </Text>
             {IS_SILENT_E2E_BUILD ? (
-              <Pressable testID="scoreImport.loadSample" onPress={loadE2ESample} style={{ alignSelf: 'flex-start', paddingVertical: 9 }}>
-                <Text style={{ color: colors.dim, fontSize: 11, fontWeight: '700' }}>Load test score</Text>
+              <Pressable testID="scoreImport.loadSample" onPress={loadE2ESample} style={importscoreStyle11()}>
+                <Text style={importscoreStyle12({ colors })}>Load test score</Text>
               </Pressable>
             ) : null}
             {featureFlags.savedScoreLibrary ? (

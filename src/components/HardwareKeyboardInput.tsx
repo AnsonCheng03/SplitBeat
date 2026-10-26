@@ -6,6 +6,7 @@ import {
   keyboardHandForKey,
   synchronizeKeyboardTimestamp,
 } from '@/rhythm/keyboardInput';
+import { HardwareKeyboardInputStyle1 } from '@/styles/shared';
 
 const ANDROID_KEY_EVENT = 'SplitBeatHardwareKeyPress';
 
@@ -67,7 +68,7 @@ export function HardwareKeyboardInput({ onTap }: HardwareKeyboardInputProps) {
       onKeyPress={(event) => handleKey(event.nativeEvent.key)}
       pointerEvents="none"
       showSoftInputOnFocus={false}
-      style={{ position: 'absolute', left: 0, top: 0, width: 1, height: 1, opacity: 0 }}
+      style={HardwareKeyboardInputStyle1()}
     />
   );
 }

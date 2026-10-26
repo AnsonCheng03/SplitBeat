@@ -4,6 +4,7 @@ import { Text } from '@/i18n/LocalizedText';
 import type { NoteNotationPlan } from '@/rhythm/noteNotation';
 import { notationVisualCenterOffsetY } from '@/rhythm/noteNotation';
 import VexFlowNotationDOM from '@/components/VexFlowNotationDOM';
+import { NoteNotationStyle1, NoteNotationStyle2, NoteNotationStyle3, NoteNotationStyle4, noteNotationDOMStyle } from '@/styles/notation';
 
 export function NoteNotation({
   plan,
@@ -38,21 +39,13 @@ export function NoteNotation({
     <View
       testID={testID}
       accessibilityLabel={accessibilityLabel}
-      style={{ width: plan.width, height: plan.height, alignSelf: 'center', justifyContent: 'flex-end', position: 'relative' }}
+      style={NoteNotationStyle1({ plan })}
     >
       {showStaffLines ? Array.from({ length: 5 }, (_, index) => (
         <View
           key={`staff-line-${index}`}
           pointerEvents="none"
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: (plan.height - 24) / 2 + index * 6,
-            height: 1,
-            backgroundColor: staffLineColor ?? '#53616F',
-            opacity: 0.85,
-          }}
+          style={NoteNotationStyle2({ plan, index, staffLineColor })}
         />
       )) : null}
       <VexFlowNotationDOM
@@ -68,31 +61,21 @@ export function NoteNotation({
         dom={{
           scrollEnabled: false,
           bounces: false,
-          style: { position: 'absolute', left: 0, top: visualOffsetY, width: plan.width, height: plan.height, backgroundColor: 'transparent' },
+          style: noteNotationDOMStyle(plan, visualOffsetY),
         }}
       />
       {ready && readyTestID ? (
         <View
           testID={readyTestID}
           pointerEvents="none"
-          style={{ position: 'absolute', right: 0, bottom: 0, width: 1, height: 1, opacity: 0.01 }}
+          style={NoteNotationStyle3()}
         />
       ) : null}
       {plan.tupletLabels.map((label, index) => (
         <Text
           key={label.key}
           testID={testID ? `${testID}.tuplet.${index}` : undefined}
-          style={{
-            position: 'absolute',
-            left: label.left,
-            top: label.top + visualOffsetY,
-            width: label.width,
-            textAlign: 'center',
-            color,
-            fontSize: label.fontSize,
-            fontWeight: '800',
-            lineHeight: label.fontSize + 2,
-          }}
+          style={NoteNotationStyle4({ label, visualOffsetY, color })}
         >
           {label.text}
         </Text>

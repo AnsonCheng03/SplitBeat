@@ -1,4 +1,3 @@
-import type { DimensionValue } from 'react-native';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -12,6 +11,32 @@ import type { RhythmicFeel, SessionResults } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
 import { ResultsScorePanel as ScorePanel } from '@/features/results/ResultsControls';
 import type { LearnLessonRating } from '@/rhythm/learnRating';
+import {
+  ResultsOverviewStyle1,
+  ResultsOverviewStyle2,
+  ResultsOverviewStyle3,
+  ResultsOverviewStyle4,
+  ResultsOverviewStyle5,
+  ResultsOverviewStyle6,
+  ResultsOverviewStyle7,
+  ResultsOverviewStyle8,
+  ResultsOverviewStyle9,
+  ResultsOverviewStyle10,
+  ResultsOverviewStyle11,
+  ResultsOverviewStyle12,
+  ResultsOverviewStyle13,
+  ResultsOverviewStyle14,
+  ResultsOverviewStyle15,
+  ResultsOverviewStyle16,
+  ResultsOverviewStyle17,
+  ResultsOverviewStyle18,
+  ResultsOverviewStyle19,
+  ResultsOverviewStyle20,
+  ResultsOverviewStyle21,
+  ResultsOverviewStyle22,
+  ResultsOverviewStyle23,
+  ResultsOverviewStyle24
+} from '@/styles/results';
 
 export function ResultsOverview({
   results,
@@ -48,30 +73,30 @@ export function ResultsOverview({
 
   return (
     <View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-          <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.8 }}>{courseLesson ? lessonCompleted ? 'LESSON COMPLETE' : 'LESSON FINISHED' : viewResults.source === 'score' ? 'SCORE SESSION COMPLETE' : 'SESSION COMPLETE'}</Text>
-          <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 12, maxWidth: '68%', textAlign: 'right' }}>
+        <View style={ResultsOverviewStyle1()}>
+          <Text style={ResultsOverviewStyle2({ colors })}>{courseLesson ? lessonCompleted ? 'LESSON COMPLETE' : 'LESSON FINISHED' : viewResults.source === 'score' ? 'SCORE SESSION COMPLETE' : 'SESSION COMPLETE'}</Text>
+          <Text numberOfLines={1} style={ResultsOverviewStyle3({ colors })}>
             {viewResults.bpm} BPM · {viewResults.timeSignature} · {viewResults.source === 'score' ? viewResults.scoreTitle : sessionOptions}
           </Text>
         </View>
-        <Text style={{ color: colors.text, fontSize: 32, fontWeight: '900', letterSpacing: -0.8 }}>{courseLesson ? courseLesson.title : 'Your timing.'}</Text>
+        <Text style={ResultsOverviewStyle4({ colors })}>{courseLesson ? courseLesson.title : 'Your timing.'}</Text>
         {courseLesson && lessonCompleted ? (
-          <Text testID="results.lessonComplete" style={{ color: colors.left, fontSize: 13, fontWeight: '800', marginTop: 7 }}>
+          <Text testID="results.lessonComplete" style={ResultsOverviewStyle5({ colors })}>
             {courseLesson.number === LEARN_COURSE.length ? 'Course complete. You have reached the final lesson.' : 'Lesson complete. The next lesson is ready.'}
           </Text>
         ) : null}
 
         {viewResults.source !== 'score' && viewResults.replayExpectedEvents?.length ? (
-          <View testID="results.feelCount" style={{ paddingHorizontal: 13, paddingVertical: 11, marginTop: 14, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: swingFeelAnalysis?.likelyStraight && originalFeel === 'swing' ? colors.accent : colors.line }}>
+          <View testID="results.feelCount" style={ResultsOverviewStyle6({ colors, swingFeelAnalysis, originalFeel })}>
             {swingFeelAnalysis?.likelyStraight && originalFeel === 'swing' ? (
-              <Text testID="results.swingFeelWarning" style={{ color: colors.text, fontSize: 12, lineHeight: 17, fontWeight: '800', marginBottom: 8 }}>
+              <Text testID="results.swingFeelWarning" style={ResultsOverviewStyle7({ colors })}>
                 {t('This was set to swing, but your taps line up more closely with straight timing.')}
               </Text>
             ) : null}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 }}>{t('COUNT THIS SESSION AS')}</Text>
-                <Text style={{ color: colors.dim, fontSize: 10, lineHeight: 14, marginTop: 3 }}>{t('Recount these taps without playing again.')}</Text>
+            <View style={ResultsOverviewStyle8()}>
+              <View style={ResultsOverviewStyle9()}>
+                <Text style={ResultsOverviewStyle10({ colors })}>{t('COUNT THIS SESSION AS')}</Text>
+                <Text style={ResultsOverviewStyle11({ colors })}>{t('Recount these taps without playing again.')}</Text>
               </View>
               {(['straight', 'swing'] as const).map((feel) => (
                 <Pressable
@@ -80,39 +105,39 @@ export function ResultsOverview({
                   accessibilityRole="button"
                   accessibilityState={{ selected: countAsFeel === feel }}
                   onPress={() => onCountAsFeel(feel)}
-                  style={{ minWidth: 76, minHeight: 38, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, borderRadius: 10, backgroundColor: countAsFeel === feel ? colors.accent : colors.background, borderWidth: 1, borderColor: countAsFeel === feel ? colors.accent : colors.line }}
+                  style={ResultsOverviewStyle12({ countAsFeel, feel, colors })}
                 >
-                  <Text style={{ color: countAsFeel === feel ? colors.background : colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.5 }}>{t(feel === 'straight' ? 'Straight' : 'Swing').toUpperCase()}</Text>
+                  <Text style={ResultsOverviewStyle13({ countAsFeel, feel, colors })}>{t(feel === 'straight' ? 'Straight' : 'Swing').toUpperCase()}</Text>
                 </Pressable>
               ))}
             </View>
           </View>
         ) : null}
 
-        <View style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 20, padding: 20, marginTop: 17 }}>
-          <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>{courseLesson ? 'LESSON ACCURACY' : viewResults.source === 'score' ? 'SCORE ACCURACY' : 'OVERALL ACCURACY'}</Text>
-          <Text style={{ color: colors.text, fontSize: 58, lineHeight: 66, fontWeight: '900', marginTop: 4 }}>{percent(overall)}</Text>
+        <View style={ResultsOverviewStyle14({ colors })}>
+          <Text style={ResultsOverviewStyle15({ colors })}>{courseLesson ? 'LESSON ACCURACY' : viewResults.source === 'score' ? 'SCORE ACCURACY' : 'OVERALL ACCURACY'}</Text>
+          <Text style={ResultsOverviewStyle16({ colors })}>{percent(overall)}</Text>
           {courseLesson ? (
-            <View testID="results.lessonRating" accessibilityLabel={t('{score} correct, {stars} out of 5 stars', { score: percent(overall), stars: starsForAccuracy(overall) })} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
-              <Text testID="results.lessonStars" style={{ color: colors.accent, fontSize: 19, fontWeight: '900', letterSpacing: 1.4 }}>
+            <View testID="results.lessonRating" accessibilityLabel={t('{score} correct, {stars} out of 5 stars', { score: percent(overall), stars: starsForAccuracy(overall) })} style={ResultsOverviewStyle17()}>
+              <Text testID="results.lessonStars" style={ResultsOverviewStyle18({ colors })}>
                 {'★'.repeat(starsForAccuracy(overall))}{'☆'.repeat(5 - starsForAccuracy(overall))}
               </Text>
-              <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.7 }}>
+              <Text style={ResultsOverviewStyle19({ colors })}>
                 {t('{count} / 5 STARS', { count: starsForAccuracy(overall) })}
               </Text>
             </View>
           ) : null}
           {courseLesson && lessonRating ? (
-            <Text testID="results.lessonBest" style={{ color: colors.muted, fontSize: 10, fontWeight: '700', marginTop: 7 }}>
+            <Text testID="results.lessonBest" style={ResultsOverviewStyle20({ colors })}>
               Best: {percent(lessonRating.bestAccuracy)} · {lessonRating.attempts} {lessonRating.attempts === 1 ? 'attempt' : 'attempts'}
             </Text>
           ) : null}
-          <View style={{ height: 4, borderRadius: 3, backgroundColor: colors.line, marginTop: 11, overflow: 'hidden' }}>
-            <View style={{ width: (String(overall) + '%') as DimensionValue, height: 4, backgroundColor: colors.accent, borderRadius: 3 }} />
+          <View style={ResultsOverviewStyle21({ colors })}>
+            <View style={ResultsOverviewStyle22({ overall, colors })} />
           </View>
         </View>
 
-        <View style={{ flexDirection: 'row', gap: 10, marginTop: 11 }}>
+        <View style={ResultsOverviewStyle23()}>
           {displayedHands.map((hand) => (
             <ScorePanel
               key={hand}
@@ -124,7 +149,7 @@ export function ResultsOverview({
           ))}
         </View>
         {viewResults.source === 'score' ? null : (
-          <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+          <View style={ResultsOverviewStyle24()}>
             <ScorePanel label="STEADY RHYTHM" value={viewResults.stable.totalExpected ? percent(accuracyPercent(viewResults.stable)) : '—'} detail="Outside switch window" />
             <ScorePanel label="DURING SWITCHES" value={viewResults.transition.totalExpected ? percent(accuracyPercent(viewResults.transition)) : '—'} detail="First 2 beats after change" />
           </View>

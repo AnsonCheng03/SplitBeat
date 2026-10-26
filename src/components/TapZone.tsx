@@ -8,6 +8,17 @@ import { getTapResultFlash, shouldFlashOnTap } from '@/rhythm/flashSource';
 import type { FlashSource, Hand, TapFeedback } from '@/types/rhythm';
 import type { TapResultFlash } from '@/rhythm/flashSource';
 import { useTheme } from '@/theme/ThemeProvider';
+import {
+  TapZoneStyle1,
+  TapZoneStyle2,
+  TapZoneStyle3,
+  TapZoneStyle4,
+  TapZoneStyle5,
+  TapZoneStyle6,
+  TapZoneStyle7,
+  TapZoneStyle8,
+  TapZoneStyle9
+} from '@/styles/practice';
 
 interface TapZoneProps {
   hand: Hand;
@@ -175,48 +186,30 @@ export function TapZone({
       onTouchStart={handleTouch}
       collapsable={false}
       style={[
-        {
-          flex: 1,
-          minHeight: minimal ? 0 : compact ? 90 : 180,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: pressed ? pressedBackground : restingBackground,
-          borderColor: pressed ? accent : restingBorder,
-          borderWidth: minimal ? 0 : 1,
-          borderRadius: minimal ? 0 : 18,
-          marginHorizontal: minimal ? 0 : 4,
-          transform: minimal ? undefined : [{ scale: pressed ? 0.985 : 1 }],
-          opacity: enabled ? 1 : missed ? 0.82 : 0.44,
-        },
+        TapZoneStyle1({ minimal, compact, pressed, pressedBackground, restingBackground, accent, restingBorder, enabled, missed }),
         style,
       ]}
     >
       <Animated.View
         pointerEvents="none"
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: minimal ? 0 : 18, backgroundColor: accent, opacity: beatFlashOpacity }}
+        style={TapZoneStyle2({ minimal, accent, beatFlashOpacity })}
       />
       <Animated.View
         pointerEvents="none"
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: minimal ? 0 : 18, backgroundColor: tapResultColor === 'correct' ? colors.left : colors.danger, opacity: tapResultOpacity }}
+        style={TapZoneStyle3({ minimal, tapResultColor, colors, tapResultOpacity })}
       />
       {!minimal ? (
         <>
-          <Text style={{ color: accent, fontSize: compact ? 11 : 12, fontWeight: '800', letterSpacing: 2 }}>
+          <Text style={TapZoneStyle4({ accent, compact })}>
             {!enabled || resting ? 'REST' : isLeft ? 'LEFT' : 'RIGHT'}
           </Text>
-          <Text style={{ color: colors.text, fontSize: compact ? 18 : 21, fontWeight: '700', marginTop: 6 }}>
+          <Text style={TapZoneStyle5({ colors, compact })}>
             {!enabled ? 'OFF' : resting ? 'WAIT' : 'TAP'}
           </Text>
           <Text
             testID={`practice.keyboard.${hand}Keys`}
             numberOfLines={1}
-            style={{
-              color: colors.muted,
-              fontSize: compact ? 7 : 8,
-              fontWeight: '700',
-              letterSpacing: 0.1,
-              marginTop: 4,
-            }}
+            style={TapZoneStyle6({ colors, compact })}
           >
             {KEYBOARD_KEYS_BY_HAND[hand]}
           </Text>
@@ -226,7 +219,7 @@ export function TapZone({
         <Text
           testID={`practice.tap.${hand}.label`}
           pointerEvents="none"
-          style={{ position: 'absolute', top: '58%', left: 0, right: 0, color: accent, fontSize: compact ? 11 : 13, fontWeight: '900', letterSpacing: 2, opacity: 0.7, textAlign: 'center' }}
+          style={TapZoneStyle7({ accent, compact })}
         >
           {hand.toUpperCase()}
         </Text>
@@ -234,31 +227,14 @@ export function TapZone({
       {missed && !minimal ? (
         <Animated.Text
           testID={`practice.tap.${hand}.miss`}
-          style={{
-            position: 'absolute',
-            top: compact ? 8 : 11,
-            right: 10,
-            color: colors.danger,
-            fontSize: 8,
-            fontWeight: '900',
-            letterSpacing: 0.7,
-            opacity: tapResultOpacity.interpolate({ inputRange: [0, 0.5], outputRange: [0, 1] }),
-          }}
+          style={TapZoneStyle8({ compact, colors, tapResultOpacity })}
         >
           OFF BEAT
         </Animated.Text>
       ) : null}
       {!minimal ? (
         <View
-          style={{
-            position: 'absolute',
-            bottom: compact ? 12 : 16,
-            width: 30,
-            height: 3,
-            borderRadius: 4,
-            backgroundColor: accent,
-            opacity: pressed ? 1 : 0.5,
-          }}
+          style={TapZoneStyle9({ compact, accent, pressed })}
         />
       ) : null}
     </View>

@@ -8,6 +8,14 @@ import { centerScoreBeatEvents, scoreBeatEvents, scoreNotationEventsForSpan } fr
 import type { ScoreRhythmMeasure, ScoreRhythmEvent } from '@/types/importedScore';
 import type { Hand } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
+import {
+  ScoreBeatFocusStyle1,
+  ScoreBeatFocusStyle2,
+  ScoreBeatFocusStyle3,
+  ScoreBeatFocusStyle4,
+  ScoreBeatFocusStyle5,
+  ScoreBeatFocusStyle6
+} from '@/styles/notation';
 
 const TUPLET_LABELS: Record<number, string> = {
   2: 'Duplet (2)',
@@ -107,18 +115,18 @@ export function ScoreBeatFocus({
         hand: t(hand),
         pattern: visualBeatLabel || t('Rest'),
       })}
-      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: compact ? 7 : 11 }}
+      style={ScoreBeatFocusStyle1({ compact })}
     >
-      <Text style={{ color, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>
+      <Text style={ScoreBeatFocusStyle2({ color, compact })}>
         {oneHand ? 'ONE HAND' : hand.toUpperCase()}
       </Text>
       <View
         onLayout={({ nativeEvent }) => setMeasuredLayout({ estimate: initialWidth, width: nativeEvent.layout.width })}
-        style={{ width: '86%', height: compact ? 88 : 112, alignItems: 'center', justifyContent: 'center' }}
+        style={ScoreBeatFocusStyle3({ compact })}
       >
         {plan ? (
-          <View style={{ width: plan.width * notationScale, height: plan.height * notationScale, alignItems: 'center', justifyContent: 'center' }}>
-            <View style={{ width: plan.width, height: plan.height, transform: [{ scale: notationScale }] }}>
+          <View style={ScoreBeatFocusStyle4({ plan, notationScale })}>
+            <View style={ScoreBeatFocusStyle5({ plan, notationScale })}>
               <NoteNotation testID={`practice.scoreBeat.${hand}.notation`} plan={plan} color={color} accessibilityLabel={t('Current beat score notation')} />
             </View>
           </View>
@@ -129,7 +137,7 @@ export function ScoreBeatFocus({
           numberOfLines={2}
           adjustsFontSizeToFit
           minimumFontScale={0.65}
-          style={{ width: '88%', color: colors.text, fontSize: compact ? 12 : 16, lineHeight: compact ? 16 : 20, fontWeight: '800', textAlign: 'center' }}
+          style={ScoreBeatFocusStyle6({ colors, compact })}
         >
           {visualBeatLabel}
         </Text>

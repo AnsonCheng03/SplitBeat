@@ -26,6 +26,7 @@ import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ReplayPattern, RhythmicFeel, SessionResults } from '@/types/rhythm';
 import { buildFeedback, replayErrorBarGroups, sessionAccuracy, weakestCombination } from '@/features/results/resultPresentation';
+import { resultsStyle1, resultsStyle2, resultsStyle3, resultsStyle4, resultsStyle5, resultsStyle6 } from '@/styles/results';
 
 export default function ResultsScreen() {
   const { colors } = useTheme();
@@ -251,10 +252,10 @@ export default function ResultsScreen() {
 
   if (!results) {
     return (
-      <SafeAreaView testID="results.screen" style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
-        <Text style={{ color: colors.muted }}>{t('No session results yet.')}</Text>
-        <Pressable onPress={() => router.replace('/setup')} style={{ padding: 16 }}>
-          <Text style={{ color: colors.left, fontWeight: '800' }}>{t('SET UP A SESSION')}</Text>
+      <SafeAreaView testID="results.screen" style={resultsStyle1({ colors })}>
+        <Text style={resultsStyle2({ colors })}>{t('No session results yet.')}</Text>
+        <Pressable onPress={() => router.replace('/setup')} style={resultsStyle3()}>
+          <Text style={resultsStyle4({ colors })}>{t('SET UP A SESSION')}</Text>
         </Pressable>
       </SafeAreaView>
     );
@@ -264,9 +265,9 @@ export default function ResultsScreen() {
   const feedback = buildFeedback(viewResults, weakest, t);
 
   return (
-    <SafeAreaView testID="results.screen" style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView testID="results.screen" style={resultsStyle5({ colors })}>
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 32, maxWidth: 720, width: '100%', alignSelf: 'center' }}
+        contentContainerStyle={resultsStyle6()}
         showsVerticalScrollIndicator={false}
       >
         <ResultsOverview

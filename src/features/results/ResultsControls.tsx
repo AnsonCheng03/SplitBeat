@@ -2,6 +2,19 @@ import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useTheme } from '@/theme/ThemeProvider';
+import {
+  ResultsControlsStyle1,
+  ResultsControlsStyle2,
+  ResultsControlsStyle3,
+  ResultsControlsStyle4,
+  ResultsControlsStyle5,
+  ResultsControlsStyle6,
+  ResultsControlsStyle7,
+  ResultsControlsStyle8,
+  ResultsControlsStyle9,
+  ResultsControlsStyle10,
+  ResultsControlsStyle11
+} from '@/styles/results';
 
 export function ResultsScorePanel({
   label,
@@ -16,10 +29,10 @@ export function ResultsScorePanel({
 }) {
   const { colors } = useTheme();
   return (
-    <View style={{ flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 16, padding: 15 }}>
-      <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1 }}>{label}</Text>
-      <Text style={{ color: accent ?? colors.text, fontSize: 25, fontWeight: '900', marginTop: 7 }}>{value}</Text>
-      {detail ? <Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>{detail}</Text> : null}
+    <View style={ResultsControlsStyle1({ colors })}>
+      <Text style={ResultsControlsStyle2({ colors })}>{label}</Text>
+      <Text style={ResultsControlsStyle3({ accent, colors })}>{value}</Text>
+      {detail ? <Text style={ResultsControlsStyle4({ colors })}>{detail}</Text> : null}
     </View>
   );
 }
@@ -44,20 +57,10 @@ export function ResultsDisclosureHeader({
       accessibilityLabel={t('{title}, {action} details', { title: t(title), action: t(expanded ? 'Hide' : 'Show') })}
       accessibilityState={{ expanded }}
       onPress={onPress}
-      style={({ pressed }) => ({
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        minHeight: 48,
-        paddingHorizontal: 14,
-        borderRadius: 13,
-        backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-        borderWidth: 1,
-        borderColor: colors.line,
-      })}
+      style={({ pressed }) => (ResultsControlsStyle5({ pressed, colors }))}
     >
-      <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800', flex: 1 }}>{title}</Text>
-      <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '900', letterSpacing: 0.8 }}>
+      <Text style={ResultsControlsStyle6({ colors })}>{title}</Text>
+      <Text style={ResultsControlsStyle7({ colors })}>
         {expanded ? 'HIDE  −' : 'VIEW  +'}
       </Text>
     </Pressable>
@@ -87,19 +90,12 @@ export function ResultsActionRow({
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         onPress={onPress}
-        style={({ pressed }) => ({
-          minHeight: 58,
-          paddingHorizontal: 17,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          backgroundColor: pressed ? colors.surfaceRaised : 'transparent',
-        })}
+        style={({ pressed }) => (ResultsControlsStyle8({ pressed, colors }))}
       >
-        <Text style={{ color, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>{label}</Text>
-        <Text accessibilityElementsHidden style={{ color, fontSize: 23, lineHeight: 27, fontWeight: '500' }}>›</Text>
+        <Text style={ResultsControlsStyle9({ color })}>{label}</Text>
+        <Text accessibilityElementsHidden style={ResultsControlsStyle10({ color })}>›</Text>
       </Pressable>
-      {!last ? <View style={{ height: 1, marginHorizontal: 16, backgroundColor: colors.line }} /> : null}
+      {!last ? <View style={ResultsControlsStyle11({ colors })} /> : null}
     </View>
   );
 }

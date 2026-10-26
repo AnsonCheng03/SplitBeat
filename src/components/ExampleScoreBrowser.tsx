@@ -5,6 +5,27 @@ import { ScoreTemplateFilterChip } from '@/components/ScoreTemplateFilterChip';
 import { filterScoreTemplates, SCORE_TEMPLATES, SCORE_TEMPLATE_CATEGORIES, SCORE_TEMPLATE_TAGS } from '@/rhythm/scoreTemplates';
 import type { ScoreTemplateCategory, ScoreTemplateTag } from '@/rhythm/scoreTemplates';
 import { useTheme } from '@/theme/ThemeProvider';
+import { ExampleScoreBrowserStyle1,
+  ExampleScoreBrowserStyle2,
+  ExampleScoreBrowserStyle3,
+  ExampleScoreBrowserStyle4,
+  ExampleScoreBrowserStyle5,
+  ExampleScoreBrowserStyle6,
+  ExampleScoreBrowserStyle7,
+  ExampleScoreBrowserStyle8,
+  ExampleScoreBrowserStyle9,
+  ExampleScoreBrowserStyle10,
+  ExampleScoreBrowserStyle11,
+  ExampleScoreBrowserStyle12,
+  ExampleScoreBrowserStyle13,
+  ExampleScoreBrowserStyle14,
+  ExampleScoreBrowserStyle15,
+  ExampleScoreBrowserStyle16,
+  ExampleScoreBrowserStyle17,
+  ExampleScoreBrowserStyle18,
+  ExampleScoreBrowserStyle19,
+  ExampleScoreBrowserStyle20,
+  ExampleScoreBrowserStyle21, ExampleScoreBrowserStyle22, ExampleScoreBrowserStyle23 } from '@/styles/exercise';
 
 export function ExampleScoreBrowser({
   category,
@@ -29,21 +50,21 @@ export function ExampleScoreBrowser({
   const hasFilters = category !== 'All' || tags.length > 0;
 
   return (
-    <View style={{ marginTop: 13 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>EXAMPLE SCORES</Text>
-        <Text testID="scoreImport.exampleCount" style={{ color: colors.dim, fontSize: 10 }}>{t('{count} example scores', { count: visibleTemplates.length })}</Text>
+    <View style={ExampleScoreBrowserStyle1()}>
+      <View style={ExampleScoreBrowserStyle2()}>
+        <Text style={ExampleScoreBrowserStyle3({ colors })}>EXAMPLE SCORES</Text>
+        <Text testID="scoreImport.exampleCount" style={ExampleScoreBrowserStyle4({ colors })}>{t('{count} example scores', { count: visibleTemplates.length })}</Text>
       </View>
-      <Text style={{ color: colors.dim, fontSize: 11, marginBottom: 8 }}>Choose a style, level, or hand setup.</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={{ color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 1.1, marginBottom: 5 }}>CATEGORY</Text>
+      <Text style={ExampleScoreBrowserStyle5({ colors })}>Choose a style, level, or hand setup.</Text>
+      <View style={ExampleScoreBrowserStyle6()}>
+        <Text style={ExampleScoreBrowserStyle7({ colors })}>CATEGORY</Text>
         {hasFilters ? (
-          <Pressable testID="scoreImport.filters.clear" accessibilityRole="button" onPress={onClearFilters} hitSlop={6} style={{ minHeight: 30, justifyContent: 'center', paddingHorizontal: 4 }}>
-            <Text style={{ color: colors.accent, fontSize: 9, fontWeight: '900' }}>CLEAR FILTERS</Text>
+          <Pressable testID="scoreImport.filters.clear" accessibilityRole="button" onPress={onClearFilters} hitSlop={6} style={ExampleScoreBrowserStyle8()}>
+            <Text style={ExampleScoreBrowserStyle9({ colors })}>CLEAR FILTERS</Text>
           </Pressable>
         ) : null}
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 7, paddingBottom: 8 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={ExampleScoreBrowserStyle22()}>
         {(['All', ...SCORE_TEMPLATE_CATEGORIES] as const).map((item) => (
           <ScoreTemplateFilterChip
             key={item}
@@ -55,8 +76,8 @@ export function ExampleScoreBrowser({
           />
         ))}
       </ScrollView>
-      <Text style={{ color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 1.1, marginBottom: 5 }}>TAGS · COMBINE ANY</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 7, paddingBottom: 9 }}>
+      <Text style={ExampleScoreBrowserStyle10({ colors })}>TAGS · COMBINE ANY</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={ExampleScoreBrowserStyle23()}>
         {SCORE_TEMPLATE_TAGS.map((tag) => (
           <ScoreTemplateFilterChip
             key={tag}
@@ -69,11 +90,11 @@ export function ExampleScoreBrowser({
         ))}
       </ScrollView>
       {visibleTemplates.length === 0 ? (
-        <View style={{ minHeight: 72, alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
-          <Text style={{ color: colors.dim, fontSize: 11, textAlign: 'center' }}>No example scores match these filters.</Text>
+        <View style={ExampleScoreBrowserStyle11({ colors })}>
+          <Text style={ExampleScoreBrowserStyle12({ colors })}>No example scores match these filters.</Text>
         </View>
       ) : (
-        <View testID="scoreImport.template.list" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <View testID="scoreImport.template.list" style={ExampleScoreBrowserStyle13()}>
           {visibleTemplates.map((template) => (
             <Pressable
               key={template.id}
@@ -81,17 +102,17 @@ export function ExampleScoreBrowser({
               accessibilityRole="button"
               accessibilityLabel={t('Open {title}, {category}, {tags}', { title: template.title, category: t(template.category), tags: template.tags.map((tag) => t(tag)).join(', ') })}
               onPress={() => onSelectTemplate(template.id)}
-              style={({ pressed }) => ({ flexGrow: 1, flexBasis: templateCardBasis, maxWidth: templateCardBasis, minHeight: 96, justifyContent: 'center', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line })}
+              style={({ pressed }) => (ExampleScoreBrowserStyle14({ templateCardBasis, pressed, colors }))}
             >
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                <Text raw numberOfLines={1} style={{ flex: 1, color: colors.text, fontSize: 12, fontWeight: '900' }}>{template.title}</Text>
-                <Text raw style={{ color: colors.accent, fontSize: 9, fontWeight: '900' }}>{t(template.category).toUpperCase()}</Text>
+              <View style={ExampleScoreBrowserStyle15()}>
+                <Text raw numberOfLines={1} style={ExampleScoreBrowserStyle16({ colors })}>{template.title}</Text>
+                <Text raw style={ExampleScoreBrowserStyle17({ colors })}>{t(template.category).toUpperCase()}</Text>
               </View>
-              <Text style={{ color: colors.dim, fontSize: 10, marginTop: 4 }} numberOfLines={1}>{template.subtitle}</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 7 }}>
+              <Text style={ExampleScoreBrowserStyle18({ colors })} numberOfLines={1}>{template.subtitle}</Text>
+              <View style={ExampleScoreBrowserStyle19()}>
                 {template.tags.map((tag) => (
-                  <View key={tag} style={{ paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: colors.background }}>
-                    <Text style={{ color: colors.muted, fontSize: 8, fontWeight: '800' }}>{t(tag)}</Text>
+                  <View key={tag} style={ExampleScoreBrowserStyle20({ colors })}>
+                    <Text style={ExampleScoreBrowserStyle21({ colors })}>{t(tag)}</Text>
                   </View>
                 ))}
               </View>

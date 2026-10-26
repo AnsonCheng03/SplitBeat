@@ -5,6 +5,21 @@ import { ChoiceChip } from '@/components/ExercisePatternPicker';
 import { CombinationTile, SavedPracticeTile } from '@/components/ExerciseHistoryTiles';
 import type { CombinationFilter, CombinationProgress, SavedPracticePair } from '@/rhythm/targetedPractice';
 import { useTheme } from '@/theme/ThemeProvider';
+import {
+  ExerciseHistoryPanelStyle1,
+  ExerciseHistoryPanelStyle2,
+  ExerciseHistoryPanelStyle3,
+  ExerciseHistoryPanelStyle4,
+  ExerciseHistoryPanelStyle5,
+  ExerciseHistoryPanelStyle6,
+  ExerciseHistoryPanelStyle7,
+  ExerciseHistoryPanelStyle8,
+  ExerciseHistoryPanelStyle9,
+  ExerciseHistoryPanelStyle10,
+  ExerciseHistoryPanelStyle11,
+  ExerciseHistoryPanelStyle12,
+  exerciseSectionTitleStyle
+} from '@/styles/exercise';
 
 const filterOptions: { value: CombinationFilter; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -44,12 +59,12 @@ export function ExerciseHistoryPanel({
 }) {
   const { colors } = useTheme();
   const { t } = useI18n();
-  const sectionTitle = { color: colors.muted, fontSize: 10, fontWeight: '900' as const, letterSpacing: 1.2 };
+  const sectionTitle = exerciseSectionTitleStyle(colors);
 
   if (view === 'review') {
     return (
       <>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 9 }}>
+        <View style={ExerciseHistoryPanelStyle1()}>
           <Text style={sectionTitle}>YOUR COMBINATIONS</Text>
           <TextInput
             testID="exercise.search"
@@ -60,26 +75,26 @@ export function ExerciseHistoryPanel({
             placeholderTextColor={colors.dim}
             autoCapitalize="none"
             autoCorrect={false}
-            style={{ width: 205, minHeight: 37, color: colors.text, fontSize: 11, paddingHorizontal: 12, borderRadius: 10, backgroundColor: colors.surface, borderColor: colors.line, borderWidth: 1 }}
+            style={ExerciseHistoryPanelStyle2({ colors })}
           />
         </View>
-        <View style={{ flexDirection: 'row', gap: 7, marginBottom: 10 }}>
+        <View style={ExerciseHistoryPanelStyle3()}>
           {filterOptions.map((option) => (
             <ChoiceChip key={option.value} label={option.label} selected={filter === option.value} onPress={() => onFilterChange(option.value)} />
           ))}
         </View>
         {progress.length > 0 ? (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginBottom: 18 }}>
+          <View style={ExerciseHistoryPanelStyle4()}>
             {progress.map((record) => (
               <CombinationTile key={record.id} record={record} onPress={() => onPracticeProgress(record)} />
             ))}
           </View>
         ) : (
-          <View style={{ paddingHorizontal: 16, paddingVertical: 13, marginBottom: 18, borderRadius: 13, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
-            <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>
+          <View style={ExerciseHistoryPanelStyle5({ colors })}>
+            <Text style={ExerciseHistoryPanelStyle6({ colors })}>
               {progressLoaded ? progress.length ? 'No combinations match this filter.' : 'Your combinations will appear here after practice.' : 'Loading your practice history…'}
             </Text>
-            <Text style={{ color: colors.muted, fontSize: 10, marginTop: 4 }}>Accuracy is saved on this device and includes mixture patterns.</Text>
+            <Text style={ExerciseHistoryPanelStyle7({ colors })}>Accuracy is saved on this device and includes mixture patterns.</Text>
           </View>
         )}
       </>
@@ -89,11 +104,11 @@ export function ExerciseHistoryPanel({
   return (
     <>
       <Text style={sectionTitle}>{t('SAVED FROM YOUR RESULTS')}</Text>
-      <Text style={{ color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 5, marginBottom: 10 }}>
+      <Text style={ExerciseHistoryPanelStyle8({ colors })}>
         {t('Practice a saved bar pattern again, or remove it when you no longer need it.')}
       </Text>
       {savedPairs.length > 0 ? (
-        <View style={{ gap: 8, marginBottom: 18 }}>
+        <View style={ExerciseHistoryPanelStyle9()}>
           {savedPairs.map((saved) => (
             <SavedPracticeTile
               key={saved.id}
@@ -105,9 +120,9 @@ export function ExerciseHistoryPanel({
           ))}
         </View>
       ) : (
-        <View testID="exercise.saved.empty" style={{ paddingHorizontal: 16, paddingVertical: 13, marginBottom: 18, borderRadius: 13, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
-          <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>{savedPairsLoaded ? t('No saved patterns yet.') : t('Loading saved patterns…')}</Text>
-          <Text style={{ color: colors.muted, fontSize: 10, marginTop: 4 }}>{t('Save a missed bar from the result replay and it will appear here.')}</Text>
+        <View testID="exercise.saved.empty" style={ExerciseHistoryPanelStyle10({ colors })}>
+          <Text style={ExerciseHistoryPanelStyle11({ colors })}>{savedPairsLoaded ? t('No saved patterns yet.') : t('Loading saved patterns…')}</Text>
+          <Text style={ExerciseHistoryPanelStyle12({ colors })}>{t('Save a missed bar from the result replay and it will appear here.')}</Text>
         </View>
       )}
     </>

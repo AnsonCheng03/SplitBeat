@@ -1,6 +1,17 @@
 import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useTheme } from '@/theme/ThemeProvider';
+import {
+  HomeSelectionStyle1,
+  HomeSelectionStyle2,
+  HomeSelectionStyle3,
+  HomeSelectionStyle4,
+  HomeSelectionStyle5,
+  HomeSelectionStyle6,
+  HomeSelectionStyle7,
+  HomeSelectionStyle8,
+  HomeSelectionStyle9
+} from '@/styles/home';
 
 export function HomeHeaderAction({
   testID,
@@ -23,17 +34,9 @@ export function HomeHeaderAction({
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
       hitSlop={8}
-      style={({ pressed }) => ({
-        minHeight: 36,
-        paddingHorizontal: 13,
-        justifyContent: 'center',
-        borderRadius: 11,
-        backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-        borderWidth: 1,
-        borderColor: colors.line,
-      })}
+      style={({ pressed }) => (HomeSelectionStyle1({ pressed, colors }))}
     >
-      <Text style={{ color, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }}>{label}</Text>
+      <Text style={HomeSelectionStyle2({ color })}>{label}</Text>
     </Pressable>
   );
 }
@@ -60,22 +63,10 @@ export function HomeModeChoice({
       accessibilityRole="radio"
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={({ pressed }) => ({
-        flex: 1,
-        minHeight: 58,
-        paddingHorizontal: 15,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        borderRadius: 14,
-        backgroundColor: selected ? colors.surfaceRaised : colors.surface,
-        borderWidth: selected ? 1.5 : 1,
-        borderColor: selected ? selectedColor : colors.line,
-        opacity: pressed ? 0.82 : 1,
-      })}
+      style={({ pressed }) => (HomeSelectionStyle3({ selected, colors, selectedColor, pressed }))}
     >
       <ModeMark mode={mode} />
-      <Text style={{ color: selected ? selectedColor : colors.text, fontSize: 15, fontWeight: '900', letterSpacing: -0.2 }}>
+      <Text style={HomeSelectionStyle4({ selected, selectedColor, colors })}>
         {title}
       </Text>
     </Pressable>
@@ -86,16 +77,16 @@ function ModeMark({ mode }: { mode: 'two-hand' | 'single-hand' }) {
   const { colors } = useTheme();
   if (mode === 'single-hand') {
     return (
-      <View style={{ width: 25, height: 25, alignItems: 'center', justifyContent: 'center' }}>
-        <View style={{ width: 12, height: 12, borderRadius: 7, backgroundColor: colors.accent }} />
+      <View style={HomeSelectionStyle5()}>
+        <View style={HomeSelectionStyle6({ colors })} />
       </View>
     );
   }
 
   return (
-    <View style={{ width: 25, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-      <View style={{ width: 10, height: 10, borderRadius: 6, backgroundColor: colors.left }} />
-      <View style={{ width: 10, height: 10, borderRadius: 6, backgroundColor: colors.right }} />
+    <View style={HomeSelectionStyle7()}>
+      <View style={HomeSelectionStyle8({ colors })} />
+      <View style={HomeSelectionStyle9({ colors })} />
     </View>
   );
 }

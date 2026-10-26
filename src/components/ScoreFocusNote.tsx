@@ -5,6 +5,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
 import { createBarNoteNotationPlan } from '@/rhythm/noteNotation';
 import type { ScoreRhythmEvent } from '@/types/importedScore';
+import { ScoreFocusNoteStyle1, ScoreFocusNoteStyle2 } from '@/styles/notation';
 
 export function ScoreFocusNote({
   event,
@@ -43,12 +44,12 @@ export function ScoreFocusNote({
     <View
       testID={testID}
       onLayout={({ nativeEvent }) => setMeasuredLayout({ estimate: initialWidth, width: nativeEvent.layout.width })}
-      style={{ width: '76%', maxWidth: 620, height: 76, alignSelf: 'center', justifyContent: 'center' }}
+      style={ScoreFocusNoteStyle1()}
     >
       {plan ? (
         <NoteNotation plan={plan} color={color} accessibilityLabel={t('Next score note')} testID={`${testID}.notation`} />
       ) : !event ? (
-        <Text style={{ color, textAlign: 'center', fontSize: 16, fontWeight: '900', letterSpacing: 1.2 }}>REST</Text>
+        <Text style={ScoreFocusNoteStyle2({ color })}>REST</Text>
       ) : null}
     </View>
   );

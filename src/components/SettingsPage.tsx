@@ -7,6 +7,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FullBleedSafeArea } from '@/components/FullBleedSafeArea';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
+import { SettingsPageStyle1,
+  SettingsPageStyle2,
+  SettingsPageStyle3,
+  SettingsPageStyle4,
+  SettingsPageStyle5,
+  SettingsPageStyle6,
+  SettingsPageStyle7,
+  SettingsPageStyle8,
+  SettingsPageStyle9,
+  SettingsPageStyle10,
+  SettingsPageStyle11,
+  SettingsPageStyle12,
+  SettingsPageStyle13, SettingsPageStyle14, SettingsPageStyle15, SettingsPageStyle16 } from '@/styles/settings';
 
 export type SettingsSection = 'session' | 'rhythm' | 'audio' | 'appearance' | 'timing' | 'language';
 
@@ -48,47 +61,32 @@ export function SettingsPage({
     <FullBleedSafeArea
       testID={testID}
       backgroundColor={colors.background}
-      contentStyle={{ flexDirection: 'row' }}
+      contentStyle={SettingsPageStyle14()}
       underlay={(
         <View
           pointerEvents="none"
-          style={{
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            left: 0,
-            width: sidebarWidth + insets.left,
-            borderRightWidth: 1,
-            borderRightColor: colors.line,
-            backgroundColor: colors.surface,
-          }}
+          style={SettingsPageStyle1({ sidebarWidth, insets, colors })}
         />
       )}
     >
       <View
-        style={{
-          width: sidebarWidth,
-          paddingHorizontal: compact ? 10 : 14,
-          paddingTop: compact ? 8 : 14,
-          paddingBottom: compact ? 8 : 12,
-          backgroundColor: 'transparent',
-        }}
+        style={SettingsPageStyle2({ sidebarWidth, compact })}
       >
         <Link href={section === 'session' ? '/' : '/setup'} asChild>
-          <Pressable testID={backTestID} accessibilityRole="button" hitSlop={6} style={{ minHeight: 48, justifyContent: 'center', marginBottom: compact ? 10 : 20, paddingHorizontal: 8 }}>
-            <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '800', letterSpacing: 0.6 }}>
+          <Pressable testID={backTestID} accessibilityRole="button" hitSlop={6} style={SettingsPageStyle3({ compact })}>
+            <Text style={SettingsPageStyle4({ colors })}>
               ‹  {t(section === 'session' ? 'HOME' : 'SETUP')}
             </Text>
           </Pressable>
         </Link>
 
-        <Text style={{ color: colors.dim, fontSize: 10, fontWeight: '900', letterSpacing: 1.5, marginBottom: 10, paddingHorizontal: 8 }}>
+        <Text style={SettingsPageStyle5({ colors })}>
           {t('SETTINGS')}
         </Text>
 
         <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ gap: 10, paddingBottom: 10 }}
+          style={SettingsPageStyle6()}
+          contentContainerStyle={SettingsPageStyle15()}
           showsVerticalScrollIndicator={false}
         >
           {sections.filter((item) => item.id !== 'timing' || featureFlags.timingCalibration).map((item) => {
@@ -99,17 +97,9 @@ export function SettingsPage({
                   testID={item.testID}
                   accessibilityRole="button"
                   accessibilityState={{ selected }}
-                  style={({ pressed }) => ({
-                    minHeight: 50,
-                    justifyContent: 'center',
-                    paddingHorizontal: 12,
-                    borderRadius: 12,
-                    backgroundColor: selected || pressed ? colors.surfaceRaised : 'transparent',
-                    borderWidth: 1,
-                    borderColor: selected ? colors.line : 'transparent',
-                  })}
+                  style={({ pressed }) => (SettingsPageStyle7({ selected, pressed, colors }))}
                 >
-                  <Text style={{ color: selected ? colors.text : colors.muted, fontSize: compact ? 12 : 13, fontWeight: selected ? '800' : '600' }}>
+                  <Text style={SettingsPageStyle8({ selected, colors, compact })}>
                     {t(item.label)}
                   </Text>
                 </Pressable>
@@ -119,22 +109,22 @@ export function SettingsPage({
         </ScrollView>
 
         {!compact ? (
-          <Text style={{ color: colors.dim, fontSize: 10, fontWeight: '800', letterSpacing: 1.1, paddingHorizontal: 8, paddingTop: 12 }}>
+          <Text style={SettingsPageStyle9({ colors })}>
             {t('BEEP BEEP BEAT - RHYTHM COACH')}
           </Text>
         ) : null}
       </View>
 
-      <View style={{ flex: 1, minWidth: 0 }}>
+      <View style={SettingsPageStyle10()}>
         <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ paddingHorizontal: compact ? 16 : 28, paddingTop: compact ? 14 : 20, paddingBottom: compact ? 20 : 28, width: '100%', maxWidth: 1120, alignSelf: 'center' }}
+          style={SettingsPageStyle11()}
+          contentContainerStyle={SettingsPageStyle16({ compact })}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={{ color: colors.text, fontSize: 28, fontWeight: '900', letterSpacing: -0.7 }}>
+          <Text style={SettingsPageStyle12({ colors })}>
             {title}
           </Text>
-          <Text style={{ color: colors.muted, fontSize: 13, lineHeight: 19, marginTop: 5, marginBottom: 6 }}>
+          <Text style={SettingsPageStyle13({ colors })}>
             {description}
           </Text>
           {children}

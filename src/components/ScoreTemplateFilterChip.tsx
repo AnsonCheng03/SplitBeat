@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useTheme } from '@/theme/ThemeProvider';
+import { ScoreTemplateFilterChipStyle1, ScoreTemplateFilterChipStyle2 } from '@/styles/exercise';
 
 export function ScoreTemplateFilterChip({
   testID,
@@ -23,17 +24,9 @@ export function ScoreTemplateFilterChip({
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={({ pressed }) => ({
-        minHeight: 34,
-        justifyContent: 'center',
-        paddingHorizontal: 13,
-        borderRadius: 18,
-        backgroundColor: selected ? colors.accent : pressed ? colors.surfaceRaised : colors.surface,
-        borderWidth: 1,
-        borderColor: selected ? colors.accent : colors.line,
-      })}
+      style={({ pressed }) => (ScoreTemplateFilterChipStyle1({ selected, colors, pressed }))}
     >
-      <Text raw style={{ color: selected ? colors.background : colors.muted, fontSize: 11, fontWeight: '800' }}>{label}</Text>
+      <Text raw style={ScoreTemplateFilterChipStyle2({ selected, colors })}>{label}</Text>
     </Pressable>
   );
 }

@@ -6,6 +6,7 @@ import { createRhythmSymbolNotationPlan, fitNotationScale, type NoteNotationSize
 import { mixtureNotationEvents } from '@/rhythm/mixtureNotation';
 import { getMixturePattern } from '@/rhythm/mixtures';
 import type { MixturePatternId } from '@/types/rhythm';
+import { MixtureSymbolStyle1, MixtureSymbolStyle2 } from '@/styles/notation';
 
 export function MixtureSymbol({
   mixtureId,
@@ -55,8 +56,8 @@ export function MixtureSymbol({
   const fittedScale = fitNotationScale(plan.width, plan.height, scale, maxWidth, maxHeight);
 
   return (
-    <View style={{ width: plan.width * fittedScale, height: plan.height * fittedScale, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ width: plan.width, height: plan.height, transform: [{ scale: fittedScale }], alignItems: 'center', justifyContent: 'center' }}>
+    <View style={MixtureSymbolStyle1({ plan, fittedScale })}>
+      <View style={MixtureSymbolStyle2({ plan, fittedScale })}>
         <NoteNotation plan={plan} color={color} accessibilityLabel={accessibilityLabel ?? t(pattern.label)} readyTestID={readyTestID} centerVisualContent />
       </View>
     </View>

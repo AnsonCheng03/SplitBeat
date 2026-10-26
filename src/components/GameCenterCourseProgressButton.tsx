@@ -11,6 +11,7 @@ import {
 import type { GameCenterStatus } from '../../modules/splitbeat-game-center/src';
 import { syncLearnProgressWithGameCenter } from '@/store/learnProgress';
 import type { LearnCourseProgressSnapshot } from '@/rhythm/learnProgressSync';
+import { GameCenterCourseProgressButtonStyle1, GameCenterCourseProgressButtonStyle2, GameCenterCourseProgressButtonStyle3, GameCenterCourseProgressButtonStyle4, GameCenterCourseProgressButtonStyle5 } from '@/styles/records';
 
 interface GameCenterCourseProgressButtonProps {
   onProgressSynced: (snapshot: LearnCourseProgressSnapshot) => void;
@@ -74,7 +75,7 @@ export function GameCenterCourseProgressButton({
   if (!status.available) return null;
 
   return (
-    <View style={{ flex: 1, minWidth: 0, marginTop: 8 }}>
+    <View style={GameCenterCourseProgressButtonStyle1()}>
       <Pressable
         testID="learn.syncProgress"
         accessibilityRole="button"
@@ -82,17 +83,17 @@ export function GameCenterCourseProgressButton({
         accessibilityState={{ disabled: syncing || !status.available }}
         disabled={syncing || !status.available}
         onPress={handlePress}
-        style={({ pressed }) => ({ minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 11, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, opacity: syncing ? 0.6 : pressed ? 0.75 : 1 })}
+        style={({ pressed }) => (GameCenterCourseProgressButtonStyle2({ colors, syncing, pressed }))}
       >
-        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.6 }}>
+        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={GameCenterCourseProgressButtonStyle3({ colors })}>
           {t(syncing ? 'SYNCING COURSE…' : status.authenticated ? 'SYNC COURSE PROGRESS' : 'RESTORE FROM GAME CENTER')}
         </Text>
       </Pressable>
-      <Text style={{ color: colors.dim, fontSize: 8, lineHeight: 11, marginTop: 4 }}>
+      <Text style={GameCenterCourseProgressButtonStyle4({ colors })}>
         {t('Course progress syncs through Game Center and your iCloud account. Course content changes start a separate progress version.')}
       </Text>
       {message ? (
-        <Text testID="learn.syncProgress.status" accessibilityLiveRegion="polite" style={{ color: hasError ? colors.right : colors.muted, fontSize: 9, lineHeight: 13, marginTop: 4 }}>
+        <Text testID="learn.syncProgress.status" accessibilityLiveRegion="polite" style={GameCenterCourseProgressButtonStyle5({ hasError, colors })}>
           {message}
         </Text>
       ) : null}

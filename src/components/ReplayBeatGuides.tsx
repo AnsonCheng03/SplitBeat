@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 import { useTheme } from '@/theme/ThemeProvider';
+import { ReplayBeatGuidesStyle1, ReplayBeatGuidesStyle2 } from '@/styles/results';
 
 export function ReplayBeatGuides({
   beatsPerBar,
@@ -12,9 +13,9 @@ export function ReplayBeatGuides({
 }) {
   const { colors } = useTheme();
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', left: anchorStartX, width: anchorWidth, top: 0, bottom: 0, flexDirection: 'row', justifyContent: 'space-between' }}>
+    <View pointerEvents="none" style={ReplayBeatGuidesStyle1({ anchorStartX, anchorWidth })}>
       {Array.from({ length: beatsPerBar + 1 }, (_, beat) => (
-        <View key={beat} style={{ width: 1, height: '100%', backgroundColor: colors.line, opacity: beat === 0 || beat === beatsPerBar ? 0.7 : 0.38 }} />
+        <View key={beat} style={ReplayBeatGuidesStyle2({ colors, beat, beatsPerBar })} />
       ))}
     </View>
   );

@@ -4,32 +4,45 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { combinationAccuracy, combinationHandAccuracy, combinationTitle } from '@/rhythm/targetedPractice';
 import type { CombinationProgress, SavedPracticePair } from '@/rhythm/targetedPractice';
 import { useTheme } from '@/theme/ThemeProvider';
+import {
+  ExerciseHistoryTilesStyle1,
+  ExerciseHistoryTilesStyle2,
+  ExerciseHistoryTilesStyle3,
+  ExerciseHistoryTilesStyle4,
+  ExerciseHistoryTilesStyle5,
+  ExerciseHistoryTilesStyle6,
+  ExerciseHistoryTilesStyle7,
+  ExerciseHistoryTilesStyle8,
+  ExerciseHistoryTilesStyle9,
+  ExerciseHistoryTilesStyle10,
+  ExerciseHistoryTilesStyle11
+} from '@/styles/exercise';
 
 export function SavedPracticeTile({ item, onPractice, onRemove, disabled }: { item: SavedPracticePair; onPractice: () => void; onRemove: () => void; disabled: boolean }) {
   const { colors } = useTheme();
   const { t } = useI18n();
   const testKey = item.id.replace(/[^a-zA-Z0-9]/g, '_');
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'stretch', gap: 8 }}>
+    <View style={ExerciseHistoryTilesStyle1()}>
       <Pressable
         testID={`exercise.savedPair.${testKey}`}
         accessibilityRole="button"
         accessibilityLabel={t('Practice saved pattern: {pattern}, {meter}', { pattern: combinationTitle(item), meter: item.timeSignature })}
         disabled={disabled}
         onPress={onPractice}
-        style={({ pressed }) => ({ flex: 1, minHeight: 58, paddingHorizontal: 13, paddingVertical: 9, justifyContent: 'center', borderRadius: 12, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line, opacity: disabled ? 0.65 : 1 })}
+        style={({ pressed }) => (ExerciseHistoryTilesStyle2({ pressed, colors, disabled }))}
       >
-        <Text numberOfLines={1} style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>{combinationTitle(item)}</Text>
-        <Text style={{ color: colors.muted, fontSize: 10, marginTop: 4 }}>{item.timeSignature} · {t('from result replay')}</Text>
+        <Text numberOfLines={1} style={ExerciseHistoryTilesStyle3({ colors })}>{combinationTitle(item)}</Text>
+        <Text style={ExerciseHistoryTilesStyle4({ colors })}>{item.timeSignature} · {t('from result replay')}</Text>
       </Pressable>
       <Pressable
         testID={`exercise.savedPair.remove.${testKey}`}
         accessibilityRole="button"
         accessibilityLabel={t('Remove saved pattern {pattern}', { pattern: combinationTitle(item) })}
         onPress={onRemove}
-        style={({ pressed }) => ({ minWidth: 74, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line })}
+        style={({ pressed }) => (ExerciseHistoryTilesStyle5({ pressed, colors }))}
       >
-        <Text style={{ color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 0.5 }}>{t('REMOVE')}</Text>
+        <Text style={ExerciseHistoryTilesStyle6({ colors })}>{t('REMOVE')}</Text>
       </Pressable>
     </View>
   );
@@ -52,13 +65,13 @@ export function CombinationTile({ record, onPress }: { record: CombinationProgre
         accuracy: Math.round(accuracy),
       })}
       onPress={onPress}
-      style={({ pressed }) => ({ flexGrow: 1, flexBasis: '31%', minWidth: 235, minHeight: 76, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 13, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line, opacity: pressed ? 0.84 : 1 })}
+      style={({ pressed }) => (ExerciseHistoryTilesStyle7({ pressed, colors }))}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-        <Text numberOfLines={1} style={{ flex: 1, color: colors.text, fontSize: 11, fontWeight: '800' }}>{combinationTitle(record)}</Text>
-        <Text style={{ color: accuracy < 80 ? colors.accent : colors.left, fontSize: 15, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{Math.round(accuracy)}%</Text>
+      <View style={ExerciseHistoryTilesStyle8()}>
+        <Text numberOfLines={1} style={ExerciseHistoryTilesStyle9({ colors })}>{combinationTitle(record)}</Text>
+        <Text style={ExerciseHistoryTilesStyle10({ accuracy, colors })}>{Math.round(accuracy)}%</Text>
       </View>
-      <Text style={{ color: colors.dim, fontSize: 9, marginTop: 6 }}>
+      <Text style={ExerciseHistoryTilesStyle11({ colors })}>
         {record.timeSignature} · {correctCount}/{expectedCount} correct · L {leftAccuracy === null ? '—' : `${Math.round(leftAccuracy)}%`} · R {rightAccuracy === null ? '—' : `${Math.round(rightAccuracy)}%`} · {record.sessions} {record.sessions === 1 ? 'session' : 'sessions'}
       </Text>
     </Pressable>

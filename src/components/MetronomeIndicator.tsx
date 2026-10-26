@@ -2,6 +2,7 @@ import { View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useTheme } from '@/theme/ThemeProvider';
+import { MetronomeIndicatorStyle1, MetronomeIndicatorStyle2, MetronomeIndicatorStyle3, MetronomeIndicatorStyle4 } from '@/styles/notation';
 
 interface MetronomeIndicatorProps {
   beatInBar: number;
@@ -31,20 +32,14 @@ export function MetronomeIndicator({
         : t('GET READY');
 
   return (
-    <View style={{ alignItems: 'center', gap: compact ? 6 : 9 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: compact ? 10 : 13 }}>
+    <View style={MetronomeIndicatorStyle1({ compact })}>
+      <View style={MetronomeIndicatorStyle2({ compact })}>
         {Array.from({ length: beatsPerBar }, (_, beat) => {
           const active = isRunning && beat === beatInBar;
           return (
             <View
               key={beat}
-              style={{
-                width: active ? (compact ? 15 : 18) : compact ? 9 : 11,
-                height: active ? (compact ? 15 : 18) : compact ? 9 : 11,
-                borderRadius: 99,
-                backgroundColor: active ? (beat === 0 ? colors.accent : colors.text) : colors.dim,
-                opacity: active ? 1 : 0.6,
-              }}
+              style={MetronomeIndicatorStyle3({ active, compact, beat, colors })}
             />
           );
         })}
@@ -56,7 +51,7 @@ export function MetronomeIndicator({
         numberOfLines={1}
         adjustsFontSizeToFit
         minimumFontScale={0.8}
-        style={{ color: isRest || isPaused ? colors.accent : colors.muted, fontSize: compact ? 10 : 11, letterSpacing: compact ? 0.5 : 0.8, fontWeight: isRest || isPaused ? '900' : '700' }}
+        style={MetronomeIndicatorStyle4({ isRest, isPaused, colors, compact })}
       >
         {positionLabel}
       </Text>

@@ -7,6 +7,14 @@ import { createBarNoteNotationPlan, createSharedBarNoteAnchorInsets, type NoteNo
 import { scoreNotationEventsForSpan } from '@/rhythm/scoreStaff';
 import type { ScoreRhythmEvent } from '@/types/importedScore';
 import { useTheme } from '@/theme/ThemeProvider';
+import {
+  ScoreRhythmLaneStyle1,
+  ScoreRhythmLaneStyle2,
+  ScoreRhythmLaneStyle3,
+  ScoreRhythmLaneStyle4,
+  ScoreRhythmLaneStyle5,
+  ScoreRhythmLaneStyle6
+} from '@/styles/notation';
 
 export function scoreLaneHeight(size: NoteNotationSize): number {
   return size === 'compact' ? 48 : 60;
@@ -75,14 +83,14 @@ export function RhythmTrack({
     : null, [anchorInsets, beamGroupQuarterNotes, durationQuarter, notationEvents, notationWidth, size]);
 
   return (
-    <View style={{ height: laneHeight, flexDirection: 'row', alignItems: 'center', gap: minimal ? 0 : 10 }}>
-      {(!minimal || showHandLabels) ? <Text style={{ color, fontSize: 9, fontWeight: '900', letterSpacing: 1, width: 48 }}>{label}</Text> : null}
+    <View style={ScoreRhythmLaneStyle1({ laneHeight, minimal })}>
+      {(!minimal || showHandLabels) ? <Text style={ScoreRhythmLaneStyle2({ color })}>{label}</Text> : null}
       <View
         onLayout={({ nativeEvent }) => setMeasuredLayout({ estimate: initialNotationWidth, width: nativeEvent.layout.width })}
-        style={{ flex: 1, height: laneHeight, justifyContent: 'center' }}
+        style={ScoreRhythmLaneStyle3({ laneHeight })}
       >
         {plan ? (
-          <View style={{ height: laneHeight, justifyContent: 'center' }}>
+          <View style={ScoreRhythmLaneStyle4({ laneHeight })}>
             <NoteNotation
               plan={plan}
               color={color}
@@ -99,7 +107,7 @@ export function RhythmTrack({
         ) : null}
       </View>
       {!minimal ? (
-        <Text style={{ color: colors.muted, fontSize: 10, fontVariant: ['tabular-nums'], width: 28, textAlign: 'right' }}>
+        <Text style={ScoreRhythmLaneStyle5({ colors })}>
           {noteCount}
         </Text>
       ) : null}
@@ -113,15 +121,7 @@ export function MeasureBarLine({ testID, inset = 0 }: { testID?: string; inset?:
     <View
       testID={testID}
       pointerEvents="none"
-      style={{
-        position: 'absolute',
-        top: 1,
-        bottom: 1,
-        right: inset,
-        width: 2,
-        backgroundColor: colors.muted,
-        opacity: 0.7,
-      }}
+      style={ScoreRhythmLaneStyle6({ inset, colors })}
     />
   );
 }

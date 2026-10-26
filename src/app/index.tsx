@@ -10,6 +10,27 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { HomeHeaderAction, HomeModeChoice } from '@/components/HomeSelection';
 import { HomeActivityPicker, HomeActivityLoading } from '@/components/HomeActivityPicker';
 import type { HomeActivity, HomeActivityOption } from '@/components/HomeActivityPicker';
+import {
+  indexStyle1,
+  indexStyle2,
+  indexStyle3,
+  indexStyle4,
+  indexStyle5,
+  indexStyle6,
+  indexStyle7,
+  indexStyle8,
+  indexStyle9,
+  indexStyle10,
+  indexStyle11,
+  indexStyle12,
+  indexStyle13,
+  indexStyle14,
+  indexStyle15,
+  indexStyle16,
+  indexStyle17,
+  indexStyle18,
+  indexStyle19
+} from '@/styles/home';
 
 export default function HomeScreen() {
   const { colors } = useTheme();
@@ -153,17 +174,17 @@ export default function HomeScreen() {
         : t('Open learn rhythm');
 
   return (
-    <SafeAreaView testID="home.screen" style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={{ flex: 1, width: '100%', maxWidth: 1080, alignSelf: 'center', paddingHorizontal: 24, paddingVertical: 10 }}>
-        <View style={{ minHeight: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 14 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, minWidth: 0, flexShrink: 1 }}>
-            <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.left }} />
-            <View style={{ width: 8, height: 8, borderRadius: 8, backgroundColor: colors.right }} />
-            <Text numberOfLines={1} style={{ color: colors.text, fontSize: 12, fontWeight: '900', letterSpacing: 2, marginLeft: 4 }}>
+    <SafeAreaView testID="home.screen" style={indexStyle1({ colors })}>
+      <View style={indexStyle2()}>
+        <View style={indexStyle3()}>
+          <View style={indexStyle4()}>
+            <View style={indexStyle5({ colors })} />
+            <View style={indexStyle6({ colors })} />
+            <Text numberOfLines={1} style={indexStyle7({ colors })}>
               BEEP BEEP BEAT - RHYTHM COACH
             </Text>
           </View>
-          <View style={{ flexDirection: 'row', gap: 7 }}>
+          <View style={indexStyle8()}>
             {featureFlags.sessionRecords ? <HomeHeaderAction
               testID="home.records"
               label="MY RECORDS"
@@ -181,14 +202,14 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <View style={{ flex: 1, width: '100%', maxWidth: 820, alignSelf: 'center', justifyContent: 'center', paddingVertical: 16 }}>
-          <Text style={{ color: colors.text, fontSize: 28, fontWeight: '900', letterSpacing: -0.6 }}>
+        <View style={indexStyle9()}>
+          <Text style={indexStyle10({ colors })}>
             Ready to practise?
           </Text>
-          <Text style={{ color: colors.muted, fontSize: 14, marginTop: 5 }}>
+          <Text style={indexStyle11({ colors })}>
             Choose one or two hands, then start.
           </Text>
-          <View style={{ flexDirection: 'row', gap: 10, marginTop: 20, maxWidth: 520 }}>
+          <View style={indexStyle12()}>
             <HomeModeChoice
               testID="home.mode.twoHand"
               mode="two-hand"
@@ -206,37 +227,26 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <View style={{ width: '100%', maxWidth: 960, alignSelf: 'center', flexDirection: 'row', alignItems: 'stretch', gap: 10, paddingBottom: 2 }}>
+        <View style={indexStyle13()}>
           <Pressable
             testID="home.activityPicker"
             accessibilityRole="button"
             accessibilityLabel={t('Change practice mode: {mode}', { mode: t(currentActivity.title) })}
             accessibilityHint={t('Choose what to practice today.')}
             onPress={() => setActivityPickerVisible(true)}
-            style={({ pressed }) => ({
-              width: 220,
-              minHeight: 82,
-              paddingHorizontal: 15,
-              paddingVertical: 12,
-              justifyContent: 'center',
-              borderRadius: 17,
-              backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-              borderWidth: 1,
-              borderColor: colors.line,
-              opacity: pressed ? 0.86 : 1,
-            })}
+            style={({ pressed }) => (indexStyle14({ pressed, colors }))}
           >
-            <Text style={{ color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 1.2 }}>
+            <Text style={indexStyle15({ colors })}>
               PRACTICE MODE
             </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6, marginTop: 5 }}>
-              <Text numberOfLines={1} style={{ flex: 1, color: colors.accent, fontSize: 13, fontWeight: '900' }}>
+            <View style={indexStyle16()}>
+              <Text numberOfLines={1} style={indexStyle17({ colors })}>
                 {currentActivity.title}
               </Text>
-              <Text style={{ color: colors.accent, fontSize: 18, fontWeight: '700' }}>⌄</Text>
+              <Text style={indexStyle18({ colors })}>⌄</Text>
             </View>
           </Pressable>
-          <View style={{ flex: 1 }}>
+          <View style={indexStyle19()}>
             <AudioStartButton
               testID="home.start"
               variant="wide"

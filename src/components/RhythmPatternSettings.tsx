@@ -11,6 +11,15 @@ import { BASIC_SUBDIVISIONS } from '@/features/featureFlags';
 import { SUBDIVISIONS } from '@/types/rhythm';
 import type { ExerciseSettings, MixtureNoteValue, Subdivision } from '@/types/rhythm';
 import type { FeatureFlags } from '@/features/featureFlags';
+import {
+  RhythmPatternSettingsStyle1,
+  RhythmPatternSettingsStyle2,
+  RhythmPatternSettingsStyle3,
+  RhythmPatternSettingsStyle4,
+  RhythmPatternSettingsStyle5,
+  RhythmPatternSettingsStyle6,
+  rhythmSettingsHelperTextStyle
+} from '@/styles/settings';
 
 export function RhythmPatternSettings({
   settings,
@@ -23,7 +32,7 @@ export function RhythmPatternSettings({
 }) {
   const { colors } = useTheme();
   const { t } = useI18n();
-  const helperText = { color: colors.dim, fontSize: 12, lineHeight: 17, marginTop: 8 };
+  const helperText = rhythmSettingsHelperTextStyle(colors);
   const visibleSubdivisions = featureFlags.rhythmExtensions
     ? SUBDIVISIONS
     : SUBDIVISIONS.filter((subdivision) => BASIC_SUBDIVISIONS.includes(subdivision as (typeof BASIC_SUBDIVISIONS)[number]));
@@ -45,7 +54,7 @@ export function RhythmPatternSettings({
   return (
     <>
       <SettingsSection title="ALLOWED SUBDIVISIONS">
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+        <View style={RhythmPatternSettingsStyle1()}>
           {selectableSubdivisions.map((subdivision) => {
             const selected = settings.enabledSubdivisions.includes(subdivision);
             const cannotRemove = selected && settings.enabledSubdivisions.length <= 2;
@@ -56,9 +65,9 @@ export function RhythmPatternSettings({
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: selected, disabled: cannotRemove }}
                 onPress={() => toggleSubdivision(subdivision)}
-                style={{ paddingHorizontal: 15, minHeight: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: selected ? colors.leftSurface : colors.surface, borderWidth: 1, borderColor: selected ? colors.left : colors.line, opacity: cannotRemove ? 0.72 : 1 }}
+                style={RhythmPatternSettingsStyle2({ selected, colors, cannotRemove })}
               >
-                <Text style={{ color: selected ? colors.left : colors.muted, fontSize: 12, fontWeight: '700' }}>{SUBDIVISION_LABELS[subdivision]}</Text>
+                <Text style={RhythmPatternSettingsStyle3({ selected, colors })}>{SUBDIVISION_LABELS[subdivision]}</Text>
               </Pressable>
             );
           })}
@@ -69,7 +78,7 @@ export function RhythmPatternSettings({
       {featureFlags.mixtures ? (
         <SettingsSection title="MIXTURE">
           <Text style={helperText}>Choose note values that Split Beat may combine for either hand. It generates a fresh pattern for each change and keeps the pattern within one bar.</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 12 }}>
+          <View style={RhythmPatternSettingsStyle4()}>
             {mixtureNoteOptionsForBar(barDurationQuarterNotes(settings.timeSignature), featureFlags.sixtyFourthNotes).map((option) => {
               const selected = (settings.mixtureNoteValues ?? []).includes(option.value);
               return (
@@ -80,9 +89,9 @@ export function RhythmPatternSettings({
                   accessibilityState={{ checked: selected }}
                   accessibilityLabel={t(option.label)}
                   onPress={() => toggleMixtureNoteValue(option.value)}
-                  style={{ minHeight: 48, paddingHorizontal: 14, borderRadius: 12, justifyContent: 'center', backgroundColor: selected ? colors.leftSurface : colors.surface, borderWidth: 1, borderColor: selected ? colors.left : colors.line }}
+                  style={RhythmPatternSettingsStyle5({ selected, colors })}
                 >
-                  <Text style={{ color: selected ? colors.left : colors.text, fontSize: 13, fontWeight: '800' }}>{t(option.label)}</Text>
+                  <Text style={RhythmPatternSettingsStyle6({ selected, colors })}>{t(option.label)}</Text>
                 </Pressable>
               );
             })}

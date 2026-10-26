@@ -7,6 +7,22 @@ import { ReplayStatusBadge } from '@/components/ReplayStatusBadge';
 import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import type { ReplayExpectedEvent, ReplayTap, Hand, TimeSignature } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
+import {
+  ReplayTimelineStyle1,
+  ReplayTimelineStyle2,
+  ReplayTimelineStyle3,
+  ReplayTimelineStyle4,
+  ReplayTimelineStyle5,
+  ReplayTimelineStyle6,
+  ReplayTimelineStyle7,
+  ReplayTimelineStyle8,
+  ReplayTimelineStyle9,
+  ReplayTimelineStyle10,
+  ReplayTimelineStyle11,
+  ReplayTimelineStyle12,
+  ReplayTimelineStyle13,
+  ReplayTimelineStyle14
+} from '@/styles/results';
 
 interface ReplayTimelineProps {
   barIndex: number;
@@ -59,9 +75,9 @@ export function ReplayTimeline({
       testID={`results.replayTimeline.${barIndex}`}
       accessibilityLabel={t('Visual replay for bar {bar}, showing expected notes and your recorded taps', { bar: barIndex })}
       onLayout={({ nativeEvent }) => setTimelineWidth(nativeEvent.layout.width)}
-      style={{ position: 'relative', marginTop: 9, padding: 12, overflow: 'hidden', borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}
+      style={ReplayTimelineStyle1({ colors })}
     >
-      <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.1, marginBottom: 10 }}>
+      <Text style={ReplayTimelineStyle2({ colors })}>
         {t('BAR {bar} · EXPECTED NOTES AND YOUR TAPS', { bar: barIndex })}
       </Text>
 
@@ -91,26 +107,26 @@ export function ReplayTimeline({
         <Animated.View
           pointerEvents="none"
           testID={`results.replayPlayhead.${barIndex}`}
-          style={{ position: 'absolute', top: 28, bottom: 17, left: 12, width: 2, backgroundColor: colors.text, opacity: 0.72, transform: [{ translateX: playhead }] }}
+          style={ReplayTimelineStyle3({ colors, playhead })}
         />
       ) : null}
 
-      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 12, marginTop: 4 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+      <View style={ReplayTimelineStyle4()}>
+        <View style={ReplayTimelineStyle5()}>
+          <View style={ReplayTimelineStyle6()}>
             {hands.map((hand) => (
-              <View key={hand} style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: hand === 'left' ? colors.left : colors.right }} />
+              <View key={hand} style={ReplayTimelineStyle7({ hand, colors })} />
             ))}
           </View>
-          <Text style={{ color: colors.muted, fontSize: 9 }}>Expected</Text>
+          <Text style={ReplayTimelineStyle8({ colors })}>Expected</Text>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <ReplayStatusBadge status="correct" size={10} style={{ position: 'relative' }} />
-          <Text style={{ color: colors.muted, fontSize: 9 }}>Correct</Text>
+        <View style={ReplayTimelineStyle9()}>
+          <ReplayStatusBadge status="correct" size={10} style={ReplayTimelineStyle10()} />
+          <Text style={ReplayTimelineStyle11({ colors })}>Correct</Text>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <ReplayStatusBadge status="miss" size={10} style={{ position: 'relative' }} />
-          <Text style={{ color: colors.muted, fontSize: 9 }}>Missed / extra</Text>
+        <View style={ReplayTimelineStyle12()}>
+          <ReplayStatusBadge status="miss" size={10} style={ReplayTimelineStyle13()} />
+          <Text style={ReplayTimelineStyle14({ colors })}>Missed / extra</Text>
         </View>
       </View>
     </View>

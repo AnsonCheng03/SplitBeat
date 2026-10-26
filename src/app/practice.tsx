@@ -16,6 +16,7 @@ import { PracticeStatusBar } from '@/components/PracticeStatusBar';
 import { PracticeIntroOverlay } from '@/components/PracticeIntroOverlay';
 import { PracticeTapZones } from '@/components/PracticeTapZones';
 import { useTheme } from '@/theme/ThemeProvider';
+import { practiceStyle1, practiceStyle2, practiceStyle3, practiceStyle4 } from '@/styles/practice';
 
 function formatTimeRemaining(seconds: number, t: (source: string, values?: Record<string, string | number>) => string): string {
   const roundedSeconds = Math.max(0, Math.ceil(seconds));
@@ -259,11 +260,11 @@ export default function PracticeScreen() {
   const endingAccuracy = endingExpected === 0 ? 0 : endingHits / endingExpected * 100;
 
   return (
-    <View testID="practice.screen" style={{ flex: 1, backgroundColor: colors.background }}>
+    <View testID="practice.screen" style={practiceStyle1({ colors })}>
       {featureFlags.externalKeyboard ? <HardwareKeyboardInput onTap={handleKeyboardTap} /> : null}
-      <BlurTargetView ref={blurTargetRef} collapsable={false} style={{ flex: 1 }}>
-      <View style={{ flex: 1 }}>
-        <View pointerEvents="box-none" style={{ position: 'absolute', top: -insets.top, bottom: -insets.bottom, left: -insets.left, right: -insets.right }}>
+      <BlurTargetView ref={blurTargetRef} collapsable={false} style={practiceStyle2()}>
+      <View style={practiceStyle3()}>
+        <View pointerEvents="box-none" style={practiceStyle4({ insets })}>
           <PracticeTapZones
             settings={activeSettings}
             snapshot={snapshot}

@@ -2,6 +2,7 @@ import { View } from 'react-native';
 import { TapZone } from '@/components/TapZone';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ExerciseSettings, Hand, SessionSnapshot, TapFeedback } from '@/types/rhythm';
+import { PracticeTapZonesStyle1, PracticeTapZonesStyle2, PracticeTapZonesStyle3, PracticeTapZonesStyle4 } from '@/styles/practice';
 
 type KeyboardTokens = Record<Hand, { token: number; feedback: TapFeedback | null }>;
 
@@ -28,7 +29,7 @@ export function PracticeTapZones({
   const hands: readonly Hand[] = settings.trainingMode === 'single-hand' ? [settings.singleHand] : ['left', 'right'];
 
   return (
-    <View pointerEvents="box-none" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}>
+    <View pointerEvents="box-none" style={PracticeTapZonesStyle1()}>
       {hands.map((hand) => {
         const singleHand = settings.trainingMode === 'single-hand';
         const flashSource = tapFeedbackEnabled
@@ -54,13 +55,13 @@ export function PracticeTapZones({
             minimal
             showMinimalLabel={!singleHand && scoreDisplay}
             style={singleHand
-              ? { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }
-              : { position: 'absolute', [hand === 'left' ? 'left' : 'right']: 0, top: 0, bottom: 0, width: '50%' }}
+              ? PracticeTapZonesStyle2()
+              : PracticeTapZonesStyle3({ hand })}
           />
         );
       })}
       {settings.trainingMode === 'two-hand' ? (
-        <View pointerEvents="none" style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1, backgroundColor: colors.line, opacity: 0.65 }} />
+        <View pointerEvents="none" style={PracticeTapZonesStyle4({ colors })} />
       ) : null}
     </View>
   );

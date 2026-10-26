@@ -3,6 +3,20 @@ import { Animated, Easing, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useTheme } from '@/theme/ThemeProvider';
+import {
+  SessionEndingOverlayStyle1,
+  SessionEndingOverlayStyle2,
+  SessionEndingOverlayStyle3,
+  SessionEndingOverlayStyle4,
+  SessionEndingOverlayStyle5,
+  SessionEndingOverlayStyle6,
+  SessionEndingOverlayStyle7,
+  SessionEndingOverlayStyle8,
+  SessionEndingOverlayStyle9,
+  SessionEndingOverlayStyle10,
+  SessionEndingOverlayStyle11,
+  SessionEndingOverlayStyle12
+} from '@/styles/shared';
 
 const ENDING_DURATION_MS = 2400;
 
@@ -76,36 +90,36 @@ export function SessionEndingOverlay({
     <View
       testID="practice.ending"
       accessibilityLabel={t('Session complete. Results are opening.')}
-      style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background }}
+      style={SessionEndingOverlayStyle1({ colors })}
     >
-      <Animated.View style={{ alignItems: 'center', opacity, transform: [{ translateY }, { scale }] }}>
-        <View style={{ width: 96, height: 96, alignItems: 'center', justifyContent: 'center', marginBottom: 22 }}>
+      <Animated.View style={SessionEndingOverlayStyle2({ opacity, translateY, scale })}>
+        <View style={SessionEndingOverlayStyle3()}>
           <Animated.View
-            style={{ position: 'absolute', width: 84, height: 84, borderRadius: 42, borderWidth: 1, borderColor: colors.accent, opacity: 0.35, transform: [{ scale: haloScale }] }}
+            style={SessionEndingOverlayStyle4({ colors, haloScale })}
           />
-          <View style={{ width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent }}>
-            <Text style={{ color: colors.background, fontSize: 34, lineHeight: 40, fontWeight: '900' }}>✓</Text>
+          <View style={SessionEndingOverlayStyle5({ colors })}>
+            <Text style={SessionEndingOverlayStyle6({ colors })}>✓</Text>
           </View>
         </View>
 
-        <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '900', letterSpacing: 2.2, textAlign: 'center' }}>
+        <Text style={SessionEndingOverlayStyle7({ colors })}>
           {t(title)}
         </Text>
-        <Text testID="practice.ending.summary" style={{ color: colors.text, fontSize: 48, lineHeight: 58, fontWeight: '900', fontVariant: ['tabular-nums'], marginTop: 7 }}>
+        <Text testID="practice.ending.summary" style={SessionEndingOverlayStyle8({ colors })}>
           {hasScoredNotes ? `${Math.round(accuracy)}%` : '—'}
         </Text>
-        <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '900', letterSpacing: 1.3, marginTop: 3 }}>
+        <Text style={SessionEndingOverlayStyle9({ colors })}>
           {t(hasScoredNotes ? 'ACCURACY' : 'NO NOTES SCORED')}
         </Text>
-        <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '700', marginTop: 12 }}>
+        <Text style={SessionEndingOverlayStyle10({ colors })}>
           {hasScoredNotes
             ? t('{hits} / {expected} NOTES ON TIME', { hits, expected })
             : t('Your session ended before any notes were due.')}
         </Text>
       </Animated.View>
 
-      <View style={{ position: 'absolute', bottom: 30, width: 170, height: 3, borderRadius: 2, overflow: 'hidden', backgroundColor: colors.line }}>
-        <Animated.View style={{ width: progressWidth, height: '100%', backgroundColor: colors.accent }} />
+      <View style={SessionEndingOverlayStyle11({ colors })}>
+        <Animated.View style={SessionEndingOverlayStyle12({ progressWidth, colors })} />
       </View>
     </View>
   );

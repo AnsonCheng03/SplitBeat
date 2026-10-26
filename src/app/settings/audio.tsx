@@ -7,6 +7,17 @@ import { SettingsToggleRow } from '@/components/SettingsToggleRow';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { SoundPreset } from '@/types/rhythm';
+import {
+  audioStyle1,
+  audioStyle2,
+  audioStyle3,
+  audioStyle4,
+  audioStyle5,
+  audioStyle6,
+  audioStyle7,
+  audioStyle8,
+  audioStyle9
+} from '@/styles/settings';
 
 export default function AudioSettingsScreen() {
   const { colors } = useTheme();
@@ -20,7 +31,7 @@ export default function AudioSettingsScreen() {
       title="Sounds & feedback"
       description="Choose click sounds, accompaniment, and tap feedback."
     >
-      <View style={{ marginTop: 18, borderTopWidth: 1, borderTopColor: colors.line }}>
+      <View style={audioStyle1({ colors })}>
         {featureFlags.soundEffects ? <SettingsToggleRow
           testID="setup.toggle.sound"
           label="Sound effects"
@@ -58,13 +69,13 @@ export default function AudioSettingsScreen() {
           onChange={(referenceRhythmEnabled) => updateSettings({ referenceRhythmEnabled })}
         /> : null}
       </View>
-      {featureFlags.tapFeedback ? <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
+      {featureFlags.tapFeedback ? <Text style={audioStyle2({ colors })}>
         Correct taps flash teal; off-beat taps flash red. Turn this off for less visual feedback.
       </Text> : null}
-      {featureFlags.shownRhythmPlayback ? <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
+      {featureFlags.shownRhythmPlayback ? <Text style={audioStyle3({ colors })}>
             The shown left and right patterns play automatically using each hand’s selected sound. Keep this off to practice from the visual rhythm alone.
       </Text> : null}
-      {featureFlags.backgroundMusic || featureFlags.sessionCues ? <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 }}>
+      {featureFlags.backgroundMusic || featureFlags.sessionCues ? <Text style={audioStyle4({ colors })}>
         The accompaniment is synthesized on your device and follows your tempo and meter. A short pickup leads into beat one; change cues mark pattern boundaries. Sound effects must be on to hear either option.
       </Text> : null}
 
@@ -98,7 +109,7 @@ export default function AudioSettingsScreen() {
         value={settings.rightFlashSource}
         onChange={(rightFlashSource) => updateSettings({ rightFlashSource })}
       /> : null}
-      {featureFlags.tapFeedback ? <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 18 }}>
+      {featureFlags.tapFeedback ? <Text style={audioStyle5({ colors })}>
         Tap flashes follow your touch. Beat flashes follow the metronome. Sounds are generated on your device; turn off Sound effects to mute them.
       </Text> : null}
     </SettingsPage>
@@ -123,8 +134,8 @@ function FlashSourceChoice({
 }) {
   const { colors } = useTheme();
   return (
-    <View style={{ marginTop: 23 }}>
-      <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6, marginBottom: 10 }}>
+    <View style={audioStyle6()}>
+      <Text style={audioStyle7({ colors })}>
         {hand} HAND FLASH
       </Text>
       <SettingsChoiceRow
@@ -150,8 +161,8 @@ function SoundChoice({
 }) {
   const { colors } = useTheme();
   return (
-    <View style={{ marginTop: 23 }}>
-      <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6, marginBottom: 10 }}>
+    <View style={audioStyle8()}>
+      <Text style={audioStyle9({ colors })}>
         {title}
       </Text>
       <SettingsChoiceRow

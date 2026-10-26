@@ -5,6 +5,7 @@ import { NotationPreloader } from '@/components/NotationPreloader';
 import { SessionProvider } from '@/store/sessionStore';
 import { I18nProvider } from '@/i18n/I18nProvider';
 import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
+import { rootNavigatorScreenOptions } from '@/styles/shared';
 
 export default function RootLayout() {
   return (
@@ -28,7 +29,7 @@ function RootNavigator() {
   return (
     <>
       <StatusBar style={mode === 'light' ? 'dark' : 'light'} />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background }, animation: 'fade' }} />
+      <Stack screenOptions={rootNavigatorScreenOptions(colors)} />
     </>
   );
 }

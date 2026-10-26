@@ -3,6 +3,23 @@ import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ImportedScoreLibraryEntry } from '@/rhythm/importedScoreLibrary';
+import {
+  ScoreLibraryListStyle1,
+  ScoreLibraryListStyle2,
+  ScoreLibraryListStyle3,
+  ScoreLibraryListStyle4,
+  ScoreLibraryListStyle5,
+  ScoreLibraryListStyle6,
+  ScoreLibraryListStyle7,
+  ScoreLibraryListStyle8,
+  ScoreLibraryListStyle9,
+  ScoreLibraryListStyle10,
+  ScoreLibraryListStyle11,
+  ScoreLibraryListStyle12,
+  ScoreLibraryListStyle13,
+  ScoreLibraryListStyle14,
+  ScoreLibraryListStyle15
+} from '@/styles/exercise';
 
 export function ScoreLibraryList({
   loaded,
@@ -20,39 +37,39 @@ export function ScoreLibraryList({
 
   return (
     <>
-      <View style={{ marginTop: 15 }}>
-        <Text testID="scoreImport.saved.heading" style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.3, marginBottom: 7 }}>MY SAVED SCORES</Text>
+      <View style={ScoreLibraryListStyle1()}>
+        <Text testID="scoreImport.saved.heading" style={ScoreLibraryListStyle2({ colors })}>MY SAVED SCORES</Text>
         {!loaded ? (
-          <Text style={{ color: colors.dim, fontSize: 11, paddingVertical: 7 }}>Loading your score library…</Text>
+          <Text style={ScoreLibraryListStyle3({ colors })}>Loading your score library…</Text>
         ) : saved.length === 0 ? (
-          <Text style={{ color: colors.dim, fontSize: 11, paddingVertical: 7 }}>{t('Save a template, imported, or composed score to keep it here.')}</Text>
+          <Text style={ScoreLibraryListStyle4({ colors })}>{t('Save a template, imported, or composed score to keep it here.')}</Text>
         ) : saved.map((entry) => (
           <Pressable
             key={entry.id}
             testID={`scoreImport.saved.entry.${entry.id}`}
             onPress={() => onOpen(entry)}
-            style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 11, marginBottom: 5, borderRadius: 10, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line })}
+            style={({ pressed }) => (ScoreLibraryListStyle5({ pressed, colors }))}
           >
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text raw numberOfLines={1} style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>{entry.score.title}</Text>
-              <Text style={{ color: colors.dim, fontSize: 9, marginTop: 2 }}>{t(entry.score.trackCount === 1 ? 'One hand' : 'Two hands')} · <Text raw>{entry.fileName}</Text></Text>
+            <View style={ScoreLibraryListStyle6()}>
+              <Text raw numberOfLines={1} style={ScoreLibraryListStyle7({ colors })}>{entry.score.title}</Text>
+              <Text style={ScoreLibraryListStyle8({ colors })}>{t(entry.score.trackCount === 1 ? 'One hand' : 'Two hands')} · <Text raw>{entry.fileName}</Text></Text>
             </View>
-            <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900', marginLeft: 9 }}>OPEN ›</Text>
+            <Text style={ScoreLibraryListStyle9({ colors })}>OPEN ›</Text>
           </Pressable>
         ))}
       </View>
       {recent.length > 0 ? (
-        <View style={{ marginTop: 12 }}>
-          <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.3, marginBottom: 7 }}>RECENT SCORES</Text>
+        <View style={ScoreLibraryListStyle10()}>
+          <Text style={ScoreLibraryListStyle11({ colors })}>RECENT SCORES</Text>
           {recent.map((entry) => (
             <Pressable
               key={entry.id}
               testID={`scoreImport.recent.${entry.id}`}
               onPress={() => onOpen(entry)}
-              style={({ pressed }) => ({ minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 11, marginBottom: 4, borderRadius: 10, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line })}
+              style={({ pressed }) => (ScoreLibraryListStyle12({ pressed, colors }))}
             >
-              <Text raw numberOfLines={1} style={{ flex: 1, color: colors.text, fontSize: 10, fontWeight: '800' }}>{entry.score.title} <Text style={{ color: colors.dim, fontWeight: '500' }}>· {entry.fileName}</Text></Text>
-              <Text style={{ color: colors.dim, fontSize: 9, fontWeight: '900', marginLeft: 8 }}>OPEN ›</Text>
+              <Text raw numberOfLines={1} style={ScoreLibraryListStyle13({ colors })}>{entry.score.title} <Text style={ScoreLibraryListStyle14({ colors })}>· {entry.fileName}</Text></Text>
+              <Text style={ScoreLibraryListStyle15({ colors })}>OPEN ›</Text>
             </Pressable>
           ))}
         </View>

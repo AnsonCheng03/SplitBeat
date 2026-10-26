@@ -11,6 +11,18 @@ import {
 } from '../../modules/splitbeat-game-center/src';
 import type { GameCenterStatus } from '../../modules/splitbeat-game-center/src';
 import { useTheme } from '@/theme/ThemeProvider';
+import {
+  GameCenterChallengeCardStyle1,
+  GameCenterChallengeCardStyle2,
+  GameCenterChallengeCardStyle3,
+  GameCenterChallengeCardStyle4,
+  GameCenterChallengeCardStyle5,
+  GameCenterChallengeCardStyle6,
+  GameCenterChallengeCardStyle7,
+  GameCenterChallengeCardStyle8,
+  GameCenterChallengeCardStyle9,
+  GameCenterChallengeCardStyle10
+} from '@/styles/records';
 
 interface GameCenterChallengeCardProps {
   challengeMode?: boolean;
@@ -99,25 +111,25 @@ export function GameCenterChallengeCard({
   return (
     <View
       testID={testID}
-      style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 17, padding: 16, marginTop: 14 }}
+      style={GameCenterChallengeCardStyle1({ colors })}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.7 }}>{t('GAME CENTER')}</Text>
-          <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: 5 }}>
+      <View style={GameCenterChallengeCardStyle2()}>
+        <View style={GameCenterChallengeCardStyle3()}>
+          <Text style={GameCenterChallengeCardStyle4({ colors })}>{t('GAME CENTER')}</Text>
+          <Text style={GameCenterChallengeCardStyle5({ colors })}>
             {hasScore
               ? t('Longest clean run · {count} notes', { count: longestCorrectStreak ?? 0 })
               : t('Leaderboard · Longest clean run')}
           </Text>
         </View>
         {status.authenticated ? (
-          <Text numberOfLines={1} style={{ color: colors.left, maxWidth: '38%', fontSize: 11, fontWeight: '800' }}>
+          <Text numberOfLines={1} style={GameCenterChallengeCardStyle6({ colors })}>
             {status.playerAlias || 'SIGNED IN'}
           </Text>
         ) : null}
       </View>
 
-      <Text style={{ color: colors.dim, fontSize: 11, lineHeight: 16, marginTop: 8 }}>
+      <Text style={GameCenterChallengeCardStyle7({ colors })}>
         {t(Platform.OS !== 'ios'
           ? 'Game Center is available on iOS. Your best clean streak is saved in My Records on this device.'
           : hasScore
@@ -134,16 +146,16 @@ export function GameCenterChallengeCard({
           accessibilityLabel={t(status.authenticated ? 'View Game Center leaderboard' : 'Sign in to Game Center')}
           disabled={submitting}
           onPress={handleAction}
-          style={({ pressed }) => ({ minHeight: 44, alignSelf: 'flex-start', justifyContent: 'center', paddingHorizontal: 14, marginTop: 13, borderRadius: 12, backgroundColor: pressed ? colors.surfaceRaised : colors.background, borderWidth: 1, borderColor: colors.line, opacity: submitting ? 0.6 : 1 })}
+          style={({ pressed }) => (GameCenterChallengeCardStyle8({ pressed, colors, submitting }))}
         >
-          <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '900', letterSpacing: 0.7 }}>
+          <Text style={GameCenterChallengeCardStyle9({ colors })}>
             {t(submitting ? 'SUBMITTING…' : actionLabel)}
           </Text>
         </Pressable>
       ) : null}
 
       {message ? (
-        <Text accessibilityLiveRegion="polite" style={{ color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 9 }}>
+        <Text accessibilityLiveRegion="polite" style={GameCenterChallengeCardStyle10({ colors })}>
           {message}
         </Text>
       ) : null}

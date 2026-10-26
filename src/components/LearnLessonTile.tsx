@@ -4,6 +4,17 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { starsForAccuracy } from '@/rhythm/learnRating';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { LearnLesson } from '@/rhythm/learnCourse';
+import {
+  LearnLessonTileStyle1,
+  LearnLessonTileStyle2,
+  LearnLessonTileStyle3,
+  LearnLessonTileStyle4,
+  LearnLessonTileStyle5,
+  LearnLessonTileStyle6,
+  LearnLessonTileStyle7,
+  LearnLessonTileStyle8,
+  LearnLessonTileStyle9
+} from '@/styles/learn';
 
 export function LearnLessonTile({
   lesson,
@@ -49,42 +60,29 @@ export function LearnLessonTile({
       accessibilityState={{ selected, disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => ({
-        flexGrow: 0,
-        flexBasis: 'auto',
-        width: '100%',
-        minWidth: 0,
-        minHeight: 82,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        borderRadius: 14,
-        backgroundColor: selected ? colors.surfaceRaised : colors.surface,
-        borderWidth: selected ? 1.5 : 1,
-        borderColor: selected ? colors.accent : colors.line,
-        opacity: disabled ? 0.42 : pressed ? 0.8 : 1,
-      })}
+      style={({ pressed }) => (LearnLessonTileStyle1({ selected, colors, disabled, pressed }))}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={{ color: colors.dim, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 }}>
+      <View style={LearnLessonTileStyle2()}>
+        <Text style={LearnLessonTileStyle3({ colors })}>
           {String(lesson.number).padStart(2, '0')} · {t(lesson.level)}
         </Text>
-        <Text style={{ color: completed ? colors.left : disabled ? colors.dim : colors.accent, fontSize: 11, fontWeight: '900' }}>
+        <Text style={LearnLessonTileStyle4({ completed, colors, disabled })}>
           {completed ? '✓' : paywalled ? 'PRO' : locked ? 'LOCKED' : '›'}
         </Text>
       </View>
-      <Text numberOfLines={1} style={{ color: disabled ? colors.muted : colors.text, fontSize: 14, fontWeight: '800', marginTop: 8 }}>
+      <Text numberOfLines={1} style={LearnLessonTileStyle5({ disabled, colors })}>
         {lesson.title}
       </Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 3 }}>
-        <Text numberOfLines={1} style={{ flex: 1, color: colors.muted, fontSize: 10 }}>
+      <View style={LearnLessonTileStyle6()}>
+        <Text numberOfLines={1} style={LearnLessonTileStyle7({ colors })}>
           {lesson.skill}
         </Text>
         {rating ? (
-          <Text testID={`learn.rating.${lesson.id}`} style={{ color: colors.accent, fontSize: 9, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
+          <Text testID={`learn.rating.${lesson.id}`} style={LearnLessonTileStyle8({ colors })}>
             {Math.round(rating.bestAccuracy)}% · {'★'.repeat(stars)}{'☆'.repeat(5 - stars)}
           </Text>
         ) : completed ? (
-          <Text style={{ color: colors.dim, fontSize: 8, fontWeight: '800' }}>REPLAY FOR RATING</Text>
+          <Text style={LearnLessonTileStyle9({ colors })}>REPLAY FOR RATING</Text>
         ) : null}
       </View>
     </Pressable>

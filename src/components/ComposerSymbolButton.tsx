@@ -10,6 +10,7 @@ import type { ComposerSymbolId } from '@/rhythm/scoreComposer';
 import { TUPLET_SUBDIVISIONS } from '@/types/rhythm';
 import type { TimeSignature } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
+import { ComposerSymbolButtonStyle1, ComposerSymbolButtonStyle2, ComposerSymbolButtonStyle3 } from '@/styles/exercise';
 
 export function ComposerSymbolButton({
   symbolId,
@@ -65,20 +66,9 @@ export function ComposerSymbolButton({
       accessibilityRole="button"
       accessibilityLabel={t(isRest ? 'Add a {note} rest' : 'Add {note}', { note: label })}
       onPress={onPress}
-      style={({ pressed }) => ({
-        minWidth: 78,
-        minHeight: 75,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 7,
-        paddingVertical: 7,
-        borderRadius: 11,
-        backgroundColor: pressed ? `${color}24` : colors.background,
-        borderWidth: 1,
-        borderColor: pressed ? color : colors.line,
-      })}
+      style={({ pressed }) => (ComposerSymbolButtonStyle1({ pressed, color, colors }))}
     >
-      <View style={{ height: 39, minWidth: 46, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={ComposerSymbolButtonStyle2()}>
         {plan ? (
           <NoteNotation
             plan={plan}
@@ -88,7 +78,7 @@ export function ComposerSymbolButton({
           />
         ) : null}
       </View>
-      <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 8, fontWeight: '800', marginTop: 2, maxWidth: 100 }}>
+      <Text numberOfLines={1} style={ComposerSymbolButtonStyle3({ colors })}>
         {label}
       </Text>
     </Pressable>

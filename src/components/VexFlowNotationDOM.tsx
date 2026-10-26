@@ -6,6 +6,7 @@ import type { StaveNote } from 'vexflow';
 import type { NoteNotationPlan } from '@/rhythm/noteNotation';
 import { alignVexFlowStemTop, positionVexFlowNote } from '@/rhythm/vexFlowNotePlacement';
 import { createVexFlowRhythmNote, createVexFlowRhythmTies } from '@/rhythm/vexFlowRhythmNote';
+import { VexFlowNotationDOMStyle1 } from '@/styles/notation';
 
 interface VexFlowNotationDOMProps {
   plan: NoteNotationPlan;
@@ -101,12 +102,7 @@ export default function VexFlowNotationDOM({ plan, color, noteCenterY, restSymbo
   return (
     <div
       ref={containerRef}
-      style={{
-        width: plan.width,
-        height: plan.height,
-        overflow: 'hidden',
-        background: 'transparent',
-      }}
+      style={VexFlowNotationDOMStyle1({ plan })}
     />
   );
 }

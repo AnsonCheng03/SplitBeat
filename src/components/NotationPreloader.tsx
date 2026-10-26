@@ -4,6 +4,7 @@ import { NoteNotation } from '@/components/NoteNotation';
 import { createBarNoteNotationPlan } from '@/rhythm/noteNotation';
 import { markNotationReady } from '@/rhythm/notationReadiness';
 import { useTheme } from '@/theme/ThemeProvider';
+import { NotationPreloaderStyle1 } from '@/styles/shared';
 
 /** Start VexFlow's DOM renderer while the player is still on the app's opening screen. */
 export function NotationPreloader() {
@@ -25,7 +26,7 @@ export function NotationPreloader() {
       pointerEvents="none"
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={{ position: 'absolute', left: 0, top: 0, width: plan.width, height: plan.height, opacity: 0 }}
+      style={NotationPreloaderStyle1({ plan })}
     >
       <NoteNotation
         plan={plan}

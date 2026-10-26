@@ -1,6 +1,14 @@
 import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useTheme } from '@/theme/ThemeProvider';
+import {
+  SettingsToggleRowStyle1,
+  SettingsToggleRowStyle2,
+  SettingsToggleRowStyle3,
+  SettingsToggleRowStyle4,
+  SettingsToggleRowStyle5,
+  SettingsToggleRowStyle6
+} from '@/styles/settings';
 
 export function SettingsToggleRow({
   label,
@@ -25,24 +33,16 @@ export function SettingsToggleRow({
       accessibilityState={{ checked: value }}
       disabled={disabled}
       onPress={() => onChange(!value)}
-      style={{ minHeight: description ? 82 : 64, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.line, gap: 18, paddingVertical: 14, opacity: disabled ? 0.55 : 1 }}
+      style={SettingsToggleRowStyle1({ description, colors, disabled })}
     >
-      <View style={{ flex: 1, gap: 4 }}>
-        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>{label}</Text>
-        {description ? <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 17 }}>{description}</Text> : null}
+      <View style={SettingsToggleRowStyle2()}>
+        <Text style={SettingsToggleRowStyle3({ colors })}>{label}</Text>
+        {description ? <Text style={SettingsToggleRowStyle4({ colors })}>{description}</Text> : null}
       </View>
       <View
-        style={{
-          width: 46,
-          height: 27,
-          borderRadius: 20,
-          backgroundColor: value ? colors.left : colors.surfaceRaised,
-          justifyContent: 'center',
-          paddingHorizontal: 3,
-          alignItems: value ? 'flex-end' : 'flex-start',
-        }}
+        style={SettingsToggleRowStyle5({ value, colors })}
       >
-        <View style={{ width: 21, height: 21, borderRadius: 99, backgroundColor: colors.text }} />
+        <View style={SettingsToggleRowStyle6({ colors })} />
       </View>
     </Pressable>
   );

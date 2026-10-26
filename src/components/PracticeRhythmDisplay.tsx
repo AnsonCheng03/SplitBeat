@@ -10,6 +10,17 @@ import { maxRhythmSymbolWidth } from '@/rhythm/noteNotation';
 import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ExerciseSettings, ExerciseStep, Hand, SessionSnapshot } from '@/types/rhythm';
+import {
+  PracticeRhythmDisplayStyle1,
+  PracticeRhythmDisplayStyle2,
+  PracticeRhythmDisplayStyle3,
+  PracticeRhythmDisplayStyle4,
+  PracticeRhythmDisplayStyle5,
+  PracticeRhythmDisplayStyle6,
+  PracticeRhythmDisplayStyle7,
+  PracticeRhythmDisplayStyle8,
+  PracticeRhythmDisplayStyle9
+} from '@/styles/practice';
 
 export function PracticeRhythmDisplay({
   snapshot,
@@ -100,7 +111,7 @@ export function PracticeRhythmDisplay({
         <View
           testID="practice.scoreBackground"
           pointerEvents="none"
-          style={{ position: 'absolute', top: 0, left: -leftInset, right: -rightInset, height: scoreDisplayTop + scoreDisplayHeight, backgroundColor: colors.surface }}
+          style={PracticeRhythmDisplayStyle1({ leftInset, rightInset, scoreDisplayTop, scoreDisplayHeight, colors })}
         />
       ) : null}
 
@@ -135,9 +146,9 @@ export function PracticeRhythmDisplay({
         <View
           testID="practice.rhythmDisplay"
           pointerEvents="none"
-          style={[{ position: 'absolute', left: 0, right: 0, flexDirection: 'row', alignItems: 'center', backgroundColor: isScoreDisplay && !isScoreFocusDisplay ? colors.surface : 'transparent' }, rhythmDisplayStyle]}
+          style={[PracticeRhythmDisplayStyle2({ isScoreDisplay, isScoreFocusDisplay, colors }), rhythmDisplayStyle]}
         >
-          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginHorizontal: isScoreDisplay ? scoreContentMargin : 0 }}>
+          <View style={PracticeRhythmDisplayStyle3({ isScoreDisplay, scoreContentMargin })}>
             {displayScoreMeasure ? (
               importedScoreMeasure && scoreDisplayMode === 'focus' ? (
                 singleHandMode ? (
@@ -153,7 +164,7 @@ export function PracticeRhythmDisplay({
                     initialWidth={initialScoreFocusWidth * 0.86}
                   />
                 ) : (
-                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={PracticeRhythmDisplayStyle4()}>
                     {(['left', 'right'] as const).map((hand) => (
                       <ScoreBeatFocus
                         key={hand}
@@ -171,7 +182,7 @@ export function PracticeRhythmDisplay({
                   </View>
                 )
               ) : (
-                <View style={{ flex: 1, justifyContent: 'center' }}>
+                <View style={PracticeRhythmDisplayStyle5()}>
                   <ScrollingScoreRhythm
                     measure={displayScoreMeasure}
                     previousMeasure={displayScorePreviousMeasure}
@@ -190,8 +201,8 @@ export function PracticeRhythmDisplay({
                 </View>
               )
             ) : singleHandMode && displayStep ? (
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: compact ? 6 : 10 }}>
-                <Text style={{ color: colors.accent, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>{focusedHand.toUpperCase()}</Text>
+              <View style={PracticeRhythmDisplayStyle6({ compact })}>
+                <Text style={PracticeRhythmDisplayStyle7({ colors, compact })}>{focusedHand.toUpperCase()}</Text>
                 <HandRhythmNote
                   hand={focusedHand}
                   step={displayStep}
@@ -207,10 +218,10 @@ export function PracticeRhythmDisplay({
               (['left', 'right'] as const).map((hand) => {
                 const enabled = settings.trainingMode !== 'single-hand' || settings.singleHand === hand;
                 return (
-                  <View key={hand} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: compact ? 6 : 10, opacity: enabled ? 1 : 0.12 }}>
+                  <View key={hand} style={PracticeRhythmDisplayStyle8({ compact, enabled })}>
                     {enabled ? (
                       <>
-                        <Text style={{ color: hand === 'left' ? colors.left : colors.right, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 }}>{hand.toUpperCase()}</Text>
+                        <Text style={PracticeRhythmDisplayStyle9({ hand, colors, compact })}>{hand.toUpperCase()}</Text>
                         <HandRhythmNote
                           hand={hand}
                           step={displayStep}

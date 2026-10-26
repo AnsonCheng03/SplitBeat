@@ -4,6 +4,22 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { ChoiceChip } from '@/components/ExercisePatternPicker';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { DurationOption } from '@/types/rhythm';
+import {
+  ExerciseHeaderStyle1,
+  ExerciseHeaderStyle2,
+  ExerciseHeaderStyle3,
+  ExerciseHeaderStyle4,
+  ExerciseHeaderStyle5,
+  ExerciseHeaderStyle6,
+  ExerciseHeaderStyle7,
+  ExerciseHeaderStyle8,
+  ExerciseHeaderStyle9,
+  ExerciseHeaderStyle10,
+  ExerciseHeaderStyle11,
+  ExerciseHeaderStyle12,
+  ExerciseHeaderStyle13,
+  ExerciseHeaderStyle14
+} from '@/styles/exercise';
 
 export type ExerciseTab = 'review' | 'later' | 'pair' | 'bar';
 export interface ExerciseDurationOption {
@@ -33,25 +49,25 @@ export function ExerciseHeader({
 
   return (
     <>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <Pressable testID="exercise.home" accessibilityRole="button" onPress={onHome} hitSlop={10} style={{ paddingVertical: 8, paddingRight: 14 }}>
-          <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '900', letterSpacing: 1 }}>‹  HOME</Text>
+      <View style={ExerciseHeaderStyle1()}>
+        <Pressable testID="exercise.home" accessibilityRole="button" onPress={onHome} hitSlop={10} style={ExerciseHeaderStyle2()}>
+          <Text style={ExerciseHeaderStyle3({ colors })}>‹  HOME</Text>
         </Pressable>
-        <Text style={{ color: colors.dim, fontSize: 9, fontWeight: '900', letterSpacing: 1.4 }}>FOCUSED PRACTICE</Text>
+        <Text style={ExerciseHeaderStyle4({ colors })}>FOCUSED PRACTICE</Text>
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20, marginBottom: 18 }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 28, fontWeight: '900', letterSpacing: -0.7 }}>Practice a rhythm.</Text>
-          <Text style={{ color: colors.muted, fontSize: 12, marginTop: 5 }}>{t('Review combinations you miss, choose your own pair, or compose a score.')}</Text>
+      <View style={ExerciseHeaderStyle5()}>
+        <View style={ExerciseHeaderStyle6()}>
+          <Text style={ExerciseHeaderStyle7({ colors })}>Practice a rhythm.</Text>
+          <Text style={ExerciseHeaderStyle8({ colors })}>{t('Review combinations you miss, choose your own pair, or compose a score.')}</Text>
         </View>
-        <View style={{ paddingHorizontal: 13, paddingVertical: 9, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
-          <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }}>{progressCount} SAVED PAIRS</Text>
+        <View style={ExerciseHeaderStyle9({ colors })}>
+          <Text style={ExerciseHeaderStyle10({ colors })}>{progressCount} SAVED PAIRS</Text>
         </View>
       </View>
       {activeTab !== 'bar' ? (
-        <View testID="exercise.duration" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
-          <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.2 }}>{t('SESSION LENGTH')}</Text>
-          <View style={{ flexDirection: 'row', gap: 7 }}>
+        <View testID="exercise.duration" style={ExerciseHeaderStyle11()}>
+          <Text style={ExerciseHeaderStyle12({ colors })}>{t('SESSION LENGTH')}</Text>
+          <View style={ExerciseHeaderStyle13()}>
             {durations.map((option) => (
               <ChoiceChip
                 key={option.value}
@@ -64,7 +80,7 @@ export function ExerciseHeader({
           </View>
         </View>
       ) : null}
-      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 17 }}>
+      <View style={ExerciseHeaderStyle14()}>
         <ChoiceChip testID="exercise.tab.review" label="Review pairs" selected={activeTab === 'review'} onPress={() => onTabChange('review')} />
         <ChoiceChip testID="exercise.tab.later" label={t('Saved later')} selected={activeTab === 'later'} onPress={() => onTabChange('later')} />
         <ChoiceChip testID="exercise.tab.pair" label="Choose a pair" selected={activeTab === 'pair'} onPress={() => onTabChange('pair')} />

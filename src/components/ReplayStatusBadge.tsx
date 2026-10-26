@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useTheme } from '@/theme/ThemeProvider';
+import { ReplayStatusBadgeStyle1, ReplayStatusBadgeStyle2 } from '@/styles/results';
 
 export function ReplayStatusBadge({
   status,
@@ -26,20 +27,9 @@ export function ReplayStatusBadge({
       accessible={Boolean(accessibilityLabel)}
       accessibilityLabel={label}
       testID={testID}
-      style={[{
-        position: 'absolute',
-        zIndex: 2,
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: status === 'correct' ? colors.left : colors.danger,
-        borderWidth: 1,
-        borderColor: colors.background,
-      }, style]}
+      style={[ReplayStatusBadgeStyle1({ size, status, colors }), style]}
     >
-      <Text accessible={false} style={{ color: colors.background, fontSize: Math.max(7, size * 0.72), lineHeight: size, fontWeight: '900', textAlign: 'center' }}>
+      <Text accessible={false} style={ReplayStatusBadgeStyle2({ colors, size })}>
         {status === 'correct' ? '✓' : '×'}
       </Text>
     </View>

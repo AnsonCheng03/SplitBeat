@@ -8,6 +8,19 @@ import { ReplayStatusBadge } from '@/components/ReplayStatusBadge';
 import { createBarNoteNotationPlan } from '@/rhythm/noteNotation';
 import type { Hand, ReplayExpectedEvent, ReplayTap, TimeSignature } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
+import {
+  ReplayHandLaneStyle1,
+  ReplayHandLaneStyle2,
+  ReplayHandLaneStyle3,
+  ReplayHandLaneStyle4,
+  ReplayHandLaneStyle5,
+  ReplayHandLaneStyle6,
+  ReplayHandLaneStyle7,
+  ReplayHandLaneStyle8,
+  ReplayHandLaneStyle9,
+  ReplayHandLaneStyle10,
+  ReplayHandLaneStyle11
+} from '@/styles/results';
 
 export function ReplayHandLane({
   hand,
@@ -61,13 +74,13 @@ export function ReplayHandLane({
   const elapsedAtBarStart = (barIndex - 1) * beatsPerBar * timestampBeatMs;
 
   return (
-    <View style={{ marginBottom: isLastLane ? 0 : 13 }}>
-      <Text style={{ color: accent, fontSize: 10, fontWeight: '900', letterSpacing: 1.1, marginBottom: 3 }}>
+    <View style={ReplayHandLaneStyle1({ isLastLane })}>
+      <Text style={ReplayHandLaneStyle2({ accent })}>
         {t('{hand} · EXPECTED', { hand: t(hand === 'left' ? 'LEFT' : 'RIGHT') })}
       </Text>
       <View
         onLayout={({ nativeEvent }) => setTrackWidth(nativeEvent.layout.width)}
-        style={{ position: 'relative', height: laneHeight, justifyContent: 'center' }}
+        style={ReplayHandLaneStyle3({ laneHeight })}
       >
         <ReplayBeatGuides beatsPerBar={beatsPerBar} anchorStartX={anchorStartX} anchorWidth={anchorWidth} />
         {plan ? (
@@ -78,7 +91,7 @@ export function ReplayHandLane({
             accessibilityLabel={t('{hand} hand expected rhythm, {count} notes', { hand: t(hand), count: events.length })}
           />
         ) : events.length === 0 ? (
-          <Text style={{ color: colors.muted, fontSize: 11, textAlign: 'center', fontWeight: '700' }}>REST</Text>
+          <Text style={ReplayHandLaneStyle4({ colors })}>REST</Text>
         ) : null}
         {plan?.notes.map((note, index) => {
           const event = orderedEvents[index];
@@ -90,21 +103,18 @@ export function ReplayHandLane({
               status={event.matched ? 'correct' : 'miss'}
               size={size}
               testID={`results.replayStatus.expected.${event.id}`}
-              style={{
-                left: note.left + note.headWidth / 2 - size / 2,
-                top: notePlanTop + note.headTop + note.headHeight / 2 - size / 2,
-              }}
+              style={ReplayHandLaneStyle5({ note, size, notePlanTop })}
             />
           );
         })}
       </View>
 
-      <Text style={{ color: colors.muted, fontSize: 9, fontWeight: '800', letterSpacing: 0.9, marginTop: 2, marginBottom: 2 }}>
+      <Text style={ReplayHandLaneStyle6({ colors })}>
         YOUR TAPS
       </Text>
-      <View style={{ position: 'relative', height: 18, justifyContent: 'center' }}>
+      <View style={ReplayHandLaneStyle7()}>
         <ReplayBeatGuides beatsPerBar={beatsPerBar} anchorStartX={anchorStartX} anchorWidth={anchorWidth} />
-        <View style={{ height: 1, backgroundColor: colors.line }} />
+        <View style={ReplayHandLaneStyle8({ colors })} />
         {taps.map((tap) => {
           const elapsedInBarMs = tap.timestampMs - elapsedAtBarStart;
           const beatPosition = elapsedInBarMs / timestampBeatMs;
@@ -129,14 +139,14 @@ export function ReplayHandLane({
                 bar: barIndex,
                 timing: timingLabel,
               })}
-              style={{ left: anchorStartX + anchorWidth * position - 6, top: 3 }}
+              style={ReplayHandLaneStyle9({ anchorStartX, anchorWidth, position })}
             />
           );
         })}
       </View>
-      <View style={{ flexDirection: 'row', width: anchorWidth, marginLeft: anchorStartX, marginTop: 2 }}>
+      <View style={ReplayHandLaneStyle10({ anchorWidth, anchorStartX })}>
         {Array.from({ length: beatsPerBar }, (_, beat) => (
-          <Text key={beat} style={{ color: colors.muted, flex: 1, textAlign: 'center', fontSize: 9, fontVariant: ['tabular-nums'] }}>{beat + 1}</Text>
+          <Text key={beat} style={ReplayHandLaneStyle11({ colors })}>{beat + 1}</Text>
         ))}
       </View>
     </View>

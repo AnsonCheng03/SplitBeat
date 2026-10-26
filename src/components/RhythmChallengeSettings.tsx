@@ -6,6 +6,7 @@ import { SettingsSection } from '@/components/SettingsSection';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ExerciseSettings } from '@/types/rhythm';
 import type { FeatureFlags } from '@/features/featureFlags';
+import { RhythmChallengeSettingsStyle1, RhythmChallengeSettingsStyle2, RhythmChallengeSettingsStyle3, RhythmChallengeSettingsStyle4 } from '@/styles/settings';
 
 export function RhythmChallengeSettings({
   settings,
@@ -21,21 +22,21 @@ export function RhythmChallengeSettings({
   if (!featureFlags.challengeMode) return null;
   return (
     <SettingsSection title="CHALLENGE">
-      <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700', marginBottom: 12 }}>WHEN A MISTAKE HAPPENS</Text>
+      <Text style={RhythmChallengeSettingsStyle1({ colors })}>WHEN A MISTAKE HAPPENS</Text>
       <SettingsChoiceRow
         testIDPrefix="setup.challenge.action"
         options={[{ label: 'Off', value: 'off' as const }, { label: 'Pause', value: 'pause' as const }, { label: 'End session', value: 'stop' as const }]}
         value={settings.challengeAction}
         onChange={(challengeAction) => onSettingsChange({ challengeAction })}
       />
-      <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700', marginTop: 20, marginBottom: 12 }}>COUNT ERRORS BY</Text>
+      <Text style={RhythmChallengeSettingsStyle2({ colors })}>COUNT ERRORS BY</Text>
       <SettingsChoiceRow
         testIDPrefix="setup.challenge.triggerMode"
         options={[{ label: t('Notes'), value: 'notes' as const }, { label: t('Bars'), value: 'bars' as const }]}
         value={settings.challengeTriggerMode}
         onChange={(challengeTriggerMode) => onSettingsChange({ challengeTriggerMode })}
       />
-      <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700', marginTop: 20, marginBottom: 12 }}>TRIGGER AFTER</Text>
+      <Text style={RhythmChallengeSettingsStyle3({ colors })}>TRIGGER AFTER</Text>
       <SettingsChoiceRow
         testIDPrefix={settings.challengeTriggerMode === 'bars' ? 'setup.challenge.bars' : 'setup.challenge.misses'}
         options={settings.challengeTriggerMode === 'bars'
@@ -46,7 +47,7 @@ export function RhythmChallengeSettings({
           ? { challengeWrongBarStreak: threshold }
           : { challengeMissStreak: threshold })}
       />
-      <Text style={{ color: colors.dim, fontSize: 12, lineHeight: 17, marginTop: 8 }}>
+      <Text style={RhythmChallengeSettingsStyle4({ colors })}>
         {settings.challengeTriggerMode === 'bars'
           ? 'A bar counts as wrong when either hand misses or adds a tap. Consecutive bars are checked after each bar finishes; a clean bar resets the count.'
           : 'Any error reacts to an off-beat tap or missed note. Consecutive misses count separately for each hand; a correct note resets that hand’s streak.'}{' '}

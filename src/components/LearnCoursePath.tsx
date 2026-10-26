@@ -6,6 +6,7 @@ import { getLessonAvailability, LEARN_COURSE } from '@/rhythm/learnCourse';
 import { requiresLearnCourseUnlock } from '@/rhythm/learnCourseAccess';
 import type { readLearnRatings } from '@/store/learnProgress';
 import { useTheme } from '@/theme/ThemeProvider';
+import { LearnCoursePathStyle1, LearnCoursePathStyle2, LearnCoursePathStyle3, LearnCoursePathStyle4, LearnCoursePathStyle5, LearnCoursePathStyle6 } from '@/styles/learn';
 
 type LessonRating = Awaited<ReturnType<typeof readLearnRatings>>[number];
 
@@ -28,12 +29,12 @@ export function LearnCoursePath({
   const { t } = useI18n();
 
   return (
-    <View style={{ flex: 1, minWidth: 0, paddingHorizontal: compact ? 10 : 18, paddingTop: compact ? 13 : 20, paddingBottom: 12 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: compact ? 9 : 14 }}>
-        <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>{t('COURSE PATH')}</Text>
-        <Text numberOfLines={1} style={{ color: colors.dim, fontSize: compact ? 9 : 10, fontWeight: '700' }}>{t('First 3 free · finish each to progress')}</Text>
+    <View style={LearnCoursePathStyle1({ compact })}>
+      <View style={LearnCoursePathStyle2({ compact })}>
+        <Text style={LearnCoursePathStyle3({ colors })}>{t('COURSE PATH')}</Text>
+        <Text numberOfLines={1} style={LearnCoursePathStyle4({ colors, compact })}>{t('First 3 free · finish each to progress')}</Text>
       </View>
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
+      <ScrollView style={LearnCoursePathStyle5()} showsVerticalScrollIndicator={false} contentContainerStyle={LearnCoursePathStyle6()}>
         {LEARN_COURSE.map((lesson) => {
           const availability = getLessonAvailability(lesson.id, completedLessonIds);
           const paywalled = requiresLearnCourseUnlock(lesson, hasFullCourseUnlock);

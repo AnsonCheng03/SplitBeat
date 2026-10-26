@@ -5,6 +5,7 @@ import { SettingsPage } from '@/components/SettingsPage';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { LanguagePreference } from '@/i18n/translation';
 import { useTheme } from '@/theme/ThemeProvider';
+import { languageStyle1, languageStyle2 } from '@/styles/settings';
 
 const LANGUAGE_OPTIONS: readonly { label: string; value: LanguagePreference }[] = [
   { label: 'System default', value: 'system' },
@@ -24,14 +25,14 @@ export default function LanguageSettingsScreen() {
       title={t('Language')}
       description={t('Choose the language used throughout Split Beat.')}
     >
-      <View style={{ marginTop: 20, maxWidth: 680, padding: 18, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
+      <View style={languageStyle1({ colors })}>
         <SettingsChoiceRow
           options={LANGUAGE_OPTIONS.map((option) => ({ ...option, label: t(option.label) }))}
           value={preference}
           onChange={setLanguage}
           testIDPrefix="settings.language.choice"
         />
-        <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 14 }}>
+        <Text style={languageStyle2({ colors })}>
           {t('The app follows your device language when System default is selected.')}
         </Text>
       </View>

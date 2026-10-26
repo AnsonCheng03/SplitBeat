@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { View } from 'react-native';
+import { FullBleedSafeAreaStyle1, FullBleedSafeAreaStyle2 } from '@/styles/shared';
 
 export function FullBleedSafeArea({
   testID,
@@ -17,9 +18,9 @@ export function FullBleedSafeArea({
   children: ReactNode;
 }) {
   return (
-    <View style={{ flex: 1, backgroundColor }}>
+    <View style={FullBleedSafeAreaStyle1({ backgroundColor })}>
       {underlay}
-      <SafeAreaView testID={testID} style={[{ flex: 1, backgroundColor: 'transparent' }, contentStyle]}>
+      <SafeAreaView testID={testID} style={[FullBleedSafeAreaStyle2(), contentStyle]}>
         {children}
       </SafeAreaView>
     </View>

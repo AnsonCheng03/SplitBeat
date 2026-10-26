@@ -5,6 +5,19 @@ import { Countdown } from '@/components/Countdown';
 import { MetronomeIndicator } from '@/components/MetronomeIndicator';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { SessionSnapshot } from '@/types/rhythm';
+import {
+  PracticeStatusBarStyle1,
+  PracticeStatusBarStyle2,
+  PracticeStatusBarStyle3,
+  PracticeStatusBarStyle4,
+  PracticeStatusBarStyle5,
+  PracticeStatusBarStyle6,
+  PracticeStatusBarStyle7,
+  PracticeStatusBarStyle8,
+  PracticeStatusBarStyle9,
+  PracticeStatusBarStyle10,
+  PracticeStatusBarStyle11
+} from '@/styles/practice';
 
 export function PracticeStatusBar({
   snapshot,
@@ -38,7 +51,7 @@ export function PracticeStatusBar({
   const safeTopInset = Math.max(topInset, 12);
 
   return (
-    <View pointerEvents="box-none" style={{ position: 'absolute', top: safeTopInset, left: 0, right: 0, minHeight: snapshot?.resumeCountIn ? (compact ? 48 : 58) : compact ? 42 : 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: Math.max(compact ? 13 : 22, leftInset + 12), paddingRight: Math.max(compact ? 13 : 22, rightInset + 12) }}>
+    <View pointerEvents="box-none" style={PracticeStatusBarStyle1({ safeTopInset, snapshot, compact, leftInset, rightInset })}>
       <Pressable
         testID="practice.pause"
         accessibilityRole="button"
@@ -47,19 +60,19 @@ export function PracticeStatusBar({
         onPress={onPause}
         hitSlop={12}
       >
-        <Text style={{ color: colors.muted, fontSize: compact ? 11 : 12, fontWeight: '800', letterSpacing: 1 }}>Ⅱ  PAUSE</Text>
+        <Text style={PracticeStatusBarStyle2({ colors, compact })}>Ⅱ  PAUSE</Text>
       </Pressable>
-      <View testID="practice.beatCounter" style={{ alignItems: 'center', justifyContent: 'center', minWidth: snapshot?.resumeCountIn ? Math.min(520, Math.max(200, width * 0.5)) : 90, minHeight: snapshot?.resumeCountIn ? (compact ? 48 : 58) : 38 }}>
+      <View testID="practice.beatCounter" style={PracticeStatusBarStyle3({ snapshot, width, compact })}>
         {snapshot?.resumeCountIn ? (
           <>
-            <Text testID="practice.resumeCountIn" style={{ color: colors.accent, fontSize: compact ? 7 : 9, fontWeight: '900', letterSpacing: 1.2 }}>LISTEN</Text>
+            <Text testID="practice.resumeCountIn" style={PracticeStatusBarStyle4({ colors, compact })}>LISTEN</Text>
             <Text
               testID="practice.resumeStartNote"
               accessibilityLabel={t('START WITH') + ': ' + resumeStartLabel}
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.55}
-              style={{ maxWidth: '100%', color: colors.text, fontSize: compact ? 8 : 10, lineHeight: compact ? 11 : 13, fontWeight: '800', textAlign: 'center' }}
+              style={PracticeStatusBarStyle5({ colors, compact })}
             >
               {t('START WITH')}: {resumeStartLabel}
             </Text>
@@ -78,7 +91,7 @@ export function PracticeStatusBar({
           />
         ) : null}
       </View>
-      <View style={{ alignItems: 'flex-end', justifyContent: 'center', minWidth: compact ? 74 : 112 }}>
+      <View style={PracticeStatusBarStyle6({ compact })}>
         {remainingLabel ? (
           <Text
             testID={scoreBarsRemaining === undefined ? 'practice.timeRemaining' : 'practice.barsRemaining'}
@@ -86,13 +99,13 @@ export function PracticeStatusBar({
               ? remainingLabel === 'ENDLESS' ? t('Endless session') : t('{time} remaining', { time: remainingLabel.replace(' LEFT', '') })
               : t('{count} {unit} remaining', { count: scoreBarsRemaining, unit: t(scoreBarsRemaining === 1 ? 'bar' : 'bars') })}
             numberOfLines={1}
-            style={{ color: colors.accent, fontSize: compact ? 8 : 10, lineHeight: compact ? 11 : 13, fontWeight: '900', letterSpacing: 0.8 }}
+            style={PracticeStatusBarStyle7({ colors, compact })}
           >
             {remainingLabel}
           </Text>
         ) : null}
         {snapshot && showNextPattern && snapshot.phase === 'running' && changeCountdown !== undefined ? (
-          <Text testID="practice.changeCountdown.label" style={{ color: colors.muted, fontSize: compact ? 7 : 9, lineHeight: compact ? 9 : 11, fontWeight: '900', letterSpacing: compact ? 0.5 : 0.8 }}>
+          <Text testID="practice.changeCountdown.label" style={PracticeStatusBarStyle8({ colors, compact })}>
             {t('NEXT CHANGE')}
           </Text>
         ) : null}
@@ -102,12 +115,12 @@ export function PracticeStatusBar({
           accessibilityLabel={snapshot && showNextPattern && snapshot.phase === 'running' && changeCountdown !== undefined
             ? t('Next pattern change in {count} {unit}', { count: changeCountdown, unit: t(changeCountdown === 1 ? 'beat' : 'beats') })
             : undefined}
-          style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'flex-end', minHeight: compact ? 25 : 34, gap: compact ? 4 : 7 }}
+          style={PracticeStatusBarStyle9({ compact })}
         >
           {snapshot && showNextPattern && snapshot.phase === 'running' && changeCountdown !== undefined ? (
             <>
-              <Text testID="practice.nextPattern.countdown" style={{ color: colors.accent, fontSize: compact ? 21 : 30, lineHeight: compact ? 25 : 34, fontWeight: '900', fontVariant: ['tabular-nums'] }}>{changeCountdown}</Text>
-              <Text style={{ color: colors.accent, fontSize: compact ? 9 : 11, fontWeight: '900', letterSpacing: 1 }}>{changeCountdown === 1 ? 'BEAT' : 'BEATS'}</Text>
+              <Text testID="practice.nextPattern.countdown" style={PracticeStatusBarStyle10({ colors, compact })}>{changeCountdown}</Text>
+              <Text style={PracticeStatusBarStyle11({ colors, compact })}>{changeCountdown === 1 ? 'BEAT' : 'BEATS'}</Text>
             </>
           ) : null}
         </View>

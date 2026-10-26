@@ -8,6 +8,19 @@ import { scoreBarWidth } from '@/rhythm/scoreLayout';
 import type { ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
 import type { Hand } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
+import {
+  ScrollingScoreRhythmStyle1,
+  ScrollingScoreRhythmStyle2,
+  ScrollingScoreRhythmStyle3,
+  ScrollingScoreRhythmStyle4,
+  ScrollingScoreRhythmStyle5,
+  ScrollingScoreRhythmStyle6,
+  ScrollingScoreRhythmStyle7,
+  ScrollingScoreRhythmStyle8,
+  ScrollingScoreRhythmStyle9,
+  ScrollingScoreRhythmStyle10,
+  ScrollingScoreRhythmStyle11
+} from '@/styles/notation';
 
 interface ScrollingScoreRhythmProps {
   measure: ScoreMeasure;
@@ -71,17 +84,11 @@ function ScoreBarPanel({
   return (
     <View
       testID={`practice.scoreMeasure.bar.${bar.sequence}`}
-      style={{
-        position: 'relative',
-        width,
-        paddingHorizontal: 4,
-        paddingVertical: minimal ? 0 : size === 'compact' ? 3 : 7,
-        gap: size === 'compact' ? 2 : 4,
-      }}
+      style={ScrollingScoreRhythmStyle1({ width, minimal, size })}
     >
       {!minimal ? (
-        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: size === 'compact' ? 0 : 2 }}>
-          <Text style={{ color: colors.text, fontSize: size === 'compact' ? 10 : 11, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+        <View style={ScrollingScoreRhythmStyle2({ size })}>
+          <Text style={ScrollingScoreRhythmStyle3({ colors, size })}>
             BAR {bar.number} / {count}
           </Text>
         </View>
@@ -181,18 +188,18 @@ export function ScrollingScoreRhythm({
   return (
     <View
       testID="practice.scoreMeasure"
-      style={{ flex: 1, flexDirection: 'row', alignItems: 'center', overflow: 'hidden' }}
+      style={ScrollingScoreRhythmStyle4()}
     >
       {showLaneLabels ? (
-        <View style={{ width: labelColumnWidth, gap: laneGap }}>
+        <View style={ScrollingScoreRhythmStyle5({ labelColumnWidth, laneGap })}>
           {(!visibleHand || visibleHand === 'left') ? (
-            <View style={{ height: laneHeight, justifyContent: 'center' }}>
-              <Text style={{ color: visibleHand ? focusedColor ?? colors.left : colors.left, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 0.6 }}>{t('LEFT')}</Text>
+            <View style={ScrollingScoreRhythmStyle6({ laneHeight })}>
+              <Text style={ScrollingScoreRhythmStyle7({ visibleHand, focusedColor, colors, compact })}>{t('LEFT')}</Text>
             </View>
           ) : null}
           {(!visibleHand || visibleHand === 'right') ? (
-            <View style={{ height: laneHeight, justifyContent: 'center' }}>
-              <Text style={{ color: visibleHand ? focusedColor ?? colors.right : colors.right, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 0.6 }}>{t('RIGHT')}</Text>
+            <View style={ScrollingScoreRhythmStyle8({ laneHeight })}>
+              <Text style={ScrollingScoreRhythmStyle9({ visibleHand, focusedColor, colors, compact })}>{t('RIGHT')}</Text>
             </View>
           ) : null}
         </View>
@@ -200,17 +207,12 @@ export function ScrollingScoreRhythm({
       <View
         testID="practice.scoreMeasure.viewport"
         onLayout={({ nativeEvent }) => setMeasuredViewportWidth(nativeEvent.layout.width)}
-        style={{
-          flex: 1,
-          height: minimal ? scoreRowsHeight : undefined,
-          overflow: 'hidden',
-          paddingVertical: minimal ? 0 : compact ? 3 : 7,
-        }}
+        style={ScrollingScoreRhythmStyle10({ minimal, scoreRowsHeight, compact })}
       >
         {barWidth > 0 ? (
           <Animated.View
             testID="practice.scoreMeasure.strip"
-            style={{ width: barWidth * visibleBars.length, flexDirection: 'row', transform: [{ translateX }] }}
+            style={ScrollingScoreRhythmStyle11({ barWidth, visibleBars, translateX })}
           >
             {visibleBars.map((bar) => (
               <ScoreBarPanel

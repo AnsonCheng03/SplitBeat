@@ -2,6 +2,7 @@ import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import type { PracticeDisplayMode } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
+import { PracticeDisplayPickerStyle1, PracticeDisplayPickerStyle2, PracticeDisplayPickerStyle3, PracticeDisplayPickerStyle4, PracticeDisplayPickerStyle5 } from '@/styles/practice';
 
 export function PracticeDisplayPicker({
   value,
@@ -21,11 +22,11 @@ export function PracticeDisplayPicker({
   ];
 
   return (
-    <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      <Text style={{ width: 76, color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.4 }}>
+    <View style={PracticeDisplayPickerStyle1()}>
+      <Text style={PracticeDisplayPickerStyle2({ colors })}>
         {label}
       </Text>
-      <View style={{ flex: 1, flexDirection: 'row', gap: 8 }}>
+      <View style={PracticeDisplayPickerStyle3()}>
         {options.map((option) => {
           const selected = value === option.value;
           return (
@@ -35,20 +36,9 @@ export function PracticeDisplayPicker({
               accessibilityRole="radio"
               accessibilityState={{ selected }}
               onPress={() => onChange(option.value)}
-              style={({ pressed }) => ({
-                flex: 1,
-                minHeight: 42,
-                justifyContent: 'center',
-                alignItems: 'center',
-                paddingHorizontal: 12,
-                borderRadius: 12,
-                backgroundColor: selected ? colors.surfaceRaised : colors.surface,
-                borderWidth: 1,
-                borderColor: selected ? colors.accent : colors.line,
-                opacity: pressed ? 0.8 : 1,
-              })}
+              style={({ pressed }) => (PracticeDisplayPickerStyle4({ selected, colors, pressed }))}
             >
-              <Text style={{ color: selected ? colors.accent : colors.muted, fontSize: 12, fontWeight: '800' }}>
+              <Text style={PracticeDisplayPickerStyle5({ selected, colors })}>
                 {option.label}
               </Text>
             </Pressable>

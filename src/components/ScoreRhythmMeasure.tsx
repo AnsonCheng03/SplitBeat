@@ -6,6 +6,7 @@ import { MeasureBarLine, RhythmTrack } from '@/components/ScoreRhythmLane';
 import type { ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
 import type { Hand } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
+import { ScoreRhythmMeasureStyle1, ScoreRhythmMeasureStyle2, ScoreRhythmMeasureStyle3, ScoreRhythmMeasureStyle4 } from '@/styles/notation';
 
 export function ScoreRhythmMeasure({
   measure,
@@ -44,11 +45,11 @@ export function ScoreRhythmMeasure({
   );
 
   return (
-    <View testID={testIdPrefix} style={{ position: 'relative', paddingHorizontal: compact ? 4 : 12, paddingVertical: compact ? 3 : 7, gap: compact ? 2 : 4 }}>
+    <View testID={testIdPrefix} style={ScoreRhythmMeasureStyle1({ compact })}>
       {!hideHeader ? (
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: compact ? 0 : 2 }}>
-          <Text style={{ color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '800', letterSpacing: 1.1 }}>SCORE RHYTHM</Text>
-          <Text style={{ color: colors.text, fontSize: compact ? 10 : 11, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+        <View style={ScoreRhythmMeasureStyle2({ compact })}>
+          <Text style={ScoreRhythmMeasureStyle3({ colors, compact })}>SCORE RHYTHM</Text>
+          <Text style={ScoreRhythmMeasureStyle4({ colors, compact })}>
             BAR {number} / {count}
           </Text>
         </View>

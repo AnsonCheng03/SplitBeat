@@ -1,6 +1,7 @@
 
 import { Text } from '@/i18n/LocalizedText';
 import { useTheme } from '@/theme/ThemeProvider';
+import { CountdownStyle1 } from '@/styles/notation';
 
 interface CountdownProps {
   value: number | 'START' | null;
@@ -13,13 +14,7 @@ export function Countdown({ value, compact = false }: CountdownProps) {
   return (
     <Text
       accessibilityLiveRegion="polite"
-      style={{
-        color: colors.accent,
-        fontSize: value === 'START' ? (compact ? 19 : 22) : compact ? 29 : 34,
-        fontWeight: '800',
-        letterSpacing: value === 'START' ? 2 : 0,
-        textAlign: 'center',
-      }}
+      style={CountdownStyle1({ colors, value, compact })}
     >
       {value}
     </Text>

@@ -5,6 +5,7 @@ import { NoteNotation } from '@/components/NoteNotation';
 import { createNoteNotationPlan, fitNotationScale, type NoteNotationSize } from '@/rhythm/noteNotation';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import type { Subdivision, TimeSignature } from '@/types/rhythm';
+import { RhythmSymbolStyle1, RhythmSymbolStyle2 } from '@/styles/notation';
 
 interface RhythmSymbolProps {
   subdivision: Subdivision;
@@ -44,8 +45,8 @@ export function RhythmSymbol({ subdivision, color, compact = false, mini = false
   if (fittedScale === 1) return notation;
 
   return (
-    <View style={{ width: plan.width * fittedScale, height: plan.height * fittedScale, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ width: plan.width, height: plan.height, transform: [{ scale: fittedScale }] }}>
+    <View style={RhythmSymbolStyle1({ plan, fittedScale })}>
+      <View style={RhythmSymbolStyle2({ plan, fittedScale })}>
         {notation}
       </View>
     </View>

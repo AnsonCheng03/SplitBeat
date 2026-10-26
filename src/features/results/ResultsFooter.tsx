@@ -6,6 +6,18 @@ import { LEARN_COURSE } from '@/rhythm/learnCourse';
 import type { LearnLesson } from '@/rhythm/learnCourse';
 import type { FeatureFlags } from '@/features/featureFlags';
 import { useTheme } from '@/theme/ThemeProvider';
+import {
+  ResultsFooterStyle1,
+  ResultsFooterStyle2,
+  ResultsFooterStyle3,
+  ResultsFooterStyle4,
+  ResultsFooterStyle5,
+  ResultsFooterStyle6,
+  ResultsFooterStyle7,
+  ResultsFooterStyle8,
+  ResultsFooterStyle9,
+  ResultsFooterStyle10
+} from '@/styles/results';
 
 export function ResultsFooter({
   courseLesson,
@@ -46,9 +58,9 @@ export function ResultsFooter({
         accessibilityState={{ disabled: startingAgain }}
         disabled={startingAgain}
         onPress={onStartAgain}
-        style={({ pressed }) => ({ backgroundColor: pressed ? '#A8EADB' : colors.left, minHeight: 64, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginTop: 30, opacity: startingAgain ? 0.72 : 1 })}
+        style={({ pressed }) => (ResultsFooterStyle1({ pressed, colors, startingAgain }))}
       >
-        <Text style={{ color: colors.background, fontSize: 15, fontWeight: '900', letterSpacing: 0.8 }}>{startingAgain ? 'PREPARING…' : 'START AGAIN'}</Text>
+        <Text style={ResultsFooterStyle2({ colors })}>{startingAgain ? 'PREPARING…' : 'START AGAIN'}</Text>
       </Pressable>
       {featureFlags.learnCourse && courseLesson && lessonCompleted ? (
         <Pressable
@@ -56,16 +68,16 @@ export function ResultsFooter({
           accessibilityRole="button"
           accessibilityLabel={t('Continue the guided course')}
           onPress={onContinueLearning}
-          style={({ pressed }) => ({ backgroundColor: pressed ? colors.surfaceRaised : colors.surface, minHeight: 60, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginTop: 14, borderWidth: 1, borderColor: colors.line })}
+          style={({ pressed }) => (ResultsFooterStyle3({ pressed, colors }))}
         >
-          <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '900', letterSpacing: 0.7 }}>
+          <Text style={ResultsFooterStyle4({ colors })}>
             {courseLesson.number === LEARN_COURSE.length ? 'VIEW COURSE' : 'CONTINUE LEARNING'}
           </Text>
         </Pressable>
       ) : null}
       {showDiagnosticExport ? (
-        <View style={{ marginTop: 18 }}>
-          <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.2, marginBottom: 8 }}>{t('DEVELOPER DIAGNOSTICS')}</Text>
+        <View style={ResultsFooterStyle5()}>
+          <Text style={ResultsFooterStyle6({ colors })}>{t('DEVELOPER DIAGNOSTICS')}</Text>
           <Pressable
             testID="results.exportDiagnosticLog"
             accessibilityRole="button"
@@ -73,14 +85,14 @@ export function ResultsFooter({
             accessibilityState={{ disabled: exportingDiagnostic }}
             disabled={exportingDiagnostic}
             onPress={onConfirmExport}
-            style={({ pressed }) => ({ minHeight: 58, paddingHorizontal: 16, borderRadius: 15, justifyContent: 'center', backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line, opacity: exportingDiagnostic ? 0.7 : 1 })}
+            style={({ pressed }) => (ResultsFooterStyle7({ pressed, colors, exportingDiagnostic }))}
           >
-            <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '900', letterSpacing: 0.7 }}>{exportingDiagnostic ? t('PREPARING LOG…') : t('EXPORT SESSION LOG')}</Text>
-            <Text style={{ color: colors.muted, fontSize: 11, marginTop: 4 }}>{t('Share a JSON with settings, expected notes, and tap timestamps.')}</Text>
+            <Text style={ResultsFooterStyle8({ colors })}>{exportingDiagnostic ? t('PREPARING LOG…') : t('EXPORT SESSION LOG')}</Text>
+            <Text style={ResultsFooterStyle9({ colors })}>{t('Share a JSON with settings, expected notes, and tap timestamps.')}</Text>
           </Pressable>
         </View>
       ) : null}
-      <View testID="results.navigation" style={{ marginTop: 14, marginBottom: 18, overflow: 'hidden', borderRadius: 15, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
+      <View testID="results.navigation" style={ResultsFooterStyle10({ colors })}>
         <ResultsActionRow
           testID="results.settings"
           label={t('CHANGE SETTINGS')}

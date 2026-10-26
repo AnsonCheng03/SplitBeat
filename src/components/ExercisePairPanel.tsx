@@ -6,6 +6,7 @@ import type { PatternSelection } from '@/components/ExercisePatternPicker';
 import type { MixturePattern } from '@/rhythm/mixtures';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { TimeSignature } from '@/types/rhythm';
+import { ExercisePairPanelStyle1, ExercisePairPanelStyle2 } from '@/styles/exercise';
 
 export function ExercisePairPanel({
   leftSelection,
@@ -33,8 +34,8 @@ export function ExercisePairPanel({
 
   return (
     <>
-      <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.2 }}>CHOOSE A RHYTHM FOR EACH HAND</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'stretch', gap: 12, marginTop: 9 }}>
+      <Text style={ExercisePairPanelStyle1({ colors })}>CHOOSE A RHYTHM FOR EACH HAND</Text>
+      <View style={ExercisePairPanelStyle2()}>
         <PatternPicker hand="left" selection={leftSelection} mixtures={mixtures} includeSixtyFourth={includeSixtyFourth} timeSignature={timeSignature} onChange={onLeftChange} />
         <PatternPicker hand="right" selection={rightSelection} mixtures={mixtures} includeSixtyFourth={includeSixtyFourth} timeSignature={timeSignature} onChange={onRightChange} />
       </View>

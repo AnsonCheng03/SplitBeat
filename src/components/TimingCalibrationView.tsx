@@ -5,6 +5,36 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CALIBRATION_TAPS_PER_HAND } from '@/rhythm/timingCalibration';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { Hand, TimeSignature } from '@/types/rhythm';
+import {
+  TimingCalibrationViewStyle1,
+  TimingCalibrationViewStyle2,
+  TimingCalibrationViewStyle3,
+  TimingCalibrationViewStyle4,
+  TimingCalibrationViewStyle5,
+  TimingCalibrationViewStyle6,
+  TimingCalibrationViewStyle7,
+  TimingCalibrationViewStyle8,
+  TimingCalibrationViewStyle9,
+  TimingCalibrationViewStyle10,
+  TimingCalibrationViewStyle11,
+  TimingCalibrationViewStyle12,
+  TimingCalibrationViewStyle13,
+  TimingCalibrationViewStyle14,
+  TimingCalibrationViewStyle15,
+  TimingCalibrationViewStyle16,
+  TimingCalibrationViewStyle17,
+  TimingCalibrationViewStyle18,
+  TimingCalibrationViewStyle19,
+  TimingCalibrationViewStyle20,
+  TimingCalibrationViewStyle21,
+  TimingCalibrationViewStyle22,
+  TimingCalibrationViewStyle23,
+  TimingCalibrationViewStyle24,
+  TimingCalibrationViewStyle25,
+  TimingCalibrationViewStyle26,
+  TimingCalibrationViewStyle27,
+  TimingCalibrationViewStyle28
+} from '@/styles/settings';
 
 interface TimingCalibrationViewProps {
   visible: boolean;
@@ -52,26 +82,15 @@ export function TimingCalibrationView({
         accessibilityLabel={t('Calibrate {hand} hand timing', { hand: t(hand === 'left' ? 'left' : 'right') })}
         onTouchStart={() => onTap(hand, monotonicNow())}
         collapsable={false}
-        style={{
-          flex: 1,
-          minHeight: 170,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: isLeft ? colors.leftSurface : colors.rightSurface,
-          borderWidth: 1,
-          borderColor: accent,
-          borderRadius: 18,
-          marginHorizontal: 5,
-          opacity: complete ? 0.55 : 1,
-        }}
+        style={TimingCalibrationViewStyle1({ isLeft, colors, accent, complete })}
       >
-        <Text style={{ color: accent, fontSize: 12, fontWeight: '800', letterSpacing: 2 }}>
+        <Text style={TimingCalibrationViewStyle2({ accent })}>
           {isLeft ? 'LEFT HAND' : 'RIGHT HAND'}
         </Text>
-        <Text style={{ color: colors.text, fontSize: 21, fontWeight: '800', marginTop: 8 }}>
+        <Text style={TimingCalibrationViewStyle3({ colors })}>
           {complete ? 'READY' : 'TAP'}
         </Text>
-        <Text style={{ color: colors.muted, fontSize: 14, marginTop: 8, fontVariant: ['tabular-nums'] }}>
+        <Text style={TimingCalibrationViewStyle4({ colors })}>
           {counts[hand]} / {CALIBRATION_TAPS_PER_HAND}
         </Text>
       </View>
@@ -84,18 +103,9 @@ export function TimingCalibrationView({
         testID="setup.calibration.open"
         accessibilityRole="button"
         onPress={onOpen}
-        style={{
-          minHeight: 54,
-          marginTop: 16,
-          borderRadius: 14,
-          borderWidth: 1,
-          borderColor: colors.line,
-          backgroundColor: colors.surface,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+        style={TimingCalibrationViewStyle5({ colors })}
       >
-        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>
+        <Text style={TimingCalibrationViewStyle6({ colors })}>
           CALIBRATE BOTH HANDS
         </Text>
       </Pressable>
@@ -106,40 +116,40 @@ export function TimingCalibrationView({
         supportedOrientations={['landscape-left', 'landscape-right']}
         onRequestClose={onClose}
       >
-        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-          <View style={{ flex: 1, width: '100%', maxWidth: 950, alignSelf: 'center', paddingHorizontal: 18, paddingVertical: 10 }}>
-            <View style={{ minHeight: 42, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <SafeAreaView style={TimingCalibrationViewStyle7({ colors })}>
+          <View style={TimingCalibrationViewStyle8()}>
+            <View style={TimingCalibrationViewStyle9()}>
               <Pressable
                 testID="calibration.close"
                 accessibilityRole="button"
                 accessibilityLabel={t('Close timing calibration')}
                 onPress={onClose}
-                style={{ minWidth: 76, minHeight: 44, justifyContent: 'center' }}
+                style={TimingCalibrationViewStyle10()}
               >
-                <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '800' }}>‹  CLOSE</Text>
+                <Text style={TimingCalibrationViewStyle11({ colors })}>‹  CLOSE</Text>
               </Pressable>
-              <Text style={{ color: colors.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.8 }}>
+              <Text style={TimingCalibrationViewStyle12({ colors })}>
                 TIMING CALIBRATION
               </Text>
-              <View style={{ width: 54 }} />
+              <View style={TimingCalibrationViewStyle13()} />
             </View>
 
-            <View style={{ alignItems: 'center', marginTop: 16, marginBottom: 20 }}>
-              <Text style={{ color: colors.text, fontSize: 28, fontWeight: '900', textAlign: 'center' }}>
+            <View style={TimingCalibrationViewStyle14()}>
+              <Text style={TimingCalibrationViewStyle15({ colors })}>
                 Match the pulse.
               </Text>
-              <Text style={{ color: colors.muted, fontSize: 14, textAlign: 'center', marginTop: 7, maxWidth: 600 }}>
+              <Text style={TimingCalibrationViewStyle16({ colors })}>
                 The metronome counts in, then each hand records eight taps. Keep tapping with both hands until both sides are complete.
               </Text>
-              <Text style={{ color: colors.dim, fontSize: 12, textAlign: 'center', marginTop: 5 }}>
+              <Text style={TimingCalibrationViewStyle17({ colors })}>
                 Calibration uses the current {bpm} BPM and {timeSignature} pulse.
               </Text>
             </View>
 
             {phase === 'ready' || phase === 'error' ? (
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={TimingCalibrationViewStyle18()}>
                 {message ? (
-                  <Text style={{ color: colors.danger, fontSize: 14, textAlign: 'center', marginBottom: 14 }}>
+                  <Text style={TimingCalibrationViewStyle19({ colors })}>
                     {message}
                   </Text>
                 ) : null}
@@ -147,35 +157,35 @@ export function TimingCalibrationView({
                   testID="calibration.start"
                   onPress={onStart}
                   disabled={starting}
-                  style={{ minHeight: 58, minWidth: 250, paddingHorizontal: 24, borderRadius: 16, backgroundColor: colors.left, alignItems: 'center', justifyContent: 'center', opacity: starting ? 0.65 : 1 }}
+                  style={TimingCalibrationViewStyle20({ colors, starting })}
                 >
-                  <Text style={{ color: colors.background, fontSize: 15, fontWeight: '900', letterSpacing: 0.7 }}>
+                  <Text style={TimingCalibrationViewStyle21({ colors })}>
                     {starting ? 'PREPARING…' : phase === 'error' ? 'TRY AGAIN' : 'START CALIBRATION'}
                   </Text>
                 </Pressable>
               </View>
             ) : phase === 'complete' ? (
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: colors.left, fontSize: 18, fontWeight: '800', textAlign: 'center' }}>
+              <View style={TimingCalibrationViewStyle22()}>
+                <Text style={TimingCalibrationViewStyle23({ colors })}>
                   {message}
                 </Text>
-                <Pressable onPress={onClose} style={{ minHeight: 54, minWidth: 190, marginTop: 24, borderRadius: 15, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>DONE</Text>
+                <Pressable onPress={onClose} style={TimingCalibrationViewStyle24({ colors })}>
+                  <Text style={TimingCalibrationViewStyle25({ colors })}>DONE</Text>
                 </Pressable>
               </View>
             ) : (
               <>
-                <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '800', letterSpacing: 1.2, textAlign: 'center', marginBottom: 9 }}>
+                <Text style={TimingCalibrationViewStyle26({ colors })}>
                   {counts.left >= CALIBRATION_TAPS_PER_HAND && counts.right >= CALIBRATION_TAPS_PER_HAND
                     ? 'CALIBRATED'
                     : 'TAP ON EACH CLICK'}
                 </Text>
-                <View style={{ flex: 1, flexDirection: 'row', marginBottom: 12 }}>
+                <View style={TimingCalibrationViewStyle27()}>
                   {handZone('left')}
                   {handZone('right')}
                 </View>
                 {message ? (
-                  <Text style={{ color: colors.muted, fontSize: 12, textAlign: 'center', minHeight: 20 }}>
+                  <Text style={TimingCalibrationViewStyle28({ colors })}>
                     {message}
                   </Text>
                 ) : null}
