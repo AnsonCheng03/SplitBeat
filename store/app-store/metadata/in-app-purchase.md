@@ -19,7 +19,7 @@ Before review, attach the product to the app version if App Store Connect reques
 - The first three lessons remain available without a purchase.
 - The app requests the product from Apple and uses Apple's localized display price; no price is hardcoded in the app.
 - A successful, matching, non-revoked transaction unlocks the remaining lessons and is finished with StoreKit.
-- Restore Purchase checks the signed-in store account and restores an existing entitlement. A pending or canceled transaction does not unlock the course.
+- Restore Purchase checks the signed-in store account and restores an existing entitlement. A pending transaction does not unlock the course; canceling the Apple sign-in sheet leaves the offer unchanged and does not display a technical error.
 - TestFlight builds identified by StoreKit as sandbox get free full-course access. This does not create a purchase or charge testers. A production App Store transaction is still required for paid access.
 - The entitlement is cached on the device and reconciled against StoreKit when the store connects. There is no server receipt-verification service in this release.
 

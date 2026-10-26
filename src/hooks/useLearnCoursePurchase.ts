@@ -26,6 +26,11 @@ const canDetectTestFlightEnvironment = Platform.OS === 'ios'
   && !__DEV__
   && Constants.executionEnvironment === ExecutionEnvironment.Standalone;
 
+function isUserCancelledPurchaseError(error: unknown): boolean {
+  if (isUserCancelledError(error)) return true;
+  return error instanceof Error && /user-cancelled|user-canceled/i.test(error.message);
+}
+
 async function finishPurchaseIfNeeded(purchase: Purchase): Promise<void> {
   const isAlreadyAcknowledged = 'isAcknowledgedAndroid' in purchase
     && purchase.isAcknowledgedAndroid === true;
@@ -121,8 +126,8 @@ export function useLearnCoursePurchase() {
 
   const handlePurchaseError = useCallback((error: ExpoPurchaseError) => {
     setIsPurchasing(false);
-    if (error.code === ErrorCode.UserCancelled || isUserCancelledError(error)) return;
-    setErrorMessage(error.message || 'The purchase could not be completed.');
+    if (error.code === ErrorCode.UserCancelled || isUserCancelledPurchaseError(error)) return;
+    setErrorMessage('The purchase could not be completed.');
   }, []);
 
   const handleStoreError = useCallback((error: Error) => {
@@ -233,7 +238,9 @@ export function useLearnCoursePurchase() {
       });
     } catch (error) {
       setIsPurchasing(false);
-      setErrorMessage(error instanceof Error ? error.message : 'The purchase could not be started.');
+      if (!isUserCancelledPurchaseError(error)) {
+        setErrorMessage('The purchase could not be started.');
+      }
     }
   }, [connected, isCheckingStoreEnvironment, isPurchasing, isTestFlightFreeAccess, requestPurchase, unlockProduct]);
 
@@ -263,7 +270,9 @@ export function useLearnCoursePurchase() {
         setNotice('No full-course purchase was found for this store account.');
       }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Could not restore your purchase.');
+      if (!isUserCancelledPurchaseError(error)) {
+        setErrorMessage('Could not restore your purchase.');
+      }
     } finally {
       setIsRestoring(false);
     }
