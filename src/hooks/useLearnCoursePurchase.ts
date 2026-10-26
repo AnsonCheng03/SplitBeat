@@ -28,7 +28,23 @@ const canDetectTestFlightEnvironment = Platform.OS === 'ios'
 
 function isUserCancelledPurchaseError(error: unknown): boolean {
   if (isUserCancelledError(error)) return true;
-  return error instanceof Error && /user-cancelled|user-canceled/i.test(error.message);
+
+  const message = error instanceof Error
+    ? error.message
+    : typeof error === 'string'
+      ? error
+      : typeof error === 'object' && error !== null && 'message' in error
+        ? String(error.message)
+        : '';
+
+  let details = '';
+  try {
+    details = JSON.stringify(error);
+  } catch {
+    // Some native error wrappers are not serializable; their message is still checked above.
+  }
+
+  return /user-cancelled|user-canceled/i.test(`${message} ${details}`);
 }
 
 async function finishPurchaseIfNeeded(purchase: Purchase): Promise<void> {
@@ -131,7 +147,8 @@ export function useLearnCoursePurchase() {
   }, []);
 
   const handleStoreError = useCallback((error: Error) => {
-    setStoreErrorMessage(error.message || 'The app store is unavailable right now.');
+    if (isUserCancelledPurchaseError(error)) return;
+    setStoreErrorMessage('The app store is unavailable right now.');
   }, []);
 
   const {

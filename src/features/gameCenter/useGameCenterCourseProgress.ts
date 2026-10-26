@@ -47,7 +47,11 @@ export function useGameCenterCourseProgress(onProgressSynced: (snapshot: LearnCo
     if (nextStatus.error) {
       syncAfterAuthentication.current = false;
       clearAuthenticationTimeout();
-      setMessage(t(nextStatus.error));
+      setMessage(t(
+        nextStatus.authenticated
+          ? nextStatus.error
+          : 'Sign in to Game Center before syncing course progress.',
+      ));
       setHasError(true);
     }
     if (syncAfterAuthentication.current && nextStatus.authenticated) {
