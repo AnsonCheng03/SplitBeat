@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
-import { createBarNoteNotationPlan } from '@/rhythm/noteNotation';
+import { createScoreFocusNotePlan } from '@/rhythm/scoreFocusNote';
 import type { ScoreRhythmEvent } from '@/types/importedScore';
 import { ScoreFocusNoteStyle1, ScoreFocusNoteStyle2 } from '@/styles/notation';
 
@@ -19,26 +19,11 @@ export function ScoreFocusNote({
   testID?: string;
 }) {
   const { t } = useI18n();
-  const showsTieContinuationRest = event?.isCrossBarTieContinuation === true;
   const [measuredLayout, setMeasuredLayout] = useState({ estimate: initialWidth, width: 0 });
   const width = measuredLayout.estimate === initialWidth && measuredLayout.width > 0
     ? measuredLayout.width
     : initialWidth;
-  const plan = useMemo(() => {
-    if (!event || width <= 0) return null;
-    const notationDurationQuarter = event.notationDurationQuarter ?? event.durationQuarter;
-    const durationQuarter = Math.max(2, notationDurationQuarter * 2);
-    return createBarNoteNotationPlan([{
-      startQuarter: (durationQuarter - notationDurationQuarter) / 2,
-      durationQuarter: notationDurationQuarter,
-      tupletNumber: event.tupletNumber,
-      ...(event.isRest || showsTieContinuationRest ? { isRest: true } : {}),
-    }], {
-      durationQuarter,
-      width,
-      size: 'full',
-    });
-  }, [event, showsTieContinuationRest, width]);
+  const plan = useMemo(() => createScoreFocusNotePlan(event, width), [event, width]);
 
   return (
     <View

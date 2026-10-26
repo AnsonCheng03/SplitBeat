@@ -2,6 +2,7 @@ import { ActivityIndicator, Modal, Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useTheme } from '@/theme/ThemeProvider';
+import type { HomeActivity, HomeActivityOption } from '@/features/home/homeActivity';
 import {
   HomeActivityPickerStyle1,
   HomeActivityPickerStyle2,
@@ -17,14 +18,6 @@ import {
   HomeActivityPickerStyle12,
   HomeActivityPickerStyle13
 } from '@/styles/home';
-
-export type HomeActivity = 'practice' | 'focus' | 'score' | 'learn';
-export interface HomeActivityOption {
-  id: HomeActivity;
-  title: string;
-  description: string;
-  testID: string;
-}
 
 export function HomeActivityPicker({
   visible,

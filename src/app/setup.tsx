@@ -1,15 +1,10 @@
 import Slider from '@react-native-community/slider';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
-import { useI18n } from '@/i18n/I18nProvider';
 import { AudioStartButton } from '@/components/AudioStartButton';
 import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsPage } from '@/components/SettingsPage';
-import { useRhythmSession } from '@/store/sessionStore';
-import type { DurationOption } from '@/types/rhythm';
-import { useTheme } from '@/theme/ThemeProvider';
+import { useSetupScreen } from '@/features/setup/useSetupScreen';
 import {
   setupStyle1,
   setupStyle2,
@@ -29,35 +24,26 @@ import {
   setupStyle16,
   setupStyle17,
   setupStyle18,
-  setupStyle19
+  setupStyle19,
 } from '@/styles/exercise';
 
-const durations: { label: string; value: DurationOption }[] = [
-  { label: '30 sec', value: 30 },
-  { label: '60 sec', value: 60 },
-  { label: '2 min', value: 120 },
-  { label: 'Endless', value: 'endless' },
-];
-
 export default function SetupScreen() {
-  const { colors } = useTheme();
-  const { settings, updateSettings, audioStatus, prepareExercise } = useRhythmSession();
-  const { t } = useI18n();
-  const [starting, setStarting] = useState(false);
-  const router = useRouter();
-
-  const start = async () => {
-    if (starting || audioStatus === 'loading') return;
-    setStarting(true);
-    try {
-      await prepareExercise();
-      router.replace('/practice');
-    } catch {
-      Alert.alert(t('Audio could not start'), t('Check your device audio settings and try again.'));
-    } finally {
-      setStarting(false);
-    }
-  };
+  const {
+    colors,
+    t,
+    settings,
+    audioStatus,
+    starting,
+    durations,
+    onStartPractice,
+    onDecreaseTempo,
+    onIncreaseTempo,
+    onTempoChange,
+    onDurationChange,
+    startAccessibilityLabel,
+    startTitle,
+    startSubtitle,
+  } = useSetupScreen();
 
   return (
     <SettingsPage
@@ -73,16 +59,10 @@ export default function SetupScreen() {
             variant="wide"
             status={starting ? 'loading' : audioStatus}
             disabled={starting || audioStatus === 'loading'}
-            onPress={() => void start()}
-            accessibilityLabel={
-              audioStatus === 'error'
-                ? 'Retry audio setup before starting exercise'
-                : audioStatus === 'ready'
-                  ? 'Start exercise'
-                  : 'Loading audio engine'
-            }
-            title={starting ? 'STARTING SESSION…' : audioStatus === 'ready' ? 'START PRACTICE' : audioStatus === 'error' ? 'RETRY AUDIO SETUP' : 'PREPARING AUDIO…'}
-            subtitle={audioStatus === 'ready' ? 'Tap to begin your session' : audioStatus === 'error' ? 'Check audio setup and tap to retry' : 'Preparing the metronome and hand sounds'}
+            onPress={() => void onStartPractice()}
+            accessibilityLabel={startAccessibilityLabel}
+            title={startTitle}
+            subtitle={startSubtitle}
           />
         </View>
       )}
@@ -101,7 +81,7 @@ export default function SetupScreen() {
               testID="setup.tempo.decrease"
               accessibilityRole="button"
               accessibilityLabel={t('Decrease tempo')}
-              onPress={() => updateSettings({ bpm: Math.max(40, settings.bpm - 1) })}
+              onPress={onDecreaseTempo}
               style={setupStyle10({ colors })}
             >
               <Text style={setupStyle11({ colors })}>−</Text>
@@ -113,7 +93,7 @@ export default function SetupScreen() {
               maximumValue={200}
               step={1}
               value={settings.bpm}
-              onValueChange={(bpm) => updateSettings({ bpm })}
+              onValueChange={onTempoChange}
               minimumTrackTintColor={colors.left}
               maximumTrackTintColor={colors.line}
               thumbTintColor={colors.text}
@@ -122,7 +102,7 @@ export default function SetupScreen() {
               testID="setup.tempo.increase"
               accessibilityRole="button"
               accessibilityLabel={t('Increase tempo')}
-              onPress={() => updateSettings({ bpm: Math.min(200, settings.bpm + 1) })}
+              onPress={onIncreaseTempo}
               style={setupStyle13({ colors })}
             >
               <Text style={setupStyle14({ colors })}>+</Text>
@@ -139,7 +119,7 @@ export default function SetupScreen() {
           <SettingsChoiceRow
             options={durations}
             value={settings.durationSeconds}
-            onChange={(durationSeconds) => updateSettings({ durationSeconds })}
+            onChange={onDurationChange}
             testIDPrefix="setup.duration"
           />
         </View>

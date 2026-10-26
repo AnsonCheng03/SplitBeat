@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { View } from 'react-native';
 import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
-import { createNoteNotationPlan, fitNotationScale, type NoteNotationSize } from '@/rhythm/noteNotation';
+import { createRhythmSymbolNotationModel } from '@/rhythm/rhythmSymbolNotation';
 import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import type { Subdivision, TimeSignature } from '@/types/rhythm';
 import { RhythmSymbolStyle1, RhythmSymbolStyle2 } from '@/styles/notation';
@@ -22,16 +22,18 @@ interface RhythmSymbolProps {
   readyTestID?: string;
 }
 
-function notationSize(compact: boolean, mini: boolean): NoteNotationSize {
-  if (mini) return 'mini';
-  return compact ? 'compact' : 'full';
-}
-
 export function RhythmSymbol({ subdivision, color, compact = false, mini = false, timeSignature = '4/4', scale = 1, maxWidth, maxHeight, groupWidth, rest = false, readyTestID }: RhythmSymbolProps) {
   const { t } = useI18n();
-  const size = notationSize(compact, mini);
-  const plan = useMemo(() => createNoteNotationPlan(subdivision, size, timeSignature, groupWidth), [groupWidth, size, subdivision, timeSignature]);
-  const fittedScale = fitNotationScale(plan.width, plan.height, scale, maxWidth, maxHeight);
+  const { plan, fittedScale } = useMemo(() => createRhythmSymbolNotationModel({
+    subdivision,
+    compact,
+    mini,
+    timeSignature,
+    scale,
+    maxWidth,
+    maxHeight,
+    groupWidth,
+  }), [compact, groupWidth, maxHeight, maxWidth, mini, scale, subdivision, timeSignature]);
   const notation = <NoteNotation
     plan={plan}
     color={color}

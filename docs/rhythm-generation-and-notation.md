@@ -61,7 +61,9 @@ For the intended “two beats, three notes on each beat” exercise, select `2/4
 
 ## Screen component boundaries
 
-Route screens own navigation, session state, and composition. Reusable components own a focused display area or interaction. The session provider is a small React context wrapper; `src/store/useSessionController.ts` composes the session lifecycle, while `useSessionClock()` owns repeat scheduling and `useSessionPersistence.ts` owns the three local practice-history collections.
+`.tsx` files render screens and reusable UI. Put navigation, session state, data loading and saving, audio or Game Center operations, and domain calculations in `.ts` feature hooks or domain modules. Keep only view-specific rendering and animation behavior next to the UI. Route files should compose controller state, named actions, and focused components rather than implement workflows inline.
+
+Reusable components own a focused display area or interaction. The session provider is a small React context wrapper; `src/store/useSessionController.ts` composes the session lifecycle, while `useSessionClock()` owns repeat scheduling and `useSessionPersistence.ts` owns the three local practice-history collections.
 
 Keep route and workflow functions as readable sequences of named steps. A helper should have one clear responsibility that its name describes; when a function validates input, persists data, and changes UI state, separate those actions into focused functions or feature hooks. Components follow the same rule: the parent composes focused sections, while each child owns one display area or interaction. Avoid files that only re-export other modules.
 

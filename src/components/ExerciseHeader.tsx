@@ -4,6 +4,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { ChoiceChip } from '@/components/ExercisePatternPicker';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { DurationOption } from '@/types/rhythm';
+import type { ExerciseDurationOption, ExerciseTab } from '@/features/exercise/exerciseTypes';
 import {
   ExerciseHeaderStyle1,
   ExerciseHeaderStyle2,
@@ -20,12 +21,6 @@ import {
   ExerciseHeaderStyle13,
   ExerciseHeaderStyle14
 } from '@/styles/exercise';
-
-export type ExerciseTab = 'review' | 'later' | 'pair' | 'bar';
-export interface ExerciseDurationOption {
-  label: string;
-  value: DurationOption;
-}
 
 export function ExerciseHeader({
   progressCount,

@@ -2,7 +2,7 @@ import { View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { PatternPicker, PrimaryButton } from '@/components/ExercisePatternPicker';
-import type { PatternSelection } from '@/components/ExercisePatternPicker';
+import type { PatternSelection } from '@/features/exercise/exerciseTypes';
 import type { MixturePattern } from '@/rhythm/mixtures';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { TimeSignature } from '@/types/rhythm';

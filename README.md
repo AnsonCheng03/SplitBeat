@@ -60,6 +60,7 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 ## Architecture
 
 - `src/app/` contains the mode-select home, guided course, focused exercise and typed-bar editor, session setup, separate rhythm/audio/appearance/timing settings pages, practice, score import, results, and records routes.
+- `.tsx` files contain screen and component markup. Route state, navigation, data loading and saving, audio or Game Center operations, and domain calculations belong in `.ts` feature hooks or domain modules; leave only view-specific rendering and animation behavior with the UI.
 - Route and workflow functions compose clearly named steps; feature hooks own focused lifecycles and persistence, while components render one screen area or interaction. Keep helpers cohesive and avoid export-only files.
 - `src/theme/ThemeProvider.tsx` loads and saves the appearance choice and provides the active palette to screens and components; `src/theme.ts` defines dark and light tokens.
 - The root layout warms VexFlow's DOM renderer on app launch, and exercise preparation waits for that notation preload before opening practice.
@@ -73,6 +74,7 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 - `src/audio/` synthesizes selectable metronome and hand clicks, a generated beat-synced accompaniment, and session cues; it schedules all sounds on the native audio clock.
 - `src/store/` owns session state, prepares the audio context and offline click sounds at app startup, and persists exercise settings, course progress, combination accuracy, and summary-only session history locally. Expected notes and actual tap timestamps remain in the active result screen for visual replay; shaking on the results page reveals an optional JSON diagnostics export.
 - `src/components/` contains reusable symbols, settings controls, beat indicators, start buttons, and large touch zones. Every displayed rhythm note uses VexFlow's engraved notehead, stem, flag, beam, and dot glyphs in an offline Expo DOM view; the native planner supplies note positions and overlay metadata. The renderer reserves bar-edge space for flags and dots so the final notes stay visible.
+- `src/features/` contains screen controllers and UI-facing workflows as `.ts` hooks. Route `.tsx` modules should mostly destructure a controller and compose the returned view state and named actions into components.
 - `src/styles/` keeps React Native and notation DOM styles outside TSX, grouped by app area; state- and theme-dependent styles are small functions that receive their changing values.
 - `expo-build-properties` enables the iOS scene lifecycle required by iOS 27 and builds React Native from source, avoiding a missing prebuilt framework when launching the iPad simulator.
 - The metronome synthesizes output and never records audio. A version-pinned postinstall patch disables the audio library's unused iOS microphone permission methods; the app does not request microphone access.

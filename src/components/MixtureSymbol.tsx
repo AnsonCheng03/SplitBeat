@@ -2,9 +2,7 @@ import { useMemo } from 'react';
 import { View } from 'react-native';
 import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
-import { createRhythmSymbolNotationPlan, fitNotationScale, type NoteNotationSize } from '@/rhythm/noteNotation';
-import { mixtureNotationEvents } from '@/rhythm/mixtureNotation';
-import { getMixturePattern } from '@/rhythm/mixtures';
+import { createMixtureSymbolNotationModel } from '@/rhythm/mixtureNotation';
 import type { MixturePatternId } from '@/types/rhythm';
 import { MixtureSymbolStyle1, MixtureSymbolStyle2 } from '@/styles/notation';
 
@@ -33,27 +31,15 @@ export function MixtureSymbol({
   readyTestID?: string;
 }) {
   const { t } = useI18n();
-  const pattern = getMixturePattern(mixtureId);
-  const size: NoteNotationSize = mini ? 'mini' : compact ? 'compact' : 'full';
-  const notationWidth = mini
-    ? Math.min(120, Math.max(42, pattern.atoms.length * 6))
-    : compact
-    ? Math.min(112, Math.max(58, pattern.atoms.length * 7))
-    : Math.min(220, Math.max(82, pattern.atoms.length * 12));
-  const noteEvents = useMemo(() => mixtureNotationEvents(pattern), [pattern]);
-  const symbolWidth = groupWidth ?? notationWidth;
-  const shortestEvent = noteEvents.reduce((shortest, event) => Math.min(shortest, event.durationQuarter), pattern.durationQuarter);
-  const noteSpacing = symbolWidth * shortestEvent / pattern.durationQuarter;
-  const baseHeadWidth = size === 'mini' ? 4.2 : size === 'compact' ? 7 : 9.2;
-  const noteHeadWidth = Math.max(size === 'full' ? 3.4 : 2.4, Math.min(baseHeadWidth, noteSpacing * 0.72));
-  const plan = useMemo(() => createRhythmSymbolNotationPlan(noteEvents, {
-    durationQuarter: pattern.durationQuarter,
-    width: symbolWidth,
-    size,
-    noteHeadWidth,
-    beamGroupQuarterNotes: pattern.durationQuarter,
-  }), [noteEvents, noteHeadWidth, pattern.durationQuarter, size, symbolWidth]);
-  const fittedScale = fitNotationScale(plan.width, plan.height, scale, maxWidth, maxHeight);
+  const { pattern, plan, fittedScale } = useMemo(() => createMixtureSymbolNotationModel({
+    mixtureId,
+    compact,
+    mini,
+    scale,
+    maxWidth,
+    maxHeight,
+    groupWidth,
+  }), [compact, groupWidth, maxHeight, maxWidth, mini, mixtureId, scale]);
 
   return (
     <View style={MixtureSymbolStyle1({ plan, fittedScale })}>

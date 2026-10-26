@@ -1,17 +1,10 @@
 import Slider from '@react-native-community/slider';
-import { useEffect } from 'react';
-import { useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { SettingsPage } from '@/components/SettingsPage';
 import { TimingCalibration } from '@/components/TimingCalibration';
-import {
-  DEFAULT_GOOD_WINDOW_MS,
-  MAX_GOOD_WINDOW_MS,
-  MIN_GOOD_WINDOW_MS,
-} from '@/rhythm/timingCalibration';
-import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
+import { useTimingSettingsScreen } from '@/features/timing/useTimingSettingsScreen';
 import {
   timingStyle1,
   timingStyle2,
@@ -25,24 +18,23 @@ import {
   timingStyle10
 } from '@/styles/settings';
 
-function signedMilliseconds(value: number): string {
-  return `${value > 0 ? '+' : ''}${value} ms`;
-}
-
 export default function TimingSettingsScreen() {
-  const { colors } = useTheme();
-  const { settings, featureFlags, updateSettings } = useRhythmSession();
-  const router = useRouter();
-  useEffect(() => {
-    if (!featureFlags.timingCalibration) router.replace('/setup');
-  }, [featureFlags.timingCalibration, router]);
-
-  const reset = () =>
-    updateSettings({
-      leftTapOffsetMs: 0,
-      rightTapOffsetMs: 0,
-      goodWindowMs: DEFAULT_GOOD_WINDOW_MS,
-    });
+  const {
+    colors,
+    settings,
+    updateSettings,
+    reset,
+    updateLeftOffset,
+    updateRightOffset,
+    updateGoodWindow,
+    leftOffsetTitle,
+    rightOffsetTitle,
+    goodWindowTitle,
+    strictEndpoint,
+    wideEndpoint,
+    minimumGoodWindowMs,
+    maximumGoodWindowMs,
+  } = useTimingSettingsScreen();
 
   return (
     <SettingsPage
@@ -64,7 +56,7 @@ export default function TimingSettingsScreen() {
           leftHandSound={settings.leftHandSound}
           rightHandSound={settings.rightHandSound}
           soundEnabled={settings.soundEnabled}
-          onCalibrate={(offsets) => updateSettings(offsets)}
+        onCalibrate={updateSettings}
         />
       </View>
 
@@ -81,34 +73,34 @@ export default function TimingSettingsScreen() {
 
       <SettingSlider
         testID="setup.calibration.leftOffset"
-        title={`LEFT TAP OFFSET · ${signedMilliseconds(settings.leftTapOffsetMs)}`}
+        title={leftOffsetTitle}
         value={settings.leftTapOffsetMs}
         minimum={-200}
         maximum={200}
         step={5}
         color={colors.left}
-        onChange={(leftTapOffsetMs) => updateSettings({ leftTapOffsetMs })}
+        onChange={updateLeftOffset}
       />
       <SettingSlider
         testID="setup.calibration.rightOffset"
-        title={`RIGHT TAP OFFSET · ${signedMilliseconds(settings.rightTapOffsetMs)}`}
+        title={rightOffsetTitle}
         value={settings.rightTapOffsetMs}
         minimum={-200}
         maximum={200}
         step={5}
         color={colors.right}
-        onChange={(rightTapOffsetMs) => updateSettings({ rightTapOffsetMs })}
+        onChange={updateRightOffset}
       />
       <SettingSlider
         testID="setup.calibration.goodWindow"
-        title={`ACCEPTABLE TIMING RANGE · ±${settings.goodWindowMs} MS`}
+        title={goodWindowTitle}
         value={settings.goodWindowMs}
-        minimum={MIN_GOOD_WINDOW_MS}
-        maximum={MAX_GOOD_WINDOW_MS}
+        minimum={minimumGoodWindowMs}
+        maximum={maximumGoodWindowMs}
         step={5}
         color={colors.accent}
-        onChange={(goodWindowMs) => updateSettings({ goodWindowMs })}
-        endpoints={[`STRICT · ${MIN_GOOD_WINDOW_MS} ms`, `WIDE · ${MAX_GOOD_WINDOW_MS} ms`]}
+        onChange={updateGoodWindow}
+        endpoints={[strictEndpoint, wideEndpoint]}
       />
 
     </SettingsPage>

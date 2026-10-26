@@ -1,11 +1,11 @@
-import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRhythmSession } from '@/store/sessionStore';
-import { useTheme } from '@/theme/ThemeProvider';
 import type { SessionRecord } from '@/store/sessionHistory';
+import { useRecordsScreen } from '@/features/records/useRecordsScreen';
+import { formatCompletedAt, primaryRecordAccuracy, primaryRecordHand, recordSessionTitle } from '@/features/records/recordPresentation';
+import { useTheme } from '@/theme/ThemeProvider';
 import { recordsStyle1,
   recordsStyle2,
   recordsStyle3,
@@ -43,23 +43,12 @@ import { recordsStyle1,
   recordsStyle35,
   recordsStyle36, recordsStyle37 } from '@/styles/records';
 
-function formatCompletedAt(timestamp: number, locale: 'en' | 'zh-Hant'): string {
-  return new Intl.DateTimeFormat(locale, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(timestamp));
-}
-
 function RecordRow({ record }: { record: SessionRecord }) {
   const { colors } = useTheme();
   const { locale, t } = useI18n();
-  const primaryHand = record.trainingMode === 'single-hand' ? record.singleHand : 'left';
-  const primaryAccuracy = primaryHand === 'left' ? record.leftAccuracy : record.rightAccuracy;
-  const sessionName = record.source === 'score'
-    ? record.scoreTitle || 'Imported score'
-    : record.trainingMode === 'single-hand'
-      ? 'One hand'
-      : 'Two hands';
+  const primaryHand = primaryRecordHand(record);
+  const primaryAccuracy = primaryRecordAccuracy(record);
+  const sessionName = recordSessionTitle(record);
 
   return (
     <View
@@ -91,18 +80,8 @@ function RecordRow({ record }: { record: SessionRecord }) {
 }
 
 export default function RecordsScreen() {
-  const { colors } = useTheme();
+  const { colors, sessionHistory, sessionHistoryLoaded, bestRecord, bestStreak, returnHome } = useRecordsScreen();
   const { t } = useI18n();
-  const { sessionHistory, sessionHistoryLoaded } = useRhythmSession();
-  const router = useRouter();
-  const bestRecord = sessionHistory.reduce<SessionRecord | null>(
-    (best, record) => !best || record.overallAccuracy > best.overallAccuracy ? record : best,
-    null,
-  );
-  const bestStreak = sessionHistory.reduce(
-    (best, record) => Math.max(best, record.longestCorrectStreak),
-    0,
-  );
 
   return (
     <SafeAreaView testID="records.screen" style={recordsStyle13({ colors })}>
@@ -111,7 +90,7 @@ export default function RecordsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={recordsStyle14()}>
-          <Pressable testID="records.home" accessibilityRole="button" accessibilityLabel={t('Return home')} onPress={() => router.replace('/')} hitSlop={8} style={recordsStyle15()}>
+          <Pressable testID="records.home" accessibilityRole="button" accessibilityLabel={t('Return home')} onPress={returnHome} hitSlop={8} style={recordsStyle15()}>
             <Text style={recordsStyle16({ colors })}>‹  HOME</Text>
           </Pressable>
           <Text style={recordsStyle17({ colors })}>ON THIS DEVICE</Text>
@@ -130,7 +109,7 @@ export default function RecordsScreen() {
             <Text style={recordsStyle23({ colors })}>
               Finish a practice session and your accuracy will appear here.
             </Text>
-            <Pressable testID="records.start" onPress={() => router.replace('/')} style={recordsStyle24({ colors })}>
+            <Pressable testID="records.start" onPress={returnHome} style={recordsStyle24({ colors })}>
               <Text style={recordsStyle25({ colors })}>START PRACTICE</Text>
             </Pressable>
           </View>

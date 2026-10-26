@@ -3,8 +3,8 @@ import { View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
-import { createBarNoteNotationPlan, createSharedBarNoteAnchorInsets, type NoteNotationSize } from '@/rhythm/noteNotation';
-import { scoreNotationEventsForSpan } from '@/rhythm/scoreStaff';
+import { scoreLaneHeight, createScoreRhythmLaneModel } from '@/rhythm/scoreRhythmLayout';
+import type { NoteNotationSize } from '@/rhythm/noteNotation';
 import type { ScoreRhythmEvent } from '@/types/importedScore';
 import { useTheme } from '@/theme/ThemeProvider';
 import {
@@ -15,10 +15,6 @@ import {
   ScoreRhythmLaneStyle5,
   ScoreRhythmLaneStyle6
 } from '@/styles/notation';
-
-export function scoreLaneHeight(size: NoteNotationSize): number {
-  return size === 'compact' ? 48 : 60;
-}
 
 export function RhythmTrack({
   label,
@@ -54,33 +50,15 @@ export function RhythmTrack({
   const notationWidth = measuredLayout.estimate === initialNotationWidth && measuredLayout.width > 0
     ? measuredLayout.width
     : initialNotationWidth;
-  const notationEvents = useMemo(
-    () => scoreNotationEventsForSpan(events, durationQuarter),
-    [durationQuarter, events],
-  );
-  const alignedNotationEventGroups = useMemo(
-    () => alignmentEventGroups?.map((group) => scoreNotationEventsForSpan(group, durationQuarter)) ?? [notationEvents],
-    [alignmentEventGroups, durationQuarter, notationEvents],
-  );
-  const anchorInsets = useMemo(() => notationWidth > 0
-    ? createSharedBarNoteAnchorInsets(alignedNotationEventGroups, {
-      durationQuarter,
-      width: notationWidth,
-      size,
-    })
-    : undefined, [alignedNotationEventGroups, durationQuarter, notationWidth, size]);
-  const noteCount = useMemo(() => events.filter((event) => !event.isRest).length, [events]);
-  const restCount = events.length === 0 ? 1 : events.filter((event) => event.isRest).length;
+  const { plan, noteCount, restCount } = useMemo(() => createScoreRhythmLaneModel({
+    events,
+    alignmentEventGroups,
+    durationQuarter,
+    width: notationWidth,
+    size,
+    beamGroupQuarterNotes,
+  }), [alignmentEventGroups, beamGroupQuarterNotes, durationQuarter, events, notationWidth, size]);
   const restDescription = t(restCount === 1 ? '{count} rest' : '{count} rests', { count: restCount });
-  const plan = useMemo(() => notationWidth > 0
-    ? createBarNoteNotationPlan(notationEvents, {
-      durationQuarter,
-      width: notationWidth,
-      size,
-      beamGroupQuarterNotes,
-      anchorInsets,
-    })
-    : null, [anchorInsets, beamGroupQuarterNotes, durationQuarter, notationEvents, notationWidth, size]);
 
   return (
     <View style={ScoreRhythmLaneStyle1({ laneHeight, minimal })}>

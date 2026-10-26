@@ -6,7 +6,8 @@ import { RhythmSymbol } from '@/components/RhythmSymbol';
 import { patternSelectionLabel } from '@/i18n/patternLabels';
 import type { MixturePattern } from '@/rhythm/mixtures';
 import { SUBDIVISIONS } from '@/types/rhythm';
-import type { Hand, MixturePatternId, Subdivision, TimeSignature } from '@/types/rhythm';
+import type { Hand, TimeSignature } from '@/types/rhythm';
+import type { PatternSelection } from '@/features/exercise/exerciseTypes';
 import { useTheme } from '@/theme/ThemeProvider';
 import {
   ExercisePatternPickerStyle1,
@@ -19,8 +20,6 @@ import {
   ExercisePatternPickerStyle8,
   ExercisePatternPickerStyle9
 } from '@/styles/exercise';
-
-export type PatternSelection = { subdivision: Subdivision; mixture?: MixturePatternId; rest: boolean };
 
 export function PatternPicker({ hand, selection, mixtures, includeSixtyFourth, timeSignature, onChange }: { hand: Hand; selection: PatternSelection; mixtures: readonly MixturePattern[]; includeSixtyFourth: boolean; timeSignature: TimeSignature; onChange: (selection: PatternSelection) => void }) {
   const { colors } = useTheme();
