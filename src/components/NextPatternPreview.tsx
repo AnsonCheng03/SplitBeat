@@ -2,15 +2,13 @@ import { useLayoutEffect, useState } from 'react';
 import { Animated, Easing, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
-import { RhythmSymbol } from '@/components/RhythmSymbol';
-import { MixtureSymbol } from '@/components/MixtureSymbol';
+import { NextRhythmPatternCard } from '@/components/NextRhythmPatternCard';
 import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
 import { patternLabelForHand } from '@/rhythm/mixtures';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
-import type { ExerciseStep, Hand, MixturePatternId, Subdivision, TimeSignature } from '@/types/rhythm';
+import type { ExerciseStep, Hand, TimeSignature } from '@/types/rhythm';
 import {
-  NextPatternPreviewStyle1,
   NextPatternPreviewStyle2,
   NextPatternPreviewStyle3,
   NextPatternPreviewStyle4,
@@ -20,8 +18,6 @@ import {
   NextPatternPreviewStyle8,
   NextPatternPreviewStyle9,
   NextPatternPreviewStyle10,
-  NextPatternPreviewStyle11,
-  NextPatternPreviewStyle12
 } from '@/styles/notation';
 
 interface NextPatternPreviewProps {
@@ -43,38 +39,7 @@ interface NextPatternPreviewProps {
   beamGroupQuarterNotes?: number;
   focusedHand?: Hand;
   groupWidth: number;
-  maxNoteWidth: number;
   maxNoteHeight: number;
-}
-
-interface HandPreviewProps {
-  hand: Hand;
-  subdivision: Subdivision;
-  mixtureId?: MixturePatternId;
-  rest: boolean;
-  timeSignature: TimeSignature;
-  compact: boolean;
-  colorOverride?: string;
-  groupWidth: number;
-  maxNoteWidth: number;
-  maxNoteHeight: number;
-  readyTestID: string;
-}
-
-function HandPreview({ hand, subdivision, mixtureId, rest, timeSignature, compact, colorOverride, groupWidth, maxNoteWidth, maxNoteHeight, readyTestID }: HandPreviewProps) {
-  const { colors } = useTheme();
-  const color = colorOverride ?? (hand === 'left' ? colors.left : colors.right);
-  return (
-    <View style={NextPatternPreviewStyle1({ compact })}>
-      {rest ? (
-        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} mini scale={1} groupWidth={groupWidth} maxWidth={maxNoteWidth} maxHeight={maxNoteHeight} readyTestID={readyTestID} rest />
-      ) : mixtureId ? (
-        <MixtureSymbol mixtureId={mixtureId} color={color} mini scale={1} groupWidth={groupWidth} maxWidth={maxNoteWidth} maxHeight={maxNoteHeight} readyTestID={readyTestID} />
-      ) : (
-        <RhythmSymbol subdivision={subdivision} color={color} timeSignature={timeSignature} mini scale={1} groupWidth={groupWidth} maxWidth={maxNoteWidth} maxHeight={maxNoteHeight} readyTestID={readyTestID} />
-      )}
-    </View>
-  );
 }
 
 export function NextPatternPreview({
@@ -96,7 +61,6 @@ export function NextPatternPreview({
   beamGroupQuarterNotes = 1,
   focusedHand,
   groupWidth,
-  maxNoteWidth,
   maxNoteHeight,
 }: NextPatternPreviewProps) {
   const { colors } = useTheme();
@@ -204,29 +168,15 @@ export function NextPatternPreview({
             />
           </View>
         ) : step ? (
-          <View style={NextPatternPreviewStyle11()}>
-            {focusedHand ? (
-              <HandPreview
-                hand={focusedHand}
-                subdivision={focusedHand === 'left' ? step.leftSubdivision : step.rightSubdivision}
-                mixtureId={focusedHand === 'left' ? step.leftMixture : step.rightMixture}
-                rest={focusedHand === 'left' ? step.leftRest : step.rightRest}
-                timeSignature={timeSignature}
-                compact={compact}
-                colorOverride={colors.accent}
-                groupWidth={groupWidth}
-                maxNoteWidth={maxNoteWidth}
-                maxNoteHeight={maxNoteHeight}
-                readyTestID={`practice.nextPattern.${focusedHand}.ready`}
-              />
-            ) : (
-              <>
-                <HandPreview hand="left" subdivision={step.leftSubdivision} mixtureId={step.leftMixture} rest={step.leftRest} timeSignature={timeSignature} compact={compact} groupWidth={groupWidth} maxNoteWidth={maxNoteWidth} maxNoteHeight={maxNoteHeight} readyTestID="practice.nextPattern.left.ready" />
-                <View style={NextPatternPreviewStyle12({ colors })} />
-                <HandPreview hand="right" subdivision={step.rightSubdivision} mixtureId={step.rightMixture} rest={step.rightRest} timeSignature={timeSignature} compact={compact} groupWidth={groupWidth} maxNoteWidth={maxNoteWidth} maxNoteHeight={maxNoteHeight} readyTestID="practice.nextPattern.right.ready" />
-              </>
-            )}
-          </View>
+          <NextRhythmPatternCard
+            step={step}
+            countdown={countdown}
+            compact={compact}
+            timeSignature={timeSignature}
+            focusedHand={focusedHand}
+            groupWidth={groupWidth}
+            maxNoteHeight={maxNoteHeight}
+          />
         ) : null}
       </View>
     </Animated.View>

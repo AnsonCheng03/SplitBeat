@@ -909,6 +909,7 @@ const TRADITIONAL_CHINESE: Record<string, string> = {
   'NOTE': '音符',
   'RIGHT HAND': '右手',
   'LEFT HAND': '左手',
+  'NEXT': '下一個',
   'NEXT BAR': '下一小節',
   'UP NEXT': '接下來',
   'SETUP': '設定',

@@ -56,7 +56,7 @@ export function PracticeRhythmDisplay({
     ? Math.min(180, Math.max(110, height * 0.25))
     : Math.min(200, Math.max(136, height * 0.27));
   const showNextPattern = Boolean(!isScoreDisplay && snapshot?.nextStep);
-  const previewTop = Math.max(topInset, 12) + (compact ? 46 : 58);
+  const previewTop = Math.max(topInset, 12) + (compact ? 35 : 47);
   const previewHeight = isScoreDisplay
     ? Math.min(220, Math.max(112, height * 0.25))
     : compact ? 124 : 104;
@@ -110,7 +110,6 @@ export function PracticeRhythmDisplay({
           beamGroupQuarterNotes={pulseQuarterNotes(settings.timeSignature)}
           focusedHand={singleHandMode ? focusedHand : undefined}
           groupWidth={nextPatternGroupWidth}
-          maxNoteWidth={notationMaxWidth}
           maxNoteHeight={Math.max(0, previewHeight - 8)}
         />
       ) : null}

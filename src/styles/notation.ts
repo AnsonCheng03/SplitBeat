@@ -38,10 +38,6 @@ export function MixtureSymbolStyle2({ plan, fittedScale }: { plan: import("@/rhy
   return { width: plan.width, height: plan.height, transform: [{ scale: fittedScale }], alignItems: 'center', justifyContent: 'center' };
 }
 
-export function NextPatternPreviewStyle1({ compact }: { compact: boolean }): import('react-native').ViewStyle {
-  return { flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: compact ? 5 : 12 };
-}
-
 export function NextPatternPreviewStyle2({ top, height, isScorePreview, leftInset, rightInset, slideProgress }: { top: number; height: number; isScorePreview: boolean; leftInset: number; rightInset: number; slideProgress: import("react-native").Animated.Value }): import('react-native').ViewStyle {
   return {
         position: 'absolute',
@@ -95,13 +91,73 @@ export function NextPatternPreviewStyle10(): import('react-native').ViewStyle {
   return { flex: 1, justifyContent: 'center' };
 }
 
-export function NextPatternPreviewStyle11(): import('react-native').ViewStyle {
-  return { flex: 1, flexDirection: 'row', alignItems: 'center' };
+export function NextPatternPreviewStyle12({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { width: 1, height: '42%', backgroundColor: colors.line };
 }
 
-export function NextPatternPreviewStyle12({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { width: 1, height: '82%', backgroundColor: colors.line };
+export const nextRhythmPatternCardWrapperStyle: import('react-native').ViewStyle = {
+  width: '19%',
+  minWidth: 160,
+  maxWidth: 360,
+  alignSelf: 'center',
+};
+
+export function nextRhythmPatternCardSurfaceStyle({ light }: { light: boolean }): import('react-native').ViewStyle {
+  return {
+    position: 'relative',
+    width: '100%',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: light ? 'rgba(112, 68, 204, 0.24)' : 'rgba(172, 145, 255, 0.28)',
+    overflow: 'hidden',
+    backgroundColor: light ? 'rgba(255, 255, 255, 0.54)' : 'rgba(25, 23, 44, 0.38)',
+  };
 }
+
+export function nextRhythmPatternCardTintStyle({ light }: { light: boolean }): import('react-native').ViewStyle {
+  return {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: light ? 'rgba(255, 255, 255, 0.16)' : 'rgba(12, 12, 24, 0.16)',
+  };
+}
+
+export const nextRhythmPatternCardContentStyle: import('react-native').ViewStyle = {
+  position: 'relative',
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  gap: 5,
+  zIndex: 1,
+};
+
+export function nextRhythmPatternCardHeaderStyle(): import('react-native').ViewStyle {
+  return { minHeight: 16, alignItems: 'center', justifyContent: 'center' };
+}
+
+export function nextRhythmPatternCardLabelRowStyle(): import('react-native').ViewStyle {
+  return { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' };
+}
+
+export function nextRhythmPatternCardCountdownStyle({ colors, compact }: { colors: import('@/theme').ThemeColors; compact: boolean }): import('react-native').TextStyle {
+  return { color: colors.accent, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 0.8 };
+}
+
+export const nextRhythmPatternSymbolsStyle: import('react-native').ViewStyle = {
+  width: '100%',
+  minHeight: 44,
+  flexDirection: 'row',
+  alignItems: 'center',
+};
+
+export const nextRhythmPatternHandStyle: import('react-native').ViewStyle = {
+  flex: 1,
+  minWidth: 0,
+  alignItems: 'center',
+  justifyContent: 'center',
+};
 
 export function NoteNotationStyle1({ plan }: { plan: import("@/rhythm/noteNotation").NoteNotationPlan }): import('react-native').ViewStyle {
   return { width: plan.width, height: plan.height, alignSelf: 'center', justifyContent: 'flex-end', position: 'relative' };
