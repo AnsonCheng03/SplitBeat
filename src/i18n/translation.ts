@@ -188,7 +188,7 @@ const TRADITIONAL_CHINESE: Record<string, string> = {
   'Grace note pickups': '裝飾音引入',
   'Rest before each change': '變化前休止',
   'Independent hand rests': '左右手獨立休止',
-  'BPM follows the written beat. In 6/8, 9/8, and 12/8 it counts dotted-quarter pulses.': 'BPM 會依拍號的基本拍計算。6/8、9/8 和 12/8 以附點四分音符為一拍。',
+  'BPM follows the main pulse. In 6/8, 9/8, and 12/8 it counts dotted-quarter pulses; the display counts each eighth-note beat.': '速度會依主要拍點計算。6/8、9/8 和 12/8 以附點四分音符為速度拍；畫面拍數則會逐個計算八分音符。',
   'Swing stretches binary offbeats to a 2:1 feel. Tuplets keep their even spacing.': '搖擺會把二分細分的弱拍拉成 2:1；連音仍維持平均間距。',
   'Tuplets divide one metronome beat evenly. The beat length follows your time signature. Keep at least two patterns enabled.': '連音會將一個節拍平均分割。每拍長度依拍號而定，請至少啟用兩種節奏。',
   'Choose mixed note groups to use for either hand. The shorter half-beat patterns repeat to fill a 4/4 beat.': '選擇可分配給任一手的混合音符組合。較短的半拍組合會重複填滿 4/4 的一拍。',

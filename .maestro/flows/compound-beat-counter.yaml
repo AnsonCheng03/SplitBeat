@@ -1,0 +1,49 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: LANDSCAPE_LEFT
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
+- tapOn:
+    id: home.setup
+- assertVisible:
+    id: setup.screen
+- tapOn:
+    id: setup.card.language
+- tapOn:
+    id: settings.language.choice.zh-Hant
+- tapOn:
+    id: settings.language.back
+- tapOn:
+    id: setup.card.rhythm
+- scrollUntilVisible:
+    element:
+      id: setup.timeSignature.6-8
+    direction: DOWN
+- tapOn:
+    id: setup.timeSignature.6-8
+- tapOn:
+    id: settings.rhythm.back
+- tapOn:
+    id: setup.home
+- tapOn:
+    id: home.start
+- extendedWaitUntil:
+    visible:
+      id: practice.screen
+    timeout: 15000
+- tapOn:
+    id: practice.tutorial
+- extendedWaitUntil:
+    visible:
+      id: practice.rhythmDisplay
+    timeout: 10000
+- extendedWaitUntil:
+    visible:
+      id: practice.beatPosition
+      text: 第 1 / 6 拍
+    timeout: 10000
+- takeScreenshot: compound-meter-counter-6-8

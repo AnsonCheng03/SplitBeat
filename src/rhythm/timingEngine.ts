@@ -1,5 +1,6 @@
 import { createExerciseStepGenerator } from '@/rhythm/exerciseGenerator';
 import {
+  beatCounterPosition,
   isTupletSubdivision,
   roundSessionDurationToBar,
   pulseQuarterNotes,
@@ -974,6 +975,10 @@ export class RhythmTimingEngine {
   private createSnapshot(now: number, wallNow: number): SessionSnapshot {
     const elapsed = now - this.sessionStartTime;
     const beatIndex = Math.max(0, Math.floor(elapsed / this.beatMs));
+    const counterPosition = beatCounterPosition(
+      Math.max(0, elapsed / this.beatMs),
+      this.settings.timeSignature,
+    );
     const stepIndex = Math.floor(beatIndex / this.patternChangeIntervalBeats);
     const currentStep = this.getStep(stepIndex);
     const barStartBeat = Math.floor(beatIndex / this.beatsPerBar) * this.beatsPerBar;
@@ -1024,6 +1029,8 @@ export class RhythmTimingEngine {
       beatsPerBar: this.beatsPerBar,
       beatIndex,
       beatInBar: beatIndex % this.beatsPerBar,
+      counterBeatsPerBar: counterPosition.beatsPerBar,
+      counterBeatInBar: counterPosition.beatInBar,
       isRest: !this.importedScore && this.isRestAt(now),
       currentStep,
       barStartBeat,

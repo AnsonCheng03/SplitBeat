@@ -1,5 +1,6 @@
 import { TUPLET_SUBDIVISIONS } from '@/types/rhythm';
 import type { RhythmicFeel, Subdivision, TimeSignature, TupletSubdivision } from '@/types/rhythm';
+import { barPositionForBeat } from '@/rhythm/barPosition';
 
 export const SUBDIVISION_LABELS: Record<Subdivision, string> = {
   quarter: 'Quarter (Crotchet)',
@@ -92,6 +93,29 @@ export function tupletCount(subdivision: TupletSubdivision): number {
 
 export function pulseQuarterNotes(timeSignature: TimeSignature): number {
   return TIME_SIGNATURE_DEFINITIONS[timeSignature].pulseQuarterNotes;
+}
+
+/**
+ * Return the written beat position for the live counter. Compound meters keep
+ * their dotted-quarter engine pulse, while the counter follows the time
+ * signature numerator (for example, six positions in 6/8).
+ */
+export function beatCounterPosition(
+  pulsePosition: number,
+  timeSignature: TimeSignature,
+): { beatInBar: number; beatsPerBar: number } {
+  const definition = TIME_SIGNATURE_DEFINITIONS[timeSignature];
+  const barPosition = barPositionForBeat(pulsePosition, definition.beatsPerBar);
+  const writtenBeatPosition =
+    (barPosition.beatInBar / definition.beatsPerBar) * definition.numerator;
+
+  return {
+    beatInBar: Math.min(
+      definition.numerator - 1,
+      Math.floor(writtenBeatPosition + 1e-9),
+    ),
+    beatsPerBar: definition.numerator,
+  };
 }
 
 export function timeSignatureMetrics(

@@ -279,6 +279,8 @@ export interface SessionSnapshot {
   beatsPerBar: number;
   beatIndex: number;
   beatInBar: number;
+  counterBeatsPerBar: number;
+  counterBeatInBar: number;
   isRest: boolean;
   currentStep: ExerciseStep;
   barStartBeat: number;

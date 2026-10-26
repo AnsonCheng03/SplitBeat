@@ -112,7 +112,7 @@ export default function RhythmSettingsScreen() {
           })}
         </View>
         <Text style={helperText}>
-          BPM follows the written beat. In 6/8, 9/8, and 12/8 it counts dotted-quarter pulses.
+          BPM follows the main pulse. In 6/8, 9/8, and 12/8 it counts dotted-quarter pulses; the display counts each eighth-note beat.
         </Text>
       </Section>
 

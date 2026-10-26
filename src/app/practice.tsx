@@ -606,8 +606,8 @@ export default function PracticeScreen() {
               <Countdown value={snapshot.countdown} compact={compact} />
             ) : snapshot ? (
               <MetronomeIndicator
-                beatInBar={snapshot.beatInBar}
-                beatsPerBar={snapshot.beatsPerBar}
+                beatInBar={snapshot.counterBeatInBar}
+                beatsPerBar={snapshot.counterBeatsPerBar}
                 isRunning={snapshot.phase === 'running'}
                 isRest={snapshot.isRest}
                 isPaused={snapshot.phase === 'paused'}

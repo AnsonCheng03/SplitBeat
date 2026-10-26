@@ -664,6 +664,33 @@ test('every supported meter reports each beat position and pattern countdown acr
   }
 });
 
+test('live beat counter follows the written time-signature numerator in every meter', () => {
+  const start = 84_000;
+  const bpm = 60;
+
+  for (const timeSignature of TIME_SIGNATURES) {
+    const [numeratorText] = timeSignature.split('/');
+    const writtenBeatsPerBar = Number(numeratorText);
+    const engine = new RhythmTimingEngine({
+      settings: { ...settings, bpm, timeSignature, durationSeconds: 'endless' },
+      sessionStartTime: start,
+      random: () => 0,
+    });
+    const { beatsPerBar, beatDurationMs } = timeSignatureMetrics(bpm, timeSignature);
+
+    for (let writtenBeat = 0; writtenBeat < writtenBeatsPerBar; writtenBeat += 1) {
+      const pulsePosition = ((writtenBeat + 0.25) * beatsPerBar) / writtenBeatsPerBar;
+      const snapshot = engine.advance(start + pulsePosition * beatDurationMs);
+
+      assert.equal(snapshot.counterBeatInBar, writtenBeat, `${timeSignature} written beat ${writtenBeat + 1}`);
+      assert.equal(snapshot.counterBeatsPerBar, writtenBeatsPerBar, `${timeSignature} counter length`);
+    }
+
+    const nextBar = engine.advance(start + beatsPerBar * beatDurationMs + 1);
+    assert.equal(nextBar.counterBeatInBar, 0, `${timeSignature} counter resets at the bar line`);
+  }
+});
+
 test('long-run timestamps use the origin formula instead of accumulating timer delays', () => {
   const start = 8_500.25;
   const beatIndex = 60_000;
