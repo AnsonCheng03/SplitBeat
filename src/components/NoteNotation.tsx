@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import type { NoteNotationPlan } from '@/rhythm/noteNotation';
+import { notationVisualCenterOffsetY } from '@/rhythm/noteNotation';
 import VexFlowNotationDOM from '@/components/VexFlowNotationDOM';
 
 export function NoteNotation({
@@ -11,6 +12,7 @@ export function NoteNotation({
   testID,
   readyTestID,
   restSymbol = false,
+  centerVisualContent = false,
   showStaffLines = false,
   staffLineColor,
   onReady,
@@ -21,12 +23,16 @@ export function NoteNotation({
   testID?: string;
   readyTestID?: string;
   restSymbol?: boolean;
+  centerVisualContent?: boolean;
   showStaffLines?: boolean;
   staffLineColor?: string;
   onReady?: () => void;
 }) {
   const [ready, setReady] = useState(false);
   const handleReady = useCallback(() => setReady(true), []);
+  const visualOffsetY = centerVisualContent && !restSymbol && !showStaffLines
+    ? notationVisualCenterOffsetY(plan)
+    : 0;
 
   return (
     <View
@@ -62,7 +68,7 @@ export function NoteNotation({
         dom={{
           scrollEnabled: false,
           bounces: false,
-          style: { position: 'absolute', left: 0, top: 0, width: plan.width, height: plan.height, backgroundColor: 'transparent' },
+          style: { position: 'absolute', left: 0, top: visualOffsetY, width: plan.width, height: plan.height, backgroundColor: 'transparent' },
         }}
       />
       {ready && readyTestID ? (
@@ -79,7 +85,7 @@ export function NoteNotation({
           style={{
             position: 'absolute',
             left: label.left,
-            top: label.top,
+            top: label.top + visualOffsetY,
             width: label.width,
             textAlign: 'center',
             color,

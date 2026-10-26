@@ -443,9 +443,9 @@ export default function PracticeScreen() {
           <View
             testID="practice.rhythmDisplay"
             pointerEvents="none"
-            style={[{ position: 'absolute', left: -insets.left, right: -insets.right, flexDirection: 'row', alignItems: 'center', backgroundColor: isScoreDisplay && !isScoreFocusDisplay ? colors.surface : 'transparent' }, rhythmDisplayStyle]}
+            style={[{ position: 'absolute', left: 0, right: 0, flexDirection: 'row', alignItems: 'center', backgroundColor: isScoreDisplay && !isScoreFocusDisplay ? colors.surface : 'transparent' }, rhythmDisplayStyle]}
           >
-            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginHorizontal: isScoreDisplay ? scoreContentMargin : singleHandMode ? 0 : '10%' }}>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginHorizontal: isScoreDisplay ? scoreContentMargin : 0 }}>
               {displayScoreMeasure ? (
                 importedScoreMeasure && scoreDisplayMode === 'focus' ? (
                   singleHandMode ? (

@@ -148,10 +148,12 @@ export function NextPatternPreview({
       style={{
         position: 'absolute',
         top,
-        left: -leftInset,
-        right: -rightInset,
+        left: 0,
+        right: 0,
         height,
-        paddingHorizontal: Math.max(16, leftInset + 18, rightInset + 18),
+        // Rhythm lanes use the same full-screen halves as the current notes.
+        // Score headers keep safe-area padding because they contain edge labels.
+        paddingHorizontal: isScorePreview ? Math.max(16, leftInset + 18, rightInset + 18) : 0,
         opacity: slideProgress,
         transform: [{ translateX: slideProgress.interpolate({ inputRange: [0, 1], outputRange: [26, 0] }) }],
       }}
@@ -159,7 +161,7 @@ export function NextPatternPreview({
       <View
         style={{
           flex: 1,
-          width: isScorePreview ? '100%' : focusedHand ? '100%' : '80%',
+          width: '100%',
           maxWidth: isScorePreview ? 1120 : undefined,
           alignSelf: 'center',
           justifyContent: 'center',

@@ -76,6 +76,24 @@ export interface NoteNotationPlan {
   noteBaselineY: number | null;
 }
 
+/** Offset that centers a complete symbol's visible geometry inside its fixed-height canvas. */
+export function notationVisualCenterOffsetY(plan: NoteNotationPlan): number {
+  const bounds = [
+    ...plan.notes.flatMap((note) => [
+      [note.headTop, note.headTop + note.headHeight],
+      [note.stemTop, note.stemTop + note.stemHeight],
+    ]),
+    ...plan.beams.map((beam) => [beam.top, beam.top + beam.height]),
+    ...plan.dots.map((dot) => [dot.top, dot.top + dot.size]),
+    ...plan.tupletLabels.map((label) => [label.top, label.top + label.fontSize + 2]),
+  ];
+  if (bounds.length === 0) return 0;
+
+  const top = Math.min(...bounds.map(([start]) => start));
+  const bottom = Math.max(...bounds.map(([, end]) => end));
+  return (plan.height - (bottom - top)) / 2 - top;
+}
+
 export function fitNotationScale(planWidth: number, planHeight: number, preferredScale: number, maxWidth?: number, maxHeight?: number): number {
   if (!Number.isFinite(planWidth) || planWidth <= 0) throw new RangeError('Notation width must be positive.');
   if (!Number.isFinite(planHeight) || planHeight <= 0) throw new RangeError('Notation height must be positive.');

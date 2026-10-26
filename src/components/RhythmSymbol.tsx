@@ -39,6 +39,7 @@ export function RhythmSymbol({ subdivision, color, compact = false, mini = false
       : t(SUBDIVISION_LABELS[subdivision])}
     readyTestID={readyTestID}
     restSymbol={rest}
+    centerVisualContent
   />;
   if (fittedScale === 1) return notation;
 

@@ -2,7 +2,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createBarNoteNotationPlan, createNoteNotationPlan, createSharedBarNoteAnchorInsets, fitNotationScale, maxRhythmSymbolWidth } from '@/rhythm/noteNotation';
+import { createBarNoteNotationPlan, createNoteNotationPlan, createSharedBarNoteAnchorInsets, fitNotationScale, maxRhythmSymbolWidth, notationVisualCenterOffsetY } from '@/rhythm/noteNotation';
 
 function assertNotationFits(plan: ReturnType<typeof createBarNoteNotationPlan>) {
   for (const note of plan.notes) {
@@ -88,6 +88,27 @@ test('paired rhythm symbols can share one full-beat display width', () => {
   assert.ok(plans.every((plan) => plan.notes[0]!.left >= 0));
   assert.ok(plans.every((plan) => plan.notes.at(-1)!.left + plan.notes.at(-1)!.headWidth <= groupWidth));
   assert.equal(plans[0]!.notes[0]!.left + plans[0]!.notes[0]!.headWidth / 2, groupWidth / 2);
+});
+
+test('full and preview rhythm symbols center their complete note groups in the same-height canvas', () => {
+  for (const size of ['full', 'mini'] as const) {
+    for (const subdivision of ['quarter', 'eighth', 'triplet', 'thirtySecond', 'sixtyFourth'] as const) {
+      const plan = createNoteNotationPlan(subdivision, size);
+      const offset = notationVisualCenterOffsetY(plan);
+      const top = Math.min(
+        ...plan.notes.flatMap((note) => [note.headTop, note.stemTop]),
+        ...plan.beams.map((beam) => beam.top),
+        ...plan.tupletLabels.map((label) => label.top),
+      );
+      const bottom = Math.max(
+        ...plan.notes.map((note) => Math.max(note.headTop + note.headHeight, note.stemTop + note.stemHeight)),
+        ...plan.beams.map((beam) => beam.top + beam.height),
+        ...plan.tupletLabels.map((label) => label.top + label.fontSize + 2),
+      );
+
+      assert.ok(Math.abs((top + bottom) / 2 + offset - plan.height / 2) < 0.00001, `${size} ${subdivision} group center`);
+    }
+  }
 });
 
 test('bar note builder beams adjacent notes according to each note duration', () => {
