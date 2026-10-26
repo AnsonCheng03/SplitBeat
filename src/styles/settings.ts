@@ -523,3 +523,23 @@ export function SettingsPageStyle16({ compact }: { compact: boolean }): import('
 export function rhythmSettingsHelperTextStyle(colors: import('@/theme').ThemeColors): import('react-native').TextStyle {
   return { color: colors.dim, fontSize: 12, lineHeight: 17, marginTop: 8 };
 }
+
+export function resetAllSettingsStyle1({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { maxWidth: 680, marginTop: 28, paddingTop: 18, borderTopWidth: 1, borderTopColor: colors.line };
+}
+
+export function resetAllSettingsStyle2({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.danger, fontSize: 12, fontWeight: '900', letterSpacing: 0.8 };
+}
+
+export function resetAllSettingsStyle3({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 6 };
+}
+
+export function resetAllSettingsStyle4({ colors, pressed }: { colors: import('@/theme').ThemeColors; pressed: boolean }): import('react-native').ViewStyle {
+  return { minWidth: 190, minHeight: 52, alignSelf: 'flex-start', alignItems: 'center', justifyContent: 'center', marginTop: 12, paddingHorizontal: 16, borderRadius: 13, borderWidth: 1, borderColor: colors.danger, backgroundColor: pressed ? colors.surfaceRaised : 'transparent' };
+}
+
+export function resetAllSettingsStyle5({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.danger, fontSize: 12, fontWeight: '900', letterSpacing: 0.5, textAlign: 'center' };
+}

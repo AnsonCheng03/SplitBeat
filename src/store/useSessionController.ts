@@ -126,6 +126,7 @@ export interface SessionContextValue {
   featureFlags: FeatureFlags;
   sessionSettings: ExerciseSettings | null;
   updateSettings: (patch: Partial<ExerciseSettings>) => void;
+  resetSettings: () => void;
   audioStatus: AudioPreparationStatus;
   prepareAudio: () => Promise<void>;
   prepareExercise: (score?: ImportedRhythmScore, options?: ExercisePreparationOptions) => Promise<void>;
@@ -500,6 +501,10 @@ export function useSessionController(): SessionContextValue {
     }
   }, []);
 
+  const resetSettings = useCallback(() => {
+    updateSettings(DEFAULT_SETTINGS);
+  }, [updateSettings]);
+
   const resetChallengeProgress = useCallback(() => {
     challengeStreaksRef.current = createChallengeStreaks();
     challengeWrongBarIndexesRef.current.clear();
@@ -809,8 +814,8 @@ export function useSessionController(): SessionContextValue {
   );
 
   const value = useMemo(
-    () => ({ settings, featureFlags, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, savedPracticePairs, savedPracticePairsLoaded, savePairsForLater, removeSavedPracticePair, discardReplayData }),
-    [settings, featureFlags, sessionSettings, updateSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, savedPracticePairs, savedPracticePairsLoaded, savePairsForLater, removeSavedPracticePair, discardReplayData],
+    () => ({ settings, featureFlags, sessionSettings, updateSettings, resetSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, savedPracticePairs, savedPracticePairsLoaded, savePairsForLater, removeSavedPracticePair, discardReplayData }),
+    [settings, featureFlags, sessionSettings, updateSettings, resetSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, savedPracticePairs, savedPracticePairsLoaded, savePairsForLater, removeSavedPracticePair, discardReplayData],
   );
 
   return value;

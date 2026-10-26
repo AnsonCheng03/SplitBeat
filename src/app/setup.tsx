@@ -4,6 +4,7 @@ import { Text } from '@/i18n/LocalizedText';
 import { AudioStartButton } from '@/components/AudioStartButton';
 import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsPage } from '@/components/SettingsPage';
+import { ResetAllSettingsButton } from '@/components/ResetAllSettingsButton';
 import { useSetupScreen } from '@/features/setup/useSetupScreen';
 import {
   setupStyle1,
@@ -124,6 +125,7 @@ export default function SetupScreen() {
           />
         </View>
       </View>
+      <ResetAllSettingsButton />
     </SettingsPage>
   );
 }
