@@ -728,7 +728,8 @@ export function createNoteNotationPlan(
   const noteDurationQuarter = isTuplet ? pulseQuarterNotes(timeSignature) / count : 1 / count;
   const slotWidth = slotWidthFor(count, size);
   const notationWidth = groupWidth ?? count * slotWidth;
-  const noteSlotWidth = notationWidth / count;
+  const noteSlotWidth = Math.min(slotWidth, notationWidth / count);
+  const noteGroupOffset = (notationWidth - noteSlotWidth * count) / 2;
   const baseHeadWidth = size === 'mini' ? 4.2 : size === 'compact' ? 7 : 9.2;
   const minimumHeadWidth = size === 'full' ? 3.4 : 2.4;
   const noteHeadWidth = groupWidth === undefined
@@ -748,7 +749,7 @@ export function createNoteNotationPlan(
     size,
     noteHeadWidth,
     beamGroupQuarterNotes: isTuplet ? pulseQuarterNotes(timeSignature) : 1,
-    noteAnchors: Array.from({ length: count }, (_, index) => (index + 0.5) * noteSlotWidth),
+    noteAnchors: Array.from({ length: count }, (_, index) => noteGroupOffset + (index + 0.5) * noteSlotWidth),
     maxBeamNotesByLevel: Array.from({ length: beamCount }, (_, beamIndex) => beamGroupSize(count, beamIndex)),
     tupletLabelFontSize: size === 'mini' ? 6 : size === 'compact' ? 8 : 11,
   });
