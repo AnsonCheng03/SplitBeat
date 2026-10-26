@@ -1,6 +1,13 @@
 import { SUBDIVISIONS } from '@/types/rhythm';
-import { generateMixturePattern } from '@/rhythm/mixtures';
-import type { ExerciseStep, MixtureNoteValue, MixturePatternId, RhythmPatternPair, Subdivision } from '@/types/rhythm';
+import {
+  createMixturePatternIdWithTrailingRests,
+  generateMixturePattern,
+  getMixturePattern,
+  isMixturePatternId,
+} from '@/rhythm/mixtures';
+import type { MixtureAtom } from '@/rhythm/mixtures';
+import { SUBDIVISION_COUNTS, isTupletSubdivision, pulseQuarterNotes, tupletCount } from '@/rhythm/subdivisions';
+import type { ExerciseStep, MixtureNoteValue, MixturePatternId, RhythmPatternPair, Subdivision, TimeSignature } from '@/types/rhythm';
 
 export interface ExerciseGeneratorOptions {
   enabledSubdivisions: Subdivision[];
@@ -10,6 +17,7 @@ export interface ExerciseGeneratorOptions {
   mixtureRestsEnabled?: boolean;
   barDurationQuarterNotes?: number;
   changeIntervalBeats: number;
+  timeSignature?: TimeSignature;
   patternPairs?: readonly RhythmPatternPair[];
   patternPairWeights?: readonly number[];
   allowHandRests?: boolean;
@@ -74,8 +82,74 @@ function selectWeightedPattern(
   return choices.at(-1)?.pattern;
 }
 
+function patternDurationQuarterNotes(
+  pattern: RhythmPatternPair,
+  hand: 'left' | 'right',
+  timeSignature: TimeSignature,
+): number {
+  const mixtureId = hand === 'left' ? pattern.leftMixture : pattern.rightMixture;
+  if (mixtureId) return getMixturePattern(mixtureId).durationQuarter;
+
+  const subdivision = hand === 'left' ? pattern.leftSubdivision : pattern.rightSubdivision;
+  return isTupletSubdivision(subdivision) ? pulseQuarterNotes(timeSignature) : 1;
+}
+
+function atomsForSubdivision(subdivision: Subdivision, timeSignature: TimeSignature): MixtureAtom[] {
+  const count = isTupletSubdivision(subdivision) ? tupletCount(subdivision) : SUBDIVISION_COUNTS[subdivision];
+  const noteDurationQuarter = isTupletSubdivision(subdivision)
+    ? pulseQuarterNotes(timeSignature) / count
+    : 1 / count;
+  return Array.from({ length: count }, () => ({ kind: 'note', durationQuarter: noteDurationQuarter }));
+}
+
+function patternAtoms(
+  pattern: RhythmPatternPair,
+  hand: 'left' | 'right',
+  timeSignature: TimeSignature,
+): readonly MixtureAtom[] {
+  const mixtureId = hand === 'left' ? pattern.leftMixture : pattern.rightMixture;
+  if (mixtureId) return getMixturePattern(mixtureId).atoms;
+
+  const subdivision = hand === 'left' ? pattern.leftSubdivision : pattern.rightSubdivision;
+  return atomsForSubdivision(subdivision, timeSignature);
+}
+
+function alignPatternPairDurations(
+  pattern: RhythmPatternPair,
+  timeSignature: TimeSignature,
+  includeSixtyFourth: boolean,
+): RhythmPatternPair {
+  if (pattern.leftRest === true || pattern.rightRest === true) return pattern;
+
+  const leftDuration = patternDurationQuarterNotes(pattern, 'left', timeSignature);
+  const rightDuration = patternDurationQuarterNotes(pattern, 'right', timeSignature);
+  if (Math.abs(leftDuration - rightDuration) <= 0.000001) return pattern;
+
+  const longerHand = leftDuration > rightDuration ? 'left' : 'right';
+  const shorterHand = longerHand === 'left' ? 'right' : 'left';
+  const targetDuration = Math.max(leftDuration, rightDuration);
+  const paddedId = createMixturePatternIdWithTrailingRests(
+    patternAtoms(pattern, shorterHand, timeSignature),
+    targetDuration,
+    includeSixtyFourth,
+  );
+  if (!paddedId) return pattern;
+
+  return shorterHand === 'left'
+    ? { ...pattern, leftSubdivision: 'quarter', leftMixture: paddedId }
+    : { ...pattern, rightSubdivision: 'quarter', rightMixture: paddedId };
+}
+
 export function createExerciseStepGenerator(options: ExerciseGeneratorOptions) {
   const random = options.random ?? Math.random;
+  const timeSignature = options.timeSignature ?? '4/4';
+  const mixtureIds = [
+    ...(options.enabledMixtures ?? []),
+    ...(options.patternPairs ?? []).flatMap((pattern) => [pattern.leftMixture, pattern.rightMixture]),
+  ].filter((mixtureId): mixtureId is MixturePatternId => isMixturePatternId(mixtureId));
+  const includeSixtyFourth = options.enabledSubdivisions.includes('sixtyFourth') ||
+    options.mixtureNoteValues?.includes('sixtyFourth') === true ||
+    mixtureIds.some((mixtureId) => getMixturePattern(mixtureId).atoms.some((atom) => atom.noteValue === 'sixtyFourth'));
   const allowed = SUBDIVISIONS.filter((subdivision) =>
     options.enabledSubdivisions.includes(subdivision),
   );
@@ -94,7 +168,10 @@ export function createExerciseStepGenerator(options: ExerciseGeneratorOptions) {
             random,
           )).flatMap((mixture) => mixture ? [mixture.id] : []);
       const candidates: WeightedPattern[] = options.patternPairs?.length
-        ? weightedPatterns(options.patternPairs, options.patternPairWeights)
+        ? weightedPatterns(
+            options.patternPairs.map((pattern) => alignPatternPairDurations(pattern, timeSignature, includeSixtyFourth)),
+            options.patternPairWeights,
+          )
         : (() => {
             const handChoices: { subdivision: Subdivision; mixtureId?: MixturePatternId }[] = [
               ...allowed.map((subdivision) => ({ subdivision })),
@@ -103,12 +180,12 @@ export function createExerciseStepGenerator(options: ExerciseGeneratorOptions) {
             ];
             return handChoices.flatMap((left) =>
               handChoices.map((right) => ({
-                pattern: {
+                pattern: alignPatternPairDurations({
                   leftSubdivision: left.subdivision,
                   rightSubdivision: right.subdivision,
                   ...(left.mixtureId ? { leftMixture: left.mixtureId } : {}),
                   ...(right.mixtureId ? { rightMixture: right.mixtureId } : {}),
-                },
+                }, timeSignature, includeSixtyFourth),
                 weight: 1,
               })),
             );

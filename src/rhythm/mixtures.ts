@@ -46,7 +46,7 @@ export const MIXTURE_NOTE_OPTIONS: readonly MixtureNoteOption[] = [
   { value: 'sixtyFourth', label: '64th', durationQuarter: 0.0625 },
 ];
 
-const MAX_MIXTURE_ATOMS = 16;
+const MAX_MIXTURE_ATOMS = 64;
 const MAX_BAR_UNITS = 448;
 const GENERATED_ID_PREFIX = 'mix1-';
 const NOTE_OPTIONS_BY_VALUE = new Map(MIXTURE_NOTE_OPTIONS.map((option) => [option.value, option]));
@@ -129,7 +129,7 @@ function createPatternId(atoms: readonly MixtureAtom[]): MixturePatternId {
 }
 
 function generatedPatternFromId(id: string): MixturePattern | undefined {
-  if (!id.startsWith(GENERATED_ID_PREFIX) || id.length > 128) return undefined;
+  if (!id.startsWith(GENERATED_ID_PREFIX) || id.length > 512) return undefined;
   const tokens = id.slice(GENERATED_ID_PREFIX.length).split('-');
   if (tokens.length < 2 || tokens.length > MAX_MIXTURE_ATOMS) return undefined;
 
@@ -158,6 +158,48 @@ function generatedPatternFromId(id: string): MixturePattern | undefined {
     atoms,
     durationQuarter: totalUnits / 64,
   };
+}
+
+/** Encode an existing note sequence with trailing rests up to a shared phrase length. */
+export function createMixturePatternIdWithTrailingRests(
+  atoms: readonly MixtureAtom[],
+  targetDurationQuarter: number,
+  includeSixtyFourth = false,
+): MixturePatternId | undefined {
+  if (!Number.isFinite(targetDurationQuarter) || targetDurationQuarter <= 0 || atoms.length === 0) return undefined;
+
+  const targetUnits = mixtureUnits(targetDurationQuarter);
+  if (Math.abs(targetDurationQuarter * 64 - targetUnits) > 0.000001 || targetUnits > MAX_BAR_UNITS) return undefined;
+
+  const copiedAtoms = atoms.map((atom) => ({ ...atom }));
+  const currentUnits = copiedAtoms.reduce((total, atom) => {
+    if (!Number.isFinite(atom.durationQuarter) || atom.durationQuarter <= 0) return Number.NaN;
+    const units = mixtureUnits(atom.durationQuarter);
+    if (Math.abs(atom.durationQuarter * 64 - units) > 0.000001) return Number.NaN;
+    return total + units;
+  }, 0);
+  if (!Number.isFinite(currentUnits) || currentUnits <= 0 || currentUnits >= targetUnits) return undefined;
+
+  let remainingUnits = targetUnits - currentUnits;
+  const restOptions = MIXTURE_NOTE_OPTIONS
+    .filter((option) => includeSixtyFourth || option.value !== 'sixtyFourth')
+    .map((option) => ({ option, units: mixtureUnits(option.durationQuarter) }))
+    .sort((first, second) => second.units - first.units);
+
+  while (remainingUnits > 0) {
+    const fittingRest = restOptions.find(({ units }) => units <= remainingUnits);
+    if (!fittingRest) return undefined;
+    copiedAtoms.push({
+      kind: 'rest',
+      durationQuarter: fittingRest.option.durationQuarter,
+      noteValue: fittingRest.option.value,
+    });
+    remainingUnits -= fittingRest.units;
+  }
+
+  if (copiedAtoms.length > MAX_MIXTURE_ATOMS || !copiedAtoms.some((atom) => atom.kind === 'note')) return undefined;
+  const id = createPatternId(copiedAtoms);
+  return generatedPatternFromId(id) ? id : undefined;
 }
 
 function selectedAtoms(
