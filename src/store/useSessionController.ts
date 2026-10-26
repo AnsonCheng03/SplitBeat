@@ -92,7 +92,7 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   changeIntervalBeats: 4,
   restBetweenChanges: false,
   handRestsEnabled: false,
-  enabledSubdivisions: ['quarter', 'eighth', 'triplet', 'sixteenth'],
+  enabledSubdivisions: ['quarter', 'eighth'],
   enabledMixtures: [],
   mixtureNoteValues: [],
   mixtureRestsEnabled: false,
