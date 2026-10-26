@@ -83,22 +83,24 @@ export function PracticePauseOverlays({
         onStop={onStop}
       />
 
-      <PausedPracticeMenu
-        snapshot={snapshot}
-        blurTarget={blurTarget}
-        compact={compact}
-        pauseActionLoading={pauseActionLoading}
-        bpmDraft={bpmDraft}
-        onBpmChange={onBpmChange}
-        rewindBars={rewindBars}
-        onRewindBarsChange={onRewindBarsChange}
-        onResume={onResume}
-        onRestart={onRestart}
-        onRestartStraight={onRestartStraight}
-        onOpenQuickSettings={onOpenQuickSettings}
-        onStop={onStop}
-        onBackHome={onBackHome}
-      />
+      {!quickSettingsOpen ? (
+        <PausedPracticeMenu
+          snapshot={snapshot}
+          blurTarget={blurTarget}
+          compact={compact}
+          pauseActionLoading={pauseActionLoading}
+          bpmDraft={bpmDraft}
+          onBpmChange={onBpmChange}
+          rewindBars={rewindBars}
+          onRewindBarsChange={onRewindBarsChange}
+          onResume={onResume}
+          onRestart={onRestart}
+          onRestartStraight={onRestartStraight}
+          onOpenQuickSettings={onOpenQuickSettings}
+          onStop={onStop}
+          onBackHome={onBackHome}
+        />
+      ) : null}
     </>
   );
 }

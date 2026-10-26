@@ -55,6 +55,8 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible: PAUSED
 - tapOn:
     id: practice.pause.liveSettings
+- assertNotVisible:
+    id: practice.pauseMenu
 - assertVisible:
     id: practice.liveSettings
 - assertVisible:
