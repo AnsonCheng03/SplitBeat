@@ -56,3 +56,17 @@ For the intended “two beats, three notes on each beat” exercise, select `2/4
 | Score editor placement and ties | `src/rhythm/scoreComposer.ts`: `noteValuesForSymbol()`, `composeRhythmScore()` |
 | Beam, note, and tuplet layout | `src/rhythm/noteNotation.ts`: `createBarNoteNotationPlan()` |
 | Shared engraving | `src/components/VexFlowNotationDOM.tsx` |
+
+## Screen component boundaries
+
+Route screens own navigation, session state, and composition. Reusable components own a focused display area or interaction. The session provider is a small React context wrapper; `src/store/useSessionController.ts` contains the session lifecycle and timing orchestration.
+
+| Screen or feature | Main components |
+| --- | --- |
+| Practice | `PracticeStatusBar`, `PracticeRhythmDisplay`, `PracticeTapZones`, `PracticeIntroOverlay`, and `PracticePauseOverlays` |
+| Score notation | `ScrollingScoreRhythm` → `ScoreRhythmMeasure` → `ScoreRhythmLane` → `NoteNotation` / `VexFlowNotationDOM` |
+| Results and replay | `ResultsOverview`, `ResultsMissedNotes`, `ResultsPerformanceBreakdown`, `ResultsFooter`, and the replay timeline components |
+| Exercise practice | `ExerciseHeader`, `ExercisePairPanel`, `ExerciseComposer`, and `ExerciseHistoryPanel` |
+| Learn course | `LearnCoursePath`, `LearnLessonTile`, and `LearnPatternPreview` |
+| Score import | `ExampleScoreBrowser`, `ScoreLibraryList`, and `ImportedScorePreview` |
+| Rhythm settings | `RhythmSettingsOptions` composes meter, pattern, and challenge settings sections |

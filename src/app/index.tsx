@@ -1,21 +1,15 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Pressable, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AudioStartButton } from '@/components/AudioStartButton';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
-
-type HomeActivity = 'practice' | 'focus' | 'score' | 'learn';
-
-interface ActivityOption {
-  id: HomeActivity;
-  title: string;
-  description: string;
-  testID: string;
-}
+import { HomeHeaderAction, HomeModeChoice } from '@/components/HomeSelection';
+import { HomeActivityPicker, HomeActivityLoading } from '@/components/HomeActivityPicker';
+import type { HomeActivity, HomeActivityOption } from '@/components/HomeActivityPicker';
 
 export default function HomeScreen() {
   const { colors } = useTheme();
@@ -28,7 +22,7 @@ export default function HomeScreen() {
   const [selectedActivity, setSelectedActivity] = useState<HomeActivity>('practice');
   const router = useRouter();
 
-  const activityOptions: ActivityOption[] = [
+  const activityOptions: HomeActivityOption[] = [
     {
       id: 'practice',
       title: 'Free practice',
@@ -170,14 +164,14 @@ export default function HomeScreen() {
             </Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 7 }}>
-            {featureFlags.sessionRecords ? <HeaderAction
+            {featureFlags.sessionRecords ? <HomeHeaderAction
               testID="home.records"
               label="MY RECORDS"
               color={colors.left}
               onPress={() => router.push('/records')}
               accessibilityLabel={t('View training records')}
             /> : null}
-            <HeaderAction
+            <HomeHeaderAction
               testID="home.setup"
               label="SETTINGS"
               color={colors.muted}
@@ -195,14 +189,14 @@ export default function HomeScreen() {
             Choose one or two hands, then start.
           </Text>
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 20, maxWidth: 520 }}>
-            <ModeChoice
+            <HomeModeChoice
               testID="home.mode.twoHand"
               mode="two-hand"
               selected={!featureFlags.oneHandMode || settings.trainingMode === 'two-hand'}
               title="Two hands"
               onPress={() => updateSettings({ trainingMode: 'two-hand' })}
             />
-            {featureFlags.oneHandMode ? <ModeChoice
+            {featureFlags.oneHandMode ? <HomeModeChoice
               testID="home.mode.singleHand"
               mode="single-hand"
               selected={settings.trainingMode === 'single-hand'}
@@ -258,194 +252,18 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <Modal
+      <HomeActivityPicker
         visible={activityPickerVisible}
-        transparent
-        animationType="fade"
-        supportedOrientations={['landscape-left', 'landscape-right']}
-        onRequestClose={() => setActivityPickerVisible(false)}
-      >
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.68)' }}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('Close mode selection')}
-            onPress={() => setActivityPickerVisible(false)}
-            style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}
-          />
-          <View style={{ width: '100%', maxWidth: 560, padding: 22, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
-            <Text style={{ color: colors.text, fontSize: 22, fontWeight: '900' }}>Select a practice mode</Text>
-            <Text style={{ color: colors.muted, fontSize: 13, marginTop: 5, marginBottom: 16 }}>
-              Choose what to practice today.
-            </Text>
-            <View style={{ gap: 8 }}>
-              {activityOptions.map((option) => {
-                const selected = currentActivity.id === option.id;
-                return (
-                  <Pressable
-                    key={option.id}
-                    testID={option.testID}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected }}
-                    onPress={() => {
-                      setSelectedActivity(option.id);
-                      setActivityPickerVisible(false);
-                    }}
-                    style={({ pressed }) => ({
-                      minHeight: 58,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 14,
-                      paddingHorizontal: 14,
-                      paddingVertical: 9,
-                      borderRadius: 13,
-                      backgroundColor: selected ? colors.surfaceRaised : colors.background,
-                      borderWidth: 1,
-                      borderColor: selected ? colors.accent : colors.line,
-                      opacity: pressed ? 0.82 : 1,
-                    })}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: selected ? colors.accent : colors.text, fontSize: 14, fontWeight: '800' }}>
-                        {option.title}
-                      </Text>
-                      <Text style={{ color: colors.muted, fontSize: 11, marginTop: 2 }}>
-                        {option.description}
-                      </Text>
-                    </View>
-                    <Text style={{ color: selected ? colors.accent : colors.dim, fontSize: 16, fontWeight: '900' }}>
-                      {selected ? '✓' : '›'}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-        </View>
-      </Modal>
+        options={activityOptions}
+        selected={currentActivity.id}
+        onClose={() => setActivityPickerVisible(false)}
+        onSelect={(activity) => {
+          setSelectedActivity(activity);
+          setActivityPickerVisible(false);
+        }}
+      />
 
-      {openingActivity ? (
-        <View
-          testID="home.activityLoading"
-          accessibilityViewIsModal
-          accessibilityState={{ busy: true }}
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            zIndex: 20,
-            elevation: 20,
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 16,
-            backgroundColor: colors.background,
-          }}
-        >
-          <ActivityIndicator size="large" color={colors.accent} />
-          <Text accessibilityLiveRegion="polite" style={{ color: colors.text, fontSize: 17, fontWeight: '800' }}>
-            {loadingMessage}
-          </Text>
-        </View>
-      ) : null}
+      {openingActivity ? <HomeActivityLoading message={loadingMessage} /> : null}
     </SafeAreaView>
-  );
-}
-
-function HeaderAction({
-  testID,
-  label,
-  color,
-  onPress,
-  accessibilityLabel,
-}: {
-  testID: string;
-  label: string;
-  color: string;
-  onPress: () => void;
-  accessibilityLabel: string;
-}) {
-  const { colors } = useTheme();
-  return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      onPress={onPress}
-      hitSlop={8}
-      style={({ pressed }) => ({
-        minHeight: 36,
-        paddingHorizontal: 13,
-        justifyContent: 'center',
-        borderRadius: 11,
-        backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-        borderWidth: 1,
-        borderColor: colors.line,
-      })}
-    >
-      <Text style={{ color, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function ModeChoice({
-  testID,
-  mode,
-  selected,
-  title,
-  onPress,
-}: {
-  testID: string;
-  mode: 'two-hand' | 'single-hand';
-  selected: boolean;
-  title: string;
-  onPress: () => void;
-}) {
-  const { colors } = useTheme();
-  const selectedColor = mode === 'single-hand' ? colors.accent : colors.left;
-
-  return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
-      onPress={onPress}
-      style={({ pressed }) => ({
-        flex: 1,
-        minHeight: 58,
-        paddingHorizontal: 15,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        borderRadius: 14,
-        backgroundColor: selected ? colors.surfaceRaised : colors.surface,
-        borderWidth: selected ? 1.5 : 1,
-        borderColor: selected ? selectedColor : colors.line,
-        opacity: pressed ? 0.82 : 1,
-      })}
-    >
-      <ModeMark mode={mode} />
-      <Text style={{ color: selected ? selectedColor : colors.text, fontSize: 15, fontWeight: '900', letterSpacing: -0.2 }}>
-        {title}
-      </Text>
-    </Pressable>
-  );
-}
-
-function ModeMark({ mode }: { mode: 'two-hand' | 'single-hand' }) {
-  const { colors } = useTheme();
-  if (mode === 'single-hand') {
-    return (
-      <View style={{ width: 25, height: 25, alignItems: 'center', justifyContent: 'center' }}>
-        <View style={{ width: 12, height: 12, borderRadius: 7, backgroundColor: colors.accent }} />
-      </View>
-    );
-  }
-
-  return (
-    <View style={{ width: 25, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-      <View style={{ width: 10, height: 10, borderRadius: 6, backgroundColor: colors.left }} />
-      <View style={{ width: 10, height: 10, borderRadius: 6, backgroundColor: colors.right }} />
-    </View>
   );
 }

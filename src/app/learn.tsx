@@ -5,17 +5,13 @@ import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FullBleedSafeArea } from '@/components/FullBleedSafeArea';
-import { RhythmSymbol } from '@/components/RhythmSymbol';
-import { SUBDIVISION_LABELS } from '@/rhythm/subdivisions';
 import {
   getLessonAvailability,
   LEARN_COURSE,
-  lessonHandPatternOptions,
-  lessonOffersHandSwaps,
   lessonProgressPercent,
   lessonSettings,
 } from '@/rhythm/learnCourse';
-import { starsForAccuracy, totalLearnStars } from '@/rhythm/learnRating';
+import { totalLearnStars } from '@/rhythm/learnRating';
 import { requiresLearnCourseUnlock } from '@/rhythm/learnCourseAccess';
 import { useLearnCoursePurchase } from '@/hooks/useLearnCoursePurchase';
 import {
@@ -27,225 +23,8 @@ import { GameCenterCourseProgressButton } from '@/components/GameCenterCoursePro
 import type { LearnCourseProgressSnapshot } from '@/rhythm/learnProgressSync';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
-import type { LearnLesson } from '@/rhythm/learnCourse';
-
-function LessonTile({
-  lesson,
-  selected,
-  completed,
-  locked,
-  paywalled,
-  rating,
-  onPress,
-}: {
-  lesson: LearnLesson;
-  selected: boolean;
-  completed: boolean;
-  locked: boolean;
-  paywalled: boolean;
-  rating?: { bestAccuracy: number; attempts: number };
-  onPress: () => void;
-}) {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const disabled = locked && !paywalled;
-  const stars = rating ? starsForAccuracy(rating.bestAccuracy) : 0;
-  const lessonStatus = completed
-    ? t(', complete')
-    : paywalled
-      ? t(', paid course, tap to unlock')
-      : locked
-        ? t(', locked')
-        : '';
-  const lessonRating = rating
-    ? t(', best {accuracy} percent, {stars} of 5 stars', { accuracy: Math.round(rating.bestAccuracy), stars })
-    : '';
-  return (
-    <Pressable
-      testID={`learn.lesson.${lesson.id}`}
-      accessibilityRole="button"
-      accessibilityLabel={t('Lesson {number}, {title}{status}{rating}', {
-        number: lesson.number,
-        title: t(lesson.title),
-        status: lessonStatus,
-        rating: lessonRating,
-      })}
-      accessibilityState={{ selected, disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => ({
-        flexGrow: 0,
-        flexBasis: 'auto',
-        width: '100%',
-        minWidth: 0,
-        minHeight: 82,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        borderRadius: 14,
-        backgroundColor: selected ? colors.surfaceRaised : colors.surface,
-        borderWidth: selected ? 1.5 : 1,
-        borderColor: selected ? colors.accent : colors.line,
-        opacity: disabled ? 0.42 : pressed ? 0.8 : 1,
-      })}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={{ color: colors.dim, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 }}>
-          {String(lesson.number).padStart(2, '0')} · {t(lesson.level)}
-        </Text>
-        <Text style={{ color: completed ? colors.left : disabled ? colors.dim : colors.accent, fontSize: 11, fontWeight: '900' }}>
-          {completed ? '✓' : paywalled ? 'PRO' : locked ? 'LOCKED' : '›'}
-        </Text>
-      </View>
-      <Text numberOfLines={1} style={{ color: disabled ? colors.muted : colors.text, fontSize: 14, fontWeight: '800', marginTop: 8 }}>
-        {lesson.title}
-      </Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 3 }}>
-        <Text numberOfLines={1} style={{ flex: 1, color: colors.muted, fontSize: 10 }}>
-          {lesson.skill}
-        </Text>
-        {rating ? (
-          <Text testID={`learn.rating.${lesson.id}`} style={{ color: colors.accent, fontSize: 9, fontWeight: '900', fontVariant: ['tabular-nums'] }}>
-            {Math.round(rating.bestAccuracy)}% · {'★'.repeat(stars)}{'☆'.repeat(5 - stars)}
-          </Text>
-        ) : completed ? (
-          <Text style={{ color: colors.dim, fontSize: 8, fontWeight: '800' }}>REPLAY FOR RATING</Text>
-        ) : null}
-      </View>
-    </Pressable>
-  );
-}
-
-function PatternPreview({ lesson }: { lesson: LearnLesson }) {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const weights = lesson.handSubdivisionWeights;
-  if (weights) {
-    const distribution = Object.entries(weights)
-      .filter((entry): entry is [LearnLesson['patternPairs'][number]['leftSubdivision'], number] => entry[1] > 0);
-    return (
-      <View style={{ marginTop: 12 }}>
-        <Text style={{ color: colors.muted, fontSize: 8, fontWeight: '900', letterSpacing: 0.8 }}>
-          LEFT + RIGHT · WEIGHTED MIX
-        </Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 7 }}>
-          {distribution.map(([subdivision, weight]) => (
-            <View
-              key={subdivision}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 5, borderRadius: 9, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}
-            >
-              <RhythmSymbol subdivision={subdivision} color={colors.accent} mini timeSignature={lesson.timeSignature} />
-              <Text style={{ color: colors.text, fontSize: 8, fontWeight: '800' }}>
-                {Math.round(weight)}% {t(SUBDIVISION_LABELS[subdivision])}
-              </Text>
-            </View>
-          ))}
-        </View>
-        <Text style={{ color: colors.dim, fontSize: 8, fontWeight: '700', marginTop: 6 }}>
-          Each hand chooses independently from this mix.
-        </Text>
-        {lessonOffersHandSwaps(lesson) ? (
-          <Text style={{ color: colors.accent, fontSize: 8, fontWeight: '900', letterSpacing: 0.8, marginTop: 5 }}>
-            ↔ BOTH HANDS TAKE EACH RHYTHM
-          </Text>
-        ) : null}
-      </View>
-    );
-  }
-
-  if (lesson.patternPairs.length > 1) {
-    const leftOptions = lessonHandPatternOptions(lesson, 'left');
-    const rightOptions = lessonHandPatternOptions(lesson, 'right');
-    return (
-      <View style={{ marginTop: 12 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'stretch', gap: 10 }}>
-          <PatternNoteOptions label="LEFT" options={leftOptions} color={colors.left} timeSignature={lesson.timeSignature} />
-          {lesson.trainingMode === 'two-hand' ? (
-            <PatternNoteOptions label="RIGHT" options={rightOptions} color={colors.right} timeSignature={lesson.timeSignature} />
-          ) : null}
-        </View>
-        {lessonOffersHandSwaps(lesson) ? (
-          <Text style={{ color: colors.accent, fontSize: 8, fontWeight: '900', letterSpacing: 0.8, marginTop: 8 }}>
-            ↔ BOTH HANDS TAKE EACH RHYTHM
-          </Text>
-        ) : null}
-      </View>
-    );
-  }
-
-  const pair = lesson.patternPairs[0];
-  const oneHand = lesson.trainingMode === 'single-hand';
-  return (
-    <View style={{ marginTop: 12 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <PatternNote label={oneHand ? 'ONE HAND' : 'LEFT'} subdivision={pair.leftSubdivision} color={oneHand ? colors.accent : colors.left} timeSignature={lesson.timeSignature} />
-        {oneHand ? null : <PatternNote label="RIGHT" subdivision={pair.rightSubdivision} color={colors.right} timeSignature={lesson.timeSignature} />}
-      </View>
-      {lessonOffersHandSwaps(lesson) ? (
-        <Text style={{ color: colors.accent, fontSize: 8, fontWeight: '900', letterSpacing: 0.8, marginTop: 8 }}>
-          ↔ BOTH HANDS TAKE EACH RHYTHM
-        </Text>
-      ) : null}
-    </View>
-  );
-}
-
-function PatternNote({
-  label,
-  subdivision,
-  color,
-  timeSignature,
-}: {
-  label: string;
-  subdivision: LearnLesson['patternPairs'][number]['leftSubdivision'];
-  color: string;
-  timeSignature: LearnLesson['timeSignature'];
-}) {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const displayName = t(SUBDIVISION_LABELS[subdivision]).replace(' (', '\n(');
-  return (
-    <View style={{ flex: 1, minWidth: 0, minHeight: 92, alignItems: 'center', justifyContent: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 11, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
-      <Text style={{ alignSelf: 'stretch', color, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>{label}</Text>
-      <RhythmSymbol subdivision={subdivision} color={color} compact timeSignature={timeSignature} />
-      <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.65} style={{ alignSelf: 'stretch', color: colors.text, fontSize: 10, lineHeight: 12, fontWeight: '700', textAlign: 'center' }}>{displayName}</Text>
-    </View>
-  );
-}
-
-function PatternNoteOptions({
-  label,
-  options,
-  color,
-  timeSignature,
-}: {
-  label: string;
-  options: ReturnType<typeof lessonHandPatternOptions>;
-  color: string;
-  timeSignature: LearnLesson['timeSignature'];
-}) {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const names = [
-    ...options.subdivisions.map((subdivision) => t(SUBDIVISION_LABELS[subdivision])),
-    ...(options.includesRest ? [t('Rest')] : []),
-  ];
-  return (
-    <View style={{ flex: 1, minWidth: 0, minHeight: 82, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 11, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }}>
-      <Text style={{ color, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 }}>{label}</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 4 }}>
-        {options.subdivisions.map((subdivision) => (
-          <RhythmSymbol key={subdivision} subdivision={subdivision} color={color} mini timeSignature={timeSignature} />
-        ))}
-        {options.includesRest ? (
-          <Text style={{ color, fontSize: 8, fontWeight: '900', letterSpacing: 0.7 }}>REST</Text>
-        ) : null}
-      </View>
-      <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8} style={{ color: colors.text, fontSize: 9, lineHeight: 11, fontWeight: '700', marginTop: 4 }}>
-        {names.join(' · ')}
-      </Text>
-    </View>
-  );
-}
+import { LearnPatternPreview } from '@/components/LearnPatternPreview';
+import { LearnCoursePath } from '@/components/LearnCoursePath';
 
 export default function LearnScreen() {
   const { colors } = useTheme();
@@ -430,7 +209,7 @@ export default function LearnScreen() {
           <Text numberOfLines={compact ? 2 : 3} style={{ color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 7 }}>
             {selectedLesson.instruction}
           </Text>
-          <PatternPreview lesson={selectedLesson} />
+          <LearnPatternPreview lesson={selectedLesson} />
         </View>
 
         {requiresPurchase ? (
@@ -518,30 +297,14 @@ export default function LearnScreen() {
         ) : null}
       </ScrollView>
 
-      <View style={{ flex: 1, minWidth: 0, paddingHorizontal: compact ? 10 : 18, paddingTop: compact ? 13 : 20, paddingBottom: 12 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: compact ? 9 : 14 }}>
-          <Text style={{ color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }}>COURSE PATH</Text>
-          <Text numberOfLines={1} style={{ color: colors.dim, fontSize: compact ? 9 : 10, fontWeight: '700' }}>First 3 free · finish each to progress</Text>
-        </View>
-        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
-          {LEARN_COURSE.map((lesson) => {
-            const availability = getLessonAvailability(lesson.id, completedLessonIds);
-            const paywalled = requiresLearnCourseUnlock(lesson, purchase.hasFullCourseUnlock);
-            return (
-              <LessonTile
-                key={lesson.id}
-                lesson={lesson}
-                selected={selectedLesson.id === lesson.id}
-                completed={availability === 'complete'}
-                locked={availability === 'locked'}
-                paywalled={paywalled}
-                rating={lessonRatings.find((rating) => rating.lessonId === lesson.id)}
-                onPress={() => setSelectedLessonId(lesson.id)}
-              />
-            );
-          })}
-        </ScrollView>
-      </View>
+      <LearnCoursePath
+        compact={compact}
+        completedLessonIds={completedLessonIds}
+        hasFullCourseUnlock={purchase.hasFullCourseUnlock}
+        lessonRatings={lessonRatings}
+        selectedLessonId={selectedLesson.id}
+        onSelectLesson={setSelectedLessonId}
+      />
     </FullBleedSafeArea>
   );
 }
