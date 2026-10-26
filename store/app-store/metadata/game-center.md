@@ -10,7 +10,7 @@ For app `Beep Beep Beat - Rhythm Coach` (`com.splitbeat.twohandrhythm`), enable 
 
 - **Type:** Classic
 - **Reference name:** Longest Clean Streak
-- **Leaderboard ID:** `com.splitbeat.twohandrhythm.longest-correct-streak`
+- **Leaderboard ID:** `com.splitbeat.twohandrhythm.longest_correct_streak`
 - **Score format:** Integer
 - **Sort order:** Highest to lowest
 - **Submission type:** Best Score

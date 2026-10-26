@@ -2,7 +2,7 @@ import ExpoModulesCore
 import GameKit
 import UIKit
 
-private let longestCorrectStreakLeaderboardID = "com.splitbeat.twohandrhythm.longest-correct-streak"
+private let longestCorrectStreakLeaderboardID = "com.splitbeat.twohandrhythm.longest_correct_streak"
 
 public final class SplitBeatGameCenterModule: Module {
   private let gameCenterDelegate = GameCenterControllerDelegate()
