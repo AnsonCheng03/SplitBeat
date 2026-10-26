@@ -1,4 +1,5 @@
 import type { ViewStyle } from 'react-native';
+import type { PracticeLayout, PracticePaneFrame } from '@/features/deviceLayout/practiceLayout';
 
 export function practiceStyle1({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
   return { flex: 1, backgroundColor: colors.background };
@@ -55,8 +56,8 @@ export function PracticeIntroOverlayStyle2(): import('react-native').ViewStyle {
   return { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 };
 }
 
-export function PracticeIntroOverlayStyle3({ leftInset, rightInset }: { leftInset: number; rightInset: number }): import('react-native').ViewStyle {
-  return { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Math.max(28, leftInset + 28, rightInset + 28) };
+export function PracticeIntroOverlayStyle3({ leftInset, rightInset, frame }: { leftInset: number; rightInset: number; frame?: PracticePaneFrame }): import('react-native').ViewStyle {
+  return { position: 'absolute', top: frame?.top ?? 0, left: frame?.left ?? 0, width: frame?.width, height: frame?.height, bottom: frame ? undefined : 0, right: frame ? undefined : 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Math.max(28, leftInset + 28, rightInset + 28) };
 }
 
 export function PracticeIntroOverlayStyle4({ colors, compact }: { colors: import('@/theme').ThemeColors; compact: boolean }): import('react-native').TextStyle {
@@ -67,8 +68,8 @@ export function PracticeIntroOverlayStyle5({ colors, compact }: { colors: import
   return { color: colors.text, fontSize: compact ? 18 : 22, fontWeight: '800', textAlign: 'center', marginTop: 9 };
 }
 
-export function PracticeIntroOverlayStyle6(): import('react-native').ViewStyle {
-  return { position: 'absolute', top: 0, bottom: 0, left: 0, width: '50%', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 };
+export function PracticeIntroOverlayStyle6({ frame }: { frame: PracticePaneFrame }): import('react-native').ViewStyle {
+  return { position: 'absolute', left: frame.left, top: frame.top, width: frame.width, height: frame.height, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 };
 }
 
 export function PracticeIntroOverlayStyle7({ colors, compact }: { colors: import('@/theme').ThemeColors; compact: boolean }): import('react-native').TextStyle {
@@ -79,8 +80,8 @@ export function PracticeIntroOverlayStyle8({ colors, compact }: { colors: import
   return { color: colors.text, fontSize: compact ? 14 : 19, fontWeight: '800', textAlign: 'center', marginTop: 9 };
 }
 
-export function PracticeIntroOverlayStyle9(): import('react-native').ViewStyle {
-  return { position: 'absolute', top: 0, bottom: 0, right: 0, width: '50%', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 };
+export function PracticeIntroOverlayStyle9({ frame }: { frame: PracticePaneFrame }): import('react-native').ViewStyle {
+  return { position: 'absolute', left: frame.left, top: frame.top, width: frame.width, height: frame.height, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 };
 }
 
 export function PracticeIntroOverlayStyle10({ colors, compact }: { colors: import('@/theme').ThemeColors; compact: boolean }): import('react-native').TextStyle {
@@ -91,12 +92,15 @@ export function PracticeIntroOverlayStyle11({ colors, compact }: { colors: impor
   return { color: colors.text, fontSize: compact ? 14 : 19, fontWeight: '800', textAlign: 'center', marginTop: 9 };
 }
 
-export function PracticeIntroOverlayStyle12({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { position: 'absolute', top: '22%', bottom: '22%', left: '50%', width: 1, backgroundColor: colors.line, opacity: 0.9 };
+export function PracticeIntroOverlayStyle12({ colors, layout }: { colors: import('@/theme').ThemeColors; layout: PracticeLayout }): import('react-native').ViewStyle {
+  if (layout.division) return { opacity: 0 };
+  return layout.axis === 'horizontal'
+    ? { position: 'absolute', top: '22%', bottom: '22%', left: '50%', width: 1, backgroundColor: colors.line, opacity: 0.9 }
+    : { position: 'absolute', left: '22%', right: '22%', top: '50%', height: 1, backgroundColor: colors.line, opacity: 0.9 };
 }
 
-export function PracticeIntroOverlayStyle13({ bottomInset }: { bottomInset: number }): import('react-native').ViewStyle {
-  return { position: 'absolute', left: 12, right: 12, bottom: Math.max(20, bottomInset + 14), alignItems: 'center' };
+export function PracticeIntroOverlayStyle13({ bottomInset, frame, height }: { bottomInset: number; frame: PracticePaneFrame; height: number }): import('react-native').ViewStyle {
+  return { position: 'absolute', left: frame.left + 12, width: Math.max(0, frame.width - 24), bottom: Math.max(20, bottomInset + 14) + Math.max(0, height - frame.top - frame.height), alignItems: 'center' };
 }
 
 export function PracticeIntroOverlayStyle14({ colors, compact }: { colors: import('@/theme').ThemeColors; compact: boolean }): import('react-native').TextStyle {
@@ -363,12 +367,28 @@ export function PracticeRhythmDisplayStyle1({ leftInset, rightInset, scoreDispla
   return { position: 'absolute', top: 0, left: -leftInset, right: -rightInset, height: scoreDisplayTop + scoreDisplayHeight, backgroundColor: colors.surface };
 }
 
-export function PracticeRhythmDisplayStyle2({ isScoreDisplay, isScoreFocusDisplay, colors }: { isScoreDisplay: boolean; isScoreFocusDisplay: boolean; colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { position: 'absolute', left: 0, right: 0, flexDirection: 'row', alignItems: 'center', backgroundColor: isScoreDisplay && !isScoreFocusDisplay ? colors.surface : 'transparent' };
+export function PracticeRhythmDisplayStyle2({ isScoreDisplay, isScoreFocusDisplay, colors, layout }: { isScoreDisplay: boolean; isScoreFocusDisplay: boolean; colors: import('@/theme').ThemeColors; layout: PracticeLayout }): import('react-native').ViewStyle {
+  const scorePane = isScoreDisplay && layout.division ? layout.leftHand : undefined;
+  return {
+    position: 'absolute',
+    left: scorePane?.left ?? 0,
+    right: scorePane ? undefined : 0,
+    width: scorePane?.width,
+    top: scorePane?.top,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: isScoreDisplay && !isScoreFocusDisplay ? colors.surface : 'transparent',
+  };
 }
 
-export function PracticeRhythmDisplayStyle3({ isScoreDisplay, scoreContentMargin }: { isScoreDisplay: boolean; scoreContentMargin: number }): import('react-native').ViewStyle {
-  return { flex: 1, flexDirection: 'row', alignItems: 'center', marginHorizontal: isScoreDisplay ? scoreContentMargin : 0 };
+export function PracticeRhythmDisplayStyle3({ isScoreDisplay, scoreContentMargin, layout }: { isScoreDisplay: boolean; scoreContentMargin: number; layout: PracticeLayout }): import('react-native').ViewStyle {
+  if (isScoreDisplay) return { flex: 1, flexDirection: 'row', alignItems: 'center', marginHorizontal: scoreContentMargin };
+  if (layout.division) return { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 };
+  return {
+    flex: 1,
+    flexDirection: layout.axis === 'horizontal' ? 'row' : 'column',
+    alignItems: 'center',
+  };
 }
 
 export function PracticeRhythmDisplayStyle4(): import('react-native').ViewStyle {
@@ -379,7 +399,8 @@ export function PracticeRhythmDisplayStyle5(): import('react-native').ViewStyle 
   return { flex: 1, justifyContent: 'center' };
 }
 
-export function PracticeRhythmDisplayStyle6({ compact }: { compact: boolean }): import('react-native').ViewStyle {
+export function PracticeRhythmDisplayStyle6({ compact, frame }: { compact: boolean; frame?: PracticePaneFrame }): import('react-native').ViewStyle {
+  if (frame) return { position: 'absolute', left: frame.left, top: frame.top, width: frame.width, height: frame.height, alignItems: 'center', justifyContent: 'center', gap: compact ? 6 : 10 };
   return { flex: 1, alignItems: 'center', justifyContent: 'center', gap: compact ? 6 : 10 };
 }
 
@@ -387,7 +408,8 @@ export function PracticeRhythmDisplayStyle7({ colors, compact }: { colors: impor
   return { color: colors.accent, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 };
 }
 
-export function PracticeRhythmDisplayStyle8({ compact, enabled }: { compact: boolean; enabled: boolean }): import('react-native').ViewStyle {
+export function PracticeRhythmDisplayStyle8({ compact, enabled, frame }: { compact: boolean; enabled: boolean; frame?: PracticePaneFrame }): import('react-native').ViewStyle {
+  if (frame) return { position: 'absolute', left: frame.left, top: frame.top, width: frame.width, height: frame.height, alignItems: 'center', justifyContent: 'center', gap: compact ? 6 : 10, opacity: enabled ? 1 : 0.12 };
   return { flex: 1, alignItems: 'center', justifyContent: 'center', gap: compact ? 6 : 10, opacity: enabled ? 1 : 0.12 };
 }
 
@@ -403,8 +425,24 @@ export function PracticeStatusBarStyle2({ colors, compact }: { colors: import('@
   return { color: colors.muted, fontSize: compact ? 11 : 12, fontWeight: '800', letterSpacing: 1 };
 }
 
-export function PracticeStatusBarStyle3({ snapshot, width, compact }: { snapshot: import("@/types/rhythm").SessionSnapshot | null; width: number; compact: boolean }): import('react-native').ViewStyle {
-  return { alignItems: 'center', justifyContent: 'center', minWidth: snapshot?.resumeCountIn ? Math.min(520, Math.max(200, width * 0.5)) : 90, minHeight: snapshot?.resumeCountIn ? (compact ? 48 : 58) : 38 };
+export function PracticeStatusBarStyle3({ snapshot, width, compact, layout }: { snapshot: import("@/types/rhythm").SessionSnapshot | null; width: number; compact: boolean; layout: PracticeLayout }): import('react-native').ViewStyle {
+  const keepCounterInsideLeftPane = layout.axis === 'horizontal' && layout.division;
+  const availableWidth = keepCounterInsideLeftPane ? layout.leftHand.width : width;
+  const counterWidth = Math.min(
+    availableWidth,
+    snapshot?.resumeCountIn ? Math.min(520, Math.max(200, availableWidth * 0.5)) : 90,
+  );
+  return {
+    position: keepCounterInsideLeftPane ? 'absolute' : undefined,
+    left: keepCounterInsideLeftPane ? layout.leftHand.left : undefined,
+    width: keepCounterInsideLeftPane ? layout.leftHand.width : undefined,
+    top: keepCounterInsideLeftPane ? 0 : undefined,
+    bottom: keepCounterInsideLeftPane ? 0 : undefined,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: counterWidth,
+    minHeight: snapshot?.resumeCountIn ? (compact ? 48 : 58) : 38,
+  };
 }
 
 export function PracticeStatusBarStyle4({ colors, compact }: { colors: import('@/theme').ThemeColors; compact: boolean }): import('react-native').TextStyle {
@@ -447,12 +485,15 @@ export function PracticeTapZonesStyle2(): import('react-native').ViewStyle {
   return { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 };
 }
 
-export function PracticeTapZonesStyle3({ hand }: { hand: import("@/types/rhythm").Hand }): import('react-native').ViewStyle {
-  return { position: 'absolute', [hand === 'left' ? 'left' : 'right']: 0, top: 0, bottom: 0, width: '50%' };
+export function PracticeTapZonesStyle3({ frame }: { frame: PracticePaneFrame }): import('react-native').ViewStyle {
+  return { position: 'absolute', left: frame.left, top: frame.top, width: frame.width, height: frame.height };
 }
 
-export function PracticeTapZonesStyle4({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1, backgroundColor: colors.line, opacity: 0.65 };
+export function PracticeTapZonesStyle4({ colors, layout }: { colors: import('@/theme').ThemeColors; layout: PracticeLayout }): import('react-native').ViewStyle {
+  if (layout.division) return { opacity: 0 };
+  return layout.axis === 'horizontal'
+    ? { position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1, backgroundColor: colors.line, opacity: 0.65 }
+    : { position: 'absolute', left: 0, right: 0, top: '50%', height: 1, backgroundColor: colors.line, opacity: 0.65 };
 }
 
 export function TapZoneStyle1({ minimal, compact, pressed, pressedBackground, restingBackground, accent, restingBorder, enabled, missed }: { minimal: boolean; compact: boolean; pressed: boolean; pressedBackground: string; restingBackground: string; accent: string; restingBorder: string; enabled: boolean; missed: boolean }): import('react-native').ViewStyle {

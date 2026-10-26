@@ -4,6 +4,7 @@ import { MixtureSymbol } from '@/components/MixtureSymbol';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ExerciseSettings, ExerciseStep, Hand } from '@/types/rhythm';
+import type { PracticeLayout } from '@/features/deviceLayout/practiceLayout';
 import {
   PracticeRhythmDisplayStyle6,
   PracticeRhythmDisplayStyle7,
@@ -18,6 +19,7 @@ export function PracticeHandRhythmDisplay({
   groupWidth,
   maxWidth,
   maxHeight,
+  layout,
 }: {
   step: ExerciseStep;
   settings: ExerciseSettings;
@@ -25,11 +27,12 @@ export function PracticeHandRhythmDisplay({
   groupWidth: number;
   maxWidth: number;
   maxHeight: number;
+  layout: PracticeLayout;
 }) {
   const { colors } = useTheme();
   if (settings.trainingMode === 'single-hand') {
     return (
-      <View style={PracticeRhythmDisplayStyle6({ compact })}>
+      <View style={PracticeRhythmDisplayStyle6({ compact, frame: layout.division ? layout[`${settings.singleHand}Hand`] : undefined })}>
         <Text style={PracticeRhythmDisplayStyle7({ colors, compact })}>{settings.singleHand.toUpperCase()}</Text>
         <HandRhythmNote
           hand={settings.singleHand}
@@ -48,7 +51,7 @@ export function PracticeHandRhythmDisplay({
   return (
     <>
       {(['left', 'right'] as const).map((hand) => (
-        <View key={hand} style={PracticeRhythmDisplayStyle8({ compact, enabled: true })}>
+        <View key={hand} style={PracticeRhythmDisplayStyle8({ compact, enabled: true, frame: layout.division ? layout[`${hand}Hand`] : undefined })}>
           <Text style={PracticeRhythmDisplayStyle9({ hand, colors, compact })}>{hand.toUpperCase()}</Text>
           <HandRhythmNote
             hand={hand}

@@ -1,5 +1,5 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Alert, AppState, useWindowDimensions, View } from 'react-native';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,6 +7,8 @@ import { findNextScoreEvent, type ScoreDisplayMode } from '@/rhythm/scoreStaff';
 import { getResumeStartNotes } from '@/rhythm/resumeStart';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
+import { practiceLayoutForScreen } from '@/features/deviceLayout/practiceLayout';
+import { useDeviceReservedRegions } from '@/features/deviceLayout/useDeviceReservedRegions';
 import type { Hand, TapFeedback } from '@/types/rhythm';
 
 function formatTimeRemaining(
@@ -24,7 +26,12 @@ export function usePracticeScreen() {
   const { t } = useI18n();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const compact = height < 520;
+  const regions = useDeviceReservedRegions(width, height);
+  const practiceLayout = useMemo(
+    () => practiceLayoutForScreen(width, height, regions),
+    [height, regions, width],
+  );
+  const compact = height < 520 || width < 520;
   const router = useRouter();
   const { lessonId: rawLessonId, scoreDisplayMode: rawScoreDisplayMode } = useLocalSearchParams<{
     lessonId?: string;
@@ -253,6 +260,7 @@ export function usePracticeScreen() {
     height,
     insets,
     compact,
+    practiceLayout,
     featureFlags,
     snapshot,
     activeSettings,

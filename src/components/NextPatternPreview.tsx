@@ -8,6 +8,7 @@ import { patternLabelForHand } from '@/rhythm/mixtures';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
 import type { ExerciseStep, Hand, TimeSignature } from '@/types/rhythm';
+import type { PracticePaneFrame } from '@/features/deviceLayout/practiceLayout';
 import {
   NextPatternPreviewStyle2,
   NextPatternPreviewStyle3,
@@ -29,6 +30,7 @@ interface NextPatternPreviewProps {
   timeSignature: TimeSignature;
   leftInset: number;
   rightInset: number;
+  frame: PracticePaneFrame;
   top: number;
   height: number;
   scoreMeasure?: ScoreMeasure | null;
@@ -51,6 +53,7 @@ export function NextPatternPreview({
   timeSignature,
   leftInset,
   rightInset,
+  frame,
   top,
   height,
   scoreMeasure,
@@ -123,7 +126,7 @@ export function NextPatternPreview({
       testID="practice.nextPattern"
       pointerEvents="none"
       accessibilityLabel={accessibleDescription}
-      style={NextPatternPreviewStyle2({ top, height, isScorePreview, leftInset, rightInset, slideProgress })}
+      style={NextPatternPreviewStyle2({ top, height, frame, isScorePreview, leftInset, rightInset, slideProgress })}
     >
       <View
         style={NextPatternPreviewStyle3({ isScorePreview })}

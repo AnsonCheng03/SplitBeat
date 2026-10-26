@@ -17,6 +17,7 @@ export default function PracticeScreen() {
     height,
     insets,
     compact,
+    practiceLayout,
     featureFlags,
     snapshot,
     activeSettings,
@@ -75,6 +76,7 @@ export default function PracticeScreen() {
               compact={compact}
               tapFeedbackEnabled={tapFeedbackEnabled}
               scoreDisplay={isScoreDisplay && !isScoreFocusDisplay}
+              layout={practiceLayout}
               beatFlashToken={beatFlashToken}
               keyboardTapTokens={keyboardTapTokens}
               onTap={registerTap}
@@ -93,6 +95,7 @@ export default function PracticeScreen() {
             bottomInset={insets.bottom}
             leftInset={insets.left}
             rightInset={insets.right}
+            layout={practiceLayout}
           />
 
           <PracticeStatusBar
@@ -102,6 +105,7 @@ export default function PracticeScreen() {
             topInset={insets.top}
             leftInset={insets.left}
             rightInset={insets.right}
+            layout={practiceLayout}
             remainingLabel={remainingLabel}
             scoreBarsRemaining={scoreBarsRemaining}
             resumeStartLabel={resumeStartLabel}
@@ -116,6 +120,9 @@ export default function PracticeScreen() {
               compact={compact}
               leftInset={insets.left}
               rightInset={insets.right}
+              layout={practiceLayout}
+              width={width}
+              height={height}
               bottomInset={insets.bottom}
               starting={starting}
               soundEnabled={activeSettings.soundEnabled}

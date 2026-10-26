@@ -38,14 +38,14 @@ export function MixtureSymbolStyle2({ plan, fittedScale }: { plan: import("@/rhy
   return { width: plan.width, height: plan.height, transform: [{ scale: fittedScale }], alignItems: 'center', justifyContent: 'center' };
 }
 
-export function NextPatternPreviewStyle2({ top, height, isScorePreview, leftInset, rightInset, slideProgress }: { top: number; height: number; isScorePreview: boolean; leftInset: number; rightInset: number; slideProgress: import("react-native").Animated.Value }): import('react-native').ViewStyle {
+export function NextPatternPreviewStyle2({ top, height, frame, isScorePreview, leftInset, rightInset, slideProgress }: { top: number; height: number; frame: import('@/features/deviceLayout/practiceLayout').PracticePaneFrame; isScorePreview: boolean; leftInset: number; rightInset: number; slideProgress: import("react-native").Animated.Value }): import('react-native').ViewStyle {
   return {
         position: 'absolute',
         top,
-        left: 0,
-        right: 0,
+        left: frame.left,
+        width: frame.width,
         height,
-        // Rhythm lanes use the same full-screen halves as the current notes.
+        // Keep previews within one physical panel when the display has a hinge.
         // Score headers keep safe-area padding because they contain edge labels.
         paddingHorizontal: isScorePreview ? Math.max(16, leftInset + 18, rightInset + 18) : 0,
         opacity: slideProgress,

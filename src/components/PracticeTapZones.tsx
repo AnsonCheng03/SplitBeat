@@ -2,6 +2,7 @@ import { View } from 'react-native';
 import { TapZone } from '@/components/TapZone';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ExerciseSettings, Hand, SessionSnapshot, TapFeedback } from '@/types/rhythm';
+import type { PracticeLayout } from '@/features/deviceLayout/practiceLayout';
 import { PracticeTapZonesStyle1, PracticeTapZonesStyle2, PracticeTapZonesStyle3, PracticeTapZonesStyle4 } from '@/styles/practice';
 
 type KeyboardTokens = Record<Hand, { token: number; feedback: TapFeedback | null }>;
@@ -12,6 +13,7 @@ export function PracticeTapZones({
   compact,
   tapFeedbackEnabled,
   scoreDisplay,
+  layout,
   beatFlashToken,
   keyboardTapTokens,
   onTap,
@@ -21,6 +23,7 @@ export function PracticeTapZones({
   compact: boolean;
   tapFeedbackEnabled: boolean;
   scoreDisplay: boolean;
+  layout: PracticeLayout;
   beatFlashToken: number;
   keyboardTapTokens: KeyboardTokens;
   onTap: (hand: Hand, timestamp: number) => TapFeedback | null;
@@ -56,12 +59,12 @@ export function PracticeTapZones({
             showMinimalLabel={!singleHand && scoreDisplay}
             style={singleHand
               ? PracticeTapZonesStyle2()
-              : PracticeTapZonesStyle3({ hand })}
+              : PracticeTapZonesStyle3({ frame: hand === 'left' ? layout.leftHand : layout.rightHand })}
           />
         );
       })}
       {settings.trainingMode === 'two-hand' ? (
-        <View pointerEvents="none" style={PracticeTapZonesStyle4({ colors })} />
+        <View pointerEvents="none" style={PracticeTapZonesStyle4({ colors, layout })} />
       ) : null}
     </View>
   );

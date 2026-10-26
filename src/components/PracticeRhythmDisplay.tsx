@@ -7,6 +7,7 @@ import { maxRhythmSymbolWidth } from '@/rhythm/noteNotation';
 import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ExerciseSettings, ExerciseStep, SessionSnapshot } from '@/types/rhythm';
+import type { PracticeLayout } from '@/features/deviceLayout/practiceLayout';
 import {
   PracticeRhythmDisplayStyle1,
   PracticeRhythmDisplayStyle2,
@@ -25,6 +26,7 @@ export function PracticeRhythmDisplay({
   bottomInset,
   leftInset,
   rightInset,
+  layout,
 }: {
   snapshot: SessionSnapshot | null;
   settings: ExerciseSettings;
@@ -37,31 +39,41 @@ export function PracticeRhythmDisplay({
   bottomInset: number;
   leftInset: number;
   rightInset: number;
+  layout: PracticeLayout;
 }) {
   const { colors } = useTheme();
   const singleHandMode = settings.trainingMode === 'single-hand';
   const focusedHand = settings.singleHand;
-  const scoreContentMargin = Math.max(24, leftInset + 24, rightInset + 24);
-  const initialScoreContentWidth = Math.max(0, width - scoreContentMargin * 2);
+  const scoreFrame = layout.division ? layout.leftHand : { left: 0, top: 0, width, height };
+  const scoreContentMargin = Math.max(24, leftInset + 24, layout.division ? 24 : rightInset + 24);
+  const initialScoreContentWidth = Math.max(0, scoreFrame.width - scoreContentMargin * 2);
   const initialScoreFocusWidth = Math.min(620, initialScoreContentWidth * (singleHandMode ? 0.76 : 0.38));
   const initialScoreViewportWidth = initialScoreContentWidth;
-  const notationMaxWidth = width * (singleHandMode ? 0.82 : 0.42);
+  const notationPaneWidth = layout.axis === 'horizontal'
+    ? Math.min(layout.leftHand.width, layout.rightHand.width)
+    : width;
+  const notationMaxWidth = Math.min(maxRhythmSymbolWidth('full'), notationPaneWidth * 0.84);
   const importedScoreMeasure = snapshot?.scoreMeasure;
   const practiceScoreMeasure = settings.practiceDisplayMode === 'score' ? snapshot?.practiceScoreMeasure : undefined;
   const displayScoreMeasure = importedScoreMeasure ?? practiceScoreMeasure;
   const isScoreDisplay = Boolean(displayScoreMeasure);
   const isScoreFocusDisplay = Boolean(importedScoreMeasure && scoreDisplayMode === 'focus');
-  const scoreDisplayTop = Math.max(topInset, 12) + (compact ? 46 : 58);
-  const scoreDisplayHeight = compact
+  const safeTopInset = Math.max(topInset, layout.safeTopInset, 12);
+  const scoreDisplayTop = safeTopInset + (compact ? 46 : 58);
+  const requestedScoreDisplayHeight = compact
     ? Math.min(180, Math.max(110, height * 0.25))
     : Math.min(200, Math.max(136, height * 0.27));
+  const scoreDisplayHeight = layout.division
+    ? Math.min(requestedScoreDisplayHeight, Math.max(0, scoreFrame.top + scoreFrame.height - scoreDisplayTop - bottomInset))
+    : requestedScoreDisplayHeight;
   const showNextPattern = Boolean(!isScoreDisplay && snapshot?.nextStep);
-  const previewTop = Math.max(topInset, 12) + (compact ? 35 : 47);
-  const previewHeight = isScoreDisplay
-    ? Math.min(220, Math.max(112, height * 0.25))
+  const previewTop = safeTopInset + (compact ? 35 : 47);
+  const requestedPreviewHeight = isScoreDisplay
+    ? Math.min(220, Math.max(112, layout.preview.height * 0.25))
     : compact ? 124 : 104;
+  const previewHeight = Math.min(requestedPreviewHeight, Math.max(0, layout.preview.height - previewTop - bottomInset));
   const currentPatternGroupWidth = Math.min(notationMaxWidth, maxRhythmSymbolWidth('full'));
-  const nextPatternGroupWidth = Math.min(notationMaxWidth, maxRhythmSymbolWidth('mini'));
+  const nextPatternGroupWidth = Math.min(layout.preview.width * 0.84, maxRhythmSymbolWidth('mini'));
   const step = snapshot?.currentStep;
   const preloadSubdivision = settings.enabledSubdivisions[0] ?? 'quarter';
   const displayStep: ExerciseStep | undefined = step ?? (tutorialVisible ? {
@@ -75,8 +87,13 @@ export function PracticeRhythmDisplay({
   } : undefined);
   const rhythmDisplayStyle: ViewStyle = isScoreDisplay && !isScoreFocusDisplay
     ? { top: scoreDisplayTop, height: scoreDisplayHeight }
-    : { top: Math.max(topInset, 12), bottom: compact ? 0 : height * 0.18 };
-  const notationMaxHeight = Math.max(0, height - Math.max(0, previewTop + previewHeight) - bottomInset - 30);
+    : layout.division
+      ? { top: 0, bottom: 0 }
+      : { top: safeTopInset, bottom: compact ? 0 : height * 0.18 };
+  const availableNotationHeight = layout.division
+    ? Math.min(layout.leftHand.height, layout.rightHand.height)
+    : height - safeTopInset - (compact ? 0 : height * 0.18);
+  const notationMaxHeight = Math.max(0, Math.min(availableNotationHeight, height - Math.max(0, previewTop + previewHeight) - bottomInset) - 30);
 
   return (
     <>
@@ -98,6 +115,7 @@ export function PracticeRhythmDisplay({
           timeSignature={settings.timeSignature}
           leftInset={leftInset}
           rightInset={rightInset}
+          frame={layout.preview}
           top={previewTop}
           height={previewHeight}
           scoreMeasure={snapshot.scoreNextMeasure}
@@ -118,9 +136,9 @@ export function PracticeRhythmDisplay({
         <View
           testID="practice.rhythmDisplay"
           pointerEvents="none"
-          style={[PracticeRhythmDisplayStyle2({ isScoreDisplay, isScoreFocusDisplay, colors }), rhythmDisplayStyle]}
+          style={[PracticeRhythmDisplayStyle2({ isScoreDisplay, isScoreFocusDisplay, colors, layout }), rhythmDisplayStyle]}
         >
-          <View style={PracticeRhythmDisplayStyle3({ isScoreDisplay, scoreContentMargin })}>
+          <View style={PracticeRhythmDisplayStyle3({ isScoreDisplay, scoreContentMargin, layout })}>
             {displayScoreMeasure ? (
               <PracticeScoreDisplay
                 importedMeasure={importedScoreMeasure}
@@ -142,6 +160,7 @@ export function PracticeRhythmDisplay({
                 groupWidth={currentPatternGroupWidth}
                 maxWidth={notationMaxWidth}
                 maxHeight={notationMaxHeight}
+                layout={layout}
               />
             ) : null}
           </View>

@@ -5,6 +5,7 @@ import { Countdown } from '@/components/Countdown';
 import { MetronomeIndicator } from '@/components/MetronomeIndicator';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { SessionSnapshot } from '@/types/rhythm';
+import type { PracticeLayout } from '@/features/deviceLayout/practiceLayout';
 import {
   PracticeStatusBarStyle1,
   PracticeStatusBarStyle2,
@@ -26,6 +27,7 @@ export function PracticeStatusBar({
   topInset,
   leftInset,
   rightInset,
+  layout,
   remainingLabel,
   scoreBarsRemaining,
   resumeStartLabel,
@@ -39,6 +41,7 @@ export function PracticeStatusBar({
   topInset: number;
   leftInset: number;
   rightInset: number;
+  layout: PracticeLayout;
   remainingLabel: string;
   scoreBarsRemaining?: number;
   resumeStartLabel: string;
@@ -48,7 +51,7 @@ export function PracticeStatusBar({
 }) {
   const { colors } = useTheme();
   const { t } = useI18n();
-  const safeTopInset = Math.max(topInset, 12);
+  const safeTopInset = Math.max(topInset, layout.safeTopInset, 12);
 
   return (
     <View pointerEvents="box-none" style={PracticeStatusBarStyle1({ safeTopInset, snapshot, compact, leftInset, rightInset })}>
@@ -62,7 +65,7 @@ export function PracticeStatusBar({
       >
         <Text style={PracticeStatusBarStyle2({ colors, compact })}>Ⅱ  PAUSE</Text>
       </Pressable>
-      <View testID="practice.beatCounter" style={PracticeStatusBarStyle3({ snapshot, width, compact })}>
+      <View testID="practice.beatCounter" style={PracticeStatusBarStyle3({ snapshot, width, compact, layout })}>
         {snapshot?.resumeCountIn ? (
           <>
             <Text testID="practice.resumeCountIn" style={PracticeStatusBarStyle4({ colors, compact })}>LISTEN</Text>
