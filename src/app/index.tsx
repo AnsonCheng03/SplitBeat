@@ -89,34 +89,7 @@ export default function HomeScreen() {
   }, []));
 
   const buttonStatus = openingActivity || starting ? 'loading' : isFreePractice ? audioStatus : 'ready';
-  const startPractice = async () => {
-    if (!isFreePractice) {
-      if (openingActivityRef.current) return;
-      openingActivityRef.current = true;
-      setOpeningActivity(currentActivity.id);
-
-      // Let the loading screen render before navigation starts.
-      await new Promise<void>((resolve) => setTimeout(resolve, 350));
-      try {
-        switch (currentActivity.id) {
-          case 'focus':
-            router.push('/exercise');
-            return;
-          case 'score':
-            router.push('/import-score');
-            return;
-          case 'learn':
-            router.push('/learn');
-            return;
-        }
-      } catch {
-        openingActivityRef.current = false;
-        setOpeningActivity(null);
-        Alert.alert(t('Could not open practice'), t('Please try again.'));
-      }
-      return;
-    }
-
+  const startFreePractice = async () => {
     if (starting || audioStatus === 'loading') return;
     setStarting(true);
     try {
@@ -131,6 +104,44 @@ export default function HomeScreen() {
     } finally {
       setStarting(false);
     }
+  };
+
+  const navigateToActivity = (activity: HomeActivity) => {
+    switch (activity) {
+      case 'practice':
+        router.replace('/practice');
+        return;
+      case 'focus':
+        router.push('/exercise');
+        return;
+      case 'score':
+        router.push('/import-score');
+        return;
+      case 'learn':
+        router.push('/learn');
+        return;
+    }
+  };
+
+  const openSelectedActivity = async () => {
+    if (openingActivityRef.current) return;
+    openingActivityRef.current = true;
+    setOpeningActivity(currentActivity.id);
+
+    // Let the loading screen render before navigation starts.
+    await new Promise<void>((resolve) => setTimeout(resolve, 350));
+    try {
+      navigateToActivity(currentActivity.id);
+    } catch {
+      openingActivityRef.current = false;
+      setOpeningActivity(null);
+      Alert.alert(t('Could not open practice'), t('Please try again.'));
+    }
+  };
+
+  const startPractice = async () => {
+    if (isFreePractice) await startFreePractice();
+    else await openSelectedActivity();
   };
 
   const startTitle = openingActivity

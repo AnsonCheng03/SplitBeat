@@ -20,6 +20,8 @@ flowchart LR
 4. **Plan notation.** `src/rhythm/noteNotation.ts` maps event onsets and durations to note anchors and engraving geometry. `createNoteNotationPlan()` creates a repeated subdivision symbol; `createRhythmSymbolNotationPlan()` lays out mixtures and rests; `createBarNoteNotationPlan()` lays out a complete bar.
 5. **Group and draw.** The notation planner groups beams only when notes are contiguous, have the required beam level, and remain inside the configured beam group. Tuplet labels are formed from contiguous events with the same tuplet count. `src/components/VexFlowNotationDOM.tsx` uses VexFlow for noteheads, stems, flags, beams, rests, dots, and ties. Native React Native views position the rendered notation and add surrounding labels or score layout.
 
+The notation planner keeps these operations in named helpers: `validateBarNotationInputs()` checks the bar request, `orderNotationEvents()` and `calculateNoteAnchors()` position its events, and `buildNotationPlan()` composes note placement with dedicated beam, glyph, dot, and tuplet-label builders. The public `createBarNoteNotationPlan()` is the orchestration entry point; it prepares layout metrics and delegates the drawing geometry to those focused functions.
+
 ## Composed and imported scores
 
 ```mermaid
@@ -59,11 +61,13 @@ For the intended “two beats, three notes on each beat” exercise, select `2/4
 
 ## Screen component boundaries
 
-Route screens own navigation, session state, and composition. Reusable components own a focused display area or interaction. The session provider is a small React context wrapper; `src/store/useSessionController.ts` contains the session lifecycle and timing orchestration.
+Route screens own navigation, session state, and composition. Reusable components own a focused display area or interaction. The session provider is a small React context wrapper; `src/store/useSessionController.ts` composes the session lifecycle, while `useSessionClock()` owns repeat scheduling and `useSessionPersistence.ts` owns the three local practice-history collections.
+
+Keep route and workflow functions as readable sequences of named steps. A helper should have one clear responsibility that its name describes; when a function validates input, persists data, and changes UI state, separate those actions into focused functions or feature hooks. Components follow the same rule: the parent composes focused sections, while each child owns one display area or interaction. Avoid files that only re-export other modules.
 
 | Screen or feature | Main components |
 | --- | --- |
-| Practice | `PracticeStatusBar`, `PracticeRhythmDisplay`, `PracticeTapZones`, `PracticeIntroOverlay`, and `PracticePauseOverlays` |
+| Practice | `PracticeStatusBar`, `PracticeRhythmDisplay`, `PracticeTapZones`, `PracticeIntroOverlay`, and `PracticePauseOverlays`; the pause menu composes dedicated swing, rewind, tempo, and action controls |
 | Score notation | `ScrollingScoreRhythm` → `ScoreRhythmMeasure` → `ScoreRhythmLane` → `NoteNotation` / `VexFlowNotationDOM` |
 | Results and replay | `ResultsOverview`, `ResultsMissedNotes`, `ResultsPerformanceBreakdown`, `ResultsFooter`, and the replay timeline components |
 | Exercise practice | `ExerciseHeader`, `ExercisePairPanel`, `ExerciseComposer`, and `ExerciseHistoryPanel` |

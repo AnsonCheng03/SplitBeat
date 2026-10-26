@@ -22,15 +22,9 @@ import {
 } from '@/rhythm/timingCalibration';
 import { timeSignatureMetrics } from '@/rhythm/subdivisions';
 import { alignedPatternChangeIntervalBeats } from '@/rhythm/patternChange';
-import {
-  parseCombinationProgress,
-  parseSavedPracticePairs,
-  recordCombinationProgress,
-  removeSavedPracticePair as removeSavedPracticePairRecord,
-  savePracticePairsForLater as addPracticePairsForLater,
-} from '@/rhythm/targetedPractice';
 import type { CombinationProgress, SavedPracticePair } from '@/rhythm/targetedPractice';
-import { appendSessionRecord, createSessionRecord, parseSessionHistory } from '@/store/sessionHistory';
+import { useCombinationProgress, useSavedPracticePairs, useSessionHistory } from '@/store/useSessionPersistence';
+import { useSessionClock } from '@/store/useSessionClock';
 import type { SessionRecord } from '@/store/sessionHistory';
 import { MIXTURE_NOTE_VALUES, MIXTURE_PATTERN_IDS, SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
 import type { ImportedRhythmScore } from '@/types/importedScore';
@@ -51,9 +45,6 @@ import type {
 } from '@/types/rhythm';
 
 const SETTINGS_KEY = 'two-hand-rhythm-trainer.settings.v1';
-const SESSION_HISTORY_KEY = 'split-beat.session-history.v1';
-const COMBINATION_PROGRESS_KEY = 'split-beat.combination-progress.v1';
-const SAVED_PRACTICE_PAIRS_KEY = 'split-beat.saved-practice-pairs.v1';
 const COUNT_IN_BEATS = 3;
 const AUDIO_LEAD_IN_MS = 300;
 const FORCE_SILENT_E2E = process.env.EXPO_PUBLIC_E2E_SILENT === '1';
@@ -264,6 +255,106 @@ function monotonicNow(): number {
   return globalThis.performance.now();
 }
 
+function resolveSessionConfiguration(
+  settings: ExerciseSettings,
+  score: ImportedRhythmScore | undefined,
+  options: ExercisePreparationOptions,
+  featureFlags: FeatureFlags,
+) {
+  const configuredSettings = applyFeatureFlagsToSettings(
+    { ...settings, ...options.settings },
+    featureFlags,
+  );
+  const activeSettings = score
+    ? {
+        ...configuredSettings,
+        bpm: score.bpm ?? configuredSettings.bpm,
+        timeSignature: score.timeSignature,
+      }
+    : configuredSettings;
+  const patternPairs = applyFeatureFlagsToPatternPairs(
+    options.patternPairs,
+    featureFlags,
+    configuredSettings.enabledSubdivisions,
+  );
+
+  return { activeSettings, patternPairs };
+}
+
+function createSessionTiming(
+  settings: ExerciseSettings,
+  score: ImportedRhythmScore | undefined,
+  performanceNow: number,
+  audioNow: number,
+) {
+  const metrics = timeSignatureMetrics(settings.bpm, settings.timeSignature);
+  const countInDurationMs = COUNT_IN_BEATS * metrics.beatDurationMs;
+
+  return {
+    metrics,
+    sessionStartTime: performanceNow + AUDIO_LEAD_IN_MS + countInDurationMs,
+    sessionStartAudioTime: audioNow + AUDIO_LEAD_IN_MS / 1_000 + countInDurationMs / 1_000,
+    patternChangeIntervalBeats: alignedPatternChangeIntervalBeats(
+      settings.changeIntervalBeats,
+      metrics.beatsPerBar,
+    ),
+    durationSeconds: getSessionDurationSeconds(settings, score),
+  };
+}
+
+function createAudioStartOptions(
+  settings: ExerciseSettings,
+  score: ImportedRhythmScore | undefined,
+  engine: RhythmTimingEngine,
+  timing: ReturnType<typeof createSessionTiming>,
+): Parameters<MetronomeAudio['start']>[0] {
+  return {
+    sessionStartAudioTime: timing.sessionStartAudioTime,
+    sessionStartTime: timing.sessionStartTime,
+    bpm: settings.bpm,
+    beatsPerBar: timing.metrics.beatsPerBar,
+    durationSeconds: timing.durationSeconds,
+    soundEnabled: settings.soundEnabled && !FORCE_SILENT_E2E,
+    backgroundMusicEnabled: settings.backgroundMusicEnabled,
+    sessionCuesEnabled: settings.sessionCuesEnabled,
+    changeIntervalBeats: timing.patternChangeIntervalBeats,
+    patternChangesEnabled: !score,
+    referenceRhythmEnabled: settings.referenceRhythmEnabled,
+    getReferenceEventsThrough: (timeMs) => engine.getReferenceEventsThrough(timeMs),
+    sounds: {
+      metronome: settings.metronomeSound,
+      leftHand: settings.leftHandSound,
+      rightHand: settings.rightHandSound,
+    },
+  };
+}
+
+function restartScoreFromMeasure(
+  score: ImportedRhythmScore | undefined,
+  currentMeasureIndex: number | undefined,
+  barsBack: number,
+  bpm: number,
+): ImportedRhythmScore | undefined {
+  if (!score) return undefined;
+  const foundMeasureIndex = score.measures.findIndex((measure) => measure.index === currentMeasureIndex);
+  const currentIndex = foundMeasureIndex < 0 ? 0 : foundMeasureIndex;
+  const barsToRewind = Math.max(0, Math.floor(barsBack));
+  const startMeasureIndex = Math.max(0, currentIndex - barsToRewind);
+
+  return { ...scoreFromMeasure(score, startMeasureIndex), bpm };
+}
+
+function createRestartOptions(
+  previousOptions: ExercisePreparationOptions,
+  activeSettings: ExerciseSettings,
+  overrides: Partial<ExerciseSettings>,
+): ExercisePreparationOptions {
+  return {
+    ...previousOptions,
+    settings: { ...previousOptions.settings, ...activeSettings, ...overrides },
+  };
+}
+
 export function useSessionController(): SessionContextValue {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const featureFlags = BUILD_FEATURE_FLAGS;
@@ -272,17 +363,19 @@ export function useSessionController(): SessionContextValue {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [snapshot, setSnapshot] = useState<SessionSnapshot | null>(null);
   const [results, setResults] = useState<SessionResults | null>(null);
-  const [sessionHistory, setSessionHistory] = useState<SessionRecord[]>([]);
-  const [sessionHistoryLoaded, setSessionHistoryLoaded] = useState(false);
-  const [combinationProgress, setCombinationProgress] = useState<CombinationProgress[]>([]);
-  const [combinationProgressLoaded, setCombinationProgressLoaded] = useState(false);
-  const [savedPracticePairs, setSavedPracticePairs] = useState<SavedPracticePair[]>([]);
-  const [savedPracticePairsLoaded, setSavedPracticePairsLoaded] = useState(false);
+  const { records: sessionHistory, loaded: sessionHistoryLoaded, recordSession } = useSessionHistory(featureFlags.sessionRecords);
+  const { progress: combinationProgress, loaded: combinationProgressLoaded, recordSessionResults } = useCombinationProgress(featureFlags.focusPractice);
+  const {
+    pairs: savedPracticePairs,
+    loaded: savedPracticePairsLoaded,
+    savePairsForLater,
+    removeSavedPracticePair,
+  } = useSavedPracticePairs();
   const [audioStatus, setAudioStatus] = useState<AudioPreparationStatus>('loading');
   const engineRef = useRef<RhythmTimingEngine | null>(null);
   const audioRef = useRef<MetronomeAudio | null>(null);
   const audioPreparationRef = useRef<Promise<void> | null>(null);
-  const uiTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const { stopSessionClock: stopTimers, scheduleSessionClock } = useSessionClock();
   const sessionIdRef = useRef<string | null>(null);
   const pendingScoreRef = useRef<ImportedRhythmScore | undefined>(undefined);
   const lastScoreRef = useRef<ImportedRhythmScore | undefined>(undefined);
@@ -294,57 +387,6 @@ export function useSessionController(): SessionContextValue {
   const challengeWrongBarStreakRef = useRef(0);
   const challengePausedRef = useRef(false);
   const [exercisePrepared, setExercisePrepared] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    void AsyncStorage.getItem(SESSION_HISTORY_KEY)
-      .then((raw) => {
-        if (active) setSessionHistory(parseSessionHistory(raw));
-      })
-      .catch(() => {
-        if (active) setSessionHistory([]);
-      })
-      .finally(() => {
-        if (active) setSessionHistoryLoaded(true);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    void AsyncStorage.getItem(COMBINATION_PROGRESS_KEY)
-      .then((raw) => {
-        if (active) setCombinationProgress(parseCombinationProgress(raw));
-      })
-      .catch(() => {
-        if (active) setCombinationProgress([]);
-      })
-      .finally(() => {
-        if (active) setCombinationProgressLoaded(true);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    void AsyncStorage.getItem(SAVED_PRACTICE_PAIRS_KEY)
-      .then((raw) => {
-        if (active) setSavedPracticePairs(parseSavedPracticePairs(raw));
-      })
-      .catch(() => {
-        if (active) setSavedPracticePairs([]);
-      })
-      .finally(() => {
-        if (active) setSavedPracticePairsLoaded(true);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -458,71 +500,60 @@ export function useSessionController(): SessionContextValue {
     }
   }, []);
 
-  const savePairsForLater = useCallback((pairs: readonly RhythmPatternPair[], timeSignature: TimeSignature) => {
-    setSavedPracticePairs((current) => {
-      const next = addPracticePairsForLater(current, pairs, timeSignature, Date.now());
-      void AsyncStorage.setItem(SAVED_PRACTICE_PAIRS_KEY, JSON.stringify(next)).catch(() => undefined);
-      return next;
-    });
+  const resetChallengeProgress = useCallback(() => {
+    challengeStreaksRef.current = createChallengeStreaks();
+    challengeWrongBarIndexesRef.current.clear();
+    challengeWrongBarStreakRef.current = 0;
+    challengePausedRef.current = false;
   }, []);
 
-  const removeSavedPracticePair = useCallback((id: string) => {
-    setSavedPracticePairs((current) => {
-      const next = removeSavedPracticePairRecord(current, id);
-      void AsyncStorage.setItem(SAVED_PRACTICE_PAIRS_KEY, JSON.stringify(next)).catch(() => undefined);
-      return next;
-    });
-  }, []);
+  const prepareAudioForPlayback = useCallback(async () => {
+    const audio = audioRef.current ?? new MetronomeAudio();
+    audioRef.current = audio;
 
-  const stopTimers = useCallback(() => {
-    if (uiTimerRef.current) clearTimeout(uiTimerRef.current);
-    uiTimerRef.current = undefined;
+    try {
+      await audio.prepare();
+      await audio.resume();
+      setAudioStatus('ready');
+      return audio;
+    } catch (error) {
+      sessionIdRef.current = null;
+      setAudioStatus('error');
+      void audio.stop();
+      if (audioRef.current === audio) audioRef.current = null;
+      throw error;
+    }
   }, []);
 
   const saveCompletedSession = useCallback((completedResults: SessionResults) => {
     const sessionId = sessionIdRef.current;
     if (!sessionId) return;
     sessionIdRef.current = null;
-    const record = createSessionRecord(sessionId, Date.now(), completedResults);
-    const activeFlags = featureFlagsRef.current;
-    if (activeFlags.sessionRecords) {
-      setSessionHistory((current) => {
-        const next = appendSessionRecord(current, record);
-        void AsyncStorage.setItem(SESSION_HISTORY_KEY, JSON.stringify(next)).catch(() => undefined);
-        return next;
-      });
-    }
-    if (!activeFlags.focusPractice) return;
-    if (completedResults.trainingMode !== 'two-hand') return;
-    setCombinationProgress((current) => {
-      const next = recordCombinationProgress(
-        current,
-        completedResults.combinations,
-        completedResults.timeSignature,
-        Date.now(),
-      );
-      if (next !== current) {
-        void AsyncStorage.setItem(COMBINATION_PROGRESS_KEY, JSON.stringify(next)).catch(() => undefined);
-      }
-      return next;
-    });
-  }, []);
+    recordSession(sessionId, completedResults);
+    recordSessionResults(completedResults);
+  }, [recordSession, recordSessionResults]);
 
-  const stopExercise = useCallback(() => {
-    const engine = engineRef.current;
-    if (!engine) return;
-    const now = monotonicNow();
-    const finalResults = engine.getResults(now);
-    const finalSnapshot = engine.advance(now);
+  const finalizeSession = useCallback((
+    finalSnapshot: SessionSnapshot,
+    finalResults: SessionResults,
+  ) => {
+    setSnapshot({ ...finalSnapshot, phase: 'finished', results: finalResults });
     setResults(finalResults);
     saveCompletedSession(finalResults);
-    setSnapshot({ ...finalSnapshot, phase: 'finished', results: finalResults });
     stopTimers();
     challengePausedRef.current = false;
     void audioRef.current?.stop();
     audioRef.current = null;
     engineRef.current = null;
   }, [saveCompletedSession, stopTimers]);
+
+  const stopExercise = useCallback(() => {
+    const engine = engineRef.current;
+    if (!engine) return;
+    const now = monotonicNow();
+    const finalResults = engine.getResults(now);
+    finalizeSession(engine.advance(now), finalResults);
+  }, [finalizeSession]);
 
   const pauseForChallenge = useCallback((message: string) => {
     const engine = engineRef.current;
@@ -586,33 +617,29 @@ export function useSessionController(): SessionContextValue {
     return true;
   }, [pauseForChallenge, stopExercise]);
 
-  const scheduleSessionClock = useCallback((initialDelayMs = 30) => {
-    const updateFromClock = () => {
-      const engine = engineRef.current;
-      if (!engine) return;
-      const nextSnapshot = engine.advance(monotonicNow());
-      if (challengePausedRef.current && !nextSnapshot.resumeCountIn) {
-        challengeStreaksRef.current = createChallengeStreaks();
-        challengeWrongBarIndexesRef.current.clear();
-        challengeWrongBarStreakRef.current = 0;
-        challengePausedRef.current = false;
-      }
-      if (nextSnapshot.phase === 'finished' && nextSnapshot.results) {
-        setSnapshot(nextSnapshot);
-        setResults(nextSnapshot.results);
-        saveCompletedSession(nextSnapshot.results);
-        stopTimers();
-        void audioRef.current?.stop();
-        audioRef.current = null;
-        engineRef.current = null;
-        return;
-      }
-      if (checkChallenge(engine)) return;
-      setSnapshot(nextSnapshot);
-      uiTimerRef.current = setTimeout(updateFromClock, 50);
-    };
-    uiTimerRef.current = setTimeout(updateFromClock, initialDelayMs);
-  }, [checkChallenge, saveCompletedSession, stopTimers]);
+  const advanceSessionClock = useCallback(() => {
+    const engine = engineRef.current;
+    if (!engine) return false;
+
+    const nextSnapshot = engine.advance(monotonicNow());
+    if (challengePausedRef.current && !nextSnapshot.resumeCountIn) resetChallengeProgress();
+    if (nextSnapshot.phase === 'finished' && nextSnapshot.results) {
+      finalizeSession(nextSnapshot, nextSnapshot.results);
+      return false;
+    }
+    if (checkChallenge(engine)) return false;
+
+    setSnapshot(nextSnapshot);
+    return true;
+  }, [checkChallenge, finalizeSession, resetChallengeProgress]);
+
+  const configureActiveSession = useCallback((activeSettings: ExerciseSettings, score?: ImportedRhythmScore) => {
+    sessionSettingsRef.current = activeSettings;
+    resetChallengeProgress();
+    setSessionSettings(activeSettings);
+    if (score) setSettings(activeSettings);
+    sessionIdRef.current = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }, [resetChallengeProgress]);
 
   const startSession = useCallback(async (
     score?: ImportedRhythmScore,
@@ -625,112 +652,45 @@ export function useSessionController(): SessionContextValue {
       audioRef.current = null;
     }
 
-    const activeFlags = featureFlagsRef.current;
-    const configuredSettings = applyFeatureFlagsToSettings(
-      { ...settings, ...preparationOptions.settings },
-      activeFlags,
-    );
-    const activePatternPairs = applyFeatureFlagsToPatternPairs(
-      preparationOptions.patternPairs,
-      activeFlags,
-      configuredSettings.enabledSubdivisions,
-    );
-    const activeSettings = score
-      ? {
-          ...configuredSettings,
-          bpm: score.bpm ?? configuredSettings.bpm,
-          timeSignature: score.timeSignature,
-        }
-      : configuredSettings;
-    sessionSettingsRef.current = activeSettings;
-    challengeStreaksRef.current = createChallengeStreaks();
-    challengeWrongBarIndexesRef.current.clear();
-    challengeWrongBarStreakRef.current = 0;
-    challengePausedRef.current = false;
-    setSessionSettings(activeSettings);
-    if (score) setSettings(activeSettings);
-    sessionIdRef.current = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-
-    const audio = audioRef.current ?? new MetronomeAudio();
-    audioRef.current = audio;
-    try {
-      await audio.prepare();
-      await audio.resume();
-      setAudioStatus('ready');
-    } catch (error) {
-      sessionIdRef.current = null;
-      setAudioStatus('error');
-      void audio.stop();
-      if (audioRef.current === audio) audioRef.current = null;
-      throw error;
-    }
-
-    const metrics = timeSignatureMetrics(activeSettings.bpm, activeSettings.timeSignature);
-    const patternChangeIntervalBeats = alignedPatternChangeIntervalBeats(
-      activeSettings.changeIntervalBeats,
-      metrics.beatsPerBar,
-    );
-    const beatMs = metrics.beatDurationMs;
     const performanceNow = monotonicNow();
-    const audioNow = audio.currentTime;
-    const sessionStartTime = performanceNow + AUDIO_LEAD_IN_MS + COUNT_IN_BEATS * beatMs;
-    const sessionStartAudioTime =
-      audioNow + AUDIO_LEAD_IN_MS / 1_000 + (COUNT_IN_BEATS * beatMs) / 1_000;
+    const { activeSettings, patternPairs } = resolveSessionConfiguration(
+      settings,
+      score,
+      preparationOptions,
+      featureFlagsRef.current,
+    );
+    configureActiveSession(activeSettings, score);
+
+    const audio = await prepareAudioForPlayback();
+    const timing = createSessionTiming(activeSettings, score, performanceNow, audio.currentTime);
     const engine = new RhythmTimingEngine({
       settings: activeSettings,
-      sessionStartTime,
+      sessionStartTime: timing.sessionStartTime,
       importedScore: score,
-      patternPairs: activePatternPairs,
+      patternPairs,
       patternPairWeights: preparationOptions.patternPairWeights,
     });
     engineRef.current = engine;
     setResults(null);
     setSnapshot(engine.advance(performanceNow));
-    audio.start({
-      sessionStartAudioTime,
-      sessionStartTime,
-      bpm: activeSettings.bpm,
-      beatsPerBar: metrics.beatsPerBar,
-      durationSeconds: getSessionDurationSeconds(activeSettings, score),
-      soundEnabled: activeSettings.soundEnabled && !FORCE_SILENT_E2E,
-      backgroundMusicEnabled: activeSettings.backgroundMusicEnabled,
-      sessionCuesEnabled: activeSettings.sessionCuesEnabled,
-      changeIntervalBeats: patternChangeIntervalBeats,
-      patternChangesEnabled: !score,
-      referenceRhythmEnabled: activeSettings.referenceRhythmEnabled,
-      getReferenceEventsThrough: (timeMs) => engine.getReferenceEventsThrough(timeMs),
-      sounds: {
-        metronome: activeSettings.metronomeSound,
-        leftHand: activeSettings.leftHandSound,
-        rightHand: activeSettings.rightHandSound,
-      },
-    });
+    audio.start(createAudioStartOptions(activeSettings, score, engine, timing));
 
-    scheduleSessionClock(30);
-  }, [scheduleSessionClock, settings, stopTimers]);
+    scheduleSessionClock(advanceSessionClock, 30);
+  }, [advanceSessionClock, configureActiveSession, prepareAudioForPlayback, scheduleSessionClock, settings, stopTimers]);
 
   const restartPausedExercise = useCallback(async (barsBack: number, bpm: number) => {
     if (snapshot?.phase !== 'paused') throw new Error('Pause the exercise before changing it.');
     const nextBpm = Math.max(40, Math.min(200, Math.round(bpm)));
     const originalScore = lastScoreRef.current;
-    let scoreForSession = originalScore;
-
-    if (originalScore) {
-      const currentMeasureIndex = originalScore.measures.findIndex(
-        (measure) => measure.index === snapshot.scoreMeasure?.index,
-      );
-      const rewindToIndex = Math.max(0, (currentMeasureIndex < 0 ? 0 : currentMeasureIndex) - Math.max(0, Math.floor(barsBack)));
-      scoreForSession = {
-        ...scoreFromMeasure(originalScore, rewindToIndex),
-        bpm: nextBpm,
-      };
-    }
+    const scoreForSession = restartScoreFromMeasure(
+      originalScore,
+      snapshot.scoreMeasure?.index,
+      barsBack,
+      nextBpm,
+    );
 
     const activeSettings = sessionSettingsRef.current;
-    const nextOptions: ExercisePreparationOptions = {
-      ...lastOptionsRef.current,
-      settings: { ...lastOptionsRef.current.settings, ...activeSettings, bpm: nextBpm },
-    };
+    const nextOptions = createRestartOptions(lastOptionsRef.current, activeSettings, { bpm: nextBpm });
     setSettings((current) => ({ ...current, bpm: nextBpm }));
 
     const previousAudio = audioRef.current;
@@ -813,12 +773,12 @@ export function useSessionController(): SessionContextValue {
       const now = monotonicNow();
       engine.beginResumeCountIn(now, durationMs);
       setSnapshot(engine.advance(now));
-      scheduleSessionClock(0);
+      scheduleSessionClock(advanceSessionClock, 0);
     } catch {
       setAudioStatus('error');
       throw new Error('The metronome audio could not resume.');
     }
-  }, [scheduleSessionClock, snapshot?.phase]);
+  }, [advanceSessionClock, scheduleSessionClock, snapshot?.phase]);
 
   const discardReplayData = useCallback(() => {
     setResults((current) => current ? {
@@ -843,10 +803,9 @@ export function useSessionController(): SessionContextValue {
 
   useEffect(
     () => () => {
-      stopTimers();
       void audioRef.current?.stop();
     },
-    [stopTimers],
+    [],
   );
 
   const value = useMemo(

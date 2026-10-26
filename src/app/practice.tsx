@@ -126,10 +126,6 @@ export default function PracticeScreen() {
     }
   }, [shouldShowEarlySwingWarning]);
 
-  const stop = () => {
-    stopExercise();
-  };
-
   const openPauseMenu = () => {
     if (!snapshot || snapshot.phase === 'paused' || snapshot.phase === 'finished') return;
     setBpmDraft(snapshot.bpm);
@@ -341,7 +337,7 @@ export default function PracticeScreen() {
           onRestart={restartFromPause}
           onRestartStraight={restartWithStraightFeel}
           onDismissSwingWarning={dismissEarlySwingWarning}
-          onStop={stop}
+          onStop={stopExercise}
           onBackHome={backHomeFromPause}
         />
 

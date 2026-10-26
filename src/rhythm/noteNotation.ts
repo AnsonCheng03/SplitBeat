@@ -163,6 +163,11 @@ interface PositionedNote extends NoteNotationEvent {
   beamGroupIndex: number;
 }
 
+interface OrderedNotationEntry {
+  event: NoteNotationEvent;
+  originalIndex: number;
+}
+
 const EPSILON = 0.000001;
 const BEAM_SLOPE = 0;
 const MINI_SLOT_WIDTHS: Record<number, number> = { 1: 15, 2: 15, 3: 12, 4: 11, 8: 8, 16: 6 };
@@ -321,32 +326,40 @@ function flagDirection(notes: PositionedNote[], noteIndex: number): 'left' | 'ri
   return 'right';
 }
 
-function buildNotationPlan(
-  events: NoteNotationEvent[],
-  metrics: NoteNotationMetrics,
-): NoteNotationPlan {
-  const notes: PositionedNote[] = events
-    .map((event, sourceIndex) => {
-      if (!Number.isFinite(event.startQuarter) || event.startQuarter < -EPSILON) {
-        throw new RangeError(`Note ${sourceIndex + 1} must start at a non-negative quarter-note position.`);
-      }
-      if (!Number.isFinite(event.durationQuarter) || event.durationQuarter <= 0) {
-        throw new RangeError(`Note ${sourceIndex + 1} must have a positive duration.`);
-      }
-      if (event.beamCount !== undefined && (!Number.isInteger(event.beamCount) || event.beamCount < 0 || event.beamCount > 4)) {
-        throw new RangeError(`Note ${sourceIndex + 1} must use between zero and four beams.`);
-      }
-      if (event.tupletNumber !== undefined && (!Number.isInteger(event.tupletNumber) || event.tupletNumber < 2 || event.tupletNumber > 16)) {
-        throw new RangeError(`Note ${sourceIndex + 1} must use a tuplet group size between two and sixteen.`);
-      }
+function validateNotationEvents(events: readonly NoteNotationEvent[]): void {
+  events.forEach((event, sourceIndex) => {
+    if (!Number.isFinite(event.startQuarter) || event.startQuarter < -EPSILON) {
+      throw new RangeError(`Note ${sourceIndex + 1} must start at a non-negative quarter-note position.`);
+    }
+    if (!Number.isFinite(event.durationQuarter) || event.durationQuarter <= 0) {
+      throw new RangeError(`Note ${sourceIndex + 1} must have a positive duration.`);
+    }
+    if (event.beamCount !== undefined && (!Number.isInteger(event.beamCount) || event.beamCount < 0 || event.beamCount > 4)) {
+      throw new RangeError(`Note ${sourceIndex + 1} must use between zero and four beams.`);
+    }
+    if (event.tupletNumber !== undefined && (!Number.isInteger(event.tupletNumber) || event.tupletNumber < 2 || event.tupletNumber > 16)) {
+      throw new RangeError(`Note ${sourceIndex + 1} must use a tuplet group size between two and sixteen.`);
+    }
+  });
+}
 
-      return { ...event, sourceIndex, beamCount: event.beamCount ?? inferredBeamCount(event.durationQuarter), anchorX: 0, beamGroupIndex: 0 };
-    })
+function orderPositionedNotes(events: readonly NoteNotationEvent[]): PositionedNote[] {
+  return events
+    .map((event, sourceIndex) => ({
+      ...event,
+      sourceIndex,
+      beamCount: event.beamCount ?? inferredBeamCount(event.durationQuarter),
+      anchorX: 0,
+      beamGroupIndex: 0,
+    }))
     .sort((left, right) => left.startQuarter - right.startQuarter || left.sourceIndex - right.sourceIndex);
+}
 
+function assignNotePositions(notes: PositionedNote[], metrics: NoteNotationMetrics): void {
   if (metrics.noteAnchors.length !== notes.length) {
     throw new Error('Every note must have a matching horizontal position.');
   }
+
   notes.forEach((note, index) => {
     const anchorX = metrics.noteAnchors[index];
     if (anchorX === undefined || !Number.isFinite(anchorX)) {
@@ -355,11 +368,25 @@ function buildNotationPlan(
     note.anchorX = anchorX;
     note.beamGroupIndex = groupIndexAt(note.startQuarter, metrics.beamGroupQuarterNotes);
   });
+}
 
+function createPositionedNotes(
+  events: NoteNotationEvent[],
+  metrics: NoteNotationMetrics,
+): PositionedNote[] {
+  validateNotationEvents(events);
+  const notes = orderPositionedNotes(events);
+  assignNotePositions(notes, metrics);
+  return notes;
+}
+
+function createBeamShapes(
+  notes: PositionedNote[],
+  metrics: NoteNotationMetrics,
+): { beams: NoteBeamShape[]; primaryBeamStartX: number[] } {
   const beamCount = notes.reduce((maximum, note) => Math.max(maximum, note.beamCount), 0);
-  const beamHeight = metrics.beamHeight;
-  const beams: NoteBeamShape[] = [];
   const primaryBeamStartX = notes.map((note) => note.anchorX);
+  const beams: NoteBeamShape[] = [];
 
   for (let beamLevel = 1; beamLevel <= beamCount; beamLevel += 1) {
     const maximumNotes = metrics.maxBeamNotesByLevel?.[beamLevel - 1];
@@ -374,14 +401,14 @@ function buildNotationPlan(
       const isFlag = firstIndex === lastIndex;
       const direction = isFlag ? flagDirection(notes, firstIndex) : 'right';
       const left = isFlag
-        ? direction === 'right' ? firstAnchorX - beamHeight * 0.2 : firstAnchorX - metrics.flagWidth
-        : firstAnchorX - beamHeight * 0.25;
+        ? direction === 'right' ? firstAnchorX - metrics.beamHeight * 0.2 : firstAnchorX - metrics.flagWidth
+        : firstAnchorX - metrics.beamHeight * 0.25;
       const right = isFlag
-        ? direction === 'right' ? firstAnchorX + metrics.flagWidth : firstAnchorX + beamHeight * 0.2
-        : lastAnchorX + beamHeight * 0.25;
+        ? direction === 'right' ? firstAnchorX + metrics.flagWidth : firstAnchorX + metrics.beamHeight * 0.2
+        : lastAnchorX + metrics.beamHeight * 0.25;
       const middleX = (left + right) / 2;
       const rowTop = metrics.beamTop + (beamLevel - 1) * metrics.beamGap;
-      const middleY = rowTop + beamHeight / 2 + BEAM_SLOPE * (middleX - firstAnchorX);
+      const middleY = rowTop + metrics.beamHeight / 2 + BEAM_SLOPE * (middleX - firstAnchorX);
 
       if (beamLevel === 1) {
         for (const noteIndex of run) primaryBeamStartX[noteIndex] = firstAnchorX;
@@ -394,40 +421,58 @@ function buildNotationPlan(
         startIndex: firstIndex,
         endIndex: lastIndex,
         left,
-        top: Math.max(0, Math.min(metrics.height - beamHeight, middleY - beamHeight / 2)),
-        width: Math.max(beamHeight, right - left),
-        height: beamHeight,
+        top: Math.max(0, Math.min(metrics.height - metrics.beamHeight, middleY - metrics.beamHeight / 2)),
+        width: Math.max(metrics.beamHeight, right - left),
+        height: metrics.beamHeight,
         rotationDegrees: 0,
       });
     }
   }
 
-  const headWidth = metrics.headWidth;
-  const headHeight = metrics.headHeight;
+  return { beams, primaryBeamStartX };
+}
+
+function createNoteGlyphs(
+  notes: PositionedNote[],
+  primaryBeamStartX: number[],
+  metrics: NoteNotationMetrics,
+): { glyphs: NoteGlyphShape[]; noteCenterY: number } {
   const noteCenterY = Math.max(
-    headHeight / 2,
-    Math.min(metrics.height - headHeight / 2, metrics.noteBaselineY ?? metrics.height - 5),
+    metrics.headHeight / 2,
+    Math.min(metrics.height - metrics.headHeight / 2, metrics.noteBaselineY ?? metrics.height - 5),
   );
-  const headTop = noteCenterY - headHeight / 2;
-  const glyphs: NoteGlyphShape[] = notes.map((note, index) => {
-    const stemCenterX = note.anchorX + headWidth * 0.3;
+  const headTop = noteCenterY - metrics.headHeight / 2;
+  const glyphs = notes.map((note, index) => {
+    const stemCenterX = note.anchorX + metrics.headWidth * 0.3;
     const referenceX = primaryBeamStartX[index] ?? stemCenterX;
-    const stemBottom = headTop + headHeight * 0.48;
-    const stemTop = Math.max(0, Math.min(stemBottom, metrics.beamTop + beamHeight + BEAM_SLOPE * (stemCenterX - referenceX)));
+    const stemBottom = headTop + metrics.headHeight * 0.48;
+    const stemTop = Math.max(0, Math.min(
+      stemBottom,
+      metrics.beamTop + metrics.beamHeight + BEAM_SLOPE * (stemCenterX - referenceX),
+    ));
 
     return {
       key: `note-${note.sourceIndex}`,
-      left: note.anchorX - headWidth / 2,
+      left: note.anchorX - metrics.headWidth / 2,
       headTop,
-      headWidth,
-      headHeight,
-      stemLeft: headWidth * 0.8 - metrics.stemWidth / 2,
+      headWidth: metrics.headWidth,
+      headHeight: metrics.headHeight,
+      stemLeft: metrics.headWidth * 0.8 - metrics.stemWidth / 2,
       stemTop,
       stemHeight: Math.max(0, stemBottom - stemTop),
       stemWidth: metrics.stemWidth,
     };
   });
-  const dots: NoteDotShape[] = notes.flatMap((note, index) => {
+
+  return { glyphs, noteCenterY };
+}
+
+function createDottedNoteShapes(
+  notes: PositionedNote[],
+  glyphs: NoteGlyphShape[],
+  metrics: NoteNotationMetrics,
+): NoteDotShape[] {
+  return notes.flatMap((note, index) => {
     if (!isDottedValue(note.durationQuarter)) return [];
     const glyph = glyphs[index];
     if (!glyph) return [];
@@ -439,47 +484,61 @@ function buildNotationPlan(
       size: dotSize,
     }];
   });
+}
 
-  const tupletLabels: NoteNotationPlan['tupletLabels'] = [];
-  let tupletGroupIndex = 0;
-  while (tupletGroupIndex < notes.length) {
-    const firstNote = notes[tupletGroupIndex];
+function createTupletLabels(
+  notes: PositionedNote[],
+  metrics: NoteNotationMetrics,
+): NoteNotationPlan['tupletLabels'] {
+  const labels: NoteNotationPlan['tupletLabels'] = [];
+  let groupStartIndex = 0;
+
+  while (groupStartIndex < notes.length) {
+    const firstNote = notes[groupStartIndex];
     const tupletNumber = firstNote?.tupletNumber;
     if (!firstNote || tupletNumber === undefined) {
-      tupletGroupIndex += 1;
+      groupStartIndex += 1;
       continue;
     }
 
     const group: PositionedNote[] = [firstNote];
-    let nextIndex = tupletGroupIndex + 1;
+    let nextIndex = groupStartIndex + 1;
     while (nextIndex < notes.length && group.length < tupletNumber) {
       const previous = group.at(-1);
       const next = notes[nextIndex];
-      if (
-        !previous ||
-        !next ||
-        next.tupletNumber !== tupletNumber ||
-        !isContiguous(previous, next)
-      ) break;
+      if (!previous || !next || next.tupletNumber !== tupletNumber || !isContiguous(previous, next)) break;
       group.push(next);
       nextIndex += 1;
     }
 
     const lastNote = group.at(-1) ?? firstNote;
-    const left = firstNote.anchorX - headWidth / 2;
-    const right = lastNote.anchorX + headWidth / 2;
+    const left = firstNote.anchorX - metrics.headWidth / 2;
+    const right = lastNote.anchorX + metrics.headWidth / 2;
     const groupCenter = (firstNote.anchorX + lastNote.anchorX) / 2;
     const labelWidth = Math.min(metrics.width, Math.max(metrics.tupletLabelFontSize + 8, right - left + 8));
-    tupletLabels.push({
-      key: `tuplet-${tupletGroupIndex}-${tupletNumber}`,
+    labels.push({
+      key: `tuplet-${groupStartIndex}-${tupletNumber}`,
       text: String(tupletNumber),
       left: Math.max(0, Math.min(metrics.width - labelWidth, groupCenter - labelWidth / 2)),
       width: labelWidth,
       top: 1,
       fontSize: metrics.tupletLabelFontSize,
     });
-    tupletGroupIndex += group.length;
+    groupStartIndex += group.length;
   }
+
+  return labels;
+}
+
+function buildNotationPlan(
+  events: NoteNotationEvent[],
+  metrics: NoteNotationMetrics,
+): NoteNotationPlan {
+  const notes = createPositionedNotes(events, metrics);
+  const { beams, primaryBeamStartX } = createBeamShapes(notes, metrics);
+  const { glyphs, noteCenterY } = createNoteGlyphs(notes, primaryBeamStartX, metrics);
+  const dots = createDottedNoteShapes(notes, glyphs, metrics);
+  const tupletLabels = createTupletLabels(notes, metrics);
 
   return {
     width: metrics.width,
@@ -507,23 +566,16 @@ function buildNotationPlan(
   };
 }
 
-
-/**
- * Calculate note positions, beam groups, and overlay geometry for one bar.
- * VexFlow renders the engraved noteheads, stems, flags, beams, and dots from this plan.
- * Notes with different values share a beam only where their values permit it.
- */
-export function createBarNoteNotationPlan(
+function validateBarNotationInputs(
   events: readonly NoteNotationEvent[],
   options: BarNoteNotationOptions,
-): NoteNotationPlan {
+): void {
   if (!Number.isFinite(options.durationQuarter) || options.durationQuarter <= 0) {
     throw new RangeError('A bar must have a positive duration.');
   }
   if (!Number.isFinite(options.width) || options.width <= 0) {
     throw new RangeError('A bar must have a positive layout width.');
   }
-  const size = options.size ?? 'full';
   const beamGroupQuarterNotes = options.beamGroupQuarterNotes ?? 1;
   if (!Number.isFinite(beamGroupQuarterNotes) || beamGroupQuarterNotes <= 0) {
     throw new RangeError('Beam groups must have a positive duration.');
@@ -540,6 +592,7 @@ export function createBarNoteNotationPlan(
   if (options.noteAnchors && options.noteAnchors.length !== events.length) {
     throw new RangeError('Every note must have a matching explicit anchor.');
   }
+
   options.noteAnchors?.forEach((anchor, index) => {
     if (!Number.isFinite(anchor) || anchor < 0 || anchor > options.width) {
       throw new RangeError(`Note ${index + 1} must have an anchor inside the notation viewport.`);
@@ -553,6 +606,49 @@ export function createBarNoteNotationPlan(
       throw new RangeError(`Note ${index + 1} must have a positive duration.`);
     }
   });
+  if (options.anchorInsets && (
+    !Number.isFinite(options.anchorInsets.left) || options.anchorInsets.left < 0 ||
+    !Number.isFinite(options.anchorInsets.right) || options.anchorInsets.right < 0
+  )) {
+    throw new RangeError('Shared note-anchor insets must be finite and non-negative.');
+  }
+}
+
+function orderNotationEvents(events: readonly NoteNotationEvent[]): OrderedNotationEntry[] {
+  return Array.from(events)
+    .map((event, originalIndex) => ({ event, originalIndex }))
+    .sort((left, right) => left.event.startQuarter - right.event.startQuarter || left.originalIndex - right.originalIndex);
+}
+
+function calculateNoteAnchors(
+  orderedEntries: OrderedNotationEntry[],
+  options: BarNoteNotationOptions,
+  leftInset: number,
+  rightInset: number,
+): { events: NoteNotationEvent[]; noteAnchors: number[]; usableWidth: number } {
+  const usableWidth = Math.max(0, options.width - leftInset - rightInset);
+  const events = orderedEntries.map(({ event }) => event);
+  const noteAnchors = orderedEntries.map(
+    ({ event, originalIndex }) => options.noteAnchors?.[originalIndex]
+      ?? leftInset + (event.startQuarter / options.durationQuarter) * usableWidth,
+  );
+
+  return { events, noteAnchors, usableWidth };
+}
+
+
+/**
+ * Calculate note positions, beam groups, and overlay geometry for one bar.
+ * VexFlow renders the engraved noteheads, stems, flags, beams, and dots from this plan.
+ * Notes with different values share a beam only where their values permit it.
+ */
+export function createBarNoteNotationPlan(
+  events: readonly NoteNotationEvent[],
+  options: BarNoteNotationOptions,
+): NoteNotationPlan {
+  validateBarNotationInputs(events, options);
+  const size = options.size ?? 'full';
+  const beamGroupQuarterNotes = options.beamGroupQuarterNotes ?? 1;
 
   const shortestNote = events.length > 0
     ? Math.min(...events.map((event) => event.durationQuarter))
@@ -571,22 +667,14 @@ export function createBarNoteNotationPlan(
   const beamTop = options.beamTop ?? (size === 'mini' ? 3 : size === 'compact' ? 4 : 5);
   const flagWidth = Math.max(size === 'mini' ? 5 : 7, headWidth * 0.9);
   const ownInsets = calculateBarNoteAnchorInsets(events, options);
-  if (options.anchorInsets && (
-    !Number.isFinite(options.anchorInsets.left) || options.anchorInsets.left < 0 ||
-    !Number.isFinite(options.anchorInsets.right) || options.anchorInsets.right < 0
-  )) {
-    throw new RangeError('Shared note-anchor insets must be finite and non-negative.');
-  }
   const leftInset = options.noteAnchors ? 0 : Math.max(ownInsets.left, options.anchorInsets?.left ?? 0);
   const rightInset = options.noteAnchors ? 0 : Math.max(ownInsets.right, options.anchorInsets?.right ?? 0);
-  const usableWidth = Math.max(0, options.width - leftInset - rightInset);
-  const orderedEntries = Array.from(events)
-    .map((event, originalIndex) => ({ event, originalIndex }))
-    .sort((left, right) => left.event.startQuarter - right.event.startQuarter || left.originalIndex - right.originalIndex)
-  const orderedEvents = orderedEntries.map(({ event }) => event);
-  const noteAnchors = orderedEntries.map(
-    ({ event, originalIndex }) => options.noteAnchors?.[originalIndex]
-      ?? leftInset + (event.startQuarter / options.durationQuarter) * usableWidth,
+  const orderedEntries = orderNotationEvents(events);
+  const { events: orderedEvents, noteAnchors, usableWidth } = calculateNoteAnchors(
+    orderedEntries,
+    options,
+    leftInset,
+    rightInset,
   );
 
   return buildNotationPlan(orderedEvents, {

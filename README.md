@@ -60,6 +60,7 @@ The iOS config sets `usesNonExemptEncryption` to `false`; the archived `Info.pli
 ## Architecture
 
 - `src/app/` contains the mode-select home, guided course, focused exercise and typed-bar editor, session setup, separate rhythm/audio/appearance/timing settings pages, practice, score import, results, and records routes.
+- Route and workflow functions compose clearly named steps; feature hooks own focused lifecycles and persistence, while components render one screen area or interaction. Keep helpers cohesive and avoid export-only files.
 - `src/theme/ThemeProvider.tsx` loads and saves the appearance choice and provides the active palette to screens and components; `src/theme.ts` defines dark and light tokens.
 - The root layout warms VexFlow's DOM renderer on app launch, and exercise preparation waits for that notation preload before opening practice.
 - `src/i18n/` resolves the device language, saves the user's language preference locally, and translates interface copy while leaving imported and user-created score names intact.
