@@ -34,8 +34,7 @@ if [[ -n "$auth_key_id$auth_issuer_id$auth_key_path" ]]; then
 fi
 
 app_version="$(node -p "require('./app.json').expo.version")"
-configured_build_number="$(node -p "require('./app.json').expo.ios.buildNumber")"
-build_number="${SPLITBEAT_BUILD_NUMBER:-$configured_build_number}"
+build_number="${SPLITBEAT_BUILD_NUMBER:-$(node scripts/testflight-build-number.mjs)}"
 if [[ ! "$build_number" =~ ^[0-9]+([.][0-9]+){0,2}$ ]]; then
   echo "The iOS build number must contain one to three numeric components: $build_number" >&2
   exit 1

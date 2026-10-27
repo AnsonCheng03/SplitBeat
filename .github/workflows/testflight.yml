@@ -46,8 +46,6 @@ jobs:
           ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
           ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
-          GITHUB_RUN_NUMBER: ${{ github.run_number }}
-          GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
           SPLITBEAT_MIN_FREE_SPACE_GIB: 5
         run: |
           if [[ -z "$ASC_API_KEY_ID" || -z "$ASC_API_ISSUER_ID" || -z "$ASC_API_KEY_P8" ]]; then
@@ -61,18 +59,6 @@ jobs:
           trap 'rm -f "$key_path"' EXIT
           unset ASC_API_KEY_P8
 
-          # Keep build numbers ordered by workflow run and unique on reruns.
-          run_number="$GITHUB_RUN_NUMBER"
-          run_attempt="$GITHUB_RUN_ATTEMPT"
-          if [[ ! "$run_number" =~ ^[1-9][0-9]*$ || ! "$run_attempt" =~ ^[1-9][0-9]*$ || "$run_attempt" -gt 99 ]]; then
-            echo "GitHub returned an invalid run number or attempt." >&2
-            exit 1
-          fi
-          major=$((16 + (run_number - 1) / 99))
-          minor=$(((run_number - 1) % 99 + 1))
-          build_number="${major}.${minor}.${run_attempt}"
-
-          echo "Using Xcode $(xcodebuild -version | tr '\n' ' ') for build $build_number."
+          echo "Using Xcode $(xcodebuild -version | tr '\n' ' ') for the timestamp-numbered build."
           ASC_API_KEY_PATH="$key_path" \
-            SPLITBEAT_BUILD_NUMBER="$build_number" \
             npm run release:testflight
