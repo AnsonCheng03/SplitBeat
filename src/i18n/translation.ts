@@ -727,6 +727,8 @@ const TRADITIONAL_CHINESE: Record<string, string> = {
   'Rhythm features': '節奏功能',
   'Sound and feedback': '音效與回饋',
   'Challenges and progress': '挑戰與進度',
+  'Challenges': '挑戰',
+  'Choose how mistakes affect practice and manage your Game Center challenge score.': '設定錯誤如何影響練習，並管理 Game Center 挑戰分數。',
   'One-hand practice': '單手練習',
   'Practice with a full-screen tap area.': '使用全螢幕點按區域練習。',
   'Show the rhythm as moving notes across bars.': '以音符形式顯示節奏，並逐小節移動。',

@@ -31,6 +31,10 @@ appId: com.splitbeat.twohandrhythm
     id: setup.card.rhythm
 - assertVisible:
     id: settings.rhythm.screen
+- tapOn:
+    id: setup.card.challenges
+- assertVisible:
+    id: settings.challenges.screen
 - scrollUntilVisible:
     element: { id: setup.challenge.misses.1 }
     direction: DOWN
@@ -39,12 +43,12 @@ appId: com.splitbeat.twohandrhythm
 - tapOn:
     id: setup.challenge.action.pause
 - scrollUntilVisible:
-    element: { id: setup.challenge.gameCenter }
+    element: { id: settings.challenges.gameCenter }
     direction: DOWN
 - assertVisible:
-    id: setup.challenge.gameCenter
+    id: settings.challenges.gameCenter
 - tapOn:
-    id: settings.rhythm.back
+    id: settings.challenges.back
 - tapOn:
     id: setup.start
 - extendedWaitUntil:

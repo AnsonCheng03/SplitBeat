@@ -1,6 +1,5 @@
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
-import { GameCenterChallengeCard } from '@/components/GameCenterChallengeCard';
 import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsSection } from '@/components/SettingsSection';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -53,7 +52,6 @@ export function RhythmChallengeSettings({
           : 'Any error reacts to an off-beat tap or missed note. Consecutive misses count separately for each hand; a correct note resets that hand’s streak.'}{' '}
         A pause can be resumed from the practice screen.
       </Text>
-      {featureFlags.gameCenter ? <GameCenterChallengeCard testID="setup.challenge.gameCenter" /> : null}
     </SettingsSection>
   );
 }

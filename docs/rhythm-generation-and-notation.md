@@ -77,4 +77,5 @@ Keep route and workflow functions as readable sequences of named steps. A helper
 | Exercise practice | `ExerciseHeader`, `ExercisePairPanel`, `ExerciseComposer`, and `ExerciseHistoryPanel` |
 | Learn course | `LearnCoursePath`, `LearnLessonTile`, and `LearnPatternPreview` |
 | Score import | `ExampleScoreBrowser`, `ScoreLibraryList`, and `ImportedScorePreview` |
-| Rhythm settings | `RhythmSettingsOptions` composes meter, pattern, and challenge settings sections |
+| Rhythm settings | `RhythmSettingsOptions` composes meter and pattern settings sections |
+| Challenges | `RhythmChallengeSettings` and `GameCenterChallengeCard` live in their own settings destination |

@@ -37,6 +37,21 @@ appId: com.splitbeat.twohandrhythm
     id: setup.card.audio
 - assertVisible:
     id: setup.card.appearance
+- assertVisible:
+    id: setup.card.challenges
+- assertNotVisible:
+    id: settings.challenges.gameCenter
+- tapOn:
+    id: setup.card.challenges
+- assertVisible:
+    id: settings.challenges.screen
+- scrollUntilVisible:
+    element:
+      id: settings.challenges.gameCenter
+    direction: DOWN
+- assertVisible:
+    id: settings.challenges.gameCenter
+- takeScreenshot: settings-challenges
 - tapOn:
     id: setup.card.audio
 - assertVisible:
