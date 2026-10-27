@@ -99,8 +99,8 @@ export function PracticeIntroOverlayStyle12({ colors, layout }: { colors: import
     : { position: 'absolute', left: '22%', right: '22%', top: '50%', height: 1, backgroundColor: colors.line, opacity: 0.9 };
 }
 
-export function PracticeIntroOverlayStyle13({ bottomInset, frame, height }: { bottomInset: number; frame: PracticePaneFrame; height: number }): import('react-native').ViewStyle {
-  return { position: 'absolute', left: frame.left + 12, width: Math.max(0, frame.width - 24), bottom: Math.max(20, bottomInset + 14) + Math.max(0, height - frame.top - frame.height), alignItems: 'center' };
+export function PracticeIntroOverlayStyle13({ bottomInset, width }: { bottomInset: number; width: number }): import('react-native').ViewStyle {
+  return { position: 'absolute', left: 12, width: Math.max(0, width - 24), bottom: Math.max(20, bottomInset + 14), alignItems: 'center' };
 }
 
 export function PracticeIntroOverlayStyle14({ colors, compact }: { colors: import('@/theme').ThemeColors; compact: boolean }): import('react-native').TextStyle {

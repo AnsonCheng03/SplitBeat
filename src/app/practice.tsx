@@ -122,7 +122,6 @@ export default function PracticeScreen() {
               rightInset={insets.right}
               layout={practiceLayout}
               width={width}
-              height={height}
               bottomInset={insets.bottom}
               starting={starting}
               soundEnabled={activeSettings.soundEnabled}

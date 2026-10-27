@@ -29,7 +29,6 @@ export function PracticeIntroOverlay({
   rightInset,
   layout,
   width,
-  height,
   bottomInset,
   starting,
   soundEnabled,
@@ -41,7 +40,6 @@ export function PracticeIntroOverlay({
   rightInset: number;
   layout: PracticeLayout;
   width: number;
-  height: number;
   bottomInset: number;
   starting: boolean;
   soundEnabled: boolean;
@@ -88,7 +86,7 @@ export function PracticeIntroOverlay({
             <View style={PracticeIntroOverlayStyle12({ colors, layout })} />
           </>
         )}
-        <View style={PracticeIntroOverlayStyle13({ bottomInset, frame: promptFrame, height })}>
+        <View style={PracticeIntroOverlayStyle13({ bottomInset, width })}>
           <Text style={PracticeIntroOverlayStyle14({ colors, compact })}>{starting ? 'STARTING…' : 'TAP ANYWHERE TO START'}</Text>
           {!soundEnabled ? (
             <Text testID="practice.soundWarning" style={PracticeIntroOverlayStyle15({ colors })}>
