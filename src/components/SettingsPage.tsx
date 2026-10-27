@@ -7,7 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FullBleedSafeArea } from '@/components/FullBleedSafeArea';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
-import { SettingsPageStyle1,
+import {
+  SettingsPageStyle1,
   SettingsPageStyle2,
   SettingsPageStyle3,
   SettingsPageStyle4,
@@ -19,7 +20,17 @@ import { SettingsPageStyle1,
   SettingsPageStyle10,
   SettingsPageStyle11,
   SettingsPageStyle12,
-  SettingsPageStyle13, SettingsPageStyle14, SettingsPageStyle15, SettingsPageStyle16 } from '@/styles/settings';
+  SettingsPageStyle13,
+  SettingsPageStyle14,
+  SettingsPageStyle15,
+  SettingsPageStyle16,
+  SettingsPageStyle17,
+  SettingsPageStyle18,
+  SettingsPageStyle19,
+  SettingsPageStyle20,
+  SettingsPageStyle21,
+  SettingsPageStyle22,
+} from '@/styles/settings';
 
 export type SettingsSection = 'session' | 'rhythm' | 'audio' | 'appearance' | 'timing' | 'language';
 
@@ -56,69 +67,117 @@ export function SettingsPage({
   const sidebarWidth = compact ? 176 : 224;
   const { featureFlags } = useRhythmSession();
   const { t } = useI18n();
+  const mobileLayout = width < 640;
+  const visibleSections = sections.filter((item) => item.id !== 'timing' || featureFlags.timingCalibration);
+
+  const renderSectionLink = (item: (typeof sections)[number], mobile: boolean) => {
+    const selected = item.id === section;
+    return (
+      <Link key={item.id} href={item.href} asChild>
+        <Pressable
+          testID={item.testID}
+          accessibilityRole="button"
+          accessibilityState={{ selected }}
+          style={({ pressed }) => (mobile
+            ? SettingsPageStyle18({ selected, pressed, colors })
+            : SettingsPageStyle7({ selected, pressed, colors }))}
+        >
+          <Text style={mobile
+            ? SettingsPageStyle19({ selected, colors })
+            : SettingsPageStyle8({ selected, colors, compact })}
+          >
+            {t(item.label)}
+          </Text>
+        </Pressable>
+      </Link>
+    );
+  };
 
   return (
     <FullBleedSafeArea
       testID={testID}
       backgroundColor={colors.background}
-      contentStyle={SettingsPageStyle14()}
-      underlay={(
+      contentStyle={SettingsPageStyle14({ mobileLayout })}
+      underlay={!mobileLayout ? (
         <View
           pointerEvents="none"
           style={SettingsPageStyle1({ sidebarWidth, insets, colors })}
         />
-      )}
+      ) : undefined}
     >
-      <View
-        style={SettingsPageStyle2({ sidebarWidth, compact })}
-      >
-        <Link href={section === 'session' ? '/' : '/setup'} asChild>
-          <Pressable testID={backTestID} accessibilityRole="button" hitSlop={6} style={SettingsPageStyle3({ compact })}>
-            <Text style={SettingsPageStyle4({ colors })}>
-              ‹  {t(section === 'session' ? 'HOME' : 'SETUP')}
+      {!mobileLayout ? (
+        <View style={SettingsPageStyle2({ sidebarWidth, compact })}>
+          <Link href={section === 'session' ? '/' : '/setup'} asChild>
+            <Pressable
+              testID={backTestID}
+              accessibilityRole="button"
+              accessibilityLabel={t(section === 'session' ? 'Return home' : 'Return to setup')}
+              hitSlop={6}
+              style={SettingsPageStyle3({ compact })}
+            >
+              <Text style={SettingsPageStyle4({ colors })}>
+                ‹  {t(section === 'session' ? 'HOME' : 'SETUP')}
+              </Text>
+            </Pressable>
+          </Link>
+
+          <Text style={SettingsPageStyle5({ colors })}>
+            {t('SETTINGS')}
+          </Text>
+
+          <ScrollView
+            style={SettingsPageStyle6()}
+            contentContainerStyle={SettingsPageStyle15()}
+            showsVerticalScrollIndicator={false}
+          >
+            {visibleSections.map((item) => renderSectionLink(item, false))}
+          </ScrollView>
+
+          {!compact ? (
+            <Text style={SettingsPageStyle9({ colors })}>
+              {t('BEEP BEEP BEAT - RHYTHM COACH')}
             </Text>
-          </Pressable>
-        </Link>
+          ) : null}
+        </View>
+      ) : null}
 
-        <Text style={SettingsPageStyle5({ colors })}>
-          {t('SETTINGS')}
-        </Text>
-
-        <ScrollView
-          style={SettingsPageStyle6()}
-          contentContainerStyle={SettingsPageStyle15()}
-          showsVerticalScrollIndicator={false}
-        >
-          {sections.filter((item) => item.id !== 'timing' || featureFlags.timingCalibration).map((item) => {
-            const selected = item.id === section;
-            return (
-              <Link key={item.id} href={item.href} asChild>
+      <View style={SettingsPageStyle10()}>
+        {mobileLayout ? (
+          <>
+            <View style={SettingsPageStyle16()}>
+              <Link href={section === 'session' ? '/' : '/setup'} asChild>
                 <Pressable
-                  testID={item.testID}
+                  testID={backTestID}
                   accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  style={({ pressed }) => (SettingsPageStyle7({ selected, pressed, colors }))}
+                  accessibilityLabel={t(section === 'session' ? 'Return home' : 'Return to setup')}
+                  style={SettingsPageStyle3({ compact: true, mobileLayout: true })}
                 >
-                  <Text style={SettingsPageStyle8({ selected, colors, compact })}>
-                    {t(item.label)}
+                  <Text style={SettingsPageStyle4({ colors })}>
+                    ‹  {t(section === 'session' ? 'HOME' : 'SETUP')}
                   </Text>
                 </Pressable>
               </Link>
-            );
-          })}
-        </ScrollView>
+              <Text style={SettingsPageStyle21({ colors })}>
+                {t('SETTINGS')}
+              </Text>
+            </View>
 
-        {!compact ? (
-          <Text style={SettingsPageStyle9({ colors })}>
-            {t('BEEP BEEP BEAT - RHYTHM COACH')}
-          </Text>
+            <ScrollView
+              testID="settings.navigation"
+              horizontal
+              style={SettingsPageStyle22()}
+              accessibilityLabel={t('Settings sections')}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={SettingsPageStyle17()}
+            >
+              {visibleSections.map((item) => renderSectionLink(item, true))}
+            </ScrollView>
+          </>
         ) : null}
-      </View>
 
-      <View style={SettingsPageStyle10()}>
         <ScrollView
           style={SettingsPageStyle11()}
-          contentContainerStyle={SettingsPageStyle16({ compact })}
+          contentContainerStyle={SettingsPageStyle20({ compact, mobileLayout })}
           showsVerticalScrollIndicator={false}
         >
           <Text style={SettingsPageStyle12({ colors })}>

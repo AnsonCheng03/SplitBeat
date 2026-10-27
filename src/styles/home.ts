@@ -139,7 +139,8 @@ export function HomeActivityPickerStyle13({ colors }: { colors: import('@/theme'
 
 export function HomeSelectionStyle1({ pressed, colors }: { pressed: boolean; colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
   return {
-        minHeight: 36,
+        minWidth: 44,
+        minHeight: 44,
         paddingHorizontal: 13,
         justifyContent: 'center',
         borderRadius: 11,

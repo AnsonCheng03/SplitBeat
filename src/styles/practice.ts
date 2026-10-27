@@ -32,7 +32,7 @@ export function PracticeDisplayPickerStyle3(): import('react-native').ViewStyle 
 export function PracticeDisplayPickerStyle4({ selected, colors, pressed }: { selected: boolean; colors: import('@/theme').ThemeColors; pressed: boolean }): import('react-native').ViewStyle {
   return {
                 flex: 1,
-                minHeight: 42,
+                minHeight: 48,
                 justifyContent: 'center',
                 alignItems: 'center',
                 paddingHorizontal: 12,
@@ -132,7 +132,7 @@ export function PracticePauseOverlaysStyle4(): import('react-native').ViewStyle 
 }
 
 export function PracticePauseOverlaysStyle5({ colors, pauseActionLoading }: { colors: import('@/theme').ThemeColors; pauseActionLoading: boolean }): import('react-native').ViewStyle {
-  return { minHeight: 38, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 10, backgroundColor: colors.accent, opacity: pauseActionLoading ? 0.5 : 1 };
+  return { minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 10, backgroundColor: colors.accent, opacity: pauseActionLoading ? 0.5 : 1 };
 }
 
 export function PracticePauseOverlaysStyle6({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -140,7 +140,7 @@ export function PracticePauseOverlaysStyle6({ colors }: { colors: import('@/them
 }
 
 export function PracticePauseOverlaysStyle7(): import('react-native').ViewStyle {
-  return { minHeight: 38, justifyContent: 'center', paddingHorizontal: 12 };
+  return { minHeight: 44, justifyContent: 'center', paddingHorizontal: 12 };
 }
 
 export function PracticePauseOverlaysStyle8({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -208,7 +208,7 @@ export function PracticePauseOverlaysStyle23({ colors }: { colors: import('@/the
 }
 
 export function PracticePauseOverlaysStyle24({ colors, pauseActionLoading }: { colors: import('@/theme').ThemeColors; pauseActionLoading: boolean }): import('react-native').ViewStyle {
-  return { minHeight: 36, alignSelf: 'flex-start', justifyContent: 'center', marginTop: 5, paddingHorizontal: 10, borderRadius: 9, backgroundColor: colors.accent, opacity: pauseActionLoading ? 0.5 : 1 };
+  return { minHeight: 44, alignSelf: 'flex-start', justifyContent: 'center', marginTop: 5, paddingHorizontal: 10, borderRadius: 9, backgroundColor: colors.accent, opacity: pauseActionLoading ? 0.5 : 1 };
 }
 
 export function PracticePauseOverlaysStyle25({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -240,7 +240,7 @@ export function PracticePauseOverlaysStyle31({ compact }: { compact: boolean }):
 }
 
 export function PracticePauseOverlaysStyle32({ compact, colors, maxRewindBars, rewindBars }: { compact: boolean; colors: import('@/theme').ThemeColors; maxRewindBars: number; rewindBars: number }): import('react-native').ViewStyle {
-  return { width: 40, height: compact ? 34 : 40, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: maxRewindBars === 0 || rewindBars <= 1 ? 0.4 : 1 };
+  return { width: 44, height: 44, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: maxRewindBars === 0 || rewindBars <= 1 ? 0.4 : 1 };
 }
 
 export function PracticePauseOverlaysStyle33({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -252,7 +252,7 @@ export function PracticePauseOverlaysStyle34({ colors, compact }: { colors: impo
 }
 
 export function PracticePauseOverlaysStyle35({ compact, colors, maxRewindBars, rewindBars }: { compact: boolean; colors: import('@/theme').ThemeColors; maxRewindBars: number; rewindBars: number }): import('react-native').ViewStyle {
-  return { width: 40, height: compact ? 34 : 40, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: maxRewindBars === 0 || rewindBars >= maxRewindBars ? 0.4 : 1 };
+  return { width: 44, height: 44, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: maxRewindBars === 0 || rewindBars >= maxRewindBars ? 0.4 : 1 };
 }
 
 export function PracticePauseOverlaysStyle36({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -292,7 +292,7 @@ export function PracticePauseOverlaysStyle44({ compact }: { compact: boolean }):
 }
 
 export function PracticePauseOverlaysStyle45({ colors, bpmDraft }: { colors: import('@/theme').ThemeColors; bpmDraft: number }): import('react-native').ViewStyle {
-  return { width: 36, height: 34, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: bpmDraft <= 40 ? 0.4 : 1 };
+  return { width: 44, height: 44, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: bpmDraft <= 40 ? 0.4 : 1 };
 }
 
 export function PracticePauseOverlaysStyle46({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -300,11 +300,11 @@ export function PracticePauseOverlaysStyle46({ colors }: { colors: import('@/the
 }
 
 export function PracticePauseOverlaysStyle47(): import('react-native').ViewStyle {
-  return { flex: 1, height: 34 };
+  return { flex: 1, height: 44 };
 }
 
 export function PracticePauseOverlaysStyle48({ colors, bpmDraft }: { colors: import('@/theme').ThemeColors; bpmDraft: number }): import('react-native').ViewStyle {
-  return { width: 36, height: 34, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: bpmDraft >= 200 ? 0.4 : 1 };
+  return { width: 44, height: 44, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: bpmDraft >= 200 ? 0.4 : 1 };
 }
 
 export function PracticePauseOverlaysStyle49({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -316,7 +316,7 @@ export function PracticePauseOverlaysStyle50({ colors, compact }: { colors: impo
 }
 
 export function PracticePauseOverlaysStyle51({ compact, colors, pauseActionLoading }: { compact: boolean; colors: import('@/theme').ThemeColors; pauseActionLoading: boolean }): import('react-native').ViewStyle {
-  return { alignSelf: 'flex-end', minHeight: compact ? 34 : 40, justifyContent: 'center', paddingHorizontal: 15, marginTop: 5, borderRadius: 10, backgroundColor: colors.accent, opacity: pauseActionLoading ? 0.5 : 1 };
+  return { alignSelf: 'flex-end', minHeight: 44, justifyContent: 'center', paddingHorizontal: 15, marginTop: 5, borderRadius: 10, backgroundColor: colors.accent, opacity: pauseActionLoading ? 0.5 : 1 };
 }
 
 export function PracticePauseOverlaysStyle52({ colors, compact }: { colors: import('@/theme').ThemeColors; compact: boolean }): import('react-native').TextStyle {

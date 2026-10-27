@@ -290,7 +290,7 @@ export function ResultsMissedNotesStyle10({ colors }: { colors: import('@/theme'
 }
 
 export function ResultsMissedNotesStyle11({ pressed, colors, replayActive, replay }: { pressed: boolean; colors: import('@/theme').ThemeColors; replayActive: boolean; replay: { barIndex: number; playbackId: number; isPlaying: boolean; isStarting: boolean } | null }): import('react-native').ViewStyle {
-  return { paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', borderRadius: 11, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: replayActive && replay!.isPlaying ? colors.accent : colors.line };
+  return { paddingHorizontal: 14, minHeight: 44, justifyContent: 'center', borderRadius: 11, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: replayActive && replay!.isPlaying ? colors.accent : colors.line };
 }
 
 export function ResultsMissedNotesStyle12({ replayActive, replay, colors }: { replayActive: boolean; replay: { barIndex: number; playbackId: number; isPlaying: boolean; isStarting: boolean } | null; colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -298,7 +298,7 @@ export function ResultsMissedNotesStyle12({ replayActive, replay, colors }: { re
 }
 
 export function ResultsMissedNotesStyle13({ pressed, colors, savedBars, barIndex }: { pressed: boolean; colors: import('@/theme').ThemeColors; savedBars: ReadonlySet<number>; barIndex: number }): import('react-native').ViewStyle {
-  return { paddingHorizontal: 11, minHeight: 40, justifyContent: 'center', borderRadius: 11, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: savedBars.has(barIndex) ? colors.left : colors.line };
+  return { paddingHorizontal: 11, minHeight: 44, justifyContent: 'center', borderRadius: 11, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: savedBars.has(barIndex) ? colors.left : colors.line };
 }
 
 export function ResultsMissedNotesStyle14({ savedBars, barIndex, colors }: { savedBars: ReadonlySet<number>; barIndex: number; colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -350,7 +350,7 @@ export function ResultsOverviewStyle11({ colors }: { colors: import('@/theme').T
 }
 
 export function ResultsOverviewStyle12({ countAsFeel, feel, colors }: { countAsFeel: import("@/types/rhythm").RhythmicFeel; feel: "straight" | "swing"; colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { minWidth: 76, minHeight: 38, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, borderRadius: 10, backgroundColor: countAsFeel === feel ? colors.accent : colors.background, borderWidth: 1, borderColor: countAsFeel === feel ? colors.accent : colors.line };
+  return { minWidth: 76, minHeight: 44, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, borderRadius: 10, backgroundColor: countAsFeel === feel ? colors.accent : colors.background, borderWidth: 1, borderColor: countAsFeel === feel ? colors.accent : colors.line };
 }
 
 export function ResultsOverviewStyle13({ countAsFeel, feel, colors }: { countAsFeel: import("@/types/rhythm").RhythmicFeel; feel: "straight" | "swing"; colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {

@@ -280,8 +280,8 @@ export function SettingsPageStyle2({ sidebarWidth, compact }: { sidebarWidth: 17
         };
 }
 
-export function SettingsPageStyle3({ compact }: { compact: boolean }): import('react-native').ViewStyle {
-  return { minHeight: 48, justifyContent: 'center', marginBottom: compact ? 10 : 20, paddingHorizontal: 8 };
+export function SettingsPageStyle3({ compact, mobileLayout = false }: { compact: boolean; mobileLayout?: boolean }): import('react-native').ViewStyle {
+  return { minHeight: 48, justifyContent: 'center', marginBottom: mobileLayout ? 0 : compact ? 10 : 20, paddingHorizontal: 8 };
 }
 
 export function SettingsPageStyle4({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -508,16 +508,40 @@ export function LivePracticeSettingsStyle21(): import('react-native').ViewStyle 
   return { paddingBottom: 12 };
 }
 
-export function SettingsPageStyle14(): import('react-native').ViewStyle {
-  return { flexDirection: 'row' };
+export function SettingsPageStyle14({ mobileLayout }: { mobileLayout: boolean }): import('react-native').ViewStyle {
+  return { flex: 1, flexDirection: mobileLayout ? 'column' : 'row', minWidth: 0 };
 }
 
 export function SettingsPageStyle15(): import('react-native').ViewStyle {
   return { gap: 10, paddingBottom: 10 };
 }
 
-export function SettingsPageStyle16({ compact }: { compact: boolean }): import('react-native').ViewStyle {
-  return { paddingHorizontal: compact ? 16 : 28, paddingTop: compact ? 14 : 20, paddingBottom: compact ? 20 : 28, width: '100%', maxWidth: 1120, alignSelf: 'center' };
+export function SettingsPageStyle16(): import('react-native').ViewStyle {
+  return { minHeight: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 };
+}
+
+export function SettingsPageStyle17(): import('react-native').ViewStyle {
+  return { alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 8 };
+}
+
+export function SettingsPageStyle18({ selected, pressed, colors }: { selected: boolean; pressed: boolean; colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { minHeight: 44, justifyContent: 'center', paddingHorizontal: 13, borderRadius: 12, backgroundColor: selected || pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: selected ? colors.accent : colors.line };
+}
+
+export function SettingsPageStyle19({ selected, colors }: { selected: boolean; colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: selected ? colors.accent : colors.muted, fontSize: 12, fontWeight: selected ? '800' : '600' };
+}
+
+export function SettingsPageStyle20({ compact, mobileLayout }: { compact: boolean; mobileLayout: boolean }): import('react-native').ViewStyle {
+  return { paddingHorizontal: mobileLayout ? 16 : compact ? 16 : 28, paddingTop: mobileLayout ? 16 : compact ? 14 : 20, paddingBottom: compact ? 20 : 28, width: '100%', maxWidth: 1120, alignSelf: 'center' };
+}
+
+export function SettingsPageStyle21({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.dim, fontSize: 10, fontWeight: '900', letterSpacing: 1.5, paddingHorizontal: 8 };
+}
+
+export function SettingsPageStyle22(): import('react-native').ViewStyle {
+  return { height: 52, flexGrow: 0, flexShrink: 0 };
 }
 
 export function rhythmSettingsHelperTextStyle(colors: import('@/theme').ThemeColors): import('react-native').TextStyle {

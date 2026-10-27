@@ -1,0 +1,70 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: PORTRAIT
+- launchApp:
+    clearState: true
+- runFlow:
+    when:
+      visible:
+        text: Two-Hand Rhythm Trainer
+    commands:
+      - tapOn: Two-Hand Rhythm Trainer
+- runFlow:
+    when:
+      visible:
+        text: Open
+    commands:
+      - tapOn: Open
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
+- tapOn:
+    id: home.setup
+- assertVisible:
+    id: setup.screen
+- tapOn:
+    id: setup.card.rhythm
+- assertVisible:
+    id: settings.rhythm.screen
+- assertVisible:
+    id: settings.navigation
+- assertVisible:
+    id: setup.card.audio
+- tapOn:
+    id: setup.card.audio
+- assertVisible:
+    id: settings.audio.screen
+- scrollUntilVisible:
+    element:
+      id: setup.card.appearance
+    direction: RIGHT
+- tapOn:
+    id: setup.card.appearance
+- assertVisible:
+    id: settings.appearance.screen
+- assertVisible:
+    id: settings.appearance.lightMode
+- takeScreenshot: settings-mobile-portrait
+- swipe:
+    start: 90%, 36%
+    end: 15%, 36%
+    duration: 350
+- assertVisible:
+    id: setup.card.language
+- tapOn:
+    id: setup.card.language
+- assertVisible:
+    id: settings.language.screen
+- assertVisible:
+    id: settings.language.choice.system
+- setOrientation: LANDSCAPE_LEFT
+- waitForAnimationToEnd
+- assertVisible:
+    id: settings.language.screen
+- assertNotVisible:
+    id: settings.navigation
+- assertVisible:
+    id: setup.card.language
+- takeScreenshot: settings-mobile-landscape
