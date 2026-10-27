@@ -10,9 +10,10 @@ import {
   lessonSettings,
 } from '@/rhythm/learnCourse';
 import { totalLearnStars } from '@/rhythm/learnRating';
+import { evaluateLearnCourseSkipGate } from '@/rhythm/learnCourseSkip';
 import { requiresLearnCourseUnlock } from '@/rhythm/learnCourseAccess';
 import { useLearnCoursePurchase } from '@/hooks/useLearnCoursePurchase';
-import { readLearnProgress, readLearnRatings, syncLearnProgressIfEnabled } from '@/store/learnProgress';
+import { readLearnProgress, readLearnRatings, readSkippedLearnLessons, skipLearnLessons, syncLearnProgressIfEnabled } from '@/store/learnProgress';
 import type { LearnCourseProgressSnapshot } from '@/rhythm/learnProgressSync';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -27,10 +28,12 @@ export function useLearnScreen() {
   const { settings, featureFlags, audioStatus, prepareExercise } = useRhythmSession();
   const purchase = useLearnCoursePurchase();
   const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([]);
+  const [skippedLessonIds, setSkippedLessonIds] = useState<string[]>([]);
   const [lessonRatings, setLessonRatings] = useState<Awaited<ReturnType<typeof readLearnRatings>>>([]);
   const [selectedLessonId, setSelectedLessonId] = useState(LEARN_COURSE[0].id);
   const [progressLoaded, setProgressLoaded] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [skipping, setSkipping] = useState(false);
   const compact = width < 950;
   const detailWidth = (width - insets.left - insets.right) * (compact ? 0.56 : 0.64);
 
@@ -40,10 +43,11 @@ export function useLearnScreen() {
 
   useFocusEffect(useCallback(() => {
     let active = true;
-    void Promise.all([readLearnProgress(), readLearnRatings()]).then(([completed, ratings]) => {
+    void Promise.all([readLearnProgress(), readLearnRatings(), readSkippedLearnLessons()]).then(([completed, ratings, skipped]) => {
       if (!active) return;
       setCompletedLessonIds(completed);
       setLessonRatings(ratings);
+      setSkippedLessonIds(skipped);
       const requested = LEARN_COURSE.find((lesson) => lesson.id === routeLessonId);
       const nextLesson = LEARN_COURSE.find((lesson) => !completed.includes(lesson.id));
       const selection = requested && !completed.includes(requested.id)
@@ -55,10 +59,15 @@ export function useLearnScreen() {
 
     void syncLearnProgressIfEnabled().then(async () => {
       if (!active) return;
-      const [completed, ratings] = await Promise.all([readLearnProgress(), readLearnRatings()]);
+      const [completed, ratings, skipped] = await Promise.all([
+        readLearnProgress(),
+        readLearnRatings(),
+        readSkippedLearnLessons(),
+      ]);
       if (!active) return;
       setCompletedLessonIds(completed);
       setLessonRatings(ratings);
+      setSkippedLessonIds(skipped);
       setSelectedLessonId((current) => (
         completed.includes(current)
           ? LEARN_COURSE.find((lesson) => !completed.includes(lesson.id))?.id ?? LEARN_COURSE.at(-1)!.id
@@ -76,8 +85,15 @@ export function useLearnScreen() {
   const lessonAvailability = getLessonAvailability(selectedLesson.id, completedLessonIds);
   const requiresPurchase = requiresLearnCourseUnlock(selectedLesson, purchase.hasFullCourseUnlock);
   const lessonSequenceLocked = lessonAvailability === 'locked';
-  const completedCount = completedLessonIds.length;
+  const progressedCount = new Set([...completedLessonIds, ...skippedLessonIds]).size;
   const starsEarned = totalLearnStars(lessonRatings);
+  const skipGate = evaluateLearnCourseSkipGate({
+    targetLessonId: selectedLesson.id,
+    hasFullCourseUnlock: purchase.hasFullCourseUnlock,
+    completedLessonIds,
+    skippedLessonIds,
+    lessonRatings,
+  });
   const lessonNumber = String(selectedLesson.number).padStart(2, '0');
   const previousLessonNumber = String(selectedLesson.number - 1).padStart(2, '0');
   const lessonStartDisabled = starting || !progressLoaded || lessonSequenceLocked || audioStatus === 'loading';
@@ -96,6 +112,21 @@ export function useLearnScreen() {
     number: selectedLesson.number,
     title: t(selectedLesson.title),
   });
+  const skipStatusMessage = !lessonSequenceLocked || requiresPurchase
+    ? null
+    : skipGate.canSkip
+      ? skipGate.hasFiveStarLesson
+        ? t('A 5-star lesson qualifies you to skip ahead. Skipped lessons do not earn stars.')
+        : t('Your {accuracy}% course average qualifies you to skip here. Skipped lessons do not earn stars.', {
+          accuracy: Math.round(skipGate.averageBestAccuracy),
+        })
+      : skipGate.completedScoreCount === 0
+        ? t('Complete a lesson first. Paid skip opens after an 80% average or one 5-star lesson.')
+        : t('Your course average is {accuracy}%. Reach 80% or earn one 5-star lesson to skip ahead.', {
+          accuracy: Math.round(skipGate.averageBestAccuracy),
+        });
+  const skipButtonTitle = skipping ? t('SKIPPING…') : t('SKIP TO THIS LESSON');
+  const skipButtonAccessibilityLabel = t('Skip ahead to Lesson {number}', { number: selectedLesson.number });
   const purchaseStatusMessage = purchase.errorMessage
     ? purchase.errorMessage
     : purchase.storeErrorMessage
@@ -144,7 +175,7 @@ export function useLearnScreen() {
             : t('OFFER UNAVAILABLE');
 
   const startLesson = useCallback(async () => {
-    if (starting || !progressLoaded || requiresPurchase || lessonSequenceLocked || audioStatus === 'loading') return;
+    if (starting || skipping || !progressLoaded || requiresPurchase || lessonSequenceLocked || audioStatus === 'loading') return;
     setStarting(true);
     try {
       await prepareExercise(undefined, {
@@ -158,11 +189,26 @@ export function useLearnScreen() {
     } finally {
       setStarting(false);
     }
-  }, [audioStatus, lessonSequenceLocked, prepareExercise, progressLoaded, requiresPurchase, router, selectedLesson, settings, starting, t]);
+  }, [audioStatus, lessonSequenceLocked, prepareExercise, progressLoaded, requiresPurchase, router, selectedLesson, settings, skipping, starting, t]);
+
+  const skipToSelectedLesson = useCallback(async () => {
+    if (skipping || !progressLoaded || !skipGate.canSkip) return;
+    setSkipping(true);
+    try {
+      const progress = await skipLearnLessons(skipGate.lessonsToSkip);
+      setCompletedLessonIds(progress.completedLessonIds);
+      setSkippedLessonIds(progress.skippedLessonIds);
+    } catch {
+      Alert.alert(t('Could not save course progress'), t('Try again to skip to this lesson.'));
+    } finally {
+      setSkipping(false);
+    }
+  }, [progressLoaded, skipGate, skipping, t]);
 
   const handleProgressSynced = useCallback((snapshot: LearnCourseProgressSnapshot) => {
     setCompletedLessonIds(snapshot.completedLessonIds);
     setLessonRatings(snapshot.ratings);
+    setSkippedLessonIds(snapshot.skippedLessonIds);
     const requested = LEARN_COURSE.find((lesson) => lesson.id === routeLessonId);
     const nextLesson = LEARN_COURSE.find((lesson) => !snapshot.completedLessonIds.includes(lesson.id));
     const selectedLesson = requested && !snapshot.completedLessonIds.includes(requested.id)
@@ -184,14 +230,16 @@ export function useLearnScreen() {
     audioStatus,
     purchase,
     completedLessonIds,
+    skippedLessonIds,
     lessonRatings,
     selectedLesson,
     progressLoaded,
     starting,
+    skipping,
     compact,
     detailWidth,
     insets,
-    completedCount,
+    progressedCount,
     starsEarned,
     lessonNumber,
     previousLessonNumber,
@@ -200,6 +248,11 @@ export function useLearnScreen() {
     lessonStartDisabled,
     lessonStartLabel,
     lessonStartAccessibilityLabel,
+    skipGate,
+    skipStatusMessage,
+    skipButtonTitle,
+    skipButtonAccessibilityLabel,
+    skipToSelectedLesson,
     purchaseStatusMessage,
     purchaseStatusKind,
     showPurchaseRetry,

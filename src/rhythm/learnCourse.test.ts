@@ -14,6 +14,7 @@ import {
   lessonSettings,
   markLessonCompleted,
   parseCompletedLessonIds,
+  parseSkippedLessonIds,
 } from '@/rhythm/learnCourse';
 import type { ExerciseSettings } from '@/types/rhythm';
 
@@ -168,6 +169,13 @@ test('saved progress ignores unknown ids and malformed data', () => {
   ])), [LEARN_COURSE[0].id, LEARN_COURSE[2].id]);
   assert.deepEqual(parseCompletedLessonIds('{bad json'), []);
   assert.deepEqual(parseCompletedLessonIds(JSON.stringify({ completed: [] })), []);
+  assert.deepEqual(parseSkippedLessonIds(JSON.stringify([LEARN_COURSE[1].id, 'unknown'])), [LEARN_COURSE[1].id]);
+  assert.deepEqual(parseSkippedLessonIds('{bad json'), []);
+});
+
+test('course progress includes skipped lessons without changing completed IDs', () => {
+  assert.equal(lessonProgressPercent([LEARN_COURSE[0].id], [LEARN_COURSE[1].id]), Math.round(200 / LEARN_COURSE.length));
+  assert.equal(lessonProgressPercent([LEARN_COURSE[0].id], [LEARN_COURSE[0].id]), Math.round(100 / LEARN_COURSE.length));
 });
 
 test('lesson setup uses course tempo and meter while preserving personal audio and timing preferences', () => {

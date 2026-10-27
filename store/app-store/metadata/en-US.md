@@ -34,7 +34,7 @@ Import a one- or two-part MIDI or MusicXML score, practise a built-in arrangemen
 
 Review accuracy by hand, replay expected notes alongside your taps, and save difficult combinations for focused practice. Challenge sessions can submit your longest clean streak to Game Center.
 
-Settings, practice records, course progress, and imported scores are stored on your device. Game Center and purchases use Apple services.
+Settings, practice records, saved rhythm combinations, and imported scores are stored on your device. You can choose to sync course progress through Game Center and iCloud. Game Center and purchases use Apple services.
 
 ## Search keywords
 

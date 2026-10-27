@@ -37,6 +37,18 @@ test('progress snapshots reject a different course-content revision', () => {
   assert.equal(parseLearnCourseProgressSnapshot(JSON.stringify(otherRevision)), null);
 });
 
+test('progress snapshots preserve skipped lessons and read older saves without that field', () => {
+  const completedIds = LEARN_COURSE.slice(0, 3).map((lesson) => lesson.id);
+  const skippedIds = LEARN_COURSE.slice(3, 5).map((lesson) => lesson.id);
+  const snapshot = createLearnCourseProgressSnapshot(completedIds.concat(skippedIds), [], 100, skippedIds);
+  const parsed = parseLearnCourseProgressSnapshot(JSON.stringify(snapshot));
+  const oldSnapshot = { ...snapshot } as Partial<typeof snapshot>;
+  delete oldSnapshot.skippedLessonIds;
+
+  assert.deepEqual(parsed?.skippedLessonIds, skippedIds);
+  assert.deepEqual(parseLearnCourseProgressSnapshot(JSON.stringify(oldSnapshot))?.skippedLessonIds, []);
+});
+
 test('matching progress snapshots merge completions and keep each lesson best rating', () => {
   const firstLesson = LEARN_COURSE[0].id;
   const secondLesson = LEARN_COURSE[1].id;
@@ -61,4 +73,25 @@ test('matching progress snapshots merge completions and keep each lesson best ra
     { lessonId: secondLesson, lastAccuracy: 81, bestAccuracy: 81, attempts: 1 },
   ]);
   assert.equal(merged.updatedAt, 200);
+});
+
+test('progress sync merges skipped lessons but clears a skip when another device records a rating', () => {
+  const firstLesson = LEARN_COURSE[0].id;
+  const secondLesson = LEARN_COURSE[1].id;
+  const local = createLearnCourseProgressSnapshot(
+    [firstLesson, secondLesson],
+    [],
+    100,
+    [firstLesson, secondLesson],
+  );
+  const remote = createLearnCourseProgressSnapshot(
+    [firstLesson, secondLesson],
+    [{ lessonId: firstLesson, lastAccuracy: 86, bestAccuracy: 86, attempts: 1 }],
+    200,
+    [secondLesson],
+  );
+  const merged = mergeLearnCourseProgressSnapshots([local, remote]);
+
+  assert.deepEqual(merged.skippedLessonIds, [secondLesson]);
+  assert.deepEqual(merged.ratings.map((rating) => rating.lessonId), [firstLesson]);
 });

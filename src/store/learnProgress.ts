@@ -1,8 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
+  LEARN_COURSE,
   LEARN_COURSE_REVISION,
   markLessonCompleted,
   parseCompletedLessonIds,
+  parseSkippedLessonIds,
 } from '@/rhythm/learnCourse';
 import {
   parseLearnLessonRatings,
@@ -24,6 +26,7 @@ const LEGACY_COURSE_REVISION = 'r-ff1b264c4c175e87';
 const LEGACY_LEARN_PROGRESS_KEY = 'split-beat.learn-progress.v1';
 const LEGACY_LEARN_RATINGS_KEY = 'split-beat.learn-ratings.v1';
 const LEARN_PROGRESS_KEY = `split-beat.learn-progress.${LEARN_COURSE_REVISION}`;
+const LEARN_SKIPPED_KEY = `split-beat.learn-skipped.${LEARN_COURSE_REVISION}`;
 const LEARN_RATINGS_KEY = `split-beat.learn-ratings.${LEARN_COURSE_REVISION}`;
 const LEARN_PROGRESS_SYNC_KEY = 'split-beat.learn-progress.game-center-sync.v1';
 const LEARN_PROGRESS_INSTALL_ID_KEY = 'split-beat.learn-progress.install-id.v1';
@@ -71,11 +74,49 @@ export async function readLearnProgress(): Promise<string[]> {
   }
 }
 
+export async function readSkippedLearnLessons(): Promise<string[]> {
+  try {
+    return parseSkippedLessonIds(await AsyncStorage.getItem(LEARN_SKIPPED_KEY));
+  } catch {
+    return [];
+  }
+}
+
+export async function skipLearnLessons(lessonIds: readonly string[]): Promise<{
+  completedLessonIds: string[];
+  skippedLessonIds: string[];
+}> {
+  const [completedLessonIds, skippedLessonIds] = await Promise.all([
+    readLearnProgress(),
+    readSkippedLearnLessons(),
+  ]);
+  const requestedIds = new Set(lessonIds);
+  const newlySkippedIds = LEARN_COURSE
+    .filter((lesson) => requestedIds.has(lesson.id) && !completedLessonIds.includes(lesson.id))
+    .map((lesson) => lesson.id);
+  const nextCompletedIds = LEARN_COURSE
+    .filter((lesson) => completedLessonIds.includes(lesson.id) || newlySkippedIds.includes(lesson.id))
+    .map((lesson) => lesson.id);
+  const nextSkippedIds = LEARN_COURSE
+    .filter((lesson) => skippedLessonIds.includes(lesson.id) || newlySkippedIds.includes(lesson.id))
+    .map((lesson) => lesson.id);
+
+  await Promise.all([
+    AsyncStorage.setItem(LEARN_PROGRESS_KEY, JSON.stringify(nextCompletedIds)),
+    AsyncStorage.setItem(LEARN_SKIPPED_KEY, JSON.stringify(nextSkippedIds)),
+  ]);
+  return { completedLessonIds: nextCompletedIds, skippedLessonIds: nextSkippedIds };
+}
+
 export async function completeLearnLesson(lessonId: string): Promise<string[]> {
   const progress = await readLearnProgress();
   const completedLessonIds = markLessonCompleted(progress, lessonId);
+  const skippedLessonIds = (await readSkippedLearnLessons()).filter((id) => id !== lessonId);
   try {
-    await AsyncStorage.setItem(LEARN_PROGRESS_KEY, JSON.stringify(completedLessonIds));
+    await Promise.all([
+      AsyncStorage.setItem(LEARN_PROGRESS_KEY, JSON.stringify(completedLessonIds)),
+      AsyncStorage.setItem(LEARN_SKIPPED_KEY, JSON.stringify(skippedLessonIds)),
+    ]);
   } catch {
     return progress;
   }
@@ -134,10 +175,12 @@ async function getLearnProgressInstallId(): Promise<string> {
 async function writeLearnProgressSnapshot(
   completedLessonIds: readonly string[],
   ratings: readonly LearnLessonRating[],
+  skippedLessonIds: readonly string[],
 ): Promise<void> {
   await Promise.all([
     AsyncStorage.setItem(LEARN_PROGRESS_KEY, JSON.stringify(completedLessonIds)),
     AsyncStorage.setItem(LEARN_RATINGS_KEY, JSON.stringify(ratings)),
+    AsyncStorage.setItem(LEARN_SKIPPED_KEY, JSON.stringify(skippedLessonIds)),
   ]);
 }
 
@@ -146,19 +189,20 @@ async function performLearnProgressGameCenterSync() {
   if (!status.available) throw new Error('Game Center is not available on this platform.');
   if (!status.authenticated) throw new Error('Sign in to Game Center before syncing course progress.');
 
-  const [completedLessonIds, ratings, installId] = await Promise.all([
+  const [completedLessonIds, ratings, skippedLessonIds, installId] = await Promise.all([
     readLearnProgress(),
     readLearnRatings(),
+    readSkippedLearnLessons(),
     getLearnProgressInstallId(),
   ]);
-  const localSnapshot = createLearnCourseProgressSnapshot(completedLessonIds, ratings);
+  const localSnapshot = createLearnCourseProgressSnapshot(completedLessonIds, ratings, Date.now(), skippedLessonIds);
   const remotePayloads = await loadLearnCourseProgress(LEARN_COURSE_REVISION);
   const snapshots = remotePayloads
     .map(parseLearnCourseProgressSnapshot)
     .filter((snapshot) => snapshot !== null);
   const merged = mergeLearnCourseProgressSnapshots([localSnapshot, ...snapshots]);
 
-  await writeLearnProgressSnapshot(merged.completedLessonIds, merged.ratings);
+  await writeLearnProgressSnapshot(merged.completedLessonIds, merged.ratings, merged.skippedLessonIds);
   await saveLearnCourseProgress(LEARN_COURSE_REVISION, installId, JSON.stringify(merged));
   await AsyncStorage.setItem(LEARN_PROGRESS_SYNC_KEY, 'true');
   return merged;

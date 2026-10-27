@@ -556,6 +556,19 @@ export function parseCompletedLessonIds(raw: string | null): string[] {
   }
 }
 
+export function parseSkippedLessonIds(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return LEARN_COURSE
+      .filter((lesson) => parsed.includes(lesson.id))
+      .map((lesson) => lesson.id);
+  } catch {
+    return [];
+  }
+}
+
 export function lessonSettings(
   lesson: LearnLesson,
   preferences: ExerciseSettings,
@@ -578,6 +591,10 @@ export function lessonSettings(
   };
 }
 
-export function lessonProgressPercent(completedLessonIds: readonly string[]): number {
-  return Math.round((completedLessonIds.length / LEARN_COURSE.length) * 100);
+export function lessonProgressPercent(
+  completedLessonIds: readonly string[],
+  skippedLessonIds: readonly string[] = [],
+): number {
+  const progressedLessons = new Set([...completedLessonIds, ...skippedLessonIds]);
+  return Math.round((progressedLessons.size / LEARN_COURSE.length) * 100);
 }

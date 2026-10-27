@@ -46,7 +46,11 @@ import { learnStyle1,
   learnStyle39,
   learnStyle40,
   learnStyle41,
-  learnStyle42, learnStyle43, learnStyle44 } from '@/styles/learn';
+  learnStyle42, learnStyle43, learnStyle44,
+  learnSkipButtonStyle,
+  learnSkipButtonTextStyle,
+  learnSkipInfoStyle,
+} from '@/styles/learn';
 
 export default function LearnScreen() {
   const {
@@ -56,14 +60,16 @@ export default function LearnScreen() {
     audioStatus,
     purchase,
     completedLessonIds,
+    skippedLessonIds,
     lessonRatings,
     selectedLesson,
     progressLoaded,
     starting,
+    skipping,
     compact,
     detailWidth,
     insets,
-    completedCount,
+    progressedCount,
     starsEarned,
     lessonNumber,
     previousLessonNumber,
@@ -72,6 +78,10 @@ export default function LearnScreen() {
     lessonStartDisabled,
     lessonStartLabel,
     lessonStartAccessibilityLabel,
+    skipGate,
+    skipStatusMessage,
+    skipButtonTitle,
+    skipButtonAccessibilityLabel,
     purchaseStatusMessage,
     purchaseStatusKind,
     showPurchaseRetry,
@@ -84,6 +94,7 @@ export default function LearnScreen() {
     lessonProgressPercent,
     totalLessons,
     startLesson,
+    skipToSelectedLesson,
     handleProgressSynced,
     returnHome,
     restorePurchase,
@@ -126,11 +137,11 @@ export default function LearnScreen() {
           <View style={learnStyle9()}>
             <Text style={learnStyle10({ colors })}>YOUR PROGRESS</Text>
             <Text testID="learn.progress.count" style={learnStyle11({ colors })}>
-              {completedCount} / {totalLessons}
+              {progressedCount} / {totalLessons}
             </Text>
           </View>
           <View style={learnStyle12({ colors })}>
-            <View style={learnStyle13({ lessonProgressPercent, completedLessonIds, colors })} />
+            <View style={learnStyle13({ lessonProgressPercent, completedLessonIds, skippedLessonIds, colors })} />
           </View>
           <Text testID="learn.progress.stars" style={learnStyle14({ colors })}>
               {starsEarned} / {totalLessons * 5} {t('course stars earned')}
@@ -181,8 +192,8 @@ export default function LearnScreen() {
             <Text style={learnStyle26({ colors })}>{t('Try the first 3 lessons free, then unlock all {count} lessons with one purchase.', { count: totalLessons })}</Text>
           </View>
         ) : lessonSequenceLocked ? (
-          <Text style={learnStyle27({ colors })}>
-            {t('Complete Lesson {number} first to open this lesson.', { number: previousLessonNumber })}
+          <Text style={skipStatusMessage ? learnSkipInfoStyle({ colors }) : learnStyle27({ colors })}>
+            {skipStatusMessage ?? t('Complete Lesson {number} first to open this lesson.', { number: previousLessonNumber })}
           </Text>
         ) : null}
 
@@ -201,6 +212,24 @@ export default function LearnScreen() {
               <Text style={learnStyle30({ colors })}>{purchaseButtonTitle}</Text>
               <Text style={learnStyle31({ colors })}>
                 {t('One-time purchase · 3 lessons free')}
+              </Text>
+            </View>
+            <Text style={learnStyle32({ colors })}>›</Text>
+          </Pressable>
+        ) : lessonSequenceLocked && skipGate.canSkip ? (
+          <Pressable
+            testID={`learn.skip.${selectedLesson.id}`}
+            accessibilityRole="button"
+            accessibilityLabel={skipButtonAccessibilityLabel}
+            accessibilityState={{ disabled: skipping || !progressLoaded }}
+            disabled={skipping || !progressLoaded}
+            onPress={() => void skipToSelectedLesson()}
+            style={({ pressed }) => (learnSkipButtonStyle({ colors, skipping, pressed }))}
+          >
+            <View>
+              <Text style={learnSkipButtonTextStyle({ colors })}>{skipButtonTitle}</Text>
+              <Text style={learnStyle31({ colors })}>
+                {t('{count} lessons skipped · no stars', { count: skipGate.lessonsToSkip.length })}
               </Text>
             </View>
             <Text style={learnStyle32({ colors })}>›</Text>
@@ -253,6 +282,7 @@ export default function LearnScreen() {
       <LearnCoursePath
         compact={compact}
         completedLessonIds={completedLessonIds}
+        skippedLessonIds={skippedLessonIds}
         hasFullCourseUnlock={purchase.hasFullCourseUnlock}
         lessonRatings={lessonRatings}
         selectedLessonId={selectedLesson.id}
