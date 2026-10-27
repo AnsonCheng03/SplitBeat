@@ -90,6 +90,50 @@ test('paired rhythm symbols can share one full-beat display width', () => {
   assert.equal(plans[0]!.notes[0]!.left + plans[0]!.notes[0]!.headWidth / 2, groupWidth / 2);
 });
 
+test('note groups preserve visible padding when their available width is narrow', () => {
+  const symbols = [
+    createNoteNotationPlan('thirtySecond'),
+    createNoteNotationPlan('sixtyFourth'),
+    createNoteNotationPlan('thirtySecond', 'full', '4/4', 24),
+  ];
+  const events = Array.from({ length: 32 }, (_, index) => ({
+    startQuarter: index / 8,
+    durationQuarter: 0.125,
+  }));
+
+  const denseBars = [72, 160, 400].map((width) => createBarNoteNotationPlan(events, {
+    durationQuarter: 4,
+    width,
+    size: 'full',
+    beamGroupQuarterNotes: 1,
+  }));
+
+  for (const plan of [
+    ...symbols,
+    ...denseBars,
+  ]) {
+    for (let index = 1; index < plan.notes.length; index += 1) {
+      const previous = plan.notes[index - 1]!;
+      const current = plan.notes[index]!;
+      const centerGap = current.left + current.headWidth / 2 - (previous.left + previous.headWidth / 2);
+      const visiblePadding = centerGap - (previous.headWidth + current.headWidth) / 2;
+
+      assert.ok(
+        visiblePadding >= Math.min(3, centerGap * 0.4) - 0.00001,
+        `${plan.width}px plan keeps visible padding between neighboring noteheads`,
+      );
+    }
+  }
+
+  for (const plan of denseBars) {
+    assert.equal(
+      plan.beams.filter((beam) => beam.kind === 'beam' && beam.level === 0).length,
+      4,
+      'padding keeps the four beat groups visually distinct without changing their grouping',
+    );
+  }
+});
+
 test('full and preview rhythm symbols center their complete note groups in the same-height canvas', () => {
   for (const size of ['full', 'mini'] as const) {
     for (const subdivision of ['quarter', 'eighth', 'triplet', 'thirtySecond', 'sixtyFourth'] as const) {

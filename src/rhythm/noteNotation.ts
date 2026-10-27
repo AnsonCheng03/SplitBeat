@@ -170,7 +170,20 @@ interface OrderedNotationEntry {
 
 const EPSILON = 0.000001;
 const BEAM_SLOPE = 0;
-const MINI_SLOT_WIDTHS: Record<number, number> = { 1: 15, 2: 15, 3: 12, 4: 11, 8: 8, 16: 6 };
+const NOTE_HEAD_GROUP_PADDING = 3;
+const MINI_SLOT_WIDTHS: Record<number, number> = { 1: 15, 2: 15, 3: 12, 4: 11, 8: 8, 16: 8 };
+
+/** Keep notehead size consistent until the available slot needs extra padding. */
+export function noteHeadWidthForSlot(slotWidth: number, preferredWidth: number): number {
+  if (!Number.isFinite(slotWidth) || slotWidth <= 0) {
+    throw new RangeError('A note slot must have a positive width.');
+  }
+  if (!Number.isFinite(preferredWidth) || preferredWidth <= 0) {
+    throw new RangeError('A preferred notehead width must be positive.');
+  }
+  const padding = Math.min(NOTE_HEAD_GROUP_PADDING, slotWidth * 0.42);
+  return Math.min(preferredWidth, Math.max(0.1, slotWidth - padding));
+}
 
 function calculateBarNoteAnchorInsets(
   events: readonly NoteNotationEvent[],
@@ -181,7 +194,7 @@ function calculateBarNoteAnchorInsets(
     : durationQuarter;
   const noteSpacing = width * shortestNote / durationQuarter;
   const sizeMaximum = size === 'mini' ? 6.4 : size === 'compact' ? 10.5 : 16;
-  const headWidth = noteHeadWidth ?? Math.max(size === 'mini' ? 3.5 : 5, Math.min(sizeMaximum, noteSpacing * 0.62));
+  const headWidth = noteHeadWidth ?? noteHeadWidthForSlot(noteSpacing, sizeMaximum);
   const left = Math.min(width / 2, headWidth / 2 + 4);
   const hasFlags = events.some((event) => (event.beamCount ?? inferredBeamCount(event.durationQuarter)) > 0);
   const dotSize = Math.max(2, headWidth * 0.66 * 0.24);
@@ -267,7 +280,7 @@ function slotWidthFor(count: number, size: NoteNotationSize): number {
   if (size === 'mini') {
     return MINI_SLOT_WIDTHS[count] ?? (count >= 8 ? 8 : count >= 4 ? 11 : 15);
   }
-  if (count >= 16) return size === 'compact' ? 8 : 10;
+  if (count >= 16) return size === 'compact' ? 11 : 13;
   if (count >= 8) return size === 'compact' ? 11 : 13;
   return size === 'compact' ? 19 : 24;
 }
@@ -653,10 +666,9 @@ export function createBarNoteNotationPlan(
   const shortestNote = events.length > 0
     ? Math.min(...events.map((event) => event.durationQuarter))
     : options.durationQuarter;
-  const noteSpacing = options.width * shortestNote / options.durationQuarter;
   const sizeMaximum = size === 'mini' ? 6.4 : size === 'compact' ? 10.5 : 16;
-  const headWidth = options.noteHeadWidth ?? Math.max(size === 'mini' ? 3.5 : 5, Math.min(sizeMaximum, noteSpacing * 0.62));
-  const headHeight = headWidth * 0.66;
+  const initialNoteSpacing = options.width * shortestNote / options.durationQuarter;
+  const initialHeadWidth = options.noteHeadWidth ?? noteHeadWidthForSlot(initialNoteSpacing, sizeMaximum);
   const containsTuplets = events.some((event) => event.tupletNumber !== undefined);
   const tupletPadding = containsTuplets && options.notationHeight === undefined
     ? (size === 'mini' ? 10 : size === 'compact' ? 12 : 14)
@@ -665,8 +677,10 @@ export function createBarNoteNotationPlan(
   const beamHeight = size === 'mini' ? 1.2 : size === 'compact' ? 1.5 : 2.2;
   const beamGap = beamHeight + (size === 'mini' ? 1 : size === 'compact' ? 1.2 : 1.8);
   const beamTop = options.beamTop ?? (size === 'mini' ? 3 : size === 'compact' ? 4 : 5);
-  const flagWidth = Math.max(size === 'mini' ? 5 : 7, headWidth * 0.9);
-  const ownInsets = calculateBarNoteAnchorInsets(events, options);
+  const ownInsets = calculateBarNoteAnchorInsets(events, {
+    ...options,
+    noteHeadWidth: initialHeadWidth,
+  });
   const leftInset = options.noteAnchors ? 0 : Math.max(ownInsets.left, options.anchorInsets?.left ?? 0);
   const rightInset = options.noteAnchors ? 0 : Math.max(ownInsets.right, options.anchorInsets?.right ?? 0);
   const orderedEntries = orderNotationEvents(events);
@@ -676,6 +690,15 @@ export function createBarNoteNotationPlan(
     leftInset,
     rightInset,
   );
+  const minimumAnchorSpacing = noteAnchors.length > 1
+    ? Math.min(...noteAnchors.slice(1).map((anchor, index) => anchor - (noteAnchors[index] ?? anchor)))
+    : usableWidth * shortestNote / options.durationQuarter;
+  const headWidth = noteHeadWidthForSlot(
+    Math.max(0.1, minimumAnchorSpacing),
+    options.noteHeadWidth ?? sizeMaximum,
+  );
+  const headHeight = headWidth * 0.66;
+  const flagWidth = Math.max(size === 'mini' ? 5 : 7, headWidth * 0.9);
 
   return buildNotationPlan(orderedEvents, {
     width: options.width,
@@ -731,10 +754,7 @@ export function createNoteNotationPlan(
   const noteSlotWidth = Math.min(slotWidth, notationWidth / count);
   const noteGroupOffset = (notationWidth - noteSlotWidth * count) / 2;
   const baseHeadWidth = size === 'mini' ? 4.2 : size === 'compact' ? 7 : 9.2;
-  const minimumHeadWidth = size === 'full' ? 3.4 : 2.4;
-  const noteHeadWidth = groupWidth === undefined
-    ? baseHeadWidth
-    : Math.max(minimumHeadWidth, Math.min(baseHeadWidth, noteSlotWidth * 0.72));
+  const noteHeadWidth = noteHeadWidthForSlot(noteSlotWidth, baseHeadWidth);
   const beamCount = isTuplet ? inferredBeamCount(noteDurationQuarter) : beamCountForSubdivision(subdivision);
   const events = Array.from({ length: count }, (_, index) => ({
     startQuarter: index * noteDurationQuarter,

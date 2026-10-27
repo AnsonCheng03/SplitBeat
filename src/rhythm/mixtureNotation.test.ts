@@ -24,4 +24,12 @@ test('mixed-pattern rests become engraved rest events at their written positions
   assert.equal(plan.events.length, 3);
   assert.equal(plan.events[1]?.isRest, true);
   assert.equal(restEvent?.startQuarter, 0.25);
+
+  const noteheadGaps = plan.notes.slice(1).map((note, index) => {
+    const previous = plan.notes[index]!;
+    const centerGap = note.left + note.headWidth / 2 - (previous.left + previous.headWidth / 2);
+    const visibleGap = centerGap - (previous.headWidth + note.headWidth) / 2;
+    return visibleGap >= Math.min(3, centerGap * 0.4) - 0.00001;
+  });
+  assert.ok(noteheadGaps.every(Boolean), 'mixed note groups leave padding around every notehead');
 });

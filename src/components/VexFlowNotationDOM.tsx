@@ -31,7 +31,7 @@ function drawNotation(container: HTMLDivElement, plan: NoteNotationPlan, color: 
     line_config: Array.from({ length: 5 }, () => ({ visible: false })),
   });
   const targetHeadWidth = plan.notes[0]?.headWidth ?? 8;
-  const glyphScale = Math.max(8, Math.min(56, targetHeadWidth / 0.306));
+  const glyphScale = Math.max(1, Math.min(56, targetHeadWidth / 0.306));
   const stemTop = plan.notes[0]?.stemTop ?? plan.height * 0.28;
   const stemLength = Math.max(8, Math.min(60, noteCenterY - stemTop));
 

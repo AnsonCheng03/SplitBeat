@@ -1,4 +1,4 @@
-import { createRhythmSymbolNotationPlan, fitNotationScale } from '@/rhythm/noteNotation';
+import { createRhythmSymbolNotationPlan, fitNotationScale, noteHeadWidthForSlot } from '@/rhythm/noteNotation';
 import type { NoteNotationEvent, NoteNotationPlan, NoteNotationSize } from '@/rhythm/noteNotation';
 import type { MixturePattern } from '@/rhythm/mixtures';
 import { getMixturePattern } from '@/rhythm/mixtures';
@@ -50,7 +50,7 @@ export function createMixtureSymbolNotationModel({
   );
   const noteSpacing = symbolWidth * shortestEvent / pattern.durationQuarter;
   const baseHeadWidth = size === 'mini' ? 4.2 : size === 'compact' ? 7 : 9.2;
-  const noteHeadWidth = Math.max(size === 'full' ? 3.4 : 2.4, Math.min(baseHeadWidth, noteSpacing * 0.72));
+  const noteHeadWidth = noteHeadWidthForSlot(noteSpacing, baseHeadWidth);
   const plan = createRhythmSymbolNotationPlan(noteEvents, {
     durationQuarter: pattern.durationQuarter,
     width: symbolWidth,
