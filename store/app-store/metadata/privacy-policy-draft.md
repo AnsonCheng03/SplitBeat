@@ -6,7 +6,7 @@ Beep Beep Beat - Rhythm Coach is published by **[PUBLIC DEVELOPER / COMPANY NAME
 
 ## Information stored on your device
 
-The app stores your settings, practice records, course progress, saved rhythm combinations, and imported scores locally on your device. The app does not send these records or imported score files to the developer.
+The app stores your settings, practice records, course progress, saved rhythm combinations, and imported scores locally on your device. If you choose to sync course progress, completed lessons and lesson ratings are saved through Apple Game Center and your iCloud account so they can be restored on your devices. Sync also uses a randomly generated installation identifier to merge progress. Apple processes this information under its terms and privacy policy. The developer does not operate the sync service or receive your progress or imported score files. If you choose to send us a support email or diagnostic export, we receive the information you include in that message.
 
 ## Optional session diagnostic export
 

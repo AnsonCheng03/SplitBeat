@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -7,15 +7,15 @@ const sourceDirectory = path.join(repositoryRoot, 'site');
 const outputDirectory = path.join(repositoryRoot, 'site-dist');
 const configPath = path.join(sourceDirectory, 'site-config.json');
 
-function setPublishReadiness(isReady) {
+async function setPublishReadiness(isReady) {
   const outputPath = process.env.GITHUB_OUTPUT;
-  if (outputPath) writeFile(outputPath, `publish_ready=${isReady}\n`, { flag: 'a' });
+  if (outputPath) await writeFile(outputPath, `publish_ready=${isReady}\n`, { flag: 'a' });
 }
 
 function getMissingContactDetails(config) {
   const missing = [];
   if (typeof config.publisherName !== 'string' || !config.publisherName.trim()) missing.push('publisherName');
-  if (typeof config.supportEmail !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.supportEmail)) missing.push('supportEmail');
+  if (typeof config.supportEmail !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.supportEmail.trim())) missing.push('supportEmail');
   return missing;
 }
 
@@ -34,7 +34,7 @@ async function buildPublicSite() {
   const missingDetails = getMissingContactDetails(config);
   if (missingDetails.length) {
     console.log(`GitHub Pages deployment skipped until these public contact fields are supplied: ${missingDetails.join(', ')}.`);
-    setPublishReadiness(false);
+    await setPublishReadiness(false);
     return;
   }
 
@@ -44,12 +44,11 @@ async function buildPublicSite() {
     filter: (source) => path.resolve(source) !== path.resolve(configPath),
   });
   await personalizeHtmlFiles(outputDirectory, config);
-  setPublishReadiness(true);
+  await setPublishReadiness(true);
   console.log(`Prepared GitHub Pages files in ${path.relative(repositoryRoot, outputDirectory)}.`);
 }
 
 async function personalizeHtmlFiles(directory, config) {
-  const { readdir } = await import('node:fs/promises');
   const entries = await readdir(directory, { withFileTypes: true });
   for (const entry of entries) {
     const entryPath = path.join(directory, entry.name);
