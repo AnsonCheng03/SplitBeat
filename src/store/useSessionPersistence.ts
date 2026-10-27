@@ -38,7 +38,7 @@ export function useSessionHistory(enabled: boolean) {
   }, []);
 
   const recordSession = useCallback((sessionId: string, results: SessionResults) => {
-    if (!enabled) return;
+    if (!enabled || !results.replayTaps?.length) return;
     const record = createSessionRecord(sessionId, Date.now(), results);
     setRecords((current) => {
       const next = appendSessionRecord(current, record);
