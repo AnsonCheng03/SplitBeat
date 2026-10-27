@@ -19,6 +19,7 @@ test('Traditional Chinese translations preserve English fallback for untranslate
   assert.equal(translate('zh-Hant', 'START PRACTICE'), '開始練習');
   assert.equal(translate('zh-Hant', 'Tap tempo'), '點按設定速度');
   assert.equal(translate('zh-Hant', 'CALIBRATE TIMING'), '校準節奏');
+  assert.equal(translate('zh-Hant', 'Preparing your practice…'), '正在準備練習…');
   assert.equal(translate('zh-Hant', 'A user imported title'), 'A user imported title');
   assert.equal(translate('en', 'START PRACTICE'), 'START PRACTICE');
 });

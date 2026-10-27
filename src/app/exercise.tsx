@@ -60,6 +60,10 @@ export default function ExerciseScreen() {
     onRemoveComposedScore,
   } = useExerciseScreen();
 
+  if (starting) {
+    return <ExerciseLoadingState preparingPractice />;
+  }
+
   if (!combinationProgressLoaded || !savedPracticePairsLoaded) {
     return <ExerciseLoadingState />;
   }

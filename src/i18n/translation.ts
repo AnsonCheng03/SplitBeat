@@ -42,6 +42,8 @@ const TRADITIONAL_CHINESE: Record<string, string> = {
   'Loading {activity}…': '正在載入{activity}…',
   'Loading {activity}': '正在載入{activity}',
   'Preparing your practice history.': '正在準備你的練習紀錄。',
+  'Preparing your practice…': '正在準備練習…',
+  'Generating your rhythm pattern.': '正在生成節奏組合。',
   'Could not open practice': '無法開啟練習',
   'Please try again.': '請再試一次。',
   'Choose a score': '選擇樂譜',
