@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AudioStartButton } from '@/components/AudioStartButton';
 import { HomeHeaderAction, HomeModeChoice } from '@/components/HomeSelection';
 import { HomeActivityPicker, HomeActivityLoading } from '@/components/HomeActivityPicker';
+import { PracticeDisplayPicker } from '@/components/PracticeDisplayPicker';
 import { useHomeScreen } from '@/features/home/useHomeScreen';
 import {
   indexStyle1,
@@ -32,6 +33,7 @@ export default function HomeScreen() {
     colors,
     settings,
     featureFlags,
+    updateSettings,
     t,
     openingActivity,
     activityPickerVisible,
@@ -84,7 +86,7 @@ export default function HomeScreen() {
 
         <View style={indexStyle9()}>
           <Text style={indexStyle10({ colors })}>Ready to practise?</Text>
-          <Text style={indexStyle11({ colors })}>Choose one or two hands, then start.</Text>
+          <Text style={indexStyle11({ colors })}>Choose your hands and notation, then start.</Text>
           <View style={indexStyle12()}>
             <HomeModeChoice
               testID="home.mode.twoHand"
@@ -101,6 +103,14 @@ export default function HomeScreen() {
               onPress={onSelectSingleHand}
             /> : null}
           </View>
+          {featureFlags.scoreNotation ? (
+            <PracticeDisplayPicker
+              value={settings.practiceDisplayMode}
+              onChange={(practiceDisplayMode) => updateSettings({ practiceDisplayMode })}
+              testIDPrefix="home.display"
+              label="DISPLAY"
+            />
+          ) : null}
         </View>
 
         <View style={indexStyle13()}>

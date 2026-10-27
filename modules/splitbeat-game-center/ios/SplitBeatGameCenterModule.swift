@@ -6,11 +6,19 @@ private let longestCorrectStreakLeaderboardID = "com.splitbeat.twohandrhythm.lon
 
 public final class SplitBeatGameCenterModule: Module {
   private let gameCenterDelegate = GameCenterControllerDelegate()
+  private var authenticationHandlerInstalled = false
+  private var authenticationRequested = false
+  private var pendingAuthenticationViewController: UIViewController?
+  private var lastAuthenticationError: Error?
 
   public func definition() -> ModuleDefinition {
     Name("SplitBeatGameCenter")
 
     Events("onAuthenticationChanged")
+
+    OnCreate {
+      self.installAuthenticationHandlerIfNeeded()
+    }
 
     Function("getStatus") { () -> [String: Any] in
       self.authenticationStatus()
@@ -105,20 +113,51 @@ public final class SplitBeatGameCenterModule: Module {
   }
 
   private func authenticateLocalPlayer() {
+    if GKLocalPlayer.local.isAuthenticated {
+      lastAuthenticationError = nil
+      sendAuthenticationStatus(error: nil)
+      return
+    }
+    authenticationRequested = true
+    lastAuthenticationError = nil
+    installAuthenticationHandlerIfNeeded(restart: pendingAuthenticationViewController == nil)
+    DispatchQueue.main.async {
+      self.presentPendingAuthenticationViewController()
+    }
+  }
+
+  private func installAuthenticationHandlerIfNeeded(restart: Bool = false) {
+    guard !authenticationHandlerInstalled || restart else { return }
+    authenticationHandlerInstalled = true
     GKLocalPlayer.local.authenticateHandler = { [weak self] viewController, error in
       guard let self else { return }
-      if let viewController {
-        DispatchQueue.main.async {
-          guard let presenter = self.appContext?.utilities?.currentViewController() else {
-            self.sendAuthenticationStatus(error: error)
-            return
-          }
-          presenter.present(viewController, animated: true)
-        }
-        return
+      DispatchQueue.main.async {
+        self.handleAuthenticationCallback(viewController: viewController, error: error)
       }
-      self.sendAuthenticationStatus(error: error)
     }
+  }
+
+  private func handleAuthenticationCallback(viewController: UIViewController?, error: Error?) {
+    if let viewController {
+      pendingAuthenticationViewController = viewController
+      presentPendingAuthenticationViewController()
+      return
+    }
+    pendingAuthenticationViewController = nil
+    lastAuthenticationError = error
+    if GKLocalPlayer.local.isAuthenticated {
+      lastAuthenticationError = nil
+    }
+    authenticationRequested = false
+    sendAuthenticationStatus(error: GKLocalPlayer.local.isAuthenticated ? nil : error)
+  }
+
+  private func presentPendingAuthenticationViewController() {
+    guard authenticationRequested, let viewController = pendingAuthenticationViewController else { return }
+    guard let presenter = appContext?.utilities?.currentViewController() else { return }
+    guard !presenter.isBeingDismissed, presenter.presentedViewController == nil else { return }
+    pendingAuthenticationViewController = nil
+    presenter.present(viewController, animated: true)
   }
 
   private func authenticationStatus(error: Error? = nil) -> [String: Any] {
@@ -128,7 +167,7 @@ public final class SplitBeatGameCenterModule: Module {
       "playerAlias": GKLocalPlayer.local.isAuthenticated ? GKLocalPlayer.local.alias : "",
       "leaderboardID": longestCorrectStreakLeaderboardID,
     ]
-    if let error {
+    if let error = error ?? lastAuthenticationError {
       status["error"] = error.localizedDescription
     }
     return status

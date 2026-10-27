@@ -146,6 +146,9 @@ export function PracticeRhythmDisplay({
                 snapshot={snapshot}
                 settings={settings}
                 scoreDisplayMode={scoreDisplayMode}
+                quarterInMeasure={importedScoreMeasure
+                  ? snapshot?.scoreQuarterInMeasure ?? 0
+                  : snapshot?.practiceScoreQuarterInMeasure ?? 0}
                 compact={compact}
                 singleHandMode={singleHandMode}
                 focusedHand={focusedHand}

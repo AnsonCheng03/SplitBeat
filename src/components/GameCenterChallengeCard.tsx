@@ -27,7 +27,7 @@ export function GameCenterChallengeCard({
   testID = 'gameCenter.challenge',
 }: GameCenterChallengeCardProps) {
   const { colors } = useTheme();
-  const { t, status, message, submitting, hasScore, actionLabel, description, handleAction } = useGameCenterChallenge({
+  const { t, status, message, submitting, authenticating, hasScore, actionLabel, description, handleAction } = useGameCenterChallenge({
     challengeMode,
     longestCorrectStreak,
   });
@@ -62,12 +62,12 @@ export function GameCenterChallengeCard({
           testID={`${testID}.action`}
           accessibilityRole="button"
           accessibilityLabel={t(status.authenticated ? 'View Game Center leaderboard' : 'Sign in to Game Center')}
-          disabled={submitting}
+          disabled={submitting || authenticating}
           onPress={handleAction}
           style={({ pressed }) => (GameCenterChallengeCardStyle8({ pressed, colors, submitting }))}
         >
           <Text style={GameCenterChallengeCardStyle9({ colors })}>
-            {t(submitting ? 'SUBMITTING…' : actionLabel)}
+            {t(submitting ? 'SUBMITTING…' : authenticating ? 'SIGNING IN…' : actionLabel)}
           </Text>
         </Pressable>
       ) : null}

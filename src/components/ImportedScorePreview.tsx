@@ -161,7 +161,9 @@ export function ImportedScorePreview({
         <View style={ImportedScorePreviewStyle19()}>
           {([
             { value: 'focus', label: 'ONE NOTE', detail: 'Current beat · large hand panels' },
-            { value: 'staff', label: 'MOVING SCORE', detail: 'Both hand lanes · slides at each bar' },
+            { value: 'slide', label: 'SLIDE', detail: 'Move one bar at a time' },
+            { value: 'fade', label: 'FADE', detail: 'Keep bars still · fade forward' },
+            { value: 'slide-per-note', label: 'SLIDE PER NOTE', detail: 'Move as each note arrives' },
           ] as const).map((option) => {
             const selected = scoreDisplayMode === option.value;
             return (

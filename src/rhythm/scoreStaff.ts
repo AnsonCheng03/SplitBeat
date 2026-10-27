@@ -1,8 +1,18 @@
-import type { Hand } from '@/types/rhythm';
+import { SCORE_MOTION_MODES } from '@/types/rhythm';
+import type { Hand, ScoreMotionMode } from '@/types/rhythm';
 import type { ImportedRhythmScore, ScoreRhythmEvent, ScoreRhythmMeasure } from '@/types/importedScore';
 import type { NoteNotationEvent } from '@/rhythm/noteNotation';
 
-export type ScoreDisplayMode = 'focus' | 'staff';
+export type ScoreDisplayMode = 'focus' | ScoreMotionMode;
+export const DEFAULT_SCORE_DISPLAY_MODE: ScoreMotionMode = 'fade';
+
+/** Keep old saved practice links working while making the no-motion score the default. */
+export function scoreDisplayModeFromParam(value: string | undefined): ScoreDisplayMode {
+  if (value === 'focus') return value;
+  if (SCORE_MOTION_MODES.includes(value as ScoreMotionMode)) return value as ScoreMotionMode;
+  if (value === 'staff') return 'slide';
+  return DEFAULT_SCORE_DISPLAY_MODE;
+}
 
 export function scoreHandPresence(score: ImportedRhythmScore): Record<Hand, boolean> {
   return {

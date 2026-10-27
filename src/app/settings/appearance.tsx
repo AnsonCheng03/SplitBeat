@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { SettingsPage } from '@/components/SettingsPage';
 import { SettingsToggleRow } from '@/components/SettingsToggleRow';
-import { PracticeDisplayPicker } from '@/components/PracticeDisplayPicker';
+import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { Text } from '@/i18n/LocalizedText';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -31,20 +31,24 @@ export default function AppearanceSettingsScreen() {
       <Text style={appearanceStyle2({ colors })}>
         Your choice is saved on this device. The practice tempo remains in the pause controls.
       </Text>
-      {featureFlags.scoreNotation ? <View style={appearanceStyle3()}>
-        <Text style={appearanceStyle4({ colors })}>
-          PRACTICE DISPLAY
-        </Text>
-        <Text style={appearanceStyle5({ colors })}>
-          Choose how rhythm is shown during free practice.
-        </Text>
-        <PracticeDisplayPicker
-          value={settings.practiceDisplayMode}
-          onChange={(practiceDisplayMode) => updateSettings({ practiceDisplayMode })}
-          testIDPrefix="settings.appearance.display"
-          label="DISPLAY"
-        />
-      </View> : null}
+      {featureFlags.scoreNotation && settings.practiceDisplayMode === 'score' ? (
+        <View style={appearanceStyle3()}>
+          <Text style={appearanceStyle4({ colors })}>SCORE MOVEMENT</Text>
+          <Text style={appearanceStyle5({ colors })}>
+            Choose how score bars advance while you practise.
+          </Text>
+          <SettingsChoiceRow
+            options={[
+              { label: 'SLIDE', value: 'slide' as const },
+              { label: 'FADE', value: 'fade' as const },
+              { label: 'SLIDE PER NOTE', value: 'slide-per-note' as const },
+            ]}
+            value={settings.scoreMotionMode ?? 'fade'}
+            onChange={(scoreMotionMode) => updateSettings({ scoreMotionMode })}
+            testIDPrefix="settings.appearance.scoreMotion"
+          />
+        </View>
+      ) : null}
     </SettingsPage>
   );
 }

@@ -39,6 +39,7 @@ export function MetronomeIndicator({
           return (
             <View
               key={beat}
+              testID={`practice.beatDot.${beat + 1}`}
               style={MetronomeIndicatorStyle3({ active, compact, beat, colors })}
             />
           );

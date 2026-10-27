@@ -6,6 +6,8 @@ import { MeasureBarLine, RhythmTrack } from '@/components/ScoreRhythmLane';
 import { scoreLaneHeight } from '@/rhythm/scoreRhythmLayout';
 import type { NoteNotationSize } from '@/rhythm/noteNotation';
 import { scoreBarWidth } from '@/rhythm/scoreLayout';
+import { scoreNoteScrollProgress, scoreStripOffset } from '@/rhythm/scoreMotion';
+import type { ScoreDisplayMode } from '@/rhythm/scoreStaff';
 import type { ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
 import type { Hand } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -30,6 +32,8 @@ interface ScrollingScoreRhythmProps {
   upcomingMeasures?: ScoreMeasure[];
   sequence: number;
   count: number;
+  movementMode: Exclude<ScoreDisplayMode, 'focus'>;
+  quarterInMeasure: number;
   compact?: boolean;
   beamGroupQuarterNotes?: number;
   minimal?: boolean;
@@ -125,7 +129,7 @@ function ScoreBarPanel({
   );
 }
 
-/** Slides the score viewport when its supplied sequence changes. */
+/** Animates score bars at bar boundaries or note onsets, depending on the selected mode. */
 export function ScrollingScoreRhythm({
   measure,
   previousMeasure,
@@ -133,6 +137,8 @@ export function ScrollingScoreRhythm({
   upcomingMeasures,
   sequence,
   count,
+  movementMode,
+  quarterInMeasure,
   compact = false,
   beamGroupQuarterNotes = 1,
   minimal = false,
@@ -154,8 +160,9 @@ export function ScrollingScoreRhythm({
   const laneGap = visibleLaneCount > 1 ? compact ? 2 : 4 : 0;
   const scoreRowsHeight = laneHeight * visibleLaneCount + laneGap;
   const [translateX] = useState(() => new Animated.Value(0));
+  const [fadeProgress] = useState(() => new Animated.Value(1));
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
-  const visibleSequenceRef = useRef(sequence);
+  const motionRef = useRef({ sequence, movementMode, barWidth: 0, noteProgress: 0 });
   const barWidth = scoreBarWidth(viewportWidth, count);
   const initialNotationWidth = Math.max(0, barWidth - 8);
   const followingMeasures = upcomingMeasures?.length ? upcomingMeasures : [measure, nextMeasure];
@@ -163,28 +170,77 @@ export function ScrollingScoreRhythm({
   const visibleBars = sequence === 0 || !previousMeasure
     ? upcomingBars
     : [scoreBar(previousMeasure, count, sequence - 1), ...upcomingBars];
+  const noteProgress = movementMode === 'slide-per-note'
+    ? scoreNoteScrollProgress(measure, quarterInMeasure)
+    : 0;
 
   useLayoutEffect(() => {
-    if (sequence === visibleSequenceRef.current) return;
-    visibleSequenceRef.current = sequence;
+    const previousMotion = motionRef.current;
+    const sequenceChanged = sequence !== previousMotion.sequence;
+    const modeChanged = movementMode !== previousMotion.movementMode;
+    const widthChanged = barWidth !== previousMotion.barWidth;
+    motionRef.current = { sequence, movementMode, barWidth, noteProgress };
     animationRef.current?.stop();
 
     if (barWidth <= 0) {
       translateX.setValue(0);
+      fadeProgress.setValue(1);
       return;
     }
 
-    translateX.setValue(0);
-    animationRef.current = Animated.timing(translateX, {
-      toValue: -barWidth,
-      duration: 190,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    });
-    animationRef.current.start();
+    if (movementMode === 'fade') {
+      translateX.setValue(0);
+      if (sequenceChanged || modeChanged) {
+        fadeProgress.setValue(0);
+        animationRef.current = Animated.timing(fadeProgress, {
+          toValue: 1,
+          duration: 180,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        });
+        animationRef.current.start();
+      } else if (widthChanged) {
+        fadeProgress.setValue(1);
+      }
+      return () => animationRef.current?.stop();
+    }
+
+    fadeProgress.setValue(1);
+    const targetOffset = scoreStripOffset(movementMode, barWidth, sequence, noteProgress);
+    if (movementMode === 'slide') {
+      if (sequenceChanged || modeChanged) {
+        if (sequence > 0) {
+          translateX.setValue(0);
+          animationRef.current = Animated.timing(translateX, {
+            toValue: targetOffset,
+            duration: 190,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          });
+          animationRef.current.start();
+        } else {
+          translateX.setValue(targetOffset);
+        }
+      } else if (widthChanged) {
+        translateX.setValue(targetOffset);
+      }
+      return () => animationRef.current?.stop();
+    }
+
+    if (widthChanged || sequenceChanged) {
+      translateX.setValue(targetOffset);
+    } else if (modeChanged || noteProgress !== previousMotion.noteProgress) {
+      animationRef.current = Animated.timing(translateX, {
+        toValue: targetOffset,
+        duration: 120,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      });
+      animationRef.current.start();
+    }
 
     return () => animationRef.current?.stop();
-  }, [barWidth, sequence, translateX]);
+  }, [barWidth, fadeProgress, movementMode, noteProgress, sequence, translateX]);
 
   return (
     <View
@@ -213,7 +269,7 @@ export function ScrollingScoreRhythm({
         {barWidth > 0 ? (
           <Animated.View
             testID="practice.scoreMeasure.strip"
-            style={ScrollingScoreRhythmStyle11({ barWidth, visibleBars, translateX })}
+            style={ScrollingScoreRhythmStyle11({ barWidth, visibleBars, translateX, fadeProgress })}
           >
             {visibleBars.map((bar) => (
               <ScoreBarPanel

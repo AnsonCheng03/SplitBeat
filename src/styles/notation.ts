@@ -332,8 +332,8 @@ export function ScrollingScoreRhythmStyle10({ minimal, scoreRowsHeight, compact 
         };
 }
 
-export function ScrollingScoreRhythmStyle11({ barWidth, visibleBars, translateX }: { barWidth: number; visibleBars: { measure: import("@/types/importedScore").ScoreRhythmMeasure; number: number; sequence: number }[]; translateX: import("react-native").Animated.Value }): import('react-native').ViewStyle {
-  return { width: barWidth * visibleBars.length, flexDirection: 'row', transform: [{ translateX }] };
+export function ScrollingScoreRhythmStyle11({ barWidth, visibleBars, translateX, fadeProgress }: { barWidth: number; visibleBars: { measure: import("@/types/importedScore").ScoreRhythmMeasure; number: number; sequence: number }[]; translateX: import("react-native").Animated.Value; fadeProgress: import("react-native").Animated.Value }): import('react-native').ViewStyle {
+  return { width: barWidth * visibleBars.length, flexDirection: 'row', opacity: fadeProgress, transform: [{ translateX }] };
 }
 
 export function VexFlowNotationDOMStyle1({ plan }: { plan: import("@/rhythm/noteNotation").NoteNotationPlan }): import('react').CSSProperties {

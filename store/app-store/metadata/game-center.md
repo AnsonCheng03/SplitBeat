@@ -47,6 +47,8 @@ Course completion and per-lesson accuracy ratings sync only after the player use
 4. Reopen the leaderboard and verify that the best score appears under the signed-in player.
 5. Repeat with Game Center signed out or offline. The challenge and local My Records score should still work; the app should offer a retry after a submission failure.
 
-If Game Center reports an unauthenticated player, the course sync control should show sign-in guidance instead of the raw system error. If the sign-in flow does not return a status on an unsigned simulator, it should leave its waiting state and show the same guidance after 15 seconds. A later successful sign-in can still complete the requested sync.
+If Game Center reports an unauthenticated player, challenge and course-progress controls should show sign-in guidance instead of the raw system error. If the sign-in flow does not return a status on an unsigned simulator, it should leave its waiting state and show the same guidance after 15 seconds. A later successful sign-in can still complete the requested action.
+
+The native module registers Game Center authentication at startup but holds any sign-in sheet until the player taps the Game Center action. If an initial authentication callback has no sign-in sheet, the action refreshes the handler and presents any pending system sign-in UI.
 
 Game Center authentication and leaderboard UI require a signed native Apple-platform build and cannot be fully verified in Expo Go or a simulator without a configured Game Center test account.

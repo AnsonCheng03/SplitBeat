@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { centerScoreBeatEvents, findNextScoreEvent, scoreBeatEvents, scoreHandPresence, scoreNotationEvents, scoreNotationEventsForSpan, scoreTrainingMode } from '@/rhythm/scoreStaff';
+import { centerScoreBeatEvents, DEFAULT_SCORE_DISPLAY_MODE, findNextScoreEvent, scoreBeatEvents, scoreDisplayModeFromParam, scoreHandPresence, scoreNotationEvents, scoreNotationEventsForSpan, scoreTrainingMode } from '@/rhythm/scoreStaff';
 import type { ImportedRhythmScore, ScoreRhythmMeasure } from '@/types/importedScore';
 
 const firstBar: ScoreRhythmMeasure = {
@@ -26,6 +26,15 @@ const nextBar: ScoreRhythmMeasure = {
   leftEvents: [{ startQuarter: 0.25, durationQuarter: 0.5 }],
   rightEvents: [{ startQuarter: 1, durationQuarter: 1 }],
 };
+
+test('score display mode defaults to fade and keeps the old staff link compatible', () => {
+  assert.equal(DEFAULT_SCORE_DISPLAY_MODE, 'fade');
+  assert.equal(scoreDisplayModeFromParam(undefined), 'fade');
+  assert.equal(scoreDisplayModeFromParam('focus'), 'focus');
+  assert.equal(scoreDisplayModeFromParam('slide'), 'slide');
+  assert.equal(scoreDisplayModeFromParam('staff'), 'slide');
+  assert.equal(scoreDisplayModeFromParam('slide-per-note'), 'slide-per-note');
+});
 
 test('focus view finds each hand event and rolls forward across bars', () => {
   assert.equal(findNextScoreEvent(firstBar, nextBar, 'left', 1.6)?.startQuarter, 1.5);

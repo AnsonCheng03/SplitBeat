@@ -25,6 +25,20 @@ appId: com.splitbeat.twohandrhythm
       id: home.audioStatus
     timeout: 15000
 - assertVisible:
+    id: home.display.rhythm
+    selected: true
+- tapOn:
+    id: home.display.score
+- assertVisible:
+    id: home.display.score
+    selected: true
+- takeScreenshot: home-notation-mode-selection
+- tapOn:
+    id: home.display.rhythm
+- assertVisible:
+    id: home.display.rhythm
+    selected: true
+- assertVisible:
     id: home.start
 - tapOn:
     id: home.start

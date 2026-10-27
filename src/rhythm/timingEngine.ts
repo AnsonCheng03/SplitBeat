@@ -982,6 +982,7 @@ export class RhythmTimingEngine {
 
   private createSnapshot(now: number, wallNow: number): SessionSnapshot {
     const elapsed = now - this.sessionStartTime;
+    const beatPosition = Math.max(0, elapsed / this.beatMs);
     const beatIndex = Math.max(0, Math.floor(elapsed / this.beatMs));
     const counterPosition = beatCounterPosition(
       Math.max(0, elapsed / this.beatMs),
@@ -1005,7 +1006,7 @@ export class RhythmTimingEngine {
         : 'running';
     const scorePosition = this.currentScorePosition(now);
     const practiceScorePosition = !this.importedScore && this.settings.practiceDisplayMode === 'score'
-      ? this.currentPracticeScorePosition(beatIndex)
+      ? this.currentPracticeScorePosition(beatPosition)
       : undefined;
     const shouldAnalyzeSwingFeel = this.settings.feel === 'swing' && !this.importedScore && (
       beatIndex < this.beatsPerBar * 3 ||
@@ -1092,6 +1093,7 @@ export class RhythmTimingEngine {
             practiceScoreUpcomingMeasures: practiceScorePosition.upcomingMeasures,
             practiceScoreSequence: practiceScorePosition.sequence,
             practiceScoreCount: practiceScorePosition.count,
+            practiceScoreQuarterInMeasure: practiceScorePosition.quarterInMeasure,
           }
         : {}),
     };
@@ -1104,15 +1106,16 @@ export class RhythmTimingEngine {
     this.resumeAt = null;
   }
 
-  private currentPracticeScorePosition(beatIndex: number) {
+  private currentPracticeScorePosition(beatPosition: number) {
     const sessionEndBeat = this.endTime === null
       ? undefined
       : Math.max(0, (this.endTime - this.sessionStartTime) / this.beatMs);
     const totalBars = sessionEndBeat === undefined
       ? undefined
       : Math.max(1, Math.ceil(sessionEndBeat / this.beatsPerBar));
+    const barPosition = barPositionForBeat(beatPosition, this.beatsPerBar);
     const sequence = Math.min(
-      Math.floor(beatIndex / this.beatsPerBar),
+      barPosition.barOffset,
       totalBars === undefined ? Number.POSITIVE_INFINITY : totalBars - 1,
     );
     const count = totalBars ?? sequence + 8;
@@ -1150,6 +1153,13 @@ export class RhythmTimingEngine {
       upcomingMeasures,
       sequence,
       count,
+      quarterInMeasure: Math.max(
+        0,
+        Math.min(
+          measure.durationQuarter,
+          (beatPosition - sequence * this.beatsPerBar) * pulseQuarterNotes(this.settings.timeSignature),
+        ),
+      ),
     };
   }
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { useI18n } from '@/i18n/I18nProvider';
+import { gameCenterStatusMessage } from '@/features/gameCenterMessages';
 import {
   authenticateGameCenter,
   getGameCenterStatus,
@@ -21,19 +22,34 @@ export function useGameCenterChallenge({
   const [status, setStatus] = useState<GameCenterStatus>(getGameCenterStatus);
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [authenticating, setAuthenticating] = useState(false);
   const [scoreStatus, setScoreStatus] = useState<'idle' | 'submitted' | 'failed'>('idle');
   const submittedRef = useRef(false);
+  const authenticationTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasScore = challengeMode && typeof longestCorrectStreak === 'number';
+
+  const clearAuthenticationTimeout = useCallback(() => {
+    if (authenticationTimeout.current === null) return;
+    clearTimeout(authenticationTimeout.current);
+    authenticationTimeout.current = null;
+  }, []);
 
   const updateStatus = useCallback((nextStatus: GameCenterStatus) => {
     setStatus(nextStatus);
-    if (nextStatus.error) setMessage(t(nextStatus.error));
-  }, [t]);
+    if (nextStatus.authenticated || nextStatus.error) {
+      clearAuthenticationTimeout();
+      setAuthenticating(false);
+    }
+    if (nextStatus.error) setMessage(t(gameCenterStatusMessage(nextStatus.error) ?? nextStatus.error));
+  }, [clearAuthenticationTimeout, t]);
 
   useEffect(() => {
     const subscription = subscribeToGameCenterStatus(updateStatus);
-    return () => subscription?.remove();
-  }, [updateStatus]);
+    return () => {
+      subscription?.remove();
+      clearAuthenticationTimeout();
+    };
+  }, [clearAuthenticationTimeout, updateStatus]);
 
   const submitScore = useCallback(async () => {
     if (!hasScore || longestCorrectStreak === undefined || submitting) return;
@@ -67,8 +83,15 @@ export function useGameCenterChallenge({
   };
 
   const signIn = () => {
+    clearAuthenticationTimeout();
+    setAuthenticating(true);
     setMessage(t('Waiting for Game Center…'));
     authenticateGameCenter();
+    authenticationTimeout.current = setTimeout(() => {
+      authenticationTimeout.current = null;
+      setAuthenticating(false);
+      setMessage(t('Game Center sign-in is taking longer than expected. Check your Game Center account in iOS Settings, then try again.'));
+    }, 15_000);
   };
 
   const handleAction = () => {
@@ -97,6 +120,7 @@ export function useGameCenterChallenge({
     status,
     message,
     submitting,
+    authenticating,
     hasScore,
     actionLabel,
     description,

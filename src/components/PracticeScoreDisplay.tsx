@@ -16,6 +16,7 @@ export function PracticeScoreDisplay({
   snapshot,
   settings,
   scoreDisplayMode,
+  quarterInMeasure,
   compact,
   singleHandMode,
   focusedHand,
@@ -27,6 +28,7 @@ export function PracticeScoreDisplay({
   snapshot: SessionSnapshot | null;
   settings: ExerciseSettings;
   scoreDisplayMode: ScoreDisplayMode;
+  quarterInMeasure: number;
   compact: boolean;
   singleHandMode: boolean;
   focusedHand: Hand;
@@ -79,6 +81,8 @@ export function PracticeScoreDisplay({
         upcomingMeasures={upcomingMeasures}
         sequence={sequence}
         count={count}
+        movementMode={scoreDisplayMode === 'focus' ? 'fade' : scoreDisplayMode}
+        quarterInMeasure={quarterInMeasure}
         compact={compact}
         beamGroupQuarterNotes={pulseQuarterNotes(settings.timeSignature)}
         minimal

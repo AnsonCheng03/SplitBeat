@@ -644,11 +644,11 @@ export function ImportedScorePreviewStyle18({ colors }: { colors: import('@/them
 }
 
 export function ImportedScorePreviewStyle19(): import('react-native').ViewStyle {
-  return { flexDirection: 'row', gap: 8 };
+  return { flexDirection: 'row', flexWrap: 'wrap', gap: 8 };
 }
 
 export function ImportedScorePreviewStyle20({ selected, colors }: { selected: boolean; colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { flex: 1, minHeight: 54, justifyContent: 'center', paddingHorizontal: 11, borderRadius: 12, borderWidth: 1, borderColor: selected ? colors.accent : colors.line, backgroundColor: selected ? `${colors.accent}18` : colors.surface };
+  return { width: '48%', minHeight: 54, justifyContent: 'center', paddingHorizontal: 11, borderRadius: 12, borderWidth: 1, borderColor: selected ? colors.accent : colors.line, backgroundColor: selected ? `${colors.accent}18` : colors.surface };
 }
 
 export function ImportedScorePreviewStyle21({ selected, colors }: { selected: boolean; colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {

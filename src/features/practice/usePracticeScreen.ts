@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { Alert, AppState, useWindowDimensions, View } from 'react-native';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { findNextScoreEvent, type ScoreDisplayMode } from '@/rhythm/scoreStaff';
+import { DEFAULT_SCORE_DISPLAY_MODE, findNextScoreEvent, scoreDisplayModeFromParam } from '@/rhythm/scoreStaff';
 import { getResumeStartNotes } from '@/rhythm/resumeStart';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -39,7 +39,6 @@ export function usePracticeScreen() {
   }>();
   const lessonId = Array.isArray(rawLessonId) ? rawLessonId[0] : rawLessonId;
   const scoreDisplayModeParam = Array.isArray(rawScoreDisplayMode) ? rawScoreDisplayMode[0] : rawScoreDisplayMode;
-  const scoreDisplayMode: ScoreDisplayMode = scoreDisplayModeParam === 'focus' ? 'focus' : 'staff';
   const {
     featureFlags,
     updateSettings,
@@ -57,6 +56,9 @@ export function usePracticeScreen() {
     results,
   } = useRhythmSession();
   const activeSettings = sessionSettings ?? settings;
+  const scoreDisplayMode = scoreDisplayModeParam
+    ? scoreDisplayModeFromParam(scoreDisplayModeParam)
+    : activeSettings.scoreMotionMode ?? DEFAULT_SCORE_DISPLAY_MODE;
   const tapFeedbackEnabled = featureFlags.tapFeedback;
   const blurTargetRef = useRef<View>(null);
   const hasStartedExitRef = useRef(false);

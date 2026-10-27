@@ -678,16 +678,19 @@ test('live beat counter follows the written time-signature numerator in every me
     });
     const { beatsPerBar, beatDurationMs } = timeSignatureMetrics(bpm, timeSignature);
 
-    for (let writtenBeat = 0; writtenBeat < writtenBeatsPerBar; writtenBeat += 1) {
-      const pulsePosition = ((writtenBeat + 0.25) * beatsPerBar) / writtenBeatsPerBar;
-      const snapshot = engine.advance(start + pulsePosition * beatDurationMs);
+    for (let bar = 0; bar < 3; bar += 1) {
+      for (let writtenBeat = 0; writtenBeat < writtenBeatsPerBar; writtenBeat += 1) {
+        const pulsePosition = bar * beatsPerBar + ((writtenBeat + 0.25) * beatsPerBar) / writtenBeatsPerBar;
+        const snapshot = engine.advance(start + pulsePosition * beatDurationMs);
 
-      assert.equal(snapshot.counterBeatInBar, writtenBeat, `${timeSignature} written beat ${writtenBeat + 1}`);
-      assert.equal(snapshot.counterBeatsPerBar, writtenBeatsPerBar, `${timeSignature} counter length`);
+        assert.equal(snapshot.counterBeatInBar, writtenBeat, `${timeSignature} bar ${bar + 1}, written beat ${writtenBeat + 1}`);
+        assert.equal(snapshot.counterBeatsPerBar, writtenBeatsPerBar, `${timeSignature} bar ${bar + 1} counter length`);
+      }
+
+      const nextBar = engine.advance(start + (bar + 1) * beatsPerBar * beatDurationMs + 1);
+      assert.equal(nextBar.counterBeatInBar, 0, `${timeSignature} bar ${bar + 1} counter resets at the bar line`);
+      assert.equal(nextBar.counterBeatsPerBar, writtenBeatsPerBar, `${timeSignature} bar ${bar + 2} counter length`);
     }
-
-    const nextBar = engine.advance(start + beatsPerBar * beatDurationMs + 1);
-    assert.equal(nextBar.counterBeatInBar, 0, `${timeSignature} counter resets at the bar line`);
   }
 });
 
@@ -1090,15 +1093,21 @@ test('normal practice score notation is preloaded and advances at bar boundaries
   assert.equal(beforeStart.practiceScoreCount, 8);
   assert.deepEqual(beforeStart.practiceScoreUpcomingMeasures?.map((measure) => measure.index), [0, 1, 2, 3, 4, 5, 6, 7]);
   assert.ok((beforeStart.practiceScoreMeasure?.leftEvents.length ?? 0) > 0);
+  assert.equal(beforeStart.practiceScoreQuarterInMeasure, 0);
+
+  const withinBar = engine.advance(start + 1_500);
+  assert.equal(withinBar.practiceScoreQuarterInMeasure, 1.5);
 
   const beforeBarLine = engine.advance(start + 3_999);
   assert.equal(beforeBarLine.practiceScoreMeasure?.index, 0);
   assert.equal(beforeBarLine.practiceScoreSequence, 0);
+  assert.ok(Math.abs((beforeBarLine.practiceScoreQuarterInMeasure ?? 0) - 3.999) < 0.000001);
 
   const onBarLine = engine.advance(start + 4_000);
   assert.equal(onBarLine.practiceScoreMeasure?.index, 1);
   assert.equal(onBarLine.practiceScorePreviousMeasure?.index, 0);
   assert.equal(onBarLine.practiceScoreSequence, 1);
+  assert.equal(onBarLine.practiceScoreQuarterInMeasure, 0);
 });
 
 test('score bars advance after the configured number of metronome beats', () => {

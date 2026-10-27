@@ -4,7 +4,7 @@ import { Alert } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useI18n } from '@/i18n/I18nProvider';
-import { scoreTrainingMode, type ScoreDisplayMode } from '@/rhythm/scoreStaff';
+import { DEFAULT_SCORE_DISPLAY_MODE, scoreTrainingMode, type ScoreDisplayMode } from '@/rhythm/scoreStaff';
 import {
   createImportedScoreEntry,
   placeSingleTrackOnHand,
@@ -32,7 +32,7 @@ export function useScoreImportScreen() {
   const { colors } = useTheme();
   const { t } = useI18n();
   const router = useRouter();
-  const { settings, featureFlags, prepareExercise } = useRhythmSession();
+  const { settings, featureFlags, prepareExercise, updateSettings } = useRhythmSession();
   const [score, setScore] = useState<ImportedRhythmScore | null>(null);
   const [scoreFileName, setScoreFileName] = useState('');
   const [previewMeasureIndex, setPreviewMeasureIndex] = useState(0);
@@ -44,7 +44,10 @@ export function useScoreImportScreen() {
   const libraryLoadPromiseRef = useRef<Promise<Awaited<ReturnType<typeof loadImportedScoreLibrary>>> | null>(null);
   const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
   const [libraryLoaded, setLibraryLoaded] = useState(false);
-  const [scoreDisplayMode, setScoreDisplayMode] = useState<ScoreDisplayMode>('staff');
+  const [focusDisplayMode, setFocusDisplayMode] = useState(false);
+  const scoreDisplayMode: ScoreDisplayMode = focusDisplayMode
+    ? 'focus'
+    : settings.scoreMotionMode ?? DEFAULT_SCORE_DISPLAY_MODE;
   const [templateCategory, setTemplateCategory] = useState<ScoreTemplateCategory | 'All'>('All');
   const [templateTags, setTemplateTags] = useState<ScoreTemplateTag[]>([]);
 
@@ -209,6 +212,11 @@ export function useScoreImportScreen() {
     setTemplateTags([]);
   };
 
+  const changeScoreDisplayMode = (mode: ScoreDisplayMode) => {
+    setFocusDisplayMode(mode === 'focus');
+    if (mode !== 'focus') updateSettings({ scoreMotionMode: mode });
+  };
+
   const selectTemplate = (templateId: string) => {
     const template = SCORE_TEMPLATES.find((item) => item.id === templateId);
     if (template) loadScore(template.score, template.title, 'template');
@@ -246,7 +254,7 @@ export function useScoreImportScreen() {
     showLibrary,
     returnHome,
     onPreviewMeasureChange: setPreviewMeasureIndex,
-    onScoreDisplayModeChange: setScoreDisplayMode,
+    onScoreDisplayModeChange: changeScoreDisplayMode,
     onTemplateCategoryChange: setTemplateCategory,
   };
 }
