@@ -36,6 +36,7 @@ export default function HomeScreen() {
     updateSettings,
     t,
     openingActivity,
+    modeLoading,
     activityPickerVisible,
     activityOptions,
     currentActivity,
@@ -57,7 +58,12 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView testID="home.screen" style={indexStyle1({ colors })}>
-      <View style={indexStyle2()}>
+      <View
+        pointerEvents={modeLoading ? 'none' : 'auto'}
+        accessibilityElementsHidden={modeLoading}
+        importantForAccessibility={modeLoading ? 'no-hide-descendants' : 'auto'}
+        style={indexStyle2()}
+      >
         <View style={indexStyle3()}>
           <View style={indexStyle4()}>
             <View style={indexStyle5({ colors })} />
@@ -145,14 +151,14 @@ export default function HomeScreen() {
       </View>
 
       <HomeActivityPicker
-        visible={activityPickerVisible}
+        visible={activityPickerVisible && !modeLoading}
         options={activityOptions}
         selected={currentActivity.id}
         onClose={onCloseActivityPicker}
         onSelect={onSelectActivity}
       />
 
-      {openingActivity ? <HomeActivityLoading message={loadingMessage} /> : null}
+      {modeLoading ? <HomeActivityLoading message={loadingMessage} /> : null}
     </SafeAreaView>
   );
 }

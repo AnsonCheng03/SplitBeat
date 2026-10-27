@@ -20,6 +20,11 @@ test('Traditional Chinese translations preserve English fallback for untranslate
   assert.equal(translate('zh-Hant', 'Tap tempo'), '點按設定速度');
   assert.equal(translate('zh-Hant', 'CALIBRATE TIMING'), '校準節奏');
   assert.equal(translate('zh-Hant', 'Preparing your practice…'), '正在準備練習…');
+  assert.equal(translate('zh-Hant', 'Preparing your score.'), '正在準備樂譜。');
+  assert.equal(translate('zh-Hant', 'Preparing your lesson.'), '正在準備課程。');
+  assert.equal(translate('zh-Hant', 'Preparing your score library.'), '正在準備樂譜庫。');
+  assert.equal(translate('zh-Hant', 'Loading your course progress.'), '正在載入課程進度。');
+  assert.equal(translate('zh-Hant', 'Starting your practice…'), '正在開始練習…');
   assert.equal(translate('zh-Hant', 'A user imported title'), 'A user imported title');
   assert.equal(translate('en', 'START PRACTICE'), 'START PRACTICE');
 });

@@ -21,11 +21,7 @@ import { loadImportedScoreLibrary, saveImportedScoreLibrary } from '@/store/impo
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { DurationOption, Hand } from '@/types/rhythm';
-import { remainingPracticeLoadingFeedbackMs } from './practiceLaunchFeedback';
-
-const waitForNextAnimationFrame = () => new Promise<void>((resolve) => {
-  requestAnimationFrame(() => resolve());
-});
+import { keepModeLoadingVisible, waitForModeLoadingFrame } from '@/features/modeLoadingFeedback';
 
 const practiceDurations: ExerciseDurationOption[] = [
   { label: '30 sec', value: 30 },
@@ -125,11 +121,10 @@ export function useExerciseScreen() {
     if (starting) return;
     const loadingStartedAt = Date.now();
     setStarting(true);
-    await waitForNextAnimationFrame();
     try {
+      await waitForModeLoadingFrame();
       await prepare();
-      const feedbackDelay = remainingPracticeLoadingFeedbackMs(loadingStartedAt, Date.now());
-      if (feedbackDelay > 0) await new Promise<void>((resolve) => setTimeout(resolve, feedbackDelay));
+      await keepModeLoadingVisible(loadingStartedAt);
       router.replace('/practice');
     } catch {
       Alert.alert(t('Could not prepare practice'), t('Check your audio setup and try again.'));

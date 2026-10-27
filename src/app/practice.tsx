@@ -6,11 +6,14 @@ import { PracticePauseOverlays } from '@/components/PracticePauseOverlays';
 import { PracticeRhythmDisplay } from '@/components/PracticeRhythmDisplay';
 import { PracticeStatusBar } from '@/components/PracticeStatusBar';
 import { PracticeTapZones } from '@/components/PracticeTapZones';
+import { ModeLoadingScreen } from '@/components/ModeLoadingScreen';
 import { SessionEndingOverlay } from '@/components/SessionEndingOverlay';
 import { usePracticeScreen } from '@/features/practice/usePracticeScreen';
+import { useI18n } from '@/i18n/I18nProvider';
 import { practiceStyle1, practiceStyle2, practiceStyle3, practiceStyle4 } from '@/styles/practice';
 
 export default function PracticeScreen() {
+  const { t } = useI18n();
   const {
     colors,
     width,
@@ -63,6 +66,16 @@ export default function PracticeScreen() {
     dismissEarlySwingWarning,
     backHomeFromPause,
   } = usePracticeScreen();
+
+  if (starting) {
+    return (
+      <ModeLoadingScreen
+        testID="practice.preparing"
+        title={t('Starting your practice…')}
+        detail={t('Preparing the metronome')}
+      />
+    );
+  }
 
   return (
     <View testID="practice.screen" style={practiceStyle1({ colors })}>

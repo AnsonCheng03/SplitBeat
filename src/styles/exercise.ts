@@ -485,19 +485,19 @@ export function ExerciseHistoryTilesStyle11({ colors }: { colors: import('@/them
   return { color: colors.dim, fontSize: 9, marginTop: 6 };
 }
 
-export function ExerciseLoadingStateStyle1({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+export function ModeLoadingScreenStyle1({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
   return { flex: 1, backgroundColor: colors.background };
 }
 
-export function ExerciseLoadingStateStyle2(): import('react-native').ViewStyle {
+export function ModeLoadingScreenStyle2(): import('react-native').ViewStyle {
   return { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24 };
 }
 
-export function ExerciseLoadingStateStyle3({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+export function ModeLoadingScreenStyle3({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
   return { color: colors.text, fontSize: 17, fontWeight: '800' };
 }
 
-export function ExerciseLoadingStateStyle4({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+export function ModeLoadingScreenStyle4({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
   return { color: colors.muted, fontSize: 13, textAlign: 'center' };
 }
 

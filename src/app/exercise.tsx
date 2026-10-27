@@ -1,14 +1,16 @@
 import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ExercisePairPanel } from '@/components/ExercisePairPanel';
-import { ExerciseLoadingState } from '@/components/ExerciseLoadingState';
+import { ModeLoadingScreen } from '@/components/ModeLoadingScreen';
 import { ExerciseHeader } from '@/components/ExerciseHeader';
 import { ExerciseComposer } from '@/components/ExerciseComposer';
 import { ExerciseHistoryPanel } from '@/components/ExerciseHistoryPanel';
 import { useExerciseScreen } from '@/features/exercise/useExerciseScreen';
+import { useI18n } from '@/i18n/I18nProvider';
 import { exerciseStyle1, exerciseStyle2 } from '@/styles/exercise';
 
 export default function ExerciseScreen() {
+  const { t } = useI18n();
   const {
     colors,
     featureFlags,
@@ -61,11 +63,23 @@ export default function ExerciseScreen() {
   } = useExerciseScreen();
 
   if (starting) {
-    return <ExerciseLoadingState preparingPractice />;
+    return (
+      <ModeLoadingScreen
+        testID="exercise.preparing"
+        title={t('Preparing your practice…')}
+        detail={t('Generating your rhythm pattern.')}
+      />
+    );
   }
 
   if (!combinationProgressLoaded || !savedPracticePairsLoaded) {
-    return <ExerciseLoadingState />;
+    return (
+      <ModeLoadingScreen
+        testID="exercise.loading"
+        title={t('Loading {activity}…', { activity: t('Focus practice') })}
+        detail={t('Preparing your practice history.')}
+      />
+    );
   }
 
   return (

@@ -5,6 +5,7 @@ import { ResultsOverview } from '@/features/results/ResultsOverview';
 import { ResultsMissedNotes } from '@/features/results/ResultsMissedNotes';
 import { ResultsPerformanceBreakdown } from '@/features/results/ResultsPerformanceBreakdown';
 import { ResultsFooter } from '@/features/results/ResultsFooter';
+import { ModeLoadingScreen } from '@/components/ModeLoadingScreen';
 import { useResultsScreen } from '@/features/results/useResultsScreen';
 import { resultsStyle1, resultsStyle2, resultsStyle3, resultsStyle4, resultsStyle5, resultsStyle6 } from '@/styles/results';
 
@@ -57,6 +58,16 @@ export default function ResultsScreen() {
           <Text style={resultsStyle4({ colors })}>{t('SET UP A SESSION')}</Text>
         </Pressable>
       </SafeAreaView>
+    );
+  }
+
+  if (startingAgain) {
+    return (
+      <ModeLoadingScreen
+        testID="results.preparing"
+        title={t('Starting your practice…')}
+        detail={t('Preparing the metronome')}
+      />
     );
   }
 

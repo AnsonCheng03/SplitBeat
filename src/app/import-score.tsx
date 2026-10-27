@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ExampleScoreBrowser } from '@/components/ExampleScoreBrowser';
 import { ImportedScorePreview } from '@/components/ImportedScorePreview';
 import { ScoreLibraryList } from '@/components/ScoreLibraryList';
+import { ModeLoadingScreen } from '@/components/ModeLoadingScreen';
 import { useScoreImportScreen } from '@/features/scoreImport/useScoreImportScreen';
 import {
   importscoreStyle1,
@@ -54,6 +55,26 @@ export default function ImportScoreScreen() {
     onScoreDisplayModeChange,
     onTemplateCategoryChange,
   } = useScoreImportScreen();
+
+  if (featureFlags.savedScoreLibrary && !libraryLoaded) {
+    return (
+      <ModeLoadingScreen
+        testID="scoreImport.loading"
+        title={t('Loading {activity}…', { activity: t('Score library') })}
+        detail={t('Preparing your score library.')}
+      />
+    );
+  }
+
+  if (starting) {
+    return (
+      <ModeLoadingScreen
+        testID="scoreImport.preparing"
+        title={t('Preparing your practice…')}
+        detail={t('Preparing your score.')}
+      />
+    );
+  }
 
   return (
     <SafeAreaView testID="scoreImport.screen" style={importscoreStyle1({ colors })}>

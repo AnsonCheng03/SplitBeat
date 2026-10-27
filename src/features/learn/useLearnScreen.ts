@@ -17,6 +17,7 @@ import { readLearnProgress, readLearnRatings, readSkippedLearnLessons, skipLearn
 import type { LearnCourseProgressSnapshot } from '@/rhythm/learnProgressSync';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
+import { keepModeLoadingVisible, waitForModeLoadingFrame } from '@/features/modeLoadingFeedback';
 
 export function useLearnScreen() {
   const { colors } = useTheme();
@@ -176,13 +177,16 @@ export function useLearnScreen() {
 
   const startLesson = useCallback(async () => {
     if (starting || skipping || !progressLoaded || requiresPurchase || lessonSequenceLocked || audioStatus === 'loading') return;
+    const loadingStartedAt = Date.now();
     setStarting(true);
     try {
+      await waitForModeLoadingFrame();
       await prepareExercise(undefined, {
         settings: lessonSettings(selectedLesson, settings),
         patternPairs: selectedLesson.patternPairs,
         patternPairWeights: selectedLesson.patternPairWeights,
       });
+      await keepModeLoadingVisible(loadingStartedAt);
       router.replace({ pathname: '/practice', params: { lessonId: selectedLesson.id } });
     } catch {
       Alert.alert(t('Audio could not start'), t('Check your device audio settings and try again.'));

@@ -80,7 +80,10 @@ export function HomeActivityLoading({ message }: { message: string }) {
   return (
     <View
       testID="home.activityLoading"
+      pointerEvents="auto"
+      onStartShouldSetResponder={() => true}
       accessibilityViewIsModal
+      accessibilityRole="alert"
       accessibilityState={{ busy: true }}
       style={HomeActivityPickerStyle12({ colors })}
     >

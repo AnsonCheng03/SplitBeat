@@ -4,6 +4,7 @@ import { FullBleedSafeArea } from '@/components/FullBleedSafeArea';
 import { GameCenterCourseProgressButton } from '@/components/GameCenterCourseProgressButton';
 import { LearnPatternPreview } from '@/components/LearnPatternPreview';
 import { LearnCoursePath } from '@/components/LearnCoursePath';
+import { ModeLoadingScreen } from '@/components/ModeLoadingScreen';
 import { useLearnScreen } from '@/features/learn/useLearnScreen';
 import { learnStyle1,
   learnStyle2,
@@ -102,6 +103,26 @@ export default function LearnScreen() {
     retryStore,
     onSelectLesson,
   } = useLearnScreen();
+
+  if (!progressLoaded) {
+    return (
+      <ModeLoadingScreen
+        testID="learn.loading"
+        title={t('Loading {activity}…', { activity: t('Learn rhythm') })}
+        detail={t('Loading your course progress.')}
+      />
+    );
+  }
+
+  if (starting) {
+    return (
+      <ModeLoadingScreen
+        testID="learn.preparing"
+        title={t('Preparing your practice…')}
+        detail={t('Preparing your lesson.')}
+      />
+    );
+  }
 
   return (
     <FullBleedSafeArea

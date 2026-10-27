@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert } from 'react-native';
 import { useCallback, useMemo, useState } from 'react';
 import { useI18n } from '@/i18n/I18nProvider';
+import { keepModeLoadingVisible, waitForModeLoadingFrame } from '@/features/modeLoadingFeedback';
 import { analyzeSessionSwingFeel, recountSessionFeel } from '@/rhythm/swingFeel';
 import { LEARN_COURSE } from '@/rhythm/learnCourse';
 import { buildFeedback, replayErrorBarGroups, shouldSuggestTimingCalibration, weakestCombination } from '@/features/results/resultPresentation';
@@ -65,9 +66,12 @@ export function useResultsScreen() {
 
   const startAgain = useCallback(async () => {
     if (startingAgain) return;
+    const loadingStartedAt = Date.now();
     setStartingAgain(true);
     try {
+      await waitForModeLoadingFrame();
       await prepareRepeatExercise();
+      await keepModeLoadingVisible(loadingStartedAt);
       discardReplayData();
       router.replace(lessonId ? { pathname: '/practice', params: { lessonId } } : '/practice');
     } catch {

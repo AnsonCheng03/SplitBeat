@@ -6,6 +6,7 @@ import { useAppTutorial } from '@/store/AppTutorialProvider';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { HomeActivity, HomeActivityOption } from '@/features/home/homeActivity';
+import { keepModeLoadingVisible, waitForModeLoadingFrame } from '@/features/modeLoadingFeedback';
 
 export function useHomeScreen() {
   const { colors } = useTheme();
@@ -56,7 +57,10 @@ export function useHomeScreen() {
   const loadingActivityTitle = activityOptions.find((option) => option.id === openingActivity)?.title ?? 'Focus practice';
   const loadingMessage = openingActivity
     ? t('Loading {activity}…', { activity: t(loadingActivityTitle) })
-    : '';
+    : starting
+      ? t('Preparing your practice…')
+      : '';
+  const modeLoading = Boolean(openingActivity || starting);
 
   useFocusEffect(useCallback(() => {
     setStarting(false);
@@ -70,13 +74,17 @@ export function useHomeScreen() {
 
   const startFreePractice = useCallback(async () => {
     if (starting || audioStatus === 'loading') return;
+    const loadingStartedAt = Date.now();
     setStarting(true);
     try {
+      await waitForModeLoadingFrame();
       if (audioStatus === 'error') {
         await prepareAudio();
+        await keepModeLoadingVisible(loadingStartedAt);
         return;
       }
       await prepareExercise();
+      await keepModeLoadingVisible(loadingStartedAt);
       router.replace('/practice');
     } catch {
       Alert.alert(t('Audio could not start'), t('Check your device audio settings and try again.'));
@@ -107,9 +115,10 @@ export function useHomeScreen() {
     openingActivityRef.current = true;
     setOpeningActivity(currentActivity.id);
 
-    // Let the loading screen render before navigation starts.
-    await new Promise<void>((resolve) => setTimeout(resolve, 350));
+    const loadingStartedAt = Date.now();
     try {
+      await waitForModeLoadingFrame();
+      await keepModeLoadingVisible(loadingStartedAt);
       navigateToActivity(currentActivity.id);
     } catch {
       openingActivityRef.current = false;
@@ -170,6 +179,7 @@ export function useHomeScreen() {
     t,
     starting,
     openingActivity,
+    modeLoading,
     activityPickerVisible,
     selectedActivity,
     activityOptions,

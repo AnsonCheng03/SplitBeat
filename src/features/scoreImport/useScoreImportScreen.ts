@@ -21,6 +21,7 @@ import { useRhythmSession } from '@/store/sessionStore';
 import { loadImportedScoreLibrary, saveImportedScoreLibrary } from '@/store/importedScoreLibrary';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ImportedRhythmScore } from '@/types/importedScore';
+import { keepModeLoadingVisible, waitForModeLoadingFrame } from '@/features/modeLoadingFeedback';
 
 export const isSilentScoreImportBuild = process.env.EXPO_PUBLIC_E2E_SILENT === '1';
 
@@ -188,9 +189,12 @@ export function useScoreImportScreen() {
       );
       return;
     }
+    const loadingStartedAt = Date.now();
     setStarting(true);
     try {
+      await waitForModeLoadingFrame();
       await prepareExercise(practiceScore, { settings: trainingMode });
+      await keepModeLoadingVisible(loadingStartedAt);
       router.replace({
         pathname: '/practice',
         params: { scoreDisplayMode: featureFlags.scoreNotation ? scoreDisplayMode : 'focus' },

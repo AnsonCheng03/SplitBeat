@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Alert } from 'react-native';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useTapTempo } from '@/features/tempo/useTapTempo';
+import { keepModeLoadingVisible, waitForModeLoadingFrame } from '@/features/modeLoadingFeedback';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { DurationOption } from '@/types/rhythm';
@@ -24,9 +25,12 @@ export function useSetupScreen() {
 
   const startPractice = async () => {
     if (starting || audioStatus === 'loading') return;
+    const loadingStartedAt = Date.now();
     setStarting(true);
     try {
+      await waitForModeLoadingFrame();
       await prepareExercise();
+      await keepModeLoadingVisible(loadingStartedAt);
       router.replace('/practice');
     } catch {
       Alert.alert(t('Audio could not start'), t('Check your device audio settings and try again.'));

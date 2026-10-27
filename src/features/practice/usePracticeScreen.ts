@@ -9,6 +9,7 @@ import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import { practiceLayoutForScreen } from '@/features/deviceLayout/practiceLayout';
 import { useDeviceReservedRegions } from '@/features/deviceLayout/useDeviceReservedRegions';
+import { keepModeLoadingVisible, waitForModeLoadingFrame } from '@/features/modeLoadingFeedback';
 import type { Hand, TapFeedback } from '@/types/rhythm';
 
 function formatTimeRemaining(
@@ -184,9 +185,12 @@ export function usePracticeScreen() {
 
   const beginExercise = useCallback(async () => {
     if (starting || !exercisePrepared) return;
+    const loadingStartedAt = Date.now();
     setStarting(true);
     try {
+      await waitForModeLoadingFrame();
       await startPreparedExercise();
+      await keepModeLoadingVisible(loadingStartedAt);
       setTutorialVisible(false);
     } catch {
       Alert.alert(t('Audio could not start'), t('Check your device audio settings and try again.'));

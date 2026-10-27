@@ -21,7 +21,11 @@ appId: com.splitbeat.twohandrhythm
 - tapOn:
     id: home.start
 - assertVisible:
+    id: home.activityLoading
+- extendedWaitUntil:
+    visible:
     id: exercise.screen
+    timeout: 15000
 - tapOn:
     id: exercise.tab.bar
 - assertVisible: COMPOSE A SCORE
@@ -67,7 +71,11 @@ appId: com.splitbeat.twohandrhythm
 - tapOn:
     id: practice.tutorial
 - assertVisible:
+    id: practice.preparing
+- extendedWaitUntil:
+    visible:
     id: practice.beatCounter
+    timeout: 5000
 - tapOn:
     id: practice.pause
 - assertVisible: PAUSED

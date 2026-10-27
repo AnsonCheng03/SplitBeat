@@ -30,6 +30,8 @@ appId: com.splitbeat.twohandrhythm
     id: home.activityPicker
 - tapOn:
     id: home.learn
+- assertVisible:
+    id: home.activityLoading
 - extendedWaitUntil:
     visible:
       id: learn.screen
@@ -74,6 +76,8 @@ appId: com.splitbeat.twohandrhythm
     direction: UP
 - tapOn:
     id: learn.start
+- assertVisible:
+    id: learn.preparing
 - extendedWaitUntil:
     visible:
       id: practice.screen
@@ -83,7 +87,11 @@ appId: com.splitbeat.twohandrhythm
 - tapOn:
     id: practice.tutorial
 - assertVisible:
+    id: practice.preparing
+- extendedWaitUntil:
+    visible:
     id: practice.beatCounter
+    timeout: 5000
 - tapOn:
     id: practice.pause
 - assertVisible: PAUSED

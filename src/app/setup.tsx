@@ -7,6 +7,7 @@ import { SettingsPage } from '@/components/SettingsPage';
 import { ResetAllSettingsButton } from '@/components/ResetAllSettingsButton';
 import { TutorialReplayCard } from '@/components/TutorialReplayCard';
 import { TapTempoCounter } from '@/components/TapTempoCounter';
+import { ModeLoadingScreen } from '@/components/ModeLoadingScreen';
 import { useSetupScreen } from '@/features/setup/useSetupScreen';
 import {
   setupStyle1,
@@ -46,6 +47,16 @@ export default function SetupScreen() {
     startTitle,
     startSubtitle,
   } = useSetupScreen();
+
+  if (starting) {
+    return (
+      <ModeLoadingScreen
+        testID="setup.preparing"
+        title={t('Preparing your practice…')}
+        detail={t('Preparing the metronome')}
+      />
+    );
+  }
 
   return (
     <SettingsPage
