@@ -84,10 +84,20 @@ export function useResultsDiagnostics({
       if (!cacheDirectory) throw new Error('The app cache directory is unavailable.');
 
       const exportedAt = new Date().toISOString();
+      const nativeBuildNumber = Platform.OS === 'ios'
+        ? Constants.platform?.ios?.buildNumber
+        : Platform.OS === 'android'
+          ? Constants.platform?.android?.versionCode?.toString()
+          : undefined;
+      const configuredBuildNumber = Platform.OS === 'ios'
+        ? Constants.expoConfig?.ios?.buildNumber
+        : Platform.OS === 'android'
+          ? Constants.expoConfig?.android?.versionCode?.toString()
+          : undefined;
       const log = createSessionDiagnosticLog(results, sessionSettings ?? settings, {
         exportedAt,
         appVersion: Constants.expoConfig?.version ?? 'unknown',
-        buildNumber: Constants.nativeBuildVersion ?? 'unknown',
+        buildNumber: nativeBuildNumber ?? configuredBuildNumber ?? Constants.nativeBuildVersion ?? 'unknown',
         platform: Platform.OS,
         operatingSystemVersion: String(Platform.Version),
         locale,

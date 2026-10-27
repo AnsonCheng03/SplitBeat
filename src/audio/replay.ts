@@ -34,7 +34,10 @@ export function createReplayAudioEvents(
 
   for (const tap of taps) {
     if (tap.barIndex !== barIndex) continue;
-    const offsetMs = tap.timestampMs - barStartMs;
+    const rawOffsetMs = tap.timestampMs - barStartMs;
+    const offsetMs = tap.matchedEventId
+      ? Math.max(0, Math.min(rawOffsetMs, barDurationMs - 1))
+      : rawOffsetMs;
     if (offsetMs < 0 || offsetMs >= barDurationMs) continue;
     events.push({
       offsetMs,

@@ -356,6 +356,7 @@ export class RhythmTimingEngine {
     }
 
     const activeTapTime = this.toActiveTime(actualTapTime);
+    if (activeTapTime < this.sessionStartTime) return { feedback: 'ignored' };
     if (this.endTime !== null && activeTapTime >= this.endTime) return { feedback: 'ignored' };
 
     const replayTap = this.recordReplayTap(hand, activeTapTime, inputSource);
@@ -404,6 +405,7 @@ export class RhythmTimingEngine {
       this.recordExtraTap(hand, calibratedTapTime);
       return { feedback: 'miss' };
     }
+    replayTap.barIndex = this.barIndexForExpectedTime(matchedEvent.expectedTimeMs);
     replayTap.matchedEventId = matchedEvent.id;
     replayTap.timingErrorMs = activeTapTime - matchedEvent.expectedTimeMs;
     if (matchedEvent.midiPitches) replayTap.midiPitches = [...matchedEvent.midiPitches];
@@ -926,6 +928,11 @@ export class RhythmTimingEngine {
   private beatInBarFor(timestampMs: number): number {
     const beatPosition = (timestampMs - this.sessionStartTime) / this.beatMs;
     return barPositionForBeat(beatPosition, this.beatsPerBar).beatInBar;
+  }
+
+  private barIndexForExpectedTime(expectedTimeMs: number): number {
+    const beatPosition = (expectedTimeMs - this.sessionStartTime) / this.beatMs;
+    return barPositionForBeat(beatPosition, this.beatsPerBar).barOffset + 1;
   }
 
   private replayPattern(step: ExerciseStep): ReplayPattern {
