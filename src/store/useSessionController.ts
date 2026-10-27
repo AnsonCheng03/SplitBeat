@@ -26,7 +26,7 @@ import type { CombinationProgress, SavedPracticePair } from '@/rhythm/targetedPr
 import { useCombinationProgress, useSavedPracticePairs, useSessionHistory } from '@/store/useSessionPersistence';
 import { useSessionClock } from '@/store/useSessionClock';
 import type { SessionRecord } from '@/store/sessionHistory';
-import { MIXTURE_NOTE_VALUES, MIXTURE_PATTERN_IDS, SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
+import { MIXTURE_NOTE_VALUES, MIXTURE_PATTERN_IDS, SESSION_END_BAR_OPTIONS, SUBDIVISIONS, TIME_SIGNATURES } from '@/types/rhythm';
 import type { ImportedRhythmScore } from '@/types/importedScore';
 import type {
   ExerciseSettings,
@@ -90,6 +90,8 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   bpm: 60,
   timeSignature: '4/4',
   durationSeconds: 60,
+  sessionEndMode: 'time',
+  sessionEndBars: 4,
   changeIntervalBeats: 4,
   restBetweenChanges: false,
   handRestsEnabled: false,
@@ -175,6 +177,12 @@ function restoreSettings(raw: string | null): ExerciseSettings {
     )
       ? (parsed.durationSeconds as ExerciseSettings['durationSeconds'])
       : DEFAULT_SETTINGS.durationSeconds;
+    const sessionEndMode = parsed.sessionEndMode === 'bars' ? 'bars' : 'time';
+    const sessionEndBars = SESSION_END_BAR_OPTIONS.includes(
+      parsed.sessionEndBars as (typeof SESSION_END_BAR_OPTIONS)[number],
+    )
+      ? parsed.sessionEndBars as ExerciseSettings['sessionEndBars']
+      : DEFAULT_SETTINGS.sessionEndBars;
     const changeIntervalBeats = [1, 2, 4, 8].includes(parsed.changeIntervalBeats ?? -1)
       ? (parsed.changeIntervalBeats as ExerciseSettings['changeIntervalBeats'])
       : DEFAULT_SETTINGS.changeIntervalBeats;
@@ -193,6 +201,8 @@ function restoreSettings(raw: string | null): ExerciseSettings {
           : DEFAULT_SETTINGS.bpm,
       timeSignature,
       durationSeconds,
+      sessionEndMode,
+      sessionEndBars,
       changeIntervalBeats,
       restBetweenChanges: parsed.restBetweenChanges === true,
       handRestsEnabled: parsed.handRestsEnabled === true,

@@ -6,14 +6,7 @@ import { useTapTempo } from '@/features/tempo/useTapTempo';
 import { keepModeLoadingVisible, waitForModeLoadingFrame } from '@/features/modeLoadingFeedback';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
-import type { DurationOption } from '@/types/rhythm';
-
-export const setupDurations: { label: string; value: DurationOption }[] = [
-  { label: '30 sec', value: 30 },
-  { label: '60 sec', value: 60 },
-  { label: '2 min', value: 120 },
-  { label: 'Endless', value: 'endless' },
-];
+import type { DurationOption, SessionEndBarCount, SessionEndMode } from '@/types/rhythm';
 
 export function useSetupScreen() {
   const { colors } = useTheme();
@@ -49,13 +42,14 @@ export function useSetupScreen() {
     settings,
     audioStatus,
     starting,
-    durations: setupDurations,
     onStartPractice: startPractice,
     onDecreaseTempo: () => changeTempo(-1),
     onIncreaseTempo: () => changeTempo(1),
     onTempoChange: (bpm: number) => updateSettings({ bpm }),
     onTempoTap,
+    onSessionEndModeChange: (sessionEndMode: SessionEndMode) => updateSettings({ sessionEndMode }),
     onDurationChange: (durationSeconds: DurationOption) => updateSettings({ durationSeconds }),
+    onSessionEndBarsChange: (sessionEndBars: SessionEndBarCount) => updateSettings({ sessionEndBars }),
     startAccessibilityLabel: audioStatus === 'error'
       ? 'Retry audio setup before starting exercise'
       : audioStatus === 'ready'

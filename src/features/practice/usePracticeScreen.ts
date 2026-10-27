@@ -9,6 +9,7 @@ import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import { practiceLayoutForScreen } from '@/features/deviceLayout/practiceLayout';
 import { useDeviceReservedRegions } from '@/features/deviceLayout/useDeviceReservedRegions';
+import { timeSignatureMetrics } from '@/rhythm/subdivisions';
 import { keepModeLoadingVisible, waitForModeLoadingFrame } from '@/features/modeLoadingFeedback';
 import type { Hand, TapFeedback } from '@/types/rhythm';
 
@@ -229,8 +230,19 @@ export function usePracticeScreen() {
     : snapshot.phase === 'finished'
       ? 0
       : Math.max(0, snapshot.scoreMeasureCount - scoreSequence);
-  const remainingLabel = scoreBarsRemaining !== undefined
-    ? t('{count} {unit} LEFT', { count: scoreBarsRemaining, unit: t(scoreBarsRemaining === 1 ? 'BAR' : 'BARS') })
+  const sessionBarMetrics = activeSettings.sessionEndMode === 'bars'
+    ? timeSignatureMetrics(activeSettings.bpm, activeSettings.timeSignature)
+    : undefined;
+  const sessionBarSeconds = sessionBarMetrics
+    ? sessionBarMetrics.beatsPerBar * sessionBarMetrics.beatDurationMs / 1_000
+    : undefined;
+  const sessionBarsRemaining = scoreBarsRemaining ?? (
+    sessionBarSeconds !== undefined && snapshot?.secondsRemaining !== null && snapshot?.secondsRemaining !== undefined
+      ? Math.max(0, Math.ceil(snapshot.secondsRemaining / sessionBarSeconds - 1e-10))
+      : undefined
+  );
+  const remainingLabel = sessionBarsRemaining !== undefined
+    ? t('{count} {unit} LEFT', { count: sessionBarsRemaining, unit: t(sessionBarsRemaining === 1 ? 'BAR' : 'BARS') })
     : snapshot?.secondsRemaining !== null && snapshot?.secondsRemaining !== undefined
       ? formatTimeRemaining(snapshot.secondsRemaining, t)
       : snapshot
@@ -294,7 +306,7 @@ export function usePracticeScreen() {
     isScoreDisplay,
     isScoreFocusDisplay,
     scoreDisplayMode,
-    scoreBarsRemaining,
+    barsRemaining: sessionBarsRemaining,
     showNextPattern,
     changeCountdown,
     remainingLabel,

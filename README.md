@@ -157,7 +157,7 @@ For EAS builds, add the same variable to the selected `preview` or `production` 
 
 ## End-to-end checks
 
-The home screen follows AstroDX's compact main-menu hierarchy: choose Two hands or One hand, choose Rhythm symbols or Score notes, then start. Settings and score import stay secondary to those choices. One-hand mode uses a full-screen tap area and does not ask the player to choose a side. The Settings page keeps tempo and duration close by and opens Rhythm & meter, Sounds & feedback, Timing calibration, and Language on separate detail pages.
+The home screen follows AstroDX's compact main-menu hierarchy: choose Two hands or One hand, choose Rhythm symbols or Score notes, then start. Settings and score import stay secondary to those choices. One-hand mode uses a full-screen tap area and does not ask the player to choose a side. The Pace & length settings let players end generated practice by elapsed time or after a selected number of bars; time choices keep the existing full-bar rounding. Focus Practice offers the same end mode. Imported scores still end at the final bar in the score. Settings opens Rhythm & meter, Sounds & feedback, Timing calibration, and Language on separate detail pages.
 
 Build and install the release test app on a simulator or device, then run the Maestro smoke flow. E2E builds for both platforms force metronome, hand, and score audio off, regardless of stored settings, so automated runs stay silent. The score-import flow uses a bundled in-app test score in E2E builds, then checks the score preview and practice path; the system file picker still needs a manual device check. The flows exercise multi-page settings, the single-hand full-screen tap area, two-hand practice, results, visual replay, and records:
 

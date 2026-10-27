@@ -2,7 +2,7 @@ import Slider from '@react-native-community/slider';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { AudioStartButton } from '@/components/AudioStartButton';
-import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
+import { SessionEndSettings } from '@/components/SessionEndSettings';
 import { SettingsPage } from '@/components/SettingsPage';
 import { ResetAllSettingsButton } from '@/components/ResetAllSettingsButton';
 import { TutorialReplayCard } from '@/components/TutorialReplayCard';
@@ -25,7 +25,6 @@ import {
   setupStyle16,
   setupStyle17,
   setupStyle18,
-  setupStyle19,
 } from '@/styles/exercise';
 import { tapTempoHintStyle } from '@/styles/tempo';
 
@@ -36,13 +35,14 @@ export default function SetupScreen() {
     settings,
     audioStatus,
     starting,
-    durations,
     onStartPractice,
     onDecreaseTempo,
     onIncreaseTempo,
     onTempoChange,
     onTempoTap,
     onDurationChange,
+    onSessionEndModeChange,
+    onSessionEndBarsChange,
     startAccessibilityLabel,
     startTitle,
     startSubtitle,
@@ -64,7 +64,7 @@ export default function SetupScreen() {
       backTestID="setup.home"
       section="session"
       title="Set your pace"
-      description="Choose a tempo and how long you want to play."
+      description="Choose a tempo and how you want your session to end."
       footer={(
         <View style={setupStyle1({ colors })}>
           <AudioStartButton
@@ -128,11 +128,13 @@ export default function SetupScreen() {
         </View>
 
         <View style={setupStyle18({ colors })}>
-          <Text style={setupStyle19({ colors })}>SESSION LENGTH</Text>
-          <SettingsChoiceRow
-            options={durations}
-            value={settings.durationSeconds}
-            onChange={onDurationChange}
+          <SessionEndSettings
+            mode={settings.sessionEndMode ?? 'time'}
+            duration={settings.durationSeconds}
+            bars={settings.sessionEndBars ?? 4}
+            onModeChange={onSessionEndModeChange}
+            onDurationChange={onDurationChange}
+            onBarsChange={onSessionEndBarsChange}
             testIDPrefix="setup.duration"
           />
         </View>

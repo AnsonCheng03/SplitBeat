@@ -2,9 +2,10 @@ import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { ChoiceChip } from '@/components/ExercisePatternPicker';
+import { SessionEndSettings } from '@/components/SessionEndSettings';
 import { useTheme } from '@/theme/ThemeProvider';
-import type { DurationOption } from '@/types/rhythm';
-import type { ExerciseDurationOption, ExerciseTab } from '@/features/exercise/exerciseTypes';
+import type { DurationOption, SessionEndBarCount, SessionEndMode } from '@/types/rhythm';
+import type { ExerciseTab } from '@/features/exercise/exerciseTypes';
 import {
   ExerciseHeaderStyle1,
   ExerciseHeaderStyle2,
@@ -17,26 +18,30 @@ import {
   ExerciseHeaderStyle9,
   ExerciseHeaderStyle10,
   ExerciseHeaderStyle11,
-  ExerciseHeaderStyle12,
-  ExerciseHeaderStyle13,
   ExerciseHeaderStyle14
 } from '@/styles/exercise';
 
 export function ExerciseHeader({
   progressCount,
   activeTab,
+  sessionEndMode,
+  sessionEndBars,
   duration,
-  durations,
   onHome,
   onTabChange,
+  onSessionEndModeChange,
+  onSessionEndBarsChange,
   onDurationChange,
 }: {
   progressCount: number;
   activeTab: ExerciseTab;
+  sessionEndMode: SessionEndMode;
+  sessionEndBars: SessionEndBarCount;
   duration: DurationOption;
-  durations: ExerciseDurationOption[];
   onHome: () => void;
   onTabChange: (tab: ExerciseTab) => void;
+  onSessionEndModeChange: (mode: SessionEndMode) => void;
+  onSessionEndBarsChange: (bars: SessionEndBarCount) => void;
   onDurationChange: (duration: DurationOption) => void;
 }) {
   const { colors } = useTheme();
@@ -61,18 +66,15 @@ export function ExerciseHeader({
       </View>
       {activeTab !== 'bar' ? (
         <View testID="exercise.duration" style={ExerciseHeaderStyle11()}>
-          <Text style={ExerciseHeaderStyle12({ colors })}>{t('SESSION LENGTH')}</Text>
-          <View style={ExerciseHeaderStyle13()}>
-            {durations.map((option) => (
-              <ChoiceChip
-                key={option.value}
-                testID={`exercise.duration.${option.value}`}
-                label={t(option.label)}
-                selected={duration === option.value}
-                onPress={() => onDurationChange(option.value)}
-              />
-            ))}
-          </View>
+          <SessionEndSettings
+            mode={sessionEndMode}
+            duration={duration}
+            bars={sessionEndBars}
+            onModeChange={onSessionEndModeChange}
+            onDurationChange={onDurationChange}
+            onBarsChange={onSessionEndBarsChange}
+            testIDPrefix="exercise.duration"
+          />
         </View>
       ) : null}
       <View style={ExerciseHeaderStyle14()}>

@@ -33,6 +33,8 @@ export default function ExerciseScreen() {
     savedCompositions,
     savingComposition,
     practiceDuration,
+    practiceEndMode,
+    practiceEndBars,
     starting,
     visibleProgress,
     mixtureExamples,
@@ -40,12 +42,13 @@ export default function ExerciseScreen() {
     composedScore,
     barLengthQuarterNotes,
     compositionAlreadySaved,
-    practiceDurations,
     onHome,
     onFilterChange,
     onQueryChange,
     onTabChange,
     onDurationChange,
+    onSessionEndModeChange,
+    onSessionEndBarsChange,
     onLeftSelectionChange,
     onRightSelectionChange,
     onPracticeProgress,
@@ -92,10 +95,13 @@ export default function ExerciseScreen() {
         <ExerciseHeader
           progressCount={combinationProgress.length}
           activeTab={activeTab}
+          sessionEndMode={practiceEndMode}
+          sessionEndBars={practiceEndBars}
           duration={practiceDuration}
-          durations={practiceDurations}
           onHome={onHome}
           onTabChange={onTabChange}
+          onSessionEndModeChange={onSessionEndModeChange}
+          onSessionEndBarsChange={onSessionEndBarsChange}
           onDurationChange={onDurationChange}
         />
 

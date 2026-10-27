@@ -48,7 +48,7 @@ export default function PracticeScreen() {
     isScoreDisplay,
     isScoreFocusDisplay,
     scoreDisplayMode,
-    scoreBarsRemaining,
+    barsRemaining,
     showNextPattern,
     changeCountdown,
     remainingLabel,
@@ -120,7 +120,7 @@ export default function PracticeScreen() {
             rightInset={insets.right}
             layout={practiceLayout}
             remainingLabel={remainingLabel}
-            scoreBarsRemaining={scoreBarsRemaining}
+            barsRemaining={barsRemaining}
             resumeStartLabel={resumeStartLabel}
             showNextPattern={showNextPattern}
             changeCountdown={changeCountdown}

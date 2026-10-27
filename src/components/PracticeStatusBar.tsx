@@ -29,7 +29,7 @@ export function PracticeStatusBar({
   rightInset,
   layout,
   remainingLabel,
-  scoreBarsRemaining,
+  barsRemaining,
   resumeStartLabel,
   showNextPattern,
   changeCountdown,
@@ -43,7 +43,7 @@ export function PracticeStatusBar({
   rightInset: number;
   layout: PracticeLayout;
   remainingLabel: string;
-  scoreBarsRemaining?: number;
+  barsRemaining?: number;
   resumeStartLabel: string;
   showNextPattern: boolean;
   changeCountdown?: number;
@@ -97,10 +97,10 @@ export function PracticeStatusBar({
       <View style={PracticeStatusBarStyle6({ compact })}>
         {remainingLabel ? (
           <Text
-            testID={scoreBarsRemaining === undefined ? 'practice.timeRemaining' : 'practice.barsRemaining'}
-            accessibilityLabel={scoreBarsRemaining === undefined
+            testID={barsRemaining === undefined ? 'practice.timeRemaining' : 'practice.barsRemaining'}
+            accessibilityLabel={barsRemaining === undefined
               ? remainingLabel === 'ENDLESS' ? t('Endless session') : t('{time} remaining', { time: remainingLabel.replace(' LEFT', '') })
-              : t('{count} {unit} remaining', { count: scoreBarsRemaining, unit: t(scoreBarsRemaining === 1 ? 'bar' : 'bars') })}
+              : t('{count} {unit} remaining', { count: barsRemaining, unit: t(barsRemaining === 1 ? 'bar' : 'bars') })}
             numberOfLines={1}
             style={PracticeStatusBarStyle7({ colors, compact })}
           >

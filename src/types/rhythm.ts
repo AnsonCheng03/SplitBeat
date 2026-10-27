@@ -58,6 +58,8 @@ export const TIME_SIGNATURES = [
   '12/8',
 ] as const;
 
+export const SESSION_END_BAR_OPTIONS = [1, 2, 4, 8, 16, 32] as const;
+
 export type TimeSignature = (typeof TIME_SIGNATURES)[number];
 export type Hand = 'left' | 'right';
 export type TrainingMode = 'two-hand' | 'single-hand';
@@ -70,6 +72,8 @@ export type SoundPreset = 'wood' | 'beep' | 'bell' | 'soft';
 export type FlashSource = 'tap' | 'beat';
 export type RhythmicFeel = 'straight' | 'swing';
 export type DurationOption = 30 | 60 | 120 | 'endless';
+export type SessionEndMode = 'time' | 'bars';
+export type SessionEndBarCount = (typeof SESSION_END_BAR_OPTIONS)[number];
 export type ChangeIntervalBeats = 1 | 2 | 4 | 8;
 export type ChallengeAction = 'off' | 'pause' | 'stop';
 export type ChallengeTriggerMode = 'notes' | 'bars';
@@ -108,6 +112,9 @@ export interface ExerciseSettings {
   bpm: number;
   timeSignature: TimeSignature;
   durationSeconds: DurationOption;
+  /** Selects whether a generated practice session ends by elapsed time or after a bar count. */
+  sessionEndMode?: SessionEndMode;
+  sessionEndBars?: SessionEndBarCount;
   changeIntervalBeats: ChangeIntervalBeats;
   restBetweenChanges: boolean;
   handRestsEnabled: boolean;

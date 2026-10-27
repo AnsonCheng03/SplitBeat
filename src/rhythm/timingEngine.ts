@@ -107,12 +107,18 @@ interface TimingEngineOptions {
 const COUNT_IN_BEATS = 3;
 
 export function getSessionDurationSeconds(
-  settings: Pick<ExerciseSettings, 'bpm' | 'timeSignature' | 'durationSeconds'>,
+  settings: Pick<ExerciseSettings, 'bpm' | 'timeSignature' | 'durationSeconds'> &
+    Partial<Pick<ExerciseSettings, 'sessionEndMode' | 'sessionEndBars'>>,
   importedScore?: Pick<ImportedRhythmScore, 'timeSignature' | 'totalQuarterNotes'>,
 ): number | null {
   if (importedScore) {
     const quarterNoteDurationMs = timeSignatureMetrics(settings.bpm, importedScore.timeSignature).quarterNoteDurationMs;
     return (importedScore.totalQuarterNotes * quarterNoteDurationMs) / 1_000;
+  }
+  if (settings.sessionEndMode === 'bars') {
+    const metrics = timeSignatureMetrics(settings.bpm, settings.timeSignature);
+    const bars = Math.max(1, Math.floor(settings.sessionEndBars ?? 4));
+    return (bars * metrics.beatsPerBar * metrics.beatDurationMs) / 1_000;
   }
   if (settings.durationSeconds === 'endless') return null;
   return roundSessionDurationToBar(settings.durationSeconds, settings.bpm, settings.timeSignature);

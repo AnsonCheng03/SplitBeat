@@ -9,7 +9,7 @@ export const APP_TUTORIAL_STEPS = [
   },
   {
     title: 'Set your pace and start',
-    description: 'Settings has tempo and session length. Tap the main button to start; some modes open one more setup step first.',
+    description: 'Settings lets you choose a tempo and end practice by time or bars. Tap the main button to start; some modes open one more setup step first.',
   },
   {
     title: 'Play, pause, and review',

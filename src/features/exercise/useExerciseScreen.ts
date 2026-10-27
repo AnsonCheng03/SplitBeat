@@ -14,21 +14,14 @@ import {
   practicePairFromSelections,
 } from '@/rhythm/targetedPractice';
 import type { CombinationFilter, CombinationProgress, SavedPracticePair } from '@/rhythm/targetedPractice';
-import type { ExerciseTab, ExerciseDurationOption, PatternSelection } from '@/features/exercise/exerciseTypes';
+import type { ExerciseTab, PatternSelection } from '@/features/exercise/exerciseTypes';
 import { createImportedScoreEntry, rememberImportedScore, setImportedScoreSaved } from '@/rhythm/importedScoreLibrary';
 import type { ImportedScoreLibraryEntry } from '@/rhythm/importedScoreLibrary';
 import { loadImportedScoreLibrary, saveImportedScoreLibrary } from '@/store/importedScoreLibrary';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
-import type { DurationOption, Hand } from '@/types/rhythm';
+import type { DurationOption, Hand, SessionEndBarCount, SessionEndMode } from '@/types/rhythm';
 import { keepModeLoadingVisible, waitForModeLoadingFrame } from '@/features/modeLoadingFeedback';
-
-const practiceDurations: ExerciseDurationOption[] = [
-  { label: '30 sec', value: 30 },
-  { label: '60 sec', value: 60 },
-  { label: '2 min', value: 120 },
-  { label: 'Endless', value: 'endless' },
-];
 
 export function useExerciseScreen() {
   const { colors } = useTheme();
@@ -62,6 +55,10 @@ export function useExerciseScreen() {
   const [savedCompositions, setSavedCompositions] = useState<ImportedScoreLibraryEntry[]>([]);
   const [savingComposition, setSavingComposition] = useState(false);
   const [practiceDuration, setPracticeDuration] = useState<DurationOption>('endless');
+  const [practiceEndModeOverride, setPracticeEndModeOverride] = useState<SessionEndMode | null>(null);
+  const [practiceEndBarsOverride, setPracticeEndBarsOverride] = useState<SessionEndBarCount | null>(null);
+  const practiceEndMode = practiceEndModeOverride ?? settings.sessionEndMode ?? 'time';
+  const practiceEndBars = practiceEndBarsOverride ?? settings.sessionEndBars ?? 4;
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
@@ -138,6 +135,8 @@ export function useExerciseScreen() {
       timeSignature: progress.timeSignature,
       trainingMode: 'two-hand',
       durationSeconds: practiceDuration,
+      sessionEndMode: practiceEndMode,
+      sessionEndBars: practiceEndBars,
       handRestsEnabled: false,
     },
     patternPairs: [practicePairFromProgress(progress)],
@@ -154,6 +153,8 @@ export function useExerciseScreen() {
         timeSignature: saved.timeSignature,
         trainingMode: 'two-hand',
         durationSeconds: practiceDuration,
+        sessionEndMode: practiceEndMode,
+        sessionEndBars: practiceEndBars,
         handRestsEnabled: pair.leftRest === true || pair.rightRest === true,
       },
       patternPairs: [pair],
@@ -171,6 +172,8 @@ export function useExerciseScreen() {
       settings: {
         trainingMode: 'two-hand',
         durationSeconds: practiceDuration,
+        sessionEndMode: practiceEndMode,
+        sessionEndBars: practiceEndBars,
         handRestsEnabled: false,
       },
       patternPairs: [pair],
@@ -261,6 +264,8 @@ export function useExerciseScreen() {
     savedCompositions,
     savingComposition,
     practiceDuration,
+    practiceEndMode,
+    practiceEndBars,
     starting,
     visibleProgress,
     mixtureExamples,
@@ -268,12 +273,13 @@ export function useExerciseScreen() {
     composedScore,
     barLengthQuarterNotes: barDurationQuarterNotes(settings.timeSignature),
     compositionAlreadySaved,
-    practiceDurations,
     onHome: () => router.replace('/'),
     onFilterChange: setFilter,
     onQueryChange: setQuery,
     onTabChange: selectTab,
     onDurationChange: setPracticeDuration,
+    onSessionEndModeChange: setPracticeEndModeOverride,
+    onSessionEndBarsChange: setPracticeEndBarsOverride,
     onLeftSelectionChange: setLeftSelection,
     onRightSelectionChange: setRightSelection,
     onPracticeProgress: practiceProgress,
