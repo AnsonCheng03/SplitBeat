@@ -47,7 +47,19 @@ export function useSessionHistory(enabled: boolean) {
     });
   }, [enabled]);
 
-  return { records, loaded, recordSession };
+  const toggleSessionFavorite = useCallback((sessionId: string) => {
+    setRecords((current) => {
+      if (!current.some((record) => record.id === sessionId)) return current;
+      const next = current.map((record) => record.id === sessionId
+        ? { ...record, starred: !record.starred }
+        : record,
+      );
+      void AsyncStorage.setItem(SESSION_HISTORY_KEY, JSON.stringify(next)).catch(() => undefined);
+      return next;
+    });
+  }, []);
+
+  return { records, loaded, recordSession, toggleSessionFavorite };
 }
 
 export function useCombinationProgress(enabled: boolean) {

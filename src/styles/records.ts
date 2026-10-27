@@ -7,11 +7,11 @@ export function recordsStyle2(): import('react-native').ViewStyle {
 }
 
 export function recordsStyle3(): import('react-native').ViewStyle {
-  return { flex: 1 };
+  return { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6 };
 }
 
 export function recordsStyle4({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
-  return { color: colors.text, fontSize: 14, fontWeight: '800' };
+  return { flex: 1, minWidth: 0, color: colors.text, fontSize: 14, fontWeight: '800' };
 }
 
 export function recordsStyle5({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -208,4 +208,76 @@ export function recordsStyle38({ colors }: { colors: import('@/theme').ThemeColo
 
 export function recordsStyle39({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
   return { width: 1, marginVertical: 10, backgroundColor: colors.line };
+}
+
+export function recordsStyle40(): import('react-native').ViewStyle {
+  return { flexDirection: 'row', alignSelf: 'stretch' };
+}
+
+export function recordsStyle41({ colors, tone, active, pressed }: { colors: import('@/theme').ThemeColors; tone: 'favorite' | 'share' | 'replay'; active: boolean; pressed: boolean }): import('react-native').ViewStyle {
+  const backgroundColor = tone === 'replay'
+    ? colors.left
+    : tone === 'favorite' && active
+      ? colors.accent
+      : colors.surfaceRaised;
+  return { width: 62, alignItems: 'center', justifyContent: 'center', backgroundColor, opacity: pressed ? 0.72 : 1 };
+}
+
+export function recordsStyle42({ colors, tone, active }: { colors: import('@/theme').ThemeColors; tone: 'favorite' | 'share' | 'replay'; active: boolean }): import('react-native').TextStyle {
+  const color = tone === 'replay'
+    ? colors.background
+    : tone === 'favorite' && active
+      ? colors.background
+      : tone === 'favorite'
+        ? colors.accent
+        : colors.text;
+  return { color, fontSize: 25, fontWeight: '900' };
+}
+
+export function recordsStyle44(): import('react-native').ViewStyle {
+  return { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 18, backgroundColor: 'rgba(0, 0, 0, 0.62)' };
+}
+
+export function recordsStyle45({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { width: '100%', maxWidth: 760, maxHeight: '92%', padding: 20, borderRadius: 20, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.background };
+}
+
+export function recordsStyle46(): import('react-native').ViewStyle {
+  return { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 };
+}
+
+export function recordsStyle47(): import('react-native').ViewStyle {
+  return { flex: 1, minWidth: 0 };
+}
+
+export function recordsStyle48({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.text, fontSize: 16, fontWeight: '900' };
+}
+
+export function recordsStyle49({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.muted, fontSize: 11, marginTop: 5 };
+}
+
+export function recordsStyle50({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: colors.surfaceRaised };
+}
+
+export function recordsStyle51({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.text, fontSize: 25, fontWeight: '800', lineHeight: 30 };
+}
+
+export function recordsStyle52({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { minHeight: 46, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 10, marginTop: 14, paddingHorizontal: 14, borderRadius: 12, backgroundColor: colors.surfaceRaised };
+}
+
+export function recordsStyle53({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.accent, fontSize: 14, fontWeight: '900' };
+}
+
+export function recordsStyle54(): import('react-native').ViewStyle {
+  return { flex: 1, minWidth: 0 };
+}
+
+export function recordsStyle55({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.muted, fontSize: 10, marginTop: -5, marginBottom: 9 };
 }

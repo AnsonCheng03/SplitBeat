@@ -148,6 +148,7 @@ export interface SessionContextValue {
   results: SessionResults | null;
   sessionHistory: SessionRecord[];
   sessionHistoryLoaded: boolean;
+  toggleSessionFavorite: (sessionId: string) => void;
   combinationProgress: CombinationProgress[];
   combinationProgressLoaded: boolean;
   savedPracticePairs: SavedPracticePair[];
@@ -383,7 +384,12 @@ export function useSessionController(): SessionContextValue {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [snapshot, setSnapshot] = useState<SessionSnapshot | null>(null);
   const [results, setResults] = useState<SessionResults | null>(null);
-  const { records: sessionHistory, loaded: sessionHistoryLoaded, recordSession } = useSessionHistory(featureFlags.sessionRecords);
+  const {
+    records: sessionHistory,
+    loaded: sessionHistoryLoaded,
+    recordSession,
+    toggleSessionFavorite,
+  } = useSessionHistory(featureFlags.sessionRecords);
   const { progress: combinationProgress, loaded: combinationProgressLoaded, recordSessionResults } = useCombinationProgress(featureFlags.focusPractice);
   const {
     pairs: savedPracticePairs,
@@ -834,8 +840,8 @@ export function useSessionController(): SessionContextValue {
   );
 
   const value = useMemo(
-    () => ({ settings, featureFlags, sessionSettings, updateSettings, resetSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, savedPracticePairs, savedPracticePairsLoaded, savePairsForLater, removeSavedPracticePair, discardReplayData }),
-    [settings, featureFlags, sessionSettings, updateSettings, resetSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, combinationProgress, combinationProgressLoaded, savedPracticePairs, savedPracticePairsLoaded, savePairsForLater, removeSavedPracticePair, discardReplayData],
+    () => ({ settings, featureFlags, sessionSettings, updateSettings, resetSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, toggleSessionFavorite, combinationProgress, combinationProgressLoaded, savedPracticePairs, savedPracticePairsLoaded, savePairsForLater, removeSavedPracticePair, discardReplayData }),
+    [settings, featureFlags, sessionSettings, updateSettings, resetSettings, audioStatus, prepareAudio, prepareExercise, prepareRepeatExercise, startPreparedExercise, stopExercise, pauseExercise, resumeExercise, restartPausedExercise, restartExerciseWithFeel, registerTap, snapshot, exercisePrepared, results, sessionHistory, sessionHistoryLoaded, toggleSessionFavorite, combinationProgress, combinationProgressLoaded, savedPracticePairs, savedPracticePairsLoaded, savePairsForLater, removeSavedPracticePair, discardReplayData],
   );
 
   return value;

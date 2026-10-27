@@ -24,7 +24,7 @@ export function useResultsReplay({
   rightHandSound,
   discardReplayData,
 }: {
-  results: SessionResults | null;
+  results: Pick<SessionResults, 'bpm'> | null;
   replaySoundEnabled: boolean;
   metronomeSound: ExerciseSettings['metronomeSound'];
   leftHandSound: ExerciseSettings['leftHandSound'];

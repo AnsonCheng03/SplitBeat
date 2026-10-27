@@ -268,7 +268,7 @@ export interface SessionResults {
   combinations: CombinationStats[];
   durationSeconds: number;
   missedEvents: MissedEvent[];
-  /** In-memory replay data; deliberately omitted from saved session history. */
+  /** In-memory replay data; session history stores a compact copy for replay. */
   replayExpectedEvents?: ReplayExpectedEvent[];
   replayTaps?: ReplayTap[];
   /** Settings captured when the exercise began, for diagnostics and replay context. */

@@ -38,6 +38,10 @@ export function rootNavigatorScreenOptions(colors: import('@/theme').ThemeColors
   };
 }
 
+export function gestureHandlerRootStyle(): import('react-native').ViewStyle {
+  return { flex: 1 };
+}
+
 export function FullBleedSafeAreaStyle1({ backgroundColor }: { backgroundColor: string }): import('react-native').ViewStyle {
   return { flex: 1, backgroundColor };
 }
