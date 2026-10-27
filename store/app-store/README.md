@@ -23,6 +23,8 @@ Upload each folder to its matching localization and device-size group in App Sto
 
 ## Listing details
 
-The app is configured as version 1.0.0, supports iPhone and iPad, is landscape-only, and uses bundle ID `com.splitbeat.twohandrhythm`. The current iOS build number in `app.json` is 15. The app icon is already present; screenshots are provided for both supported display classes and English/Traditional Chinese.
+The app is configured as version 1.0.0, supports iPhone and iPad, and uses bundle ID `com.splitbeat.twohandrhythm`. iOS allows portrait and landscape; the supplied screenshots use landscape because that is the primary practice layout. The current iOS build number in `app.json` is 15. The app icon is already present; screenshots are provided for both supported display classes and English/Traditional Chinese.
+
+The TestFlight workflow runs a read-only App Store Connect audit before archiving. Its job summary reports whether the app record, full-course in-app purchase, purchase localizations/price schedule/review screenshot, Game Center app setup, and expected challenge leaderboard are present. The audit does not change App Store Connect data. It cannot confirm the Developer Portal iCloud container or a real sandbox purchase; verify those with the device checks below and the Game Center setup guide.
 
 Apple requirements change over time. Check the App Store Connect form for the current per-locale character limits and screenshot groups before upload.

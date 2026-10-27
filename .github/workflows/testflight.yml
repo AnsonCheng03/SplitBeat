@@ -34,6 +34,13 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      - name: Audit App Store Connect setup
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+        run: node scripts/audit-app-store-connect.mjs
+
       - name: Archive and upload to TestFlight
         env:
           ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}

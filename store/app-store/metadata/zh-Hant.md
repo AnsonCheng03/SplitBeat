@@ -46,7 +46,7 @@ Beep Beep Beat 是橫向節奏訓練 App，適合單手或雙手練習。跟隨�
 
 ## App 審核備註（草稿）
 
-App 使用橫向畫面。從首頁點選「開始練習」即可開始，或使用活動選單開啟樂譜練習、重點練習或節奏課程。MIDI 及 MusicXML 匯入支援一至兩個聲部。
+App 主要為橫向畫面設計，但 iOS 亦允許直向使用。從首頁點選「開始練習」即可開始，或使用活動選單開啟樂譜練習、重點練習或節奏課程。MIDI 及 MusicXML 匯入支援一至兩個聲部。
 
 節奏課程使用非消耗型商品 `com.splitbeat.learncourse.unlock`。請先在 App Store Connect 建立並開放此商品，App 才會顯示購買選項。如需審核挑戰排行榜，請啟用 Game Center 並設定排行榜 `com.splitbeat.twohandrhythm.longest_correct_streak`。
 
