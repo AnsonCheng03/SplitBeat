@@ -22,6 +22,12 @@ appId: com.splitbeat.twohandrhythm
     timeout: 15000
 - extendedWaitUntil:
     visible:
+      id: tutorial.overlay
+    timeout: 15000
+- tapOn:
+    id: tutorial.skip
+- extendedWaitUntil:
+    visible:
       id: home.audioStatus
     timeout: 15000
 - tapOn:

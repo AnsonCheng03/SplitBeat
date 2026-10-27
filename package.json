@@ -12,6 +12,7 @@
     "test": "node --import tsx --test src/rhythm/*.test.ts src/audio/*.test.ts src/features/*.test.ts src/i18n/*.test.ts scripts/*.test.mjs",
     "lint": "eslint .",
     "e2e:ios": "EXPO_PUBLIC_E2E_SILENT=1 expo run:ios --configuration Release",
+    "e2e:tutorial": "E2E_MAESTRO_FLOW=tutorial-onboarding.yaml node scripts/e2e/run-maestro.mjs",
     "e2e:android": "EXPO_PUBLIC_E2E_SILENT=1 expo run:android --variant release",
     "ios:archive": "SPLITBEAT_ARCHIVE_ONLY=1 bash scripts/release-testflight.sh",
     "release:testflight": "bash scripts/release-testflight.sh",

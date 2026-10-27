@@ -2,6 +2,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import { useI18n } from '@/i18n/I18nProvider';
+import { useAppTutorial } from '@/store/AppTutorialProvider';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { HomeActivity, HomeActivityOption } from '@/features/home/homeActivity';
@@ -9,7 +10,8 @@ import type { HomeActivity, HomeActivityOption } from '@/features/home/homeActiv
 export function useHomeScreen() {
   const { colors } = useTheme();
   const { settings, featureFlags, updateSettings, audioStatus, prepareAudio, prepareExercise } = useRhythmSession();
-  const { t } = useI18n();
+  const { t, languageLoaded } = useI18n();
+  const { tutorialLoaded, showTutorialForFirstLaunch } = useAppTutorial();
   const router = useRouter();
   const [starting, setStarting] = useState(false);
   const [openingActivity, setOpeningActivity] = useState<HomeActivity | null>(null);
@@ -61,6 +63,10 @@ export function useHomeScreen() {
     setOpeningActivity(null);
     openingActivityRef.current = false;
   }, []));
+
+  useFocusEffect(useCallback(() => {
+    if (tutorialLoaded && languageLoaded) showTutorialForFirstLaunch();
+  }, [languageLoaded, showTutorialForFirstLaunch, tutorialLoaded]));
 
   const startFreePractice = useCallback(async () => {
     if (starting || audioStatus === 'loading') return;

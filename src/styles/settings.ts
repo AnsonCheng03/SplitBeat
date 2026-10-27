@@ -567,3 +567,31 @@ export function resetAllSettingsStyle4({ colors, pressed }: { colors: import('@/
 export function resetAllSettingsStyle5({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
   return { color: colors.danger, fontSize: 12, fontWeight: '900', letterSpacing: 0.5, textAlign: 'center' };
 }
+
+export function tutorialReplayStyle1({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { maxWidth: 680, marginTop: 24, padding: 16, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line };
+}
+
+export function tutorialReplayStyle2(): import('react-native').ViewStyle {
+  return { flexDirection: 'row', alignItems: 'center', gap: 9 };
+}
+
+export function tutorialReplayStyle3({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent };
+}
+
+export function tutorialReplayStyle4({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 };
+}
+
+export function tutorialReplayStyle5({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 6 };
+}
+
+export function tutorialReplayStyle6({ colors, pressed }: { colors: import('@/theme').ThemeColors; pressed: boolean }): import('react-native').ViewStyle {
+  return { minHeight: 48, minWidth: 190, alignSelf: 'flex-start', alignItems: 'center', justifyContent: 'center', marginTop: 12, paddingHorizontal: 15, borderRadius: 12, backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderWidth: 1, borderColor: colors.line };
+}
+
+export function tutorialReplayStyle7({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.accent, fontSize: 12, fontWeight: '900', letterSpacing: 0.5 };
+}

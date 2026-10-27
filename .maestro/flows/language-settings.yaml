@@ -6,6 +6,12 @@ appId: com.splitbeat.twohandrhythm
 - waitForAnimationToEnd
 - assertVisible:
     id: home.screen
+- extendedWaitUntil:
+    visible:
+      id: tutorial.overlay
+    timeout: 15000
+- tapOn:
+    id: tutorial.skip
 - tapOn:
     id: home.setup
 - assertVisible:
