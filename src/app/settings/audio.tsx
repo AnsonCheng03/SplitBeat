@@ -1,6 +1,8 @@
 import { View } from 'react-native';
+import { useIsFocused } from 'expo-router';
 import { Text } from '@/i18n/LocalizedText';
 import { SOUND_OPTIONS } from '@/audio/soundPresets';
+import { AutoPlayRhythmSetting } from '@/components/AutoPlayRhythmSetting';
 import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsPage } from '@/components/SettingsPage';
 import { SettingsToggleRow } from '@/components/SettingsToggleRow';
@@ -10,18 +12,18 @@ import type { SoundPreset } from '@/types/rhythm';
 import {
   audioStyle1,
   audioStyle2,
-  audioStyle3,
   audioStyle4,
   audioStyle5,
   audioStyle6,
   audioStyle7,
   audioStyle8,
-  audioStyle9
+  audioStyle9,
 } from '@/styles/settings';
 
 export default function AudioSettingsScreen() {
   const { colors } = useTheme();
   const { settings, featureFlags, updateSettings } = useRhythmSession();
+  const isFocused = useIsFocused();
 
   return (
     <SettingsPage
@@ -62,18 +64,15 @@ export default function AudioSettingsScreen() {
           value={settings.tapResultFlashEnabled}
           onChange={(tapResultFlashEnabled) => updateSettings({ tapResultFlashEnabled })}
         /> : null}
-        {featureFlags.shownRhythmPlayback ? <SettingsToggleRow
+        {featureFlags.shownRhythmPlayback ? <AutoPlayRhythmSetting
+          active={isFocused}
           testID="setup.toggle.referenceRhythm"
-          label="Play the shown rhythm"
           value={settings.referenceRhythmEnabled}
           onChange={(referenceRhythmEnabled) => updateSettings({ referenceRhythmEnabled })}
         /> : null}
       </View>
       {featureFlags.tapFeedback ? <Text style={audioStyle2({ colors })}>
         Correct taps flash teal; off-beat taps flash red. Turn this off for less visual feedback.
-      </Text> : null}
-      {featureFlags.shownRhythmPlayback ? <Text style={audioStyle3({ colors })}>
-            The shown left and right patterns play automatically using each hand’s selected sound. Keep this off to practice from the visual rhythm alone.
       </Text> : null}
       {featureFlags.backgroundMusic || featureFlags.sessionCues ? <Text style={audioStyle4({ colors })}>
         The accompaniment is synthesized on your device and follows your tempo and meter. A short pickup leads into beat one; change cues mark pattern boundaries. Sound effects must be on to hear either option.

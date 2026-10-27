@@ -4,6 +4,7 @@ import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SOUND_OPTIONS } from '@/audio/soundPresets';
+import { AutoPlayRhythmSetting } from '@/components/AutoPlayRhythmSetting';
 import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsToggleRow } from '@/components/SettingsToggleRow';
 import { PracticeOverlayBackdrop } from '@/components/PracticeOverlayBackdrop';
@@ -135,9 +136,9 @@ export function LivePracticeSettings({
                 />
               ) : null}
               {featureFlags.shownRhythmPlayback ? (
-                <SettingsToggleRow
+                <AutoPlayRhythmSetting
                   testID="practice.liveSettings.referenceRhythm"
-                  label="Play the shown rhythm"
+                  active
                   value={settings.referenceRhythmEnabled}
                   onChange={(referenceRhythmEnabled) => onSettingsChange({ referenceRhythmEnabled })}
                 />
