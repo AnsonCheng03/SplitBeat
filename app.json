@@ -10,7 +10,7 @@
       "android"
     ],
     "scheme": "twohandrhythm",
-    "orientation": "default",
+    "orientation": "landscape",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "plugins": [

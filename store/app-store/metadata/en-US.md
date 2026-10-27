@@ -46,7 +46,7 @@ Explore one-hand and two-hand rhythm practice, score notation, custom score impo
 
 ## App Review notes (draft)
 
-The app is primarily designed for landscape orientation, though iOS also allows portrait. From the home screen, tap **Start Practice** to begin, or use the activity selector to open score practice, focus practice, or the guided course. MIDI and MusicXML import accepts scores with one or two parts.
+The app uses landscape orientation only. From the home screen, tap **Start Practice** to begin, or use the activity selector to open score practice, focus practice, or the guided course. MIDI and MusicXML import accepts scores with one or two parts.
 
 The Learn course uses the non-consumable product `com.splitbeat.learncourse.unlock`. The product must be created and made available in App Store Connect before the purchase offer appears in the app. Enable Game Center and configure leaderboard `com.splitbeat.twohandrhythm.longest_correct_streak` if reviewing the challenge leaderboard.
 
