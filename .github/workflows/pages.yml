@@ -1,0 +1,51 @@
+name: Publish App Store pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'scripts/build-app-store-site.mjs'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      publish_ready: ${{ steps.build-site.outputs.publish_ready }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Prepare public pages
+        id: build-site
+        run: node scripts/build-app-store-site.mjs
+      - name: Upload site artifact
+        if: steps.build-site.outputs.publish_ready == 'true'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site-dist
+
+  deploy:
+    if: needs.build.outputs.publish_ready == 'true'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
