@@ -356,14 +356,15 @@ export class RhythmTimingEngine {
     }
 
     const activeTapTime = this.toActiveTime(actualTapTime);
-    if (activeTapTime < this.sessionStartTime) return { feedback: 'ignored' };
     if (this.endTime !== null && activeTapTime >= this.endTime) return { feedback: 'ignored' };
-
-    const replayTap = this.recordReplayTap(hand, activeTapTime, inputSource);
-
     const tapOffsetMs =
       hand === 'left' ? this.settings.leftTapOffsetMs : this.settings.rightTapOffsetMs;
     const calibratedTapTime = activeTapTime - tapOffsetMs;
+    if (calibratedTapTime + this.timingWindows.goodMs < this.sessionStartTime) {
+      return { feedback: 'ignored' };
+    }
+
+    const replayTap = this.recordReplayTap(hand, activeTapTime, inputSource);
     replayTap.scoringTimestampMs = calibratedTapTime - this.sessionStartTime;
     if (!this.importedScore) {
       const activeBeatIndex = Math.max(
