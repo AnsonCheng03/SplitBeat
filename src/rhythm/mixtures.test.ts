@@ -46,6 +46,7 @@ const baseSettings: ExerciseSettings = {
   challengeWrongBarStreak: 2,
   leftTapOffsetMs: 0,
   rightTapOffsetMs: 0,
+  autoCalibrationEnabled: true,
   goodWindowMs: 100,
   hapticsEnabled: false,
 };

@@ -70,18 +70,6 @@ export function setupStyle5({ colors }: { colors: import('@/theme').ThemeColors 
   return { color: colors.muted, fontWeight: '800', fontSize: 11, letterSpacing: 1.1 };
 }
 
-export function setupStyle6(): import('react-native').ViewStyle {
-  return { flexDirection: 'row', alignItems: 'baseline', gap: 5 };
-}
-
-export function setupStyle7({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
-  return { color: colors.text, fontSize: 36, fontWeight: '900', fontVariant: ['tabular-nums'] };
-}
-
-export function setupStyle8({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
-  return { color: colors.muted, fontSize: 12, fontWeight: '800' };
-}
-
 export function setupStyle9(): import('react-native').ViewStyle {
   return { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 16 };
 }

@@ -2,13 +2,14 @@ import Slider from '@react-native-community/slider';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
+import { TapTempoCounter } from '@/components/TapTempoCounter';
+import { useTapTempo } from '@/features/tempo/useTapTempo';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { SessionSnapshot } from '@/types/rhythm';
 import {
   PracticePauseOverlaysStyle40,
   PracticePauseOverlaysStyle41,
   PracticePauseOverlaysStyle42,
-  PracticePauseOverlaysStyle43,
   PracticePauseOverlaysStyle44,
   PracticePauseOverlaysStyle45,
   PracticePauseOverlaysStyle46,
@@ -19,6 +20,7 @@ import {
   PracticePauseOverlaysStyle51,
   PracticePauseOverlaysStyle52,
 } from '@/styles/practice';
+import { tapTempoHintStyle } from '@/styles/tempo';
 
 export function PracticeTempoControl({
   snapshot,
@@ -37,12 +39,18 @@ export function PracticeTempoControl({
 }) {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const onTempoTap = useTapTempo(onBpmChange);
 
   return (
     <View style={PracticePauseOverlaysStyle40({ compact })}>
       <View style={PracticePauseOverlaysStyle41()}>
         <Text style={PracticePauseOverlaysStyle42({ colors, compact })}>{t('TEMPO')}</Text>
-        <Text style={PracticePauseOverlaysStyle43({ colors, compact })}>{bpm} BPM</Text>
+        <TapTempoCounter
+          bpm={bpm}
+          onTap={onTempoTap}
+          testID="practice.pause.bpmTap"
+          compact
+        />
       </View>
       <View style={PracticePauseOverlaysStyle44({ compact })}>
         <Pressable
@@ -81,6 +89,9 @@ export function PracticeTempoControl({
       </View>
       <Text style={PracticePauseOverlaysStyle50({ colors, compact })}>
         {t('Applying a tempo starts play over, or restarts a score from this bar.')}
+      </Text>
+      <Text style={tapTempoHintStyle({ colors, compact })}>
+        {t('Tap the BPM number in time with the beat to set tempo. The last five seconds are averaged.')}
       </Text>
       {bpm !== snapshot.bpm ? (
         <Pressable

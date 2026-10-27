@@ -35,6 +35,7 @@ export default function ResultsScreen() {
     showBreakdown,
     countAsFeel,
     feedback,
+    timingCalibrationSuggested,
     onCountAsFeel,
     toggleMissedNotes,
     toggleBreakdown,
@@ -45,6 +46,7 @@ export default function ResultsScreen() {
     openSessionRecords,
     returnHome,
     openSetup,
+    openTimingCalibration,
   } = useResultsScreen();
 
   if (!results || !viewResults) {
@@ -71,6 +73,8 @@ export default function ResultsScreen() {
           countAsFeel={countAsFeel}
           onCountAsFeel={onCountAsFeel}
           gameCenterEnabled={featureFlags.gameCenter}
+          timingCalibrationSuggested={timingCalibrationSuggested}
+          onCalibrateTiming={openTimingCalibration}
         />
 
         {featureFlags.missedNoteReplay && replayErrorBars.length > 0 ? (

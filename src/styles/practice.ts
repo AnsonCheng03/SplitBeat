@@ -283,10 +283,6 @@ export function PracticePauseOverlaysStyle42({ colors, compact }: { colors: impo
   return { color: colors.muted, fontSize: compact ? 9 : 10, fontWeight: '900', letterSpacing: 1.2 };
 }
 
-export function PracticePauseOverlaysStyle43({ colors, compact }: { colors: import('@/theme').ThemeColors; compact: boolean }): import('react-native').TextStyle {
-  return { color: colors.text, fontSize: compact ? 15 : 18, fontWeight: '900', fontVariant: ['tabular-nums'] };
-}
-
 export function PracticePauseOverlaysStyle44({ compact }: { compact: boolean }): import('react-native').ViewStyle {
   return { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: compact ? 2 : 5 };
 }

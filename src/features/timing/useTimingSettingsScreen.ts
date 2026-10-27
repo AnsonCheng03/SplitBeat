@@ -26,6 +26,7 @@ export function useTimingSettingsScreen() {
   const updateLeftOffset = (leftTapOffsetMs: number) => updateSettings({ leftTapOffsetMs });
   const updateRightOffset = (rightTapOffsetMs: number) => updateSettings({ rightTapOffsetMs });
   const updateGoodWindow = (goodWindowMs: number) => updateSettings({ goodWindowMs });
+  const updateAutoCalibration = (autoCalibrationEnabled: boolean) => updateSettings({ autoCalibrationEnabled });
 
   return {
     colors,
@@ -35,6 +36,7 @@ export function useTimingSettingsScreen() {
     updateLeftOffset,
     updateRightOffset,
     updateGoodWindow,
+    updateAutoCalibration,
     leftOffsetTitle: `LEFT TAP OFFSET · ${signedMilliseconds(settings.leftTapOffsetMs)}`,
     rightOffsetTitle: `RIGHT TAP OFFSET · ${signedMilliseconds(settings.rightTapOffsetMs)}`,
     goodWindowTitle: `ACCEPTABLE TIMING RANGE · ±${settings.goodWindowMs} MS`,

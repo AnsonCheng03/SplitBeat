@@ -2,6 +2,7 @@ import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { GameCenterChallengeCard } from '@/components/GameCenterChallengeCard';
+import { ResultsCalibrationPrompt } from '@/features/results/ResultsCalibrationPrompt';
 import { accuracyPercent } from '@/rhythm/scoring';
 import { starsForAccuracy } from '@/rhythm/learnRating';
 import { sessionAccuracy, percent, timingText } from '@/features/results/resultPresentation';
@@ -48,6 +49,8 @@ export function ResultsOverview({
   countAsFeel,
   onCountAsFeel,
   gameCenterEnabled,
+  timingCalibrationSuggested,
+  onCalibrateTiming,
 }: {
   results: SessionResults;
   courseLesson?: LearnLesson;
@@ -58,6 +61,8 @@ export function ResultsOverview({
   countAsFeel: RhythmicFeel;
   onCountAsFeel: (feel: RhythmicFeel) => void;
   gameCenterEnabled: boolean;
+  timingCalibrationSuggested: boolean;
+  onCalibrateTiming: () => void;
 }) {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -154,6 +159,8 @@ export function ResultsOverview({
             <ScorePanel label="DURING SWITCHES" value={viewResults.transition.totalExpected ? percent(accuracyPercent(viewResults.transition)) : '—'} detail="First 2 beats after change" />
           </View>
         )}
+
+        {timingCalibrationSuggested ? <ResultsCalibrationPrompt onPress={onCalibrateTiming} /> : null}
 
         {gameCenterEnabled && viewResults.challengeMode && !courseLesson ? (
           <GameCenterChallengeCard

@@ -3,6 +3,8 @@ import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { SettingsPage } from '@/components/SettingsPage';
 import { TimingCalibration } from '@/components/TimingCalibration';
+import { SettingsSection } from '@/components/SettingsSection';
+import { SettingsToggleRow } from '@/components/SettingsToggleRow';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useTimingSettingsScreen } from '@/features/timing/useTimingSettingsScreen';
 import {
@@ -27,6 +29,7 @@ export default function TimingSettingsScreen() {
     updateLeftOffset,
     updateRightOffset,
     updateGoodWindow,
+    updateAutoCalibration,
     leftOffsetTitle,
     rightOffsetTitle,
     goodWindowTitle,
@@ -59,6 +62,16 @@ export default function TimingSettingsScreen() {
         onCalibrate={updateSettings}
         />
       </View>
+
+      <SettingsSection title="TIMING SCORING">
+        <SettingsToggleRow
+          testID="settings.timing.autoCalibration"
+          label="AUTO-CALIBRATED SCORING"
+          description="Apply your saved left and right timing offsets to tap marks. Your offsets remain saved when this is off."
+          value={settings.autoCalibrationEnabled}
+          onChange={updateAutoCalibration}
+        />
+      </SettingsSection>
 
       <Pressable
         testID="setup.calibration.reset"

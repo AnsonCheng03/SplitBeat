@@ -6,6 +6,7 @@ import { SettingsChoiceRow } from '@/components/SettingsChoiceRow';
 import { SettingsPage } from '@/components/SettingsPage';
 import { ResetAllSettingsButton } from '@/components/ResetAllSettingsButton';
 import { TutorialReplayCard } from '@/components/TutorialReplayCard';
+import { TapTempoCounter } from '@/components/TapTempoCounter';
 import { useSetupScreen } from '@/features/setup/useSetupScreen';
 import {
   setupStyle1,
@@ -13,9 +14,6 @@ import {
   setupStyle3,
   setupStyle4,
   setupStyle5,
-  setupStyle6,
-  setupStyle7,
-  setupStyle8,
   setupStyle9,
   setupStyle10,
   setupStyle11,
@@ -28,6 +26,7 @@ import {
   setupStyle18,
   setupStyle19,
 } from '@/styles/exercise';
+import { tapTempoHintStyle } from '@/styles/tempo';
 
 export default function SetupScreen() {
   const {
@@ -41,6 +40,7 @@ export default function SetupScreen() {
     onDecreaseTempo,
     onIncreaseTempo,
     onTempoChange,
+    onTempoTap,
     onDurationChange,
     startAccessibilityLabel,
     startTitle,
@@ -73,11 +73,11 @@ export default function SetupScreen() {
         <View style={setupStyle3({ colors })}>
           <View style={setupStyle4()}>
             <Text style={setupStyle5({ colors })}>TEMPO</Text>
-            <View style={setupStyle6()}>
-              <Text style={setupStyle7({ colors })}>{settings.bpm}</Text>
-              <Text style={setupStyle8({ colors })}>BPM</Text>
-            </View>
+            <TapTempoCounter bpm={settings.bpm} onTap={onTempoTap} testID="setup.tempo.tap" />
           </View>
+          <Text style={tapTempoHintStyle({ colors, compact: false })}>
+            {t('Tap the BPM number in time with the beat to set tempo. The last five seconds are averaged.')}
+          </Text>
           <View style={setupStyle9()}>
             <Pressable
               testID="setup.tempo.decrease"

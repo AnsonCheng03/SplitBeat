@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { analyzeSessionSwingFeel, recountSessionFeel } from '@/rhythm/swingFeel';
 import { LEARN_COURSE } from '@/rhythm/learnCourse';
-import { buildFeedback, replayErrorBarGroups, weakestCombination } from '@/features/results/resultPresentation';
+import { buildFeedback, replayErrorBarGroups, shouldSuggestTimingCalibration, weakestCombination } from '@/features/results/resultPresentation';
 import { useResultsReplay } from '@/features/results/useResultsReplay';
 import { useResultsDiagnostics } from '@/features/results/useResultsDiagnostics';
 import { useLessonCompletion } from '@/features/results/useLessonCompletion';
@@ -108,6 +108,12 @@ export function useResultsScreen() {
   const feedback = viewResults
     ? buildFeedback(viewResults, weakestCombination(viewResults), t)
     : null;
+  const timingCalibrationSuggested = Boolean(
+    viewResults
+    && featureFlags.timingCalibration
+    && shouldSuggestTimingCalibration(viewResults),
+  );
+  const openTimingCalibration = useCallback(() => router.push('/settings/timing'), [router]);
 
   return {
     colors,
@@ -135,6 +141,7 @@ export function useResultsScreen() {
     showBreakdown,
     countAsFeel,
     feedback,
+    timingCalibrationSuggested,
     onCountAsFeel: setCountAsFeel,
     toggleMissedNotes,
     toggleBreakdown,
@@ -145,5 +152,6 @@ export function useResultsScreen() {
     openSessionRecords,
     returnHome,
     openSetup,
+    openTimingCalibration,
   };
 }

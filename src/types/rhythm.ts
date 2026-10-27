@@ -140,6 +140,8 @@ export interface ExerciseSettings {
   challengeWrongBarStreak: ChallengeWrongBarStreak;
   leftTapOffsetMs: number;
   rightTapOffsetMs: number;
+  /** Apply saved hand offsets when judging taps. */
+  autoCalibrationEnabled: boolean;
   goodWindowMs: number;
   hapticsEnabled: boolean;
 }

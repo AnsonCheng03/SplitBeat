@@ -484,3 +484,19 @@ export function ResultsPerformanceBreakdownStyle20({ colors }: { colors: import(
 export function resultsStyle6(): import('react-native').ViewStyle {
   return { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 32, maxWidth: 720, width: '100%', alignSelf: 'center' };
 }
+
+export function ResultsCalibrationPromptStyle1({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { marginTop: 18, padding: 16, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.accent, gap: 8 };
+}
+
+export function ResultsCalibrationPromptStyle2({ colors, button = false }: { colors: import('@/theme').ThemeColors; button?: boolean }): import('react-native').TextStyle {
+  return { color: button ? colors.background : colors.text, fontSize: button ? 12 : 14, lineHeight: button ? 16 : 19, fontWeight: '900', letterSpacing: button ? 0.6 : 0 };
+}
+
+export function ResultsCalibrationPromptStyle3({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.muted, fontSize: 12, lineHeight: 18 };
+}
+
+export function ResultsCalibrationPromptStyle4({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { minHeight: 44, marginTop: 2, paddingHorizontal: 14, borderRadius: 12, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' };
+}

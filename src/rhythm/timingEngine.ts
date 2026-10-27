@@ -13,7 +13,7 @@ import { accuracyPercent, emptyHandStats, finalizeHandStats } from '@/rhythm/sco
 import { longestCorrectNoteStreak } from '@/rhythm/challenge';
 import { analyzeSwingFeel } from '@/rhythm/swingFeel';
 import { createPracticeScoreMeasure } from '@/rhythm/practiceScore';
-import { alignedPatternChangeIntervalBeats } from '@/rhythm/patternChange';
+import { patternChangeIntervalForMode } from '@/rhythm/patternChange';
 import { expandMixturePattern } from '@/rhythm/mixtures';
 import { barPositionForBeat } from '@/rhythm/barPosition';
 import type { ChallengeOutcome } from '@/rhythm/challenge';
@@ -213,8 +213,8 @@ export class RhythmTimingEngine {
       : [];
     this.timingWindows = timingWindowsForGoodWindow(options.settings.goodWindowMs);
     this.settleWindowMsByHand = {
-      left: this.timingWindows.goodMs + Math.max(0, options.settings.leftTapOffsetMs),
-      right: this.timingWindows.goodMs + Math.max(0, options.settings.rightTapOffsetMs),
+      left: this.timingWindows.goodMs + Math.max(0, this.tapOffsetFor('left')),
+      right: this.timingWindows.goodMs + Math.max(0, this.tapOffsetFor('right')),
     };
     this.sessionSettleWindowMs = Math.max(
       this.settleWindowMsByHand.left,
@@ -225,7 +225,8 @@ export class RhythmTimingEngine {
     this.beatMs = metrics.beatDurationMs;
     this.quarterNoteMs = metrics.quarterNoteDurationMs;
     this.beatsPerBar = metrics.beatsPerBar;
-    this.patternChangeIntervalBeats = alignedPatternChangeIntervalBeats(
+    this.patternChangeIntervalBeats = patternChangeIntervalForMode(
+      options.settings.practiceDisplayMode,
       options.settings.changeIntervalBeats,
       metrics.beatsPerBar,
     );
@@ -249,13 +250,13 @@ export class RhythmTimingEngine {
   }
 
   updateTimingCalibration(
-    patch: Partial<Pick<ExerciseSettings, 'leftTapOffsetMs' | 'rightTapOffsetMs' | 'goodWindowMs'>>,
+    patch: Partial<Pick<ExerciseSettings, 'leftTapOffsetMs' | 'rightTapOffsetMs' | 'autoCalibrationEnabled' | 'goodWindowMs'>>,
   ): void {
     this.settings = { ...this.settings, ...patch };
     this.timingWindows = timingWindowsForGoodWindow(this.settings.goodWindowMs);
     this.settleWindowMsByHand = {
-      left: this.timingWindows.goodMs + Math.max(0, this.settings.leftTapOffsetMs),
-      right: this.timingWindows.goodMs + Math.max(0, this.settings.rightTapOffsetMs),
+      left: this.timingWindows.goodMs + Math.max(0, this.tapOffsetFor('left')),
+      right: this.timingWindows.goodMs + Math.max(0, this.tapOffsetFor('right')),
     };
     this.sessionSettleWindowMs = Math.max(
       this.settleWindowMsByHand.left,
@@ -357,8 +358,7 @@ export class RhythmTimingEngine {
 
     const activeTapTime = this.toActiveTime(actualTapTime);
     if (this.endTime !== null && activeTapTime >= this.endTime) return { feedback: 'ignored' };
-    const tapOffsetMs =
-      hand === 'left' ? this.settings.leftTapOffsetMs : this.settings.rightTapOffsetMs;
+    const tapOffsetMs = this.tapOffsetFor(hand);
     const calibratedTapTime = activeTapTime - tapOffsetMs;
     if (calibratedTapTime + this.timingWindows.goodMs < this.sessionStartTime) {
       return { feedback: 'ignored' };
@@ -947,6 +947,11 @@ export class RhythmTimingEngine {
     };
   }
 
+  private tapOffsetFor(hand: Hand): number {
+    if (!this.settings.autoCalibrationEnabled) return 0;
+    return hand === 'left' ? this.settings.leftTapOffsetMs : this.settings.rightTapOffsetMs;
+  }
+
   private getCombinationStats(step: ExerciseStep): MutableCombinationStats {
     const key = `${step.leftRest ? 'rest' : step.leftMixture ?? step.leftSubdivision}:${step.rightRest ? 'rest' : step.rightMixture ?? step.rightSubdivision}`;
     let combination = this.combinations.get(key);
@@ -1046,7 +1051,9 @@ export class RhythmTimingEngine {
       barSteps,
       nextStep,
       beatsUntilChange:
-        this.patternChangeIntervalBeats - (beatIndex % this.patternChangeIntervalBeats),
+        this.settings.practiceDisplayMode === 'rhythm'
+          ? counterPosition.beatsPerBar - counterPosition.beatInBar
+          : this.patternChangeIntervalBeats - (beatIndex % this.patternChangeIntervalBeats),
       secondsUntilChange: nextStep ? Math.max(0, (nextStepTime - now) / 1_000) : null,
       secondsRemaining: remaining,
       leftAccuracy: accuracyPercent(overallLeft),

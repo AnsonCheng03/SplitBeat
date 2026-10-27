@@ -13,6 +13,24 @@ export function sessionAccuracy(results: SessionResults): number {
   return expected === 0 ? 0 : (hits / expected) * 100;
 }
 
+export function shouldSuggestTimingCalibration(
+  results: Pick<SessionResults, 'trainingMode' | 'singleHand' | 'left' | 'right' | 'replayTaps'>,
+): boolean {
+  const hands = results.trainingMode === 'single-hand'
+    ? [results[results.singleHand]]
+    : [results.left, results.right];
+  const expected = hands.reduce((total, stats) => total + stats.totalExpected, 0);
+  const hits = hands.reduce((total, stats) => total + stats.totalHit, 0);
+  const tapCount = results.replayTaps?.length ?? 0;
+  if (expected < 12 || tapCount < 8) return false;
+
+  const lowAccuracy = hits / expected < 0.5;
+  const consistentTimingBias = hands.some((stats) =>
+    stats.totalHit >= 4 && Math.abs(stats.averageSignedErrorMs) >= 40,
+  );
+  return lowAccuracy || consistentTimingBias;
+}
+
 export function timingText(stats: HandStats): string {
   if (stats.totalHit === 0) return '—';
   const rounded = Math.round(stats.averageSignedErrorMs);

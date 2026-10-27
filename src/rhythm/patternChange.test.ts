@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { alignedPatternChangeIntervalBeats } from './patternChange';
+import { alignedPatternChangeIntervalBeats, patternChangeIntervalForMode } from './patternChange';
 
 test('pattern changes keep bar alignment when the requested interval drifts through the meter', () => {
   assert.equal(alignedPatternChangeIntervalBeats(4, 3), 6);
@@ -19,4 +19,15 @@ test('pattern changes preserve intervals that divide or contain whole bars', () 
 test('invalid pattern intervals are returned unchanged for caller validation', () => {
   assert.equal(alignedPatternChangeIntervalBeats(0, 3), 0);
   assert.equal(alignedPatternChangeIntervalBeats(4, 0), 4);
+});
+
+test('rhythm notation changes once at each measure boundary in every meter', () => {
+  for (const beatsPerBar of [2, 3, 4, 5, 7]) {
+    assert.equal(patternChangeIntervalForMode('rhythm', 4, beatsPerBar), beatsPerBar);
+  }
+});
+
+test('score notation keeps the configured interval aligned to a measure', () => {
+  assert.equal(patternChangeIntervalForMode('score', 4, 3), 6);
+  assert.equal(patternChangeIntervalForMode('score', 2, 4), 2);
 });

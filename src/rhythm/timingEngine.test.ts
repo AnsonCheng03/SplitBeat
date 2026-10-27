@@ -50,6 +50,7 @@ const settings: ExerciseSettings = {
   challengeWrongBarStreak: 2,
   leftTapOffsetMs: 0,
   rightTapOffsetMs: 0,
+  autoCalibrationEnabled: true,
   goodWindowMs: 100,
   hapticsEnabled: false,
 };
@@ -420,6 +421,7 @@ test('rest before a change silences the last beat while the metronome beat stays
   const engine = new RhythmTimingEngine({
     settings: {
       ...settings,
+      practiceDisplayMode: 'score',
       changeIntervalBeats: 2,
       restBetweenChanges: true,
       enabledSubdivisions: ['quarter'],
@@ -470,6 +472,7 @@ test('the timing engine matches a swung offbeat at its warped timestamp', () => 
   const engine = new RhythmTimingEngine({
     settings: {
       ...settings,
+      practiceDisplayMode: 'score',
       feel: 'swing',
       changeIntervalBeats: 2,
     },
@@ -490,6 +493,7 @@ test('grace pickups are generated before a switch and count as transition hits o
   const engine = new RhythmTimingEngine({
     settings: {
       ...settings,
+      practiceDisplayMode: 'score',
       enabledSubdivisions: ['quarter'],
       changeIntervalBeats: 2,
       graceNotesEnabled: true,
@@ -574,7 +578,7 @@ test('simple eighth-note meters keep quarter-note events two pulses apart', () =
   assert.equal(secondNote.leftStats.totalExpected, 2);
 });
 
-test('3/8 pattern changes stay on bar lines when the selected interval is four beats', () => {
+test('3/8 rhythm patterns change on the final written beat of every measure', () => {
   const start = 35_000;
   const engine = new RhythmTimingEngine({
     settings: {
@@ -590,17 +594,17 @@ test('3/8 pattern changes stay on bar lines when the selected interval is four b
 
   const firstBar = engine.advance(start + 100);
   assert.equal(firstBar.beatsPerBar, 3);
-  assert.equal(firstBar.nextStep?.startBeat, 6);
-  assert.equal(firstBar.beatsUntilChange, 6);
+  assert.equal(firstBar.nextStep?.startBeat, 3);
+  assert.equal(firstBar.beatsUntilChange, 3);
 
-  const beforeBarLine = engine.advance(start + 5_999);
+  const beforeBarLine = engine.advance(start + 2_999);
   assert.equal(beforeBarLine.currentStep.startBeat, 0);
   assert.equal(beforeBarLine.beatInBar, 2);
 
-  const atBarLine = engine.advance(start + 6_000);
-  assert.equal(atBarLine.currentStep.startBeat, 6);
+  const atBarLine = engine.advance(start + 3_000);
+  assert.equal(atBarLine.currentStep.startBeat, 3);
   assert.equal(atBarLine.beatInBar, 0);
-  assert.equal(atBarLine.nextStep?.startBeat, 12);
+  assert.equal(atBarLine.nextStep?.startBeat, 6);
 });
 
 test('3/4 bar position and next-pattern countdown remain distinct and accurate', () => {
@@ -616,7 +620,7 @@ test('3/4 bar position and next-pattern countdown remain distinct and accurate',
 
   assert.equal(thirdBeat.beatsPerBar, 3);
   assert.equal(thirdBeat.beatInBar, 2);
-  assert.equal(thirdBeat.beatsUntilChange, 4);
+  assert.equal(thirdBeat.beatsUntilChange, 1);
 });
 
 test('every supported meter reports each beat position and pattern countdown across two bars', () => {
@@ -649,8 +653,8 @@ test('every supported meter reports each beat position and pattern countdown acr
     for (let beatIndex = 0; beatIndex < beatsPerBar * 2; beatIndex += 1) {
       const snapshot = engine.advance(start + (beatIndex * beatDurationMs) + 1);
       const expectedBeatInBar: number = beatIndex % expectedBeatsPerBar;
-      const beatsUntilChange =
-        engine.patternChangeIntervalBeats - (beatIndex % engine.patternChangeIntervalBeats);
+      const writtenBeatsPerBar = Number(timeSignature.split('/')[0]);
+      const beatsUntilChange = writtenBeatsPerBar - snapshot.counterBeatInBar;
 
       assert.equal(snapshot.phase, 'running', `${timeSignature} beat ${beatIndex + 1} should be active`);
       assert.equal(snapshot.beatInBar, expectedBeatInBar, `${timeSignature} beat ${beatIndex + 1} position`);
@@ -691,6 +695,32 @@ test('live beat counter follows the written time-signature numerator in every me
       assert.equal(nextBar.counterBeatInBar, 0, `${timeSignature} bar ${bar + 1} counter resets at the bar line`);
       assert.equal(nextBar.counterBeatsPerBar, writtenBeatsPerBar, `${timeSignature} bar ${bar + 2} counter length`);
     }
+  }
+});
+
+test('rhythm notation changes exactly at every written measure line in all supported meters', () => {
+  const start = 91_000;
+  const bpm = 60;
+
+  for (const timeSignature of TIME_SIGNATURES) {
+    const engine = new RhythmTimingEngine({
+      settings: { ...settings, bpm, timeSignature, durationSeconds: 'endless', changeIntervalBeats: 8 },
+      sessionStartTime: start,
+      random: () => 0,
+    });
+    const { beatsPerBar, beatDurationMs } = timeSignatureMetrics(bpm, timeSignature);
+    const numerator = Number(timeSignature.split('/')[0]);
+    const barDurationMs = beatsPerBar * beatDurationMs;
+
+    const lastWrittenBeat = engine.advance(start + barDurationMs - 1);
+    const nextMeasure = engine.advance(start + barDurationMs + 1);
+
+    assert.equal(lastWrittenBeat.currentStep.startBeat, 0, `${timeSignature} before bar line`);
+    assert.equal(lastWrittenBeat.counterBeatsPerBar, numerator, `${timeSignature} written count`);
+    assert.equal(lastWrittenBeat.beatsUntilChange, 1, `${timeSignature} last beat countdown`);
+    assert.equal(nextMeasure.currentStep.startBeat, beatsPerBar, `${timeSignature} changes at bar line`);
+    assert.equal(nextMeasure.counterBeatInBar, 0, `${timeSignature} counter resets with the pattern`);
+    assert.equal(nextMeasure.beatsUntilChange, numerator, `${timeSignature} starts a fresh written count`);
   }
 });
 
@@ -856,6 +886,26 @@ test('timing calibration can be updated during an active session', () => {
   const snapshot = engine.advance(start + 251);
   assert.equal(snapshot.leftStats.totalHit, 1);
   assert.equal(snapshot.leftStats.averageSignedErrorMs, 90);
+});
+
+test('automatic calibration applies saved offsets to scoring and can be switched off', () => {
+  const start = 13_700;
+  const calibratedEngine = new RhythmTimingEngine({
+    settings: { ...settings, leftTapOffsetMs: 100, autoCalibrationEnabled: true },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+  assert.equal(calibratedEngine.tap('left', start + 150), 'hit');
+
+  const rawEngine = new RhythmTimingEngine({
+    settings: { ...settings, leftTapOffsetMs: 100, autoCalibrationEnabled: false },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+  assert.equal(rawEngine.tap('left', start + 150), 'miss');
+
+  rawEngine.updateTimingCalibration({ autoCalibrationEnabled: true });
+  assert.equal(rawEngine.tap('left', start + 1_000), 'hit');
 });
 
 test('the selected timing range controls which taps count as hits', () => {

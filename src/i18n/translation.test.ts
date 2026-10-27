@@ -17,6 +17,8 @@ test('an explicit language preference overrides the device language', () => {
 
 test('Traditional Chinese translations preserve English fallback for untranslated text', () => {
   assert.equal(translate('zh-Hant', 'START PRACTICE'), '開始練習');
+  assert.equal(translate('zh-Hant', 'Tap tempo'), '點按設定速度');
+  assert.equal(translate('zh-Hant', 'CALIBRATE TIMING'), '校準節奏');
   assert.equal(translate('zh-Hant', 'A user imported title'), 'A user imported title');
   assert.equal(translate('en', 'START PRACTICE'), 'START PRACTICE');
 });

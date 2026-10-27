@@ -61,6 +61,7 @@ const LIVE_PRACTICE_SETTING_KEYS = [
   'referenceRhythmEnabled',
   'leftTapOffsetMs',
   'rightTapOffsetMs',
+  'autoCalibrationEnabled',
   'goodWindowMs',
   'hapticsEnabled',
 ] as const satisfies readonly (keyof ExerciseSettings)[];
@@ -118,6 +119,7 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   challengeWrongBarStreak: 2,
   leftTapOffsetMs: 0,
   rightTapOffsetMs: 0,
+  autoCalibrationEnabled: true,
   goodWindowMs: DEFAULT_GOOD_WINDOW_MS,
   hapticsEnabled: false,
 };
@@ -245,6 +247,9 @@ function restoreSettings(raw: string | null): ExerciseSettings {
         typeof parsed.rightTapOffsetMs === 'number'
           ? normalizeTapOffsetMs(parsed.rightTapOffsetMs)
           : DEFAULT_SETTINGS.rightTapOffsetMs,
+      autoCalibrationEnabled: typeof parsed.autoCalibrationEnabled === 'boolean'
+        ? parsed.autoCalibrationEnabled
+        : DEFAULT_SETTINGS.autoCalibrationEnabled,
       goodWindowMs:
         typeof parsed.goodWindowMs === 'number'
           ? normalizeGoodWindowMs(parsed.goodWindowMs)
@@ -500,6 +505,7 @@ export function useSessionController(): SessionContextValue {
       engineRef.current.updateTimingCalibration({
         ...(livePatch.leftTapOffsetMs === undefined ? {} : { leftTapOffsetMs: livePatch.leftTapOffsetMs }),
         ...(livePatch.rightTapOffsetMs === undefined ? {} : { rightTapOffsetMs: livePatch.rightTapOffsetMs }),
+        ...(livePatch.autoCalibrationEnabled === undefined ? {} : { autoCalibrationEnabled: livePatch.autoCalibrationEnabled }),
         ...(livePatch.goodWindowMs === undefined ? {} : { goodWindowMs: livePatch.goodWindowMs }),
       });
     }

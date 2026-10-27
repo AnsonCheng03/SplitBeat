@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert } from 'react-native';
 import { useI18n } from '@/i18n/I18nProvider';
+import { useTapTempo } from '@/features/tempo/useTapTempo';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { DurationOption } from '@/types/rhythm';
@@ -19,6 +20,7 @@ export function useSetupScreen() {
   const { t } = useI18n();
   const [starting, setStarting] = useState(false);
   const router = useRouter();
+  const onTempoTap = useTapTempo((bpm) => updateSettings({ bpm }));
 
   const startPractice = async () => {
     if (starting || audioStatus === 'loading') return;
@@ -48,6 +50,7 @@ export function useSetupScreen() {
     onDecreaseTempo: () => changeTempo(-1),
     onIncreaseTempo: () => changeTempo(1),
     onTempoChange: (bpm: number) => updateSettings({ bpm }),
+    onTempoTap,
     onDurationChange: (durationSeconds: DurationOption) => updateSettings({ durationSeconds }),
     startAccessibilityLabel: audioStatus === 'error'
       ? 'Retry audio setup before starting exercise'
