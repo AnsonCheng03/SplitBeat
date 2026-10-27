@@ -1,5 +1,5 @@
-export function recordsStyle1({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 16, padding: 15, marginBottom: 9 };
+export function recordsStyle1({ colors, isLast }: { colors: import('@/theme').ThemeColors; isLast: boolean }): import('react-native').ViewStyle {
+  return { paddingHorizontal: 15, paddingVertical: 13, borderBottomWidth: isLast ? 0 : 1, borderBottomColor: colors.line };
 }
 
 export function recordsStyle2(): import('react-native').ViewStyle {
@@ -22,8 +22,8 @@ export function recordsStyle6({ colors }: { colors: import('@/theme').ThemeColor
   return { color: colors.accent, fontSize: 24, fontWeight: '900', fontVariant: ['tabular-nums'] };
 }
 
-export function recordsStyle7({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { flexDirection: 'row', gap: 12, marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.line };
+export function recordsStyle7(): import('react-native').ViewStyle {
+  return { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 4, marginTop: 8 };
 }
 
 export function recordsStyle8({ record, colors, primaryHand }: { record: import("@/store/sessionHistory").SessionRecord; colors: import('@/theme').ThemeColors; primaryHand: "left" | "right" }): import('react-native').TextStyle {
@@ -39,11 +39,7 @@ export function recordsStyle10({ colors }: { colors: import('@/theme').ThemeColo
 }
 
 export function recordsStyle11({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
-  return { color: colors.muted, fontSize: 11 };
-}
-
-export function recordsStyle12({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
-  return { color: colors.dim, fontSize: 11 };
+  return { color: colors.muted, fontSize: 10, marginTop: 6 };
 }
 
 export function recordsStyle13({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
@@ -98,12 +94,12 @@ export function recordsStyle25({ colors }: { colors: import('@/theme').ThemeColo
   return { color: colors.background, fontSize: 11, fontWeight: '900', letterSpacing: 0.6 };
 }
 
-export function recordsStyle26(): import('react-native').ViewStyle {
-  return { flexDirection: 'row', gap: 9, marginBottom: 21 };
+export function recordsStyle26({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { flexDirection: 'row', alignItems: 'stretch', marginBottom: 21, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 15, overflow: 'hidden' };
 }
 
-export function recordsStyle27({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { flex: 1, borderRadius: 15, padding: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line };
+export function recordsStyle27(): import('react-native').ViewStyle {
+  return { flex: 1, paddingHorizontal: 10, paddingVertical: 12 };
 }
 
 export function recordsStyle28({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -114,8 +110,8 @@ export function recordsStyle29({ colors }: { colors: import('@/theme').ThemeColo
   return { color: colors.text, fontSize: 24, fontWeight: '900', marginTop: 4 };
 }
 
-export function recordsStyle30({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { flex: 1, borderRadius: 15, padding: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line };
+export function recordsStyle30(): import('react-native').ViewStyle {
+  return { flex: 1, paddingHorizontal: 10, paddingVertical: 12 };
 }
 
 export function recordsStyle31({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -126,8 +122,8 @@ export function recordsStyle32({ colors }: { colors: import('@/theme').ThemeColo
   return { color: colors.accent, fontSize: 24, fontWeight: '900', marginTop: 4 };
 }
 
-export function recordsStyle33({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { flex: 1, borderRadius: 15, padding: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line };
+export function recordsStyle33(): import('react-native').ViewStyle {
+  return { flex: 1, paddingHorizontal: 10, paddingVertical: 12 };
 }
 
 export function recordsStyle34({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -204,4 +200,12 @@ export function GameCenterCourseProgressButtonStyle5({ hasError, colors }: { has
 
 export function recordsStyle37(): import('react-native').ViewStyle {
   return { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 30, maxWidth: 720, width: '100%', alignSelf: 'center' };
+}
+
+export function recordsStyle38({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 15, overflow: 'hidden' };
+}
+
+export function recordsStyle39({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { width: 1, marginVertical: 10, backgroundColor: colors.line };
 }

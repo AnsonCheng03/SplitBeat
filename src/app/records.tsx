@@ -17,7 +17,6 @@ import { recordsStyle1,
   recordsStyle9,
   recordsStyle10,
   recordsStyle11,
-  recordsStyle12,
   recordsStyle13,
   recordsStyle14,
   recordsStyle15,
@@ -41,9 +40,12 @@ import { recordsStyle1,
   recordsStyle33,
   recordsStyle34,
   recordsStyle35,
-  recordsStyle36, recordsStyle37 } from '@/styles/records';
+  recordsStyle36,
+  recordsStyle37,
+  recordsStyle38,
+  recordsStyle39 } from '@/styles/records';
 
-function RecordRow({ record }: { record: SessionRecord }) {
+function RecordRow({ record, isLast }: { record: SessionRecord; isLast: boolean }) {
   const { colors } = useTheme();
   const { locale, t } = useI18n();
   const primaryHand = primaryRecordHand(record);
@@ -53,7 +55,7 @@ function RecordRow({ record }: { record: SessionRecord }) {
   return (
     <View
       testID={`records.item.${record.id}`}
-      style={recordsStyle1({ colors })}
+      style={recordsStyle1({ colors, isLast })}
     >
       <View style={recordsStyle2()}>
         <View style={recordsStyle3()}>
@@ -64,17 +66,22 @@ function RecordRow({ record }: { record: SessionRecord }) {
           {Math.round(record.overallAccuracy)}%
         </Text>
       </View>
-      <View style={recordsStyle7({ colors })}>
-        <Text style={recordsStyle8({ record, colors, primaryHand })}>
-          {t(record.trainingMode === 'single-hand' ? 'ONE HAND' : primaryHand === 'left' ? 'L' : 'R')} {Math.round(primaryAccuracy)}%
-        </Text>
+      <View style={recordsStyle7()}>
         {record.trainingMode === 'two-hand' ? (
-          <Text style={recordsStyle9({ colors })}>R {Math.round(record.rightAccuracy)}%</Text>
-        ) : null}
+          <>
+            <Text style={recordsStyle8({ record, colors, primaryHand })}>{t('L')} {Math.round(record.leftAccuracy)}%</Text>
+            <Text style={recordsStyle9({ colors })}>{t('R')} {Math.round(record.rightAccuracy)}%</Text>
+          </>
+        ) : (
+          <Text style={recordsStyle8({ record, colors, primaryHand })}>
+            {t('ONE HAND')} {Math.round(primaryAccuracy)}%
+          </Text>
+        )}
         <Text style={recordsStyle10({ colors })}>{t('CLEAN RUN {count}', { count: record.longestCorrectStreak })}</Text>
-        <Text style={recordsStyle11({ colors })}>{record.bpm} BPM · {record.timeSignature}</Text>
-        <Text style={recordsStyle12({ colors })}>{t('{seconds} sec', { seconds: Math.round(record.durationSeconds) })}</Text>
       </View>
+      <Text style={recordsStyle11({ colors })}>
+        {record.timeSignature} · {record.bpm} BPM · {t('{seconds} sec', { seconds: Math.round(record.durationSeconds) })}
+      </Text>
     </View>
   );
 }
@@ -115,22 +122,32 @@ export default function RecordsScreen() {
           </View>
         ) : (
           <>
-            <View style={recordsStyle26()}>
-              <View style={recordsStyle27({ colors })}>
+            <View style={recordsStyle26({ colors })}>
+              <View style={recordsStyle27()}>
                 <Text style={recordsStyle28({ colors })}>SESSIONS</Text>
                 <Text testID="records.count" style={recordsStyle29({ colors })}>{sessionHistory.length}</Text>
               </View>
-              <View style={recordsStyle30({ colors })}>
+              <View style={recordsStyle39({ colors })} />
+              <View style={recordsStyle30()}>
                 <Text style={recordsStyle31({ colors })}>BEST ACCURACY</Text>
                 <Text testID="records.best" style={recordsStyle32({ colors })}>{Math.round(bestRecord?.overallAccuracy ?? 0)}%</Text>
               </View>
-              <View style={recordsStyle33({ colors })}>
+              <View style={recordsStyle39({ colors })} />
+              <View style={recordsStyle33()}>
                 <Text style={recordsStyle34({ colors })}>BEST CLEAN RUN</Text>
                 <Text testID="records.bestStreak" style={recordsStyle35({ colors })}>{bestStreak}</Text>
               </View>
             </View>
             <Text style={recordsStyle36({ colors })}>RECENT SESSIONS</Text>
-            {sessionHistory.map((record) => <RecordRow key={record.id} record={record} />)}
+            <View style={recordsStyle38({ colors })}>
+              {sessionHistory.map((record, index) => (
+                <RecordRow
+                  key={record.id}
+                  record={record}
+                  isLast={index === sessionHistory.length - 1}
+                />
+              ))}
+            </View>
           </>
         )}
       </ScrollView>
