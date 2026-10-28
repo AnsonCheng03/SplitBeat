@@ -668,6 +668,26 @@ test('every supported meter reports each beat position and pattern countdown acr
   }
 });
 
+test('4/4 counter reaches beat four in every bar before resetting to beat one', () => {
+  const start = 78_000;
+  const bpm = 60;
+  const engine = new RhythmTimingEngine({
+    settings: { ...settings, bpm, timeSignature: '4/4', durationSeconds: 'endless' },
+    sessionStartTime: start,
+    random: () => 0,
+  });
+  const { beatDurationMs } = timeSignatureMetrics(bpm, '4/4');
+
+  for (let beatIndex = 0; beatIndex < 8; beatIndex += 1) {
+    const snapshot = engine.advance(start + beatIndex * beatDurationMs + 1);
+    const expectedBeatInBar = beatIndex % 4;
+
+    assert.equal(snapshot.counterBeatsPerBar, 4, `beat ${beatIndex + 1} has four displayed positions`);
+    assert.equal(snapshot.counterBeatInBar, expectedBeatInBar, `beat ${beatIndex + 1} is displayed in order`);
+    assert.equal(snapshot.beatsUntilChange, 4 - expectedBeatInBar, `beat ${beatIndex + 1} counts down to the bar line`);
+  }
+});
+
 test('live beat counter follows the written time-signature numerator in every meter', () => {
   const start = 84_000;
   const bpm = 60;

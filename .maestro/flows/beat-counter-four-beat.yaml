@@ -7,12 +7,13 @@ appId: com.splitbeat.twohandrhythm
     visible:
       id: home.screen
     timeout: 15000
-- extendedWaitUntil:
-    visible:
-      id: tutorial.overlay
-    timeout: 15000
-- tapOn:
-    id: tutorial.skip
+- runFlow:
+    when:
+      visible:
+        id: tutorial.overlay
+    commands:
+      - tapOn:
+          id: tutorial.skip
 - tapOn:
     id: home.setup
 - assertVisible:
