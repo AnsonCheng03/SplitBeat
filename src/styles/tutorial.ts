@@ -1,5 +1,5 @@
 export function tutorialStyleOverlay(): import('react-native').ViewStyle {
-  return { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, paddingVertical: 16, backgroundColor: 'rgba(5, 8, 14, 0.76)' };
+  return { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, zIndex: 1000, elevation: 1000, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, paddingVertical: 16, backgroundColor: 'rgba(5, 8, 14, 0.76)' };
 }
 
 export function tutorialStyleCard({ colors, compact }: { colors: import('@/theme').ThemeColors; compact: boolean }): import('react-native').ViewStyle {

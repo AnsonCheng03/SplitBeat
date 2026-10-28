@@ -1,4 +1,5 @@
-import { Modal, useWindowDimensions, View } from 'react-native';
+import { useEffect } from 'react';
+import { BackHandler, useWindowDimensions, View } from 'react-native';
 import { TutorialPracticeStage } from '@/components/TutorialPracticeStage';
 import { TutorialSkipControl } from '@/components/TutorialSkipControl';
 import { TutorialTransitionStage } from '@/components/TutorialTransitionStage';
@@ -24,46 +25,42 @@ export function AppTutorialOverlay({ onDismiss }: { onDismiss: () => void }) {
   const isPractice = phase === 'practice';
   const heading = t(phase === 'complete' ? 'Tutorial complete' : mode.title);
 
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => subscription.remove();
+  }, []);
+
   return (
-    <Modal
-      visible
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-      supportedOrientations={['landscape-left', 'landscape-right']}
-      onRequestClose={() => {}}
-    >
-      <View testID="tutorial.overlay" style={tutorialStyleOverlay()}>
-        <TutorialSkipControl onSkip={onDismiss} />
-        <View style={tutorialStyleCard({ colors, compact })}>
-          <View style={tutorialStyleHeader({ compact })}>
-            <Text style={tutorialStyleStepTitle({ colors })}>
-              {t(phase === 'complete' ? 'TUTORIAL' : 'TUTORIAL · MODE {step} OF 2', { step: modeIndex + 1 })}
-            </Text>
-          </View>
-          <Text testID="tutorial.title" style={tutorialStyleIntroTitle({ colors, compact })}>{heading}</Text>
-          {isPractice ? (
-            <>
-              <Text style={tutorialStyleIntroDescription({ colors, compact })}>{t(mode.description)}</Text>
-              <TutorialPracticeStage
-                mode={mode}
-                beatIndex={beatIndex}
-                expectedHand={expectedHand}
-                feedback={feedback}
-                compact={compact}
-                onTapHand={tapHand}
-              />
-            </>
-          ) : (
-            <TutorialTransitionStage
-              phase={phase}
-              compact={compact}
-              onContinue={startBarView}
-              onDone={onDismiss}
-            />
-          )}
+    <View testID="tutorial.overlay" style={tutorialStyleOverlay()}>
+      <TutorialSkipControl onSkip={onDismiss} />
+      <View style={tutorialStyleCard({ colors, compact })}>
+        <View style={tutorialStyleHeader({ compact })}>
+          <Text style={tutorialStyleStepTitle({ colors })}>
+            {t(phase === 'complete' ? 'TUTORIAL' : 'TUTORIAL · MODE {step} OF 2', { step: modeIndex + 1 })}
+          </Text>
         </View>
+        <Text testID="tutorial.title" style={tutorialStyleIntroTitle({ colors, compact })}>{heading}</Text>
+        {isPractice ? (
+          <>
+            <Text style={tutorialStyleIntroDescription({ colors, compact })}>{t(mode.description)}</Text>
+            <TutorialPracticeStage
+              mode={mode}
+              beatIndex={beatIndex}
+              expectedHand={expectedHand}
+              feedback={feedback}
+              compact={compact}
+              onTapHand={tapHand}
+            />
+          </>
+        ) : (
+          <TutorialTransitionStage
+            phase={phase}
+            compact={compact}
+            onContinue={startBarView}
+            onDone={onDismiss}
+          />
+        )}
       </View>
-    </Modal>
+    </View>
   );
 }

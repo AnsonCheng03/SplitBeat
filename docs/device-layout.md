@@ -6,4 +6,6 @@ The native `SplitBeatDeviceLayout` module observes `UIHingeInteraction` changes 
 
 The app supports landscape orientation only. On iPhone Duo, the hinge therefore divides the practice screen into side-by-side panels. Other screens continue to use their existing responsive layouts; practice is the screen that currently responds directly to Duo hinge geometry.
 
+The first-run tutorial is layered inside the app root instead of being presented as a native modal. This avoids a second UIKit orientation negotiation during app launch while preserving the full-screen tutorial overlay.
+
 Settings keeps its section navigation available on narrow iPhone screens without squeezing the setting controls into a narrow side column. Below 640 points of width, it places a horizontally scrollable section selector below the back header and gives the selected page the full content width. Wider layouts keep the vertical sidebar. The page content scrolls independently of the section selector and any pinned start action.
