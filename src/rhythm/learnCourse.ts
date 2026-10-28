@@ -450,6 +450,11 @@ export function createLearnCourse(flags: Pick<FeatureFlags, 'sixtyFourthNotes'>)
 }
 
 export const LEARN_COURSE: readonly LearnLesson[] = createLearnCourse(BUILD_FEATURE_FLAGS);
+export const LEARN_COURSE_CHECKPOINT_INTERVAL = 5;
+
+export function isLearnCourseCheckpoint(lessonNumber: number): boolean {
+  return lessonNumber > 0 && lessonNumber % LEARN_COURSE_CHECKPOINT_INTERVAL === 0;
+}
 
 function fnv1a32(value: string, seed: number): number {
   let hash = seed >>> 0;
@@ -523,19 +528,26 @@ export type LessonAvailability = 'complete' | 'available' | 'locked';
 export function getLessonAvailability(
   lessonId: string,
   completedLessonIds: readonly string[],
+  checkpointUnlockedLessonIds: readonly string[] = [],
 ): LessonAvailability {
   const index = LEARN_COURSE.findIndex((lesson) => lesson.id === lessonId);
   if (index < 0) return 'locked';
   if (completedLessonIds.includes(lessonId)) return 'complete';
-  if (index === 0 || completedLessonIds.includes(LEARN_COURSE[index - 1].id)) return 'available';
+  if (
+    checkpointUnlockedLessonIds.includes(lessonId)
+    || isLearnCourseCheckpoint(LEARN_COURSE[index].number)
+    || index === 0
+    || completedLessonIds.includes(LEARN_COURSE[index - 1].id)
+  ) return 'available';
   return 'locked';
 }
 
 export function markLessonCompleted(
   completedLessonIds: readonly string[],
   lessonId: string,
+  checkpointUnlockedLessonIds: readonly string[] = [],
 ): string[] {
-  if (getLessonAvailability(lessonId, completedLessonIds) === 'locked') {
+  if (getLessonAvailability(lessonId, completedLessonIds, checkpointUnlockedLessonIds) === 'locked') {
     return [...completedLessonIds];
   }
   return completedLessonIds.includes(lessonId)

@@ -22,6 +22,7 @@ import {
 export function ResultsFooter({
   courseLesson,
   lessonCompleted,
+  checkpointChallenge,
   featureFlags,
   startingAgain,
   showDiagnosticExport,
@@ -35,6 +36,7 @@ export function ResultsFooter({
 }: {
   courseLesson?: LearnLesson;
   lessonCompleted: boolean;
+  checkpointChallenge: boolean;
   featureFlags: FeatureFlags;
   startingAgain: boolean;
   showDiagnosticExport: boolean;
@@ -62,16 +64,18 @@ export function ResultsFooter({
       >
         <Text style={ResultsFooterStyle2({ colors })}>{startingAgain ? 'PREPARING…' : 'START AGAIN'}</Text>
       </Pressable>
-      {featureFlags.learnCourse && courseLesson && lessonCompleted ? (
+      {featureFlags.learnCourse && courseLesson && (lessonCompleted || checkpointChallenge) ? (
         <Pressable
-          testID="results.continueLearning"
+          testID={lessonCompleted ? 'results.continueLearning' : 'results.retryCheckpoint'}
           accessibilityRole="button"
-          accessibilityLabel={t('Continue the guided course')}
+          accessibilityLabel={t(lessonCompleted ? 'Continue the guided course' : 'Retry this checkpoint')}
           onPress={onContinueLearning}
           style={({ pressed }) => (ResultsFooterStyle3({ pressed, colors }))}
         >
           <Text style={ResultsFooterStyle4({ colors })}>
-            {courseLesson.number === LEARN_COURSE.length ? 'VIEW COURSE' : 'CONTINUE LEARNING'}
+            {lessonCompleted
+              ? courseLesson.number === LEARN_COURSE.length ? t('VIEW COURSE') : t('CONTINUE LEARNING')
+              : t('RETRY CHECKPOINT')}
           </Text>
         </Pressable>
       ) : null}

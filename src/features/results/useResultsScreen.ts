@@ -35,7 +35,7 @@ export function useResultsScreen() {
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [countAsFeel, setCountAsFeel] = useState<RhythmicFeel>(results?.feel ?? 'straight');
   const courseLesson = LEARN_COURSE.find((lesson) => lesson.id === lessonId);
-  const { lessonCompleted, lessonRating } = useLessonCompletion(results, courseLesson);
+  const { lessonCompleted, lessonRating, checkpointChallenge, checkpointPassed } = useLessonCompletion(results, courseLesson);
   const replaySoundEnabled = (sessionSettings ?? settings).soundEnabled && featureFlags.soundEffects;
   const { replay, replayBar, finishVisualReplay } = useResultsReplay({
     results,
@@ -129,6 +129,8 @@ export function useResultsScreen() {
     courseLesson,
     lessonCompleted,
     lessonRating,
+    checkpointChallenge,
+    checkpointPassed,
     replaySoundEnabled,
     replay,
     replayBar,

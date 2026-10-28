@@ -6,6 +6,7 @@ import { BUILD_FEATURE_FLAGS } from '@/features/featureFlags';
 import {
   createLearnCourse,
   getLessonAvailability,
+  isLearnCourseCheckpoint,
   LEARN_COURSE,
   learnCourseContentRevision,
   lessonHandPatternOptions,
@@ -160,6 +161,21 @@ test('lessons unlock in order and completion can be revisited safely', () => {
   assert.deepEqual(markLessonCompleted([], second), []);
   assert.equal(getLessonAvailability('unknown', progress), 'locked');
   assert.equal(lessonProgressPercent(progress), Math.round(100 / LEARN_COURSE.length));
+});
+
+test('every fifth lesson is directly available as a checkpoint without unlocking lessons ahead of it', () => {
+  const checkpoints = LEARN_COURSE.filter((lesson) => isLearnCourseCheckpoint(lesson.number));
+  assert.deepEqual(checkpoints.map((lesson) => lesson.number), [5, 10, 15, 20]);
+
+  for (const checkpoint of checkpoints) {
+    assert.equal(getLessonAvailability(checkpoint.id, []), 'available');
+    const followingLesson = LEARN_COURSE[checkpoint.number];
+    if (followingLesson) assert.equal(getLessonAvailability(followingLesson.id, []), 'locked');
+  }
+
+  assert.equal(isLearnCourseCheckpoint(0), false);
+  assert.equal(isLearnCourseCheckpoint(4), false);
+  assert.equal(isLearnCourseCheckpoint(5), true);
 });
 
 test('saved progress ignores unknown ids and malformed data', () => {

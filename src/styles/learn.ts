@@ -217,11 +217,11 @@ export function LearnLessonTileStyle2(): import('react-native').ViewStyle {
 }
 
 export function LearnLessonTileStyle3({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
-  return { color: colors.dim, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 };
+  return { flex: 1, minWidth: 0, marginRight: 8, color: colors.dim, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 };
 }
 
 export function LearnLessonTileStyle4({ completed, skipped, colors, disabled }: { completed: boolean; skipped: boolean; colors: import('@/theme').ThemeColors; disabled: boolean }): import('react-native').TextStyle {
-  return { color: skipped ? colors.accent : completed ? colors.left : disabled ? colors.dim : colors.accent, fontSize: 11, fontWeight: '900' };
+  return { flexShrink: 0, color: skipped ? colors.accent : completed ? colors.left : disabled ? colors.dim : colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.6 };
 }
 
 export function LearnLessonTileStyle5({ disabled, colors }: { disabled: boolean; colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -244,7 +244,7 @@ export function LearnLessonTileStyle9({ colors }: { colors: import('@/theme').Th
   return { color: colors.dim, fontSize: 8, fontWeight: '800' };
 }
 
-export function learnSkipInfoStyle({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+export function learnCourseNoticeStyle({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
   return { color: colors.muted, fontSize: 10, lineHeight: 15, marginTop: 8 };
 }
 

@@ -10,6 +10,10 @@ import {
   lessonSettings,
 } from '@/rhythm/learnCourse';
 import { totalLearnStars } from '@/rhythm/learnRating';
+import {
+  getCheckpointUnlockedLessonIds,
+  isLearnLessonCheckpointChallenge,
+} from '@/rhythm/learnCourseProgression';
 import { evaluateLearnCourseSkipGate } from '@/rhythm/learnCourseSkip';
 import { requiresLearnCourseUnlock } from '@/rhythm/learnCourseAccess';
 import { useLearnCoursePurchase } from '@/hooks/useLearnCoursePurchase';
@@ -83,7 +87,15 @@ export function useLearnScreen() {
     () => LEARN_COURSE.find((lesson) => lesson.id === selectedLessonId) ?? LEARN_COURSE[0],
     [selectedLessonId],
   );
-  const lessonAvailability = getLessonAvailability(selectedLesson.id, completedLessonIds);
+  const checkpointUnlockedLessonIds = useMemo(
+    () => getCheckpointUnlockedLessonIds(lessonRatings),
+    [lessonRatings],
+  );
+  const lessonAvailability = getLessonAvailability(
+    selectedLesson.id,
+    completedLessonIds,
+    checkpointUnlockedLessonIds,
+  );
   const requiresPurchase = requiresLearnCourseUnlock(selectedLesson, purchase.hasFullCourseUnlock);
   const lessonSequenceLocked = lessonAvailability === 'locked';
   const progressedCount = new Set([...completedLessonIds, ...skippedLessonIds]).size;
@@ -94,6 +106,7 @@ export function useLearnScreen() {
     completedLessonIds,
     skippedLessonIds,
     lessonRatings,
+    checkpointUnlockedLessonIds,
   });
   const lessonNumber = String(selectedLesson.number).padStart(2, '0');
   const previousLessonNumber = String(selectedLesson.number - 1).padStart(2, '0');
@@ -116,14 +129,12 @@ export function useLearnScreen() {
   const skipStatusMessage = !lessonSequenceLocked || requiresPurchase
     ? null
     : skipGate.canSkip
-      ? skipGate.hasFiveStarLesson
-        ? t('A 5-star lesson qualifies you to skip ahead. Skipped lessons do not earn stars.')
-        : t('Your {accuracy}% course average qualifies you to skip here. Skipped lessons do not earn stars.', {
+      ? t('Your {accuracy}% course average qualifies you to skip here. Skipped lessons do not earn stars.', {
           accuracy: Math.round(skipGate.averageBestAccuracy),
         })
       : skipGate.completedScoreCount === 0
-        ? t('Complete a lesson first. Paid skip opens after an 80% average or one 5-star lesson.')
-        : t('Your course average is {accuracy}%. Reach 80% or earn one 5-star lesson to skip ahead.', {
+        ? t('Reach an 80% course average to skip ahead. Every 5th lesson is a checkpoint.')
+        : t('Your course average is {accuracy}%. Reach 80% for paid skip, or earn 5 stars on a checkpoint to unlock earlier lessons.', {
           accuracy: Math.round(skipGate.averageBestAccuracy),
         });
   const skipButtonTitle = skipping ? t('SKIPPING…') : t('SKIP TO THIS LESSON');
@@ -247,6 +258,13 @@ export function useLearnScreen() {
     starsEarned,
     lessonNumber,
     previousLessonNumber,
+    selectedLessonIsCheckpointChallenge: isLearnLessonCheckpointChallenge({
+      lessonId: selectedLesson.id,
+      completedLessonIds,
+      skippedLessonIds,
+      lessonRatings,
+      checkpointUnlockedLessonIds,
+    }),
     lessonSequenceLocked,
     requiresPurchase,
     lessonStartDisabled,

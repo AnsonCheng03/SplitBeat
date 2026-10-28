@@ -20,6 +20,8 @@ export default function ResultsScreen() {
     courseLesson,
     lessonCompleted,
     lessonRating,
+    checkpointChallenge,
+    checkpointPassed,
     replaySoundEnabled,
     replay,
     replayBar,
@@ -79,6 +81,8 @@ export default function ResultsScreen() {
           courseLesson={courseLesson}
           lessonCompleted={lessonCompleted}
           lessonRating={lessonRating}
+          checkpointChallenge={checkpointChallenge}
+          checkpointPassed={checkpointPassed}
           swingFeelAnalysis={swingFeelAnalysis}
           originalFeel={results.feel}
           countAsFeel={countAsFeel}
@@ -116,6 +120,7 @@ export default function ResultsScreen() {
         <ResultsFooter
           courseLesson={courseLesson}
           lessonCompleted={lessonCompleted}
+          checkpointChallenge={checkpointChallenge}
           featureFlags={featureFlags}
           startingAgain={startingAgain}
           showDiagnosticExport={showDiagnosticExport}

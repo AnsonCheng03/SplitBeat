@@ -24,6 +24,10 @@ test('Traditional Chinese translations preserve English fallback for untranslate
   assert.equal(translate('zh-Hant', 'Preparing your lesson.'), '正在準備課程。');
   assert.equal(translate('zh-Hant', 'Preparing your score library.'), '正在準備樂譜庫。');
   assert.equal(translate('zh-Hant', 'Loading your course progress.'), '正在載入課程進度。');
+  assert.equal(translate('zh-Hant', 'Every 5th lesson is a 5-star checkpoint.'), '每第 5 堂課都是五星挑戰關卡。');
+  assert.equal(translate('zh-Hant', 'Earn 5 stars here to unlock every earlier lesson.'), '在這裡取得 5 顆星，即可解鎖所有較早的課堂。');
+  assert.equal(translate('zh-Hant', 'Five-star checkpoint passed. All earlier lessons are now unlocked.'), '五星挑戰成功，所有較早的課堂已解鎖。');
+  assert.equal(translate('zh-Hant', 'RETRY CHECKPOINT'), '重試挑戰關卡');
   assert.equal(translate('zh-Hant', 'Starting your practice…'), '正在開始練習…');
   assert.equal(translate('zh-Hant', 'A user imported title'), 'A user imported title');
   assert.equal(translate('en', 'START PRACTICE'), 'START PRACTICE');

@@ -50,7 +50,7 @@ import { learnStyle1,
   learnStyle42, learnStyle43, learnStyle44,
   learnSkipButtonStyle,
   learnSkipButtonTextStyle,
-  learnSkipInfoStyle,
+  learnCourseNoticeStyle,
 } from '@/styles/learn';
 
 export default function LearnScreen() {
@@ -64,6 +64,7 @@ export default function LearnScreen() {
     skippedLessonIds,
     lessonRatings,
     selectedLesson,
+    selectedLessonIsCheckpointChallenge,
     progressLoaded,
     starting,
     skipping,
@@ -204,6 +205,11 @@ export default function LearnScreen() {
           <Text numberOfLines={compact ? 2 : 3} style={learnStyle23({ colors })}>
             {selectedLesson.instruction}
           </Text>
+          {selectedLessonIsCheckpointChallenge ? (
+            <Text testID="learn.checkpoint.instructions" style={learnCourseNoticeStyle({ colors })}>
+              {t('Earn 5 stars here to unlock every earlier lesson.')}
+            </Text>
+          ) : null}
           <LearnPatternPreview lesson={selectedLesson} />
         </View>
 
@@ -213,7 +219,7 @@ export default function LearnScreen() {
             <Text style={learnStyle26({ colors })}>{t('Try the first 3 lessons free, then unlock all {count} lessons with one purchase.', { count: totalLessons })}</Text>
           </View>
         ) : lessonSequenceLocked ? (
-          <Text style={skipStatusMessage ? learnSkipInfoStyle({ colors }) : learnStyle27({ colors })}>
+          <Text style={skipStatusMessage ? learnCourseNoticeStyle({ colors }) : learnStyle27({ colors })}>
             {skipStatusMessage ?? t('Complete Lesson {number} first to open this lesson.', { number: previousLessonNumber })}
           </Text>
         ) : null}

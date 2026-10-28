@@ -20,7 +20,7 @@ test('paid learner can skip locked lessons after an 80 percent course average', 
   assert.deepEqual(gate.lessonsToSkip, LEARN_COURSE.slice(1, 6).map((lesson) => lesson.id));
 });
 
-test('a five-star lesson also qualifies even when the course average is below 80 percent', () => {
+test('a five-star non-checkpoint lesson does not bypass the 80 percent paid-skip average', () => {
   const gate = evaluateLearnCourseSkipGate({
     targetLessonId,
     hasFullCourseUnlock: true,
@@ -33,8 +33,7 @@ test('a five-star lesson also qualifies even when the course average is below 80
   });
 
   assert.equal(gate.averageBestAccuracy, 70);
-  assert.equal(gate.hasFiveStarLesson, true);
-  assert.equal(gate.canSkip, true);
+  assert.equal(gate.canSkip, false);
 });
 
 test('free access and scores below both thresholds cannot skip locked lessons', () => {
@@ -63,8 +62,22 @@ test('skipped lessons do not count toward the course accuracy gate', () => {
 
   assert.equal(gate.completedScoreCount, 1);
   assert.equal(gate.averageBestAccuracy, 78);
-  assert.equal(gate.hasFiveStarLesson, false);
   assert.equal(gate.canSkip, false);
+});
+
+test('checkpoint-unlocked lessons are not counted as paid skips', () => {
+  const unlockedLessonIds = LEARN_COURSE.slice(0, 4).map((lesson) => lesson.id);
+  const gate = evaluateLearnCourseSkipGate({
+    targetLessonId,
+    hasFullCourseUnlock: true,
+    completedLessonIds: [firstLessonId],
+    skippedLessonIds: [],
+    lessonRatings: [{ lessonId: firstLessonId, lastAccuracy: 79, bestAccuracy: 79, attempts: 1 }],
+    checkpointUnlockedLessonIds: unlockedLessonIds,
+  });
+
+  assert.equal(gate.canSkip, false);
+  assert.deepEqual(gate.lessonsToSkip, LEARN_COURSE.slice(4, 6).map((lesson) => lesson.id));
 });
 
 test('course skips are available only for a locked, not-yet-completed target', () => {

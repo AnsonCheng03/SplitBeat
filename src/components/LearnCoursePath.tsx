@@ -2,7 +2,11 @@ import { ScrollView, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { LearnLessonTile } from '@/components/LearnLessonTile';
-import { getLessonAvailability, LEARN_COURSE } from '@/rhythm/learnCourse';
+import { getLessonAvailability, isLearnCourseCheckpoint, LEARN_COURSE } from '@/rhythm/learnCourse';
+import {
+  getCheckpointUnlockedLessonIds,
+  isLearnLessonCheckpointChallenge,
+} from '@/rhythm/learnCourseProgression';
 import { requiresLearnCourseUnlock } from '@/rhythm/learnCourseAccess';
 import type { readLearnRatings } from '@/store/learnProgress';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -29,21 +33,32 @@ export function LearnCoursePath({
 }) {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const checkpointUnlockedLessonIds = getCheckpointUnlockedLessonIds(lessonRatings);
 
   return (
     <View style={LearnCoursePathStyle1({ compact })}>
       <View style={LearnCoursePathStyle2({ compact })}>
         <Text style={LearnCoursePathStyle3({ colors })}>{t('COURSE PATH')}</Text>
-        <Text numberOfLines={1} style={LearnCoursePathStyle4({ colors, compact })}>{t('Paid skip: 80% course average or one 5-star lesson')}</Text>
+        <Text numberOfLines={1} style={LearnCoursePathStyle4({ colors, compact })}>{t('Every 5th lesson is a 5-star checkpoint.')}</Text>
       </View>
       <ScrollView style={LearnCoursePathStyle5()} showsVerticalScrollIndicator={false} contentContainerStyle={LearnCoursePathStyle6()}>
         {LEARN_COURSE.map((lesson) => {
-          const availability = getLessonAvailability(lesson.id, completedLessonIds);
+          const availability = getLessonAvailability(lesson.id, completedLessonIds, checkpointUnlockedLessonIds);
           const paywalled = requiresLearnCourseUnlock(lesson, hasFullCourseUnlock);
+          const checkpointChallenge = isLearnLessonCheckpointChallenge({
+            lessonId: lesson.id,
+            completedLessonIds,
+            skippedLessonIds,
+            lessonRatings,
+            checkpointUnlockedLessonIds,
+          });
           return (
             <LearnLessonTile
               key={lesson.id}
               lesson={lesson}
+              isCheckpoint={isLearnCourseCheckpoint(lesson.number)}
+              checkpointChallenge={checkpointChallenge}
+              unlockedByCheckpoint={checkpointUnlockedLessonIds.includes(lesson.id)}
               selected={selectedLessonId === lesson.id}
               completed={availability === 'complete'}
               skipped={skippedLessonIds.includes(lesson.id)}

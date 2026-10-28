@@ -2,15 +2,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   LEARN_COURSE,
   LEARN_COURSE_REVISION,
-  markLessonCompleted,
   parseCompletedLessonIds,
   parseSkippedLessonIds,
 } from '@/rhythm/learnCourse';
-import {
-  parseLearnLessonRatings,
-  updateLearnLessonRating,
-} from '@/rhythm/learnRating';
+import { parseLearnLessonRatings } from '@/rhythm/learnRating';
 import type { LearnLessonRating } from '@/rhythm/learnRating';
+import { evaluateLearnLessonOutcome } from '@/rhythm/learnCourseProgression';
 import {
   createLearnCourseProgressSnapshot,
   mergeLearnCourseProgressSnapshots,
@@ -108,21 +105,6 @@ export async function skipLearnLessons(lessonIds: readonly string[]): Promise<{
   return { completedLessonIds: nextCompletedIds, skippedLessonIds: nextSkippedIds };
 }
 
-export async function completeLearnLesson(lessonId: string): Promise<string[]> {
-  const progress = await readLearnProgress();
-  const completedLessonIds = markLessonCompleted(progress, lessonId);
-  const skippedLessonIds = (await readSkippedLearnLessons()).filter((id) => id !== lessonId);
-  try {
-    await Promise.all([
-      AsyncStorage.setItem(LEARN_PROGRESS_KEY, JSON.stringify(completedLessonIds)),
-      AsyncStorage.setItem(LEARN_SKIPPED_KEY, JSON.stringify(skippedLessonIds)),
-    ]);
-  } catch {
-    return progress;
-  }
-  return completedLessonIds;
-}
-
 export async function readLearnRatings(): Promise<LearnLessonRating[]> {
   try {
     await migrateLegacyProgressIfCompatible();
@@ -137,21 +119,47 @@ export async function readLearnRatings(): Promise<LearnLessonRating[]> {
   }
 }
 
-export async function recordLearnLessonResult(
+export async function recordLearnLessonOutcome(
   lessonId: string,
   accuracy: number,
-): Promise<LearnLessonRating | null> {
-  const ratings = await readLearnRatings();
-  const updated = updateLearnLessonRating(ratings, lessonId, accuracy);
-  if (updated.length === ratings.length && !updated.some((rating) => rating.lessonId === lessonId)) {
-    return null;
-  }
-  const rating = updated.find((item) => item.lessonId === lessonId) ?? null;
+): Promise<{
+  lessonRating: LearnLessonRating;
+  lessonCompleted: boolean;
+  isCheckpointChallenge: boolean;
+  checkpointPassed: boolean;
+} | null> {
+  const [completedLessonIds, skippedLessonIds, lessonRatings] = await Promise.all([
+    readLearnProgress(),
+    readSkippedLearnLessons(),
+    readLearnRatings(),
+  ]);
+  const outcome = evaluateLearnLessonOutcome({
+    lessonId,
+    accuracy,
+    completedLessonIds,
+    skippedLessonIds,
+    lessonRatings,
+  });
+  if (!outcome.lessonRating) return null;
+  const nextSkippedLessonIds = outcome.lessonCompleted
+    ? skippedLessonIds.filter((id) => id !== lessonId)
+    : skippedLessonIds;
   try {
-    await AsyncStorage.setItem(LEARN_RATINGS_KEY, JSON.stringify(updated));
-    return rating;
+    await Promise.all([
+      AsyncStorage.setItem(LEARN_PROGRESS_KEY, JSON.stringify(outcome.completedLessonIds)),
+      AsyncStorage.setItem(LEARN_RATINGS_KEY, JSON.stringify(outcome.lessonRatings)),
+      ...(outcome.lessonCompleted
+        ? [AsyncStorage.setItem(LEARN_SKIPPED_KEY, JSON.stringify(nextSkippedLessonIds))]
+        : []),
+    ]);
+    return {
+      lessonRating: outcome.lessonRating,
+      lessonCompleted: outcome.lessonCompleted,
+      isCheckpointChallenge: outcome.isCheckpointChallenge,
+      checkpointPassed: outcome.checkpointPassed,
+    };
   } catch {
-    return ratings.find((item) => item.lessonId === lessonId) ?? null;
+    return null;
   }
 }
 

@@ -44,6 +44,8 @@ export function ResultsOverview({
   courseLesson,
   lessonCompleted,
   lessonRating,
+  checkpointChallenge,
+  checkpointPassed,
   swingFeelAnalysis,
   originalFeel,
   countAsFeel,
@@ -56,6 +58,8 @@ export function ResultsOverview({
   courseLesson?: LearnLesson;
   lessonCompleted: boolean;
   lessonRating: LearnLessonRating | null;
+  checkpointChallenge: boolean;
+  checkpointPassed: boolean;
   swingFeelAnalysis: { likelyStraight: boolean } | null;
   originalFeel: RhythmicFeel;
   countAsFeel: RhythmicFeel;
@@ -85,9 +89,15 @@ export function ResultsOverview({
           </Text>
         </View>
         <Text style={ResultsOverviewStyle4({ colors })}>{courseLesson ? courseLesson.title : 'Your timing.'}</Text>
-        {courseLesson && lessonCompleted ? (
+        {courseLesson && checkpointChallenge ? (
+          <Text testID="results.checkpointOutcome" style={ResultsOverviewStyle5({ colors })}>
+            {t(checkpointPassed
+              ? 'Five-star checkpoint passed. All earlier lessons are now unlocked.'
+              : 'Earn 5 stars on this checkpoint to unlock earlier lessons.')}
+          </Text>
+        ) : courseLesson && lessonCompleted ? (
           <Text testID="results.lessonComplete" style={ResultsOverviewStyle5({ colors })}>
-            {courseLesson.number === LEARN_COURSE.length ? 'Course complete. You have reached the final lesson.' : 'Lesson complete. The next lesson is ready.'}
+            {t(courseLesson.number === LEARN_COURSE.length ? 'Course complete. You have reached the final lesson.' : 'Lesson complete. The next lesson is ready.')}
           </Text>
         ) : null}
 

@@ -1,6 +1,7 @@
 import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
+import { getLearnLessonAccessibilityStatusKeys, getLearnLessonTileBadge } from '@/features/learn/lessonTilePresentation';
 import { starsForAccuracy } from '@/rhythm/learnRating';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { LearnLesson } from '@/rhythm/learnCourse';
@@ -18,6 +19,9 @@ import {
 
 export function LearnLessonTile({
   lesson,
+  isCheckpoint,
+  checkpointChallenge,
+  unlockedByCheckpoint,
   selected,
   completed,
   skipped,
@@ -28,6 +32,9 @@ export function LearnLessonTile({
   onPress,
 }: {
   lesson: LearnLesson;
+  isCheckpoint: boolean;
+  checkpointChallenge: boolean;
+  unlockedByCheckpoint: boolean;
   selected: boolean;
   completed: boolean;
   skipped: boolean;
@@ -41,15 +48,19 @@ export function LearnLessonTile({
   const { t } = useI18n();
   const disabled = locked && !paywalled && !hasFullCourseUnlock;
   const stars = rating ? starsForAccuracy(rating.bestAccuracy) : 0;
-  const lessonStatus = skipped
-    ? t(', skipped, can be replayed')
-    : completed
-      ? t(', complete')
-    : paywalled
-      ? t(', paid course, tap to unlock')
-      : locked
-        ? t(', locked')
-        : '';
+  const lessonTileStatus = {
+    skipped,
+    completed,
+    paywalled,
+    isCheckpoint,
+    checkpointChallenge,
+    unlockedByCheckpoint,
+    locked,
+  };
+  const lessonStatus = getLearnLessonAccessibilityStatusKeys(lessonTileStatus)
+    .map((statusKey) => t(statusKey))
+    .join('');
+  const lessonBadge = getLearnLessonTileBadge(lessonTileStatus);
   const lessonRating = rating
     ? t(', best {accuracy} percent, {stars} of 5 stars', { accuracy: Math.round(rating.bestAccuracy), stars })
     : '';
@@ -69,11 +80,12 @@ export function LearnLessonTile({
       style={({ pressed }) => (LearnLessonTileStyle1({ selected, colors, disabled, pressed }))}
     >
       <View style={LearnLessonTileStyle2()}>
-        <Text style={LearnLessonTileStyle3({ colors })}>
+        <Text numberOfLines={1} style={LearnLessonTileStyle3({ colors })}>
           {String(lesson.number).padStart(2, '0')} · {t(lesson.level)}
+          {isCheckpoint ? ` · ${t('CHECKPOINT')}` : ''}
         </Text>
         <Text style={LearnLessonTileStyle4({ completed, skipped, colors, disabled })}>
-          {skipped ? '↪' : completed ? '✓' : paywalled ? 'PRO' : locked ? 'LOCKED' : '›'}
+          {t(lessonBadge)}
         </Text>
       </View>
       <Text numberOfLines={1} style={LearnLessonTileStyle5({ disabled, colors })}>
