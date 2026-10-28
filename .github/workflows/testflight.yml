@@ -36,16 +36,16 @@ jobs:
 
       - name: Audit App Store Connect setup
         env:
-          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
-          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
-          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+          ASC_API_KEY_ID: \${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: \${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_KEY_P8: \${{ secrets.ASC_API_KEY_P8 }}
         run: node scripts/audit-app-store-connect.mjs
 
       - name: Archive and upload to TestFlight
         env:
-          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
-          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
-          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+          ASC_API_KEY_ID: \${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: \${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_KEY_P8: \${{ secrets.ASC_API_KEY_P8 }}
           SPLITBEAT_MIN_FREE_SPACE_GIB: 5
         run: |
           if [[ -z "$ASC_API_KEY_ID" || -z "$ASC_API_ISSUER_ID" || -z "$ASC_API_KEY_P8" ]]; then
@@ -53,10 +53,34 @@ jobs:
             exit 1
           fi
 
-          key_path="$RUNNER_TEMP/AuthKey_${ASC_API_KEY_ID}.p8"
+          key_path="$RUNNER_TEMP/AuthKey_\${ASC_API_KEY_ID}.p8"
           printf '%s' "$ASC_API_KEY_P8" > "$key_path"
           chmod 600 "$key_path"
-          trap 'rm -f "$key_path"' EXIT
+
+          # Hermes is fetched by CocoaPods from Maven Central. Force curl to
+          # HTTP/1.1 and retry transient transport errors; HTTP/2 downloads have
+          # intermittently terminated before the Hermes archive finished.
+          curl_config="$HOME/.curlrc"
+          curl_config_backup="$RUNNER_TEMP/curlrc.backup"
+          if [[ -f "$curl_config" ]]; then
+            cp "$curl_config" "$curl_config_backup"
+          fi
+          cat >> "$curl_config" <<'CURLRC'
+          http1.1
+          retry = 5
+          retry-all-errors
+          retry-delay = 2
+          retry-max-time = 900
+          CURLRC
+          restore_release_credentials() {
+            rm -f "$key_path"
+            if [[ -f "$curl_config_backup" ]]; then
+              mv "$curl_config_backup" "$curl_config"
+            else
+              rm -f "$curl_config"
+            fi
+          }
+          trap restore_release_credentials EXIT
           unset ASC_API_KEY_P8
 
           echo "Using Xcode $(xcodebuild -version | tr '\n' ' ') for the timestamp-numbered build."
