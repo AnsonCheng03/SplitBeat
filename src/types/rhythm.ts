@@ -133,6 +133,7 @@ export interface ExerciseSettings {
   singleHand: Hand;
   soundEnabled: boolean;
   backgroundMusicEnabled: boolean;
+  backgroundMusicVolume?: number;
   sessionCuesEnabled: boolean;
   metronomeSound: SoundPreset;
   leftHandSound: SoundPreset;

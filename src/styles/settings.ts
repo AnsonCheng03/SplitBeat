@@ -50,6 +50,18 @@ export function audioStyle9({ colors }: { colors: import('@/theme').ThemeColors 
   return { color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6, marginBottom: 10 };
 }
 
+export function audioStyle10(): import('react-native').ViewStyle {
+  return { marginTop: 10, marginBottom: 8 };
+}
+
+export function audioStyle11(): import('react-native').ViewStyle {
+  return { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 };
+}
+
+export function audioStyle12({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.muted, fontSize: 12, fontWeight: '800', letterSpacing: 0.5 };
+}
+
 export function autoPlaySettingStyle1({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
   return { minHeight: 64, justifyContent: 'center', borderBottomWidth: 1, borderBottomColor: colors.line, paddingVertical: 14 };
 }

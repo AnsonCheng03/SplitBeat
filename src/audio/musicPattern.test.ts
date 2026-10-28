@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { createBackgroundMusicArrangement, getBackgroundMusicNotesAtBeat } from './backgroundMusic';
 import {
-  getAccompanimentNotesAtBeat,
   getBeatAudioTime,
   getResumeCountInPlan,
   isPatternChangeBeat,
@@ -9,16 +9,30 @@ import {
   SESSION_START_CUE,
 } from './musicPattern';
 
-test('accompaniment follows the selected metronome beat and meter', () => {
-  const commonTime = Array.from({ length: 8 }, (_, beat) => getAccompanimentNotesAtBeat(beat, 4));
-  assert.equal(commonTime[0][0].midiPitch, 48);
-  assert.equal(commonTime[0][1].midiPitch, 60);
-  assert.deepEqual(commonTime.slice(1, 4).map((notes) => notes[0].midiPitch), [55, 52, 55]);
-  assert.equal(commonTime[4][0].midiPitch, 53);
-  assert.equal(commonTime[4][1].midiPitch, 65);
+test('background music repeats a chord progression and melody over the selected meter', () => {
+  const arrangement = createBackgroundMusicArrangement(42);
+  const commonTime = Array.from({ length: 20 }, (_, beat) =>
+    getBackgroundMusicNotesAtBeat(beat, 4, 2, arrangement));
+  const firstBar = commonTime[0];
+  const firstBarPad = firstBar.filter((note) => note.voice === 'pad');
 
-  const compound = Array.from({ length: 6 }, (_, beat) => getAccompanimentNotesAtBeat(beat, 2));
-  assert.deepEqual(compound.map((notes) => notes[0].midiPitch), [48, 55, 53, 60, 55, 62]);
+  assert.equal(firstBarPad.length, 3);
+  assert.equal(firstBar.filter((note) => note.voice === 'bass').length, 1);
+  assert.equal(firstBar.filter((note) => note.voice === 'melody')[0].offsetBeats, 0.5);
+  assert.equal(commonTime[1].length, 0);
+  assert.equal(commonTime[2].filter((note) => note.voice === 'pad').length, 0);
+  assert.equal(commonTime[2].filter((note) => note.voice === 'melody').length, 1);
+  assert.deepEqual(
+    commonTime[0].filter((note) => note.voice === 'pad').map((note) => note.midiPitch),
+    commonTime[16].filter((note) => note.voice === 'pad').map((note) => note.midiPitch),
+  );
+
+  const compound = Array.from({ length: 4 }, (_, beat) =>
+    getBackgroundMusicNotesAtBeat(beat, 2, 3, arrangement));
+  assert.equal(compound[0].filter((note) => note.voice === 'melody')[0].offsetBeats, 1 / 3);
+  assert.equal(compound[1].filter((note) => note.voice === 'melody')[0].offsetBeats, 2 / 3);
+  assert.equal(compound[0].filter((note) => note.voice === 'pad').length, 3);
+  assert.equal(compound[1].filter((note) => note.voice === 'pad').length, 0);
 });
 
 test('scheduled beat times are calculated from the session start without accumulating drift', () => {
@@ -61,6 +75,8 @@ test('resume count-in uses half the pulse count in compound meter', () => {
 });
 
 test('invalid meter and pulse inputs produce no accompaniment events', () => {
-  assert.deepEqual(getAccompanimentNotesAtBeat(0, 0), []);
-  assert.deepEqual(getAccompanimentNotesAtBeat(0.5, 4), []);
+  const arrangement = createBackgroundMusicArrangement(1);
+  assert.deepEqual(getBackgroundMusicNotesAtBeat(0, 0, 2, arrangement), []);
+  assert.deepEqual(getBackgroundMusicNotesAtBeat(0.5, 4, 2, arrangement), []);
+  assert.deepEqual(getBackgroundMusicNotesAtBeat(-1, 4, 2, arrangement), []);
 });
