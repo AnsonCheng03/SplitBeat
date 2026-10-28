@@ -22,3 +22,7 @@ The skip action fills only the lessons before the selected target. The target re
 ## Saved progress
 
 Skipped lesson IDs are stored separately from lesson ratings and included in the existing revision-specific Game Center/iCloud progress snapshot. Older snapshots without a skipped-lesson field remain valid and load with no skipped lessons. The content revision still determines which course progress can merge, so edits to lesson content keep their existing version boundary.
+
+## Rhythm missions
+
+Rhythm missions are a separate Practice Mode activity with five sequentially unlocked challenges in 4/4. Each prompt can play as sound or vibration at the current practice tempo, capped at 120 BPM, followed by either a timed tap-back attempt or a note-composer answer. The composer uses the same note symbols, rests, and score preview as Focus Practice. Tap attempts are scored against the prompt's note onsets with a tempo-scaled timing window; composed answers compare the ordered note/rest durations. Passing saves that mission ID locally and unlocks the next mission. Mission progress is independent of course stars, course purchases, and Game Center course restore.

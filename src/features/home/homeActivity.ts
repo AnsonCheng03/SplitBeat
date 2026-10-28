@@ -1,4 +1,4 @@
-export type HomeActivity = 'practice' | 'focus' | 'score' | 'learn';
+export type HomeActivity = 'practice' | 'focus' | 'score' | 'learn' | 'missions';
 
 export interface HomeActivityOption {
   id: HomeActivity;

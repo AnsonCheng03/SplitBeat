@@ -9,6 +9,7 @@ export const FEATURE_FLAG_IDS = [
   'scoreImport',
   'savedScoreLibrary',
   'learnCourse',
+  'rhythmMissions',
   'rhythmExtensions',
   'sixtyFourthNotes',
   'mixtures',

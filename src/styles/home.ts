@@ -94,7 +94,7 @@ export function HomeActivityPickerStyle2(): import('react-native').ViewStyle {
 }
 
 export function HomeActivityPickerStyle3({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { width: '100%', maxWidth: 560, padding: 22, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line };
+  return { width: '100%', maxWidth: 560, maxHeight: '92%', padding: 22, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line };
 }
 
 export function HomeActivityPickerStyle4({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
