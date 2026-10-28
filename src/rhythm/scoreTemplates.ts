@@ -4,6 +4,8 @@ import type { TimeSignature } from '@/types/rhythm';
 interface TemplateNote {
   pitches: number[];
   durationQuarter: number;
+  tupletNumber?: number;
+  isRest?: boolean;
 }
 
 export interface ScoreTemplate {
@@ -50,10 +52,11 @@ function trackEvents(bars: readonly (readonly TemplateNote[])[]): ScoreRhythmEve
   return bars.map((bar) => {
     let startQuarter = 0;
     return bar.map((note) => {
-      const event = {
+      const event: ScoreRhythmEvent = {
         startQuarter,
         durationQuarter: note.durationQuarter,
-        midiPitches: [...note.pitches],
+        ...(note.isRest ? { isRest: true } : { midiPitches: [...note.pitches] }),
+        ...(note.tupletNumber === undefined ? {} : { tupletNumber: note.tupletNumber }),
       };
       startQuarter += note.durationQuarter;
       return event;
@@ -67,6 +70,14 @@ function note(pitch: number, durationQuarter = 1): TemplateNote {
 
 function chord(pitches: number[], durationQuarter: number): TemplateNote {
   return { pitches, durationQuarter };
+}
+
+function rest(durationQuarter: number): TemplateNote {
+  return { pitches: [], durationQuarter, isRest: true };
+}
+
+function triplet(pitch: number): TemplateNote {
+  return { pitches: [pitch], durationQuarter: 1 / 3, tupletNumber: 3 };
 }
 
 function makeTemplateScore(
@@ -328,6 +339,178 @@ export const SCORE_TEMPLATES: readonly ScoreTemplate[] = [
         [note(64), note(64), note(64, 2)],
         [note(62), note(64), note(67, 2)],
         [note(67, 4)],
+      ],
+    ),
+  },
+  {
+    id: 'pocket-parade-easy-duet',
+    title: 'Pocket Parade',
+    subtitle: 'An original first song with an easy quarter-note pulse.',
+    category: 'Pop',
+    tags: ['Easy', 'Both hands', 'Melody', 'Original'],
+    score: makeTemplateScore(
+      'Pocket Parade',
+      72,
+      2,
+      [
+        [note(72), note(76), note(79), note(76)],
+        [note(74), note(77), note(81), note(77)],
+        [note(72), note(76), note(79), note(83)],
+        [note(81), note(79), note(76, 2)],
+      ],
+      [
+        [chord([48, 55], 2), chord([48, 55], 2)],
+        [chord([45, 52], 2), chord([45, 52], 2)],
+        [chord([41, 48], 2), chord([41, 48], 2)],
+        [chord([43, 50], 2), chord([48, 55], 2)],
+      ],
+    ),
+  },
+  {
+    id: 'triple-trail-medium-duet',
+    title: 'Triple Trail',
+    subtitle: 'An original groove that alternates quarter notes and triplets.',
+    category: 'Pop',
+    tags: ['Difficult', 'Both hands', 'Syncopation', 'Original'],
+    score: makeTemplateScore(
+      'Triple Trail',
+      68,
+      2,
+      [
+        [triplet(72), triplet(74), triplet(76), note(79), triplet(76), triplet(74), triplet(72), note(76)],
+        [triplet(74), triplet(76), triplet(79), note(81), triplet(79), triplet(76), triplet(74), note(72)],
+        [triplet(72), triplet(74), triplet(76), note(79), triplet(81), triplet(79), triplet(76), note(74)],
+        [triplet(76), triplet(74), triplet(72), note(71), triplet(72), triplet(74), triplet(76), note(72)],
+      ],
+      [
+        [chord([48, 55], 1), chord([48, 55], 1), chord([43, 50], 1), chord([43, 50], 1)],
+        [chord([45, 52], 1), chord([45, 52], 1), chord([41, 48], 1), chord([41, 48], 1)],
+        [chord([41, 48], 1), chord([41, 48], 1), chord([45, 52], 1), chord([45, 52], 1)],
+        [chord([43, 50], 1), chord([43, 50], 1), chord([48, 55], 1), chord([48, 55], 1)],
+      ],
+    ),
+  },
+  {
+    id: 'three-lanterns-easy-duet',
+    title: 'Three Lanterns',
+    subtitle: 'An original 6/8 melody with two broad, even pulses per bar.',
+    category: 'Pop',
+    tags: ['Easy', 'Both hands', 'Melody', 'Original'],
+    score: makeTemplateScore(
+      'Three Lanterns',
+      64,
+      2,
+      [
+        [note(72, 0.5), note(76, 0.5), note(79, 0.5), note(76, 0.5), note(74, 0.5), note(72, 0.5)],
+        [note(74, 0.5), note(77, 0.5), note(81, 0.5), note(77, 0.5), note(76, 0.5), note(74, 0.5)],
+        [note(72, 0.5), note(76, 0.5), note(79, 0.5), note(83, 0.5), note(81, 0.5), note(79, 0.5)],
+        [note(76, 0.5), note(74, 0.5), note(72, 1), note(72, 0.5), note(74, 0.5)],
+      ],
+      [
+        [chord([48, 55], 1.5), chord([48, 55], 1.5)],
+        [chord([45, 52], 1.5), chord([45, 52], 1.5)],
+        [chord([41, 48], 1.5), chord([41, 48], 1.5)],
+        [chord([43, 50], 1.5), chord([48, 55], 1.5)],
+      ],
+      '6/8',
+    ),
+  },
+  {
+    id: 'roundabout-waltz-easy-duet',
+    title: 'Roundabout Waltz',
+    subtitle: 'An original 3/4 tune with a gentle one-two-three sway.',
+    category: 'Pop',
+    tags: ['Easy', 'Both hands', 'Melody', 'Original'],
+    score: makeTemplateScore(
+      'Roundabout Waltz',
+      72,
+      2,
+      [
+        [note(72), note(76), note(79)],
+        [note(81), note(79), note(76)],
+        [note(74), note(77), note(81)],
+        [note(79), note(76), note(72)],
+      ],
+      [
+        [chord([48, 55], 1), chord([48, 55], 1), chord([48, 55], 1)],
+        [chord([45, 52], 1), chord([45, 52], 1), chord([45, 52], 1)],
+        [chord([41, 48], 1), chord([41, 48], 1), chord([41, 48], 1)],
+        [chord([43, 50], 1), chord([43, 50], 1), chord([48, 55], 1)],
+      ],
+      '3/4',
+    ),
+  },
+  {
+    id: 'nine-bright-notes-medium-duet',
+    title: 'Nine Bright Notes',
+    subtitle: 'An original 9/8 song grouped into three flowing pulses.',
+    category: 'Pop',
+    tags: ['Difficult', 'Both hands', 'Melody', 'Original'],
+    score: makeTemplateScore(
+      'Nine Bright Notes',
+      60,
+      2,
+      [
+        [note(72, 0.5), note(74, 0.5), note(76, 0.5), note(79, 0.5), note(76, 0.5), note(74, 0.5), note(72, 0.5), note(76, 0.5), note(79, 0.5)],
+        [note(74, 0.5), note(76, 0.5), note(79, 0.5), note(81, 0.5), note(79, 0.5), note(76, 0.5), note(74, 0.5), note(77, 0.5), note(81, 0.5)],
+        [note(72, 0.5), note(76, 0.5), note(79, 0.5), note(83, 0.5), note(81, 0.5), note(79, 0.5), note(76, 0.5), note(74, 0.5), note(72, 0.5)],
+        [note(74, 0.5), note(77, 0.5), note(81, 0.5), note(79, 0.5), note(76, 0.5), note(74, 0.5), note(72, 0.5), note(71, 0.5), note(72, 0.5)],
+      ],
+      [
+        [chord([48, 55], 1.5), chord([43, 50], 1.5), chord([48, 55], 1.5)],
+        [chord([45, 52], 1.5), chord([41, 48], 1.5), chord([45, 52], 1.5)],
+        [chord([41, 48], 1.5), chord([45, 52], 1.5), chord([41, 48], 1.5)],
+        [chord([43, 50], 1.5), chord([48, 55], 1.5), chord([48, 55], 1.5)],
+      ],
+      '9/8',
+    ),
+  },
+  {
+    id: 'five-steps-home-medium-duet',
+    title: 'Five Steps Home',
+    subtitle: 'An original 5/4 tune that makes room for an extra beat.',
+    category: 'Pop',
+    tags: ['Difficult', 'Both hands', 'Melody', 'Original'],
+    score: makeTemplateScore(
+      'Five Steps Home',
+      66,
+      2,
+      [
+        [note(72), note(76), note(79), note(76), note(74)],
+        [note(74), note(77), note(81), note(77), note(76)],
+        [note(72), note(76), note(79), note(83), note(81)],
+        [note(79), note(76), note(74), note(72, 2)],
+      ],
+      [
+        [chord([48, 55], 2), chord([43, 50], 2), chord([48, 55], 1)],
+        [chord([45, 52], 2), chord([41, 48], 2), chord([45, 52], 1)],
+        [chord([41, 48], 2), chord([45, 52], 2), chord([41, 48], 1)],
+        [chord([43, 50], 2), chord([48, 55], 3)],
+      ],
+      '5/4',
+    ),
+  },
+  {
+    id: 'room-to-breathe-easy-duet',
+    title: 'Room to Breathe',
+    subtitle: 'An original duet that uses rests as part of the rhythm.',
+    category: 'Pop',
+    tags: ['Easy', 'Both hands', 'Original'],
+    score: makeTemplateScore(
+      'Room to Breathe',
+      66,
+      2,
+      [
+        [note(72, 0.5), rest(0.5), note(76), note(79), note(76)],
+        [rest(1), note(74, 0.5), note(77, 0.5), note(81), note(77)],
+        [note(72), rest(0.5), note(76, 0.5), note(79), rest(1)],
+        [note(81), note(79), rest(1), note(72)],
+      ],
+      [
+        [chord([48, 55], 2), rest(1), chord([43, 50], 1)],
+        [rest(1), chord([45, 52], 2), chord([41, 48], 1)],
+        [chord([41, 48], 1), rest(1), chord([45, 52], 2)],
+        [chord([43, 50], 2), chord([48, 55], 2)],
       ],
     ),
   },

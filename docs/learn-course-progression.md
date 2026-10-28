@@ -2,6 +2,12 @@
 
 The first three lessons are free. Owning the full-course purchase opens the remaining lessons and enables **Skip to this lesson** for a locked lesson.
 
+## Course songs
+
+The Learn screen includes a recommended original song for each lesson and a separate **Original Course Songs** library. Recommendations use the lesson's time signature. Songs reuse the score-practice player, show the full written part, and play the scored pitches along with the beat when sound is enabled. Single-track songs follow the learner's selected hand.
+
+Song practice is supplemental: it does not award lesson stars, complete a lesson, or change course unlock progress. Song scores are authored with the score templates and do not depend on external music licensing.
+
 ## Skip eligibility
 
 A learner can skip ahead after completing at least one lesson and meeting either mastery condition:

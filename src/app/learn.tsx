@@ -3,9 +3,11 @@ import { Text } from '@/i18n/LocalizedText';
 import { FullBleedSafeArea } from '@/components/FullBleedSafeArea';
 import { GameCenterCourseProgressButton } from '@/components/GameCenterCourseProgressButton';
 import { LearnPatternPreview } from '@/components/LearnPatternPreview';
+import { LearnSongLessonCard } from '@/components/LearnSongLessonCard';
 import { LearnCoursePath } from '@/components/LearnCoursePath';
 import { ModeLoadingScreen } from '@/components/ModeLoadingScreen';
 import { useLearnScreen } from '@/features/learn/useLearnScreen';
+import { learnSongsLinkStyle, learnSongsLinkTextStyle } from '@/styles/learnSongs';
 import { learnStyle1,
   learnStyle2,
   learnStyle3,
@@ -96,6 +98,7 @@ export default function LearnScreen() {
     lessonProgressPercent,
     totalLessons,
     startLesson,
+    openSongLibrary,
     skipToSelectedLesson,
     handleProgressSynced,
     returnHome,
@@ -154,6 +157,15 @@ export default function LearnScreen() {
         <Text style={learnStyle7({ colors })}>
           A simple path from steady pulse to independent rhythms.
         </Text>
+        <Pressable
+          testID="learn.songs.open"
+          accessibilityRole="button"
+          accessibilityLabel={t('Open original course songs')}
+          onPress={() => openSongLibrary()}
+          style={({ pressed }) => learnSongsLinkStyle({ colors, pressed })}
+        >
+          <Text style={learnSongsLinkTextStyle({ colors })}>{t('ORIGINAL COURSE SONGS')}  ›</Text>
+        </Pressable>
 
         <View style={learnStyle8({ compact })}>
           <View style={learnStyle9()}>
@@ -211,6 +223,7 @@ export default function LearnScreen() {
             </Text>
           ) : null}
           <LearnPatternPreview lesson={selectedLesson} />
+          <LearnSongLessonCard lessonId={selectedLesson.id} onOpenSong={openSongLibrary} />
         </View>
 
         {requiresPurchase ? (

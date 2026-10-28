@@ -233,6 +233,9 @@ export function useLearnScreen() {
   }, [routeLessonId]);
 
   const returnHome = useCallback(() => router.replace('/'), [router]);
+  const openSongLibrary = useCallback((songId?: string) => {
+    router.push(songId ? { pathname: '/learn-songs', params: { songId } } : '/learn-songs');
+  }, [router]);
   const restorePurchase = purchase.restoreFullCourse;
   const buyCourse = purchase.buyFullCourse;
   const retryStore = purchase.retryStoreConnection;
@@ -287,6 +290,7 @@ export function useLearnScreen() {
     lessonProgressPercent,
     totalLessons: LEARN_COURSE.length,
     startLesson,
+    openSongLibrary,
     handleProgressSynced,
     returnHome,
     restorePurchase,

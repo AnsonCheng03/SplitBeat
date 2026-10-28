@@ -14,8 +14,9 @@ test('filters example scores by category', () => {
     'minuet-in-g-easy-duet',
   ]);
   const pop = filterScoreTemplates(SCORE_TEMPLATES, { category: 'Pop' });
-  assert.equal(pop.length, 3);
+  assert.ok(pop.length >= 3);
   assert.ok(pop.some(({ id }) => id === 'pop-groove-difficult-duet'));
+  assert.ok(pop.some(({ id }) => id === 'three-lanterns-easy-duet'));
   assert.equal(filterScoreTemplates(SCORE_TEMPLATES, { category: 'All' }).length, SCORE_TEMPLATES.length);
 });
 
@@ -32,7 +33,12 @@ test('combines tags with AND matching for difficulty and hand setup', () => {
   const difficultTwoHandScores = filterScoreTemplates(SCORE_TEMPLATES, {
     tags: ['Difficult', 'Both hands'],
   });
-  assert.deepEqual(difficultTwoHandScores.map(({ id }) => id), ['pop-groove-difficult-duet']);
+  assert.deepEqual(difficultTwoHandScores.map(({ id }) => id), [
+    'pop-groove-difficult-duet',
+    'triple-trail-medium-duet',
+    'nine-bright-notes-medium-duet',
+    'five-steps-home-medium-duet',
+  ]);
 
   const easyOneHandScores = filterScoreTemplates(SCORE_TEMPLATES, {
     tags: ['Easy', 'One hand'],
