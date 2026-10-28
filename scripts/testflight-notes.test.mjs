@@ -89,10 +89,12 @@ test('adds or updates localized notes on the processed build', async () => {
 
   const patchCall = calls.find((call) => call.method === 'PATCH');
   const postCall = calls.find((call) => call.method === 'POST');
+  const notes = await readTestFlightNotes(new URL('../store/app-store/testflight-notes.md', import.meta.url));
   assert.equal(patchCall.pathname, '/v1/betaBuildLocalizations/english-note-id');
-  assert.equal(JSON.parse(patchCall.body).data.attributes.whatsNew.includes('rhythm listening missions'), true);
+  assert.equal(JSON.parse(patchCall.body).data.attributes.whatsNew, notes.get('en-US'));
   assert.equal(postCall.pathname, '/v1/betaBuildLocalizations');
   assert.equal(JSON.parse(postCall.body).data.attributes.locale, 'zh-Hant');
+  assert.equal(JSON.parse(postCall.body).data.attributes.whatsNew, notes.get('zh-Hant'));
 });
 
 function jsonResponse(body, status = 200) {
