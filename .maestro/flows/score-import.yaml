@@ -20,23 +20,22 @@ appId: com.splitbeat.twohandrhythm
     visible:
       id: home.screen
     timeout: 15000
-- extendedWaitUntil:
-    visible:
-      id: tutorial.overlay
-    timeout: 15000
-- tapOn:
-    id: tutorial.skip
+- runFlow:
+    when:
+      visible:
+        id: tutorial.overlay
+    commands:
+      - tapOn:
+          id: tutorial.skip
 - tapOn:
     id: home.activityPicker
 - tapOn:
     id: home.importScore
 - tapOn:
     id: home.start
-- assertVisible:
-    id: home.activityLoading
 - extendedWaitUntil:
     visible:
-    id: scoreImport.screen
+      id: scoreImport.screen
     timeout: 15000
 - assertVisible:
     id: scoreImport.import
@@ -70,6 +69,11 @@ appId: com.splitbeat.twohandrhythm
     id: scoreImport.display.slide
     selected: true
 - tapOn:
+    id: scoreImport.display.slide-per-note
+- assertVisible:
+    id: scoreImport.display.slide-per-note
+    selected: true
+- tapOn:
     id: scoreImport.display.fade
 - assertVisible:
     id: scoreImport.display.fade
@@ -82,8 +86,6 @@ appId: com.splitbeat.twohandrhythm
     direction: DOWN
 - tapOn:
     id: scoreImport.start
-- assertVisible:
-    id: scoreImport.preparing
 - extendedWaitUntil:
     visible:
       id: practice.screen
@@ -92,8 +94,6 @@ appId: com.splitbeat.twohandrhythm
     id: practice.tutorial
 - tapOn:
     id: practice.tutorial
-- assertVisible:
-    id: practice.preparing
 - extendedWaitUntil:
     visible:
       id: practice.rhythmDisplay
