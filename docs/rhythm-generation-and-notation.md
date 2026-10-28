@@ -38,7 +38,7 @@ flowchart LR
 - The score editor maps note icons to quarter-note durations with `noteValuesForSymbol()` and places them into measures with `composeRhythmScore()` in `src/rhythm/scoreComposer.ts`. Each hand advances independently. Notes crossing a bar line are split into written segments and tied so they remain one scored attack.
 - `src/rhythm/musicXmlParser.ts` and `src/rhythm/midiParser.ts` normalize imported material into `ImportedRhythmScore` measures with left/right events.
 - `src/rhythm/scoreStaff.ts` converts score events into notation events. `ScoreRhythmMeasure` and `ScoreBeatFocus` provide the bar or beat span and its beam-group length to the same notation planner used by generated practice.
-- The **Rhythm symbols / Score notes** choice is on the home practice-mode screen. Score practice offers **Fade** (the default, with fixed bar positions), **Slide** (one bar per transition), and **Slide per note** from Appearance Settings. One-note focus remains available for imported scores. `src/rhythm/scoreMotion.ts` bounds bar-slide movement and derives note-onset progress; the practice snapshot supplies the fractional position for imported and generated scores.
+- The **Rhythm symbols / Score notes** choice is on the home practice-mode screen. Score practice offers **Fade** (the default, with fixed bar positions), **Slide** (one bar per transition), and **Slide per note** from Appearance Settings. In Fade mode, beat 3 crossfades the first visible slot to the next bar and beat 4 crossfades the second slot to the bar after that; both handoffs keep each slot in place. One-note focus remains available for imported scores. `src/rhythm/scoreMotion.ts` bounds bar-slide movement, plans fade handoffs, and derives note-onset progress; the practice snapshot supplies beat position and note progress for imported and generated scores.
 - The live counter displays written beat positions across the selected meter. `beatCounterPosition()` maps compound pulses onto written beats, so `6/8` shows six positions while its metronome uses two dotted-quarter pulses. Timing-engine coverage checks all supported meters over multiple bars; the iOS flow checks the visible 4/4 dots and label.
 
 ## Meter and grouping rules
@@ -69,7 +69,7 @@ Reusable components own a focused display area or interaction. The session provi
 
 Keep route and workflow functions as readable sequences of named steps. A helper should have one clear responsibility that its name describes; when a function validates input, persists data, and changes UI state, separate those actions into focused functions or feature hooks. Components follow the same rule: the parent composes focused sections, while each child owns one display area or interaction. Avoid files that only re-export other modules.
 
-| Screen or feature | Main components |
+| Screen or feature | Main component |
 | --- | --- |
 | Practice | `PracticeStatusBar`, `PracticeRhythmDisplay`, `PracticeTapZones`, `PracticeIntroOverlay`, and `PracticePauseOverlays`; the pause menu composes dedicated swing, rewind, tempo, and action controls |
 | Score notation | `ScrollingScoreRhythm` → `ScoreRhythmMeasure` → `ScoreRhythmLane` → `NoteNotation` / `VexFlowNotationDOM` |

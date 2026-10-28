@@ -18,18 +18,23 @@ appId: com.splitbeat.twohandrhythm
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
-      id: home.screen
-    timeout: 15000
-- extendedWaitUntil:
-    visible:
       id: tutorial.overlay
     timeout: 15000
-- tapOn:
-    id: tutorial.skip
+- longPressOn:
+    id: tutorial.holdToSkip
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
 - tapOn:
     id: home.activityPicker
+- waitForAnimationToEnd
 - tapOn:
     id: home.importScore
+- waitForAnimationToEnd
+- tapOn:
+    id: home.start
+- waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
       id: scoreImport.screen

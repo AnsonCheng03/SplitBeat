@@ -78,7 +78,11 @@ export default function ImportScoreScreen() {
 
   return (
     <SafeAreaView testID="scoreImport.screen" style={importscoreStyle1({ colors })}>
-      <ScrollView contentContainerStyle={importscoreStyle13()} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        key={score ? 'score-preview' : 'score-library'}
+        contentContainerStyle={importscoreStyle13()}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={importscoreStyle2()}>
           <Pressable
             accessibilityRole="button"

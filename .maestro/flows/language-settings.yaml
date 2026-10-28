@@ -4,14 +4,16 @@ appId: com.splitbeat.twohandrhythm
 - launchApp:
     clearState: true
 - waitForAnimationToEnd
-- assertVisible:
-    id: home.screen
 - extendedWaitUntil:
     visible:
       id: tutorial.overlay
     timeout: 15000
-- tapOn:
-    id: tutorial.skip
+- longPressOn:
+    id: tutorial.holdToSkip
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
 - tapOn:
     id: home.setup
 - assertVisible:
@@ -33,4 +35,6 @@ appId: com.splitbeat.twohandrhythm
     id: setup.screen
 - tapOn:
     id: setup.home
-- assertVisible: Choose a mode
+- assertVisible:
+    id: home.screen
+- assertVisible: Ready to practise?

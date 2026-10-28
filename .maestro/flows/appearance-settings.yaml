@@ -5,14 +5,14 @@ appId: com.splitbeat.twohandrhythm
     clearState: true
 - extendedWaitUntil:
     visible:
-      id: home.screen
-    timeout: 15000
-- extendedWaitUntil:
-    visible:
       id: tutorial.overlay
     timeout: 15000
-- tapOn:
-    id: tutorial.skip
+- longPressOn:
+    id: tutorial.holdToSkip
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
 - tapOn:
     id: home.setup
 - assertVisible:
@@ -26,8 +26,6 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: settings.appearance.screen
 - tapOn:
-    id: settings.appearance.display.score
-- tapOn:
     id: settings.appearance.lightMode
 - tapOn:
     id: settings.appearance.back
@@ -37,6 +35,11 @@ appId: com.splitbeat.twohandrhythm
     id: setup.home
 - assertVisible:
     id: home.screen
+- tapOn:
+    id: home.display.score
+- assertVisible:
+    id: home.display.score
+    selected: true
 - tapOn:
     id: home.start
 - extendedWaitUntil:
@@ -52,4 +55,4 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: practice.scoreBackground
 - assertVisible:
-    id: practice.scoreMeasure.bar.0
+    id: practice.scoreMeasure.slot.0.bar.0

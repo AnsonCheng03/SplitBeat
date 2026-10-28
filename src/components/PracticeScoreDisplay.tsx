@@ -83,6 +83,8 @@ export function PracticeScoreDisplay({
         count={count}
         movementMode={scoreDisplayMode === 'focus' ? 'fade' : scoreDisplayMode}
         quarterInMeasure={quarterInMeasure}
+        counterBeatInBar={snapshot?.counterBeatInBar ?? 0}
+        counterBeatsPerBar={snapshot?.counterBeatsPerBar ?? Number(settings.timeSignature.split('/')[0])}
         compact={compact}
         beamGroupQuarterNotes={pulseQuarterNotes(settings.timeSignature)}
         minimal

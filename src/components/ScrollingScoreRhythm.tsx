@@ -1,12 +1,18 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, View } from 'react-native';
+import { FadeScoreBarSlot } from '@/components/FadeScoreBarSlot';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { MeasureBarLine, RhythmTrack } from '@/components/ScoreRhythmLane';
 import { scoreLaneHeight } from '@/rhythm/scoreRhythmLayout';
 import type { NoteNotationSize } from '@/rhythm/noteNotation';
 import { scoreBarWidth } from '@/rhythm/scoreLayout';
-import { scoreNoteScrollProgress, scoreStripOffset } from '@/rhythm/scoreMotion';
+import {
+  scoreFadeOutgoingSequence,
+  scoreFadeVisibleSequences,
+  scoreNoteScrollProgress,
+  scoreStripOffset,
+} from '@/rhythm/scoreMotion';
 import type { ScoreDisplayMode } from '@/rhythm/scoreStaff';
 import type { ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
 import type { Hand } from '@/types/rhythm';
@@ -34,6 +40,8 @@ interface ScrollingScoreRhythmProps {
   count: number;
   movementMode: Exclude<ScoreDisplayMode, 'focus'>;
   quarterInMeasure: number;
+  counterBeatInBar: number;
+  counterBeatsPerBar: number;
   compact?: boolean;
   beamGroupQuarterNotes?: number;
   minimal?: boolean;
@@ -60,6 +68,7 @@ function scoreBar(measure: ScoreMeasure, count: number, sequence: number): Visib
 
 function ScoreBarPanel({
   bar,
+  slotIndex,
   count,
   width,
   size,
@@ -71,6 +80,7 @@ function ScoreBarPanel({
   initialNotationWidth,
 }: {
   bar: VisibleScoreBar;
+  slotIndex: number;
   count: number;
   width: number;
   size: NoteNotationSize;
@@ -88,7 +98,7 @@ function ScoreBarPanel({
   );
   return (
     <View
-      testID={`practice.scoreMeasure.bar.${bar.sequence}`}
+      testID={`practice.scoreMeasure.slot.${slotIndex}.bar.${bar.sequence}`}
       style={ScrollingScoreRhythmStyle1({ width, minimal, size })}
     >
       {!minimal ? (
@@ -109,7 +119,7 @@ function ScoreBarPanel({
         minimal={minimal}
         showStaffLines={showStaffLines}
         initialNotationWidth={initialNotationWidth}
-        testIdPrefix={`practice.scoreMeasure.bar.${bar.sequence}`}
+        testIdPrefix={`practice.scoreMeasure.slot.${slotIndex}.bar.${bar.sequence}`}
       /> : null}
       {(!visibleHand || visibleHand === 'right') ? <RhythmTrack
         label="RIGHT"
@@ -122,9 +132,9 @@ function ScoreBarPanel({
         minimal={minimal}
         showStaffLines={showStaffLines}
         initialNotationWidth={initialNotationWidth}
-        testIdPrefix={`practice.scoreMeasure.bar.${bar.sequence}`}
+        testIdPrefix={`practice.scoreMeasure.slot.${slotIndex}.bar.${bar.sequence}`}
       /> : null}
-      <MeasureBarLine testID={`practice.scoreMeasure.barline.${bar.sequence}`} inset={4} />
+      <MeasureBarLine testID={`practice.scoreMeasure.slot.${slotIndex}.barline`} inset={4} />
     </View>
   );
 }
@@ -139,6 +149,8 @@ export function ScrollingScoreRhythm({
   count,
   movementMode,
   quarterInMeasure,
+  counterBeatInBar,
+  counterBeatsPerBar,
   compact = false,
   beamGroupQuarterNotes = 1,
   minimal = false,
@@ -160,19 +172,58 @@ export function ScrollingScoreRhythm({
   const laneGap = visibleLaneCount > 1 ? compact ? 2 : 4 : 0;
   const scoreRowsHeight = laneHeight * visibleLaneCount + laneGap;
   const [translateX] = useState(() => new Animated.Value(0));
-  const [fadeProgress] = useState(() => new Animated.Value(1));
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
   const motionRef = useRef({ sequence, movementMode, barWidth: 0, noteProgress: 0 });
   const barWidth = scoreBarWidth(viewportWidth, count);
   const initialNotationWidth = Math.max(0, barWidth - 8);
   const followingMeasures = upcomingMeasures?.length ? upcomingMeasures : [measure, nextMeasure];
   const upcomingBars = followingMeasures.map((item, offset) => scoreBar(item, count, sequence + offset));
-  const visibleBars = sequence === 0 || !previousMeasure
+  const regularVisibleBars = sequence === 0 || !previousMeasure
     ? upcomingBars
     : [scoreBar(previousMeasure, count, sequence - 1), ...upcomingBars];
+  const visibleBars = movementMode === 'fade'
+    ? scoreFadeVisibleSequences(sequence, count, counterBeatInBar, counterBeatsPerBar)
+      .flatMap((barSequence) => {
+        const bar = upcomingBars.find((candidate) => candidate.sequence === barSequence);
+        return bar ? [bar] : [];
+      })
+    : regularVisibleBars;
   const noteProgress = movementMode === 'slide-per-note'
     ? scoreNoteScrollProgress(measure, quarterInMeasure)
     : 0;
+  const renderScoreBarPanel = (bar: VisibleScoreBar, slotIndex: number) => (
+    <ScoreBarPanel
+      bar={bar}
+      slotIndex={slotIndex}
+      count={count}
+      width={barWidth}
+      size={size}
+      beamGroupQuarterNotes={beamGroupQuarterNotes}
+      minimal={minimal}
+      visibleHand={visibleHand}
+      focusedColor={focusedColor}
+      showStaffLines={showStaffLines}
+      initialNotationWidth={initialNotationWidth}
+    />
+  );
+  const visibleSlots = visibleBars.map((bar, slotIndex) => {
+    const outgoingSequence = movementMode === 'fade'
+      ? scoreFadeOutgoingSequence(
+        slotIndex,
+        sequence,
+        count,
+        counterBeatInBar,
+        counterBeatsPerBar,
+      )
+      : undefined;
+    return {
+      bar,
+      slotIndex,
+      outgoingBar: outgoingSequence === undefined
+        ? undefined
+        : upcomingBars.find((candidate) => candidate.sequence === outgoingSequence),
+    };
+  });
 
   useLayoutEffect(() => {
     const previousMotion = motionRef.current;
@@ -184,28 +235,14 @@ export function ScrollingScoreRhythm({
 
     if (barWidth <= 0) {
       translateX.setValue(0);
-      fadeProgress.setValue(1);
       return;
     }
 
     if (movementMode === 'fade') {
       translateX.setValue(0);
-      if (sequenceChanged || modeChanged) {
-        fadeProgress.setValue(0);
-        animationRef.current = Animated.timing(fadeProgress, {
-          toValue: 1,
-          duration: 180,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        });
-        animationRef.current.start();
-      } else if (widthChanged) {
-        fadeProgress.setValue(1);
-      }
       return () => animationRef.current?.stop();
     }
 
-    fadeProgress.setValue(1);
     const targetOffset = scoreStripOffset(movementMode, barWidth, sequence, noteProgress);
     if (movementMode === 'slide') {
       if (sequenceChanged || modeChanged) {
@@ -240,7 +277,7 @@ export function ScrollingScoreRhythm({
     }
 
     return () => animationRef.current?.stop();
-  }, [barWidth, fadeProgress, movementMode, noteProgress, sequence, translateX]);
+  }, [barWidth, movementMode, noteProgress, sequence, translateX]);
 
   return (
     <View
@@ -269,22 +306,18 @@ export function ScrollingScoreRhythm({
         {barWidth > 0 ? (
           <Animated.View
             testID="practice.scoreMeasure.strip"
-            style={ScrollingScoreRhythmStyle11({ barWidth, visibleBars, translateX, fadeProgress })}
+            style={ScrollingScoreRhythmStyle11({ barWidth, visibleBars, translateX })}
           >
-            {visibleBars.map((bar) => (
-              <ScoreBarPanel
-                key={bar.sequence}
-                bar={bar}
-                count={count}
+            {visibleSlots.map(({ bar, slotIndex, outgoingBar }) => (
+              <FadeScoreBarSlot
+                key={slotIndex}
+                sequence={bar.sequence}
                 width={barWidth}
-                size={size}
-                beamGroupQuarterNotes={beamGroupQuarterNotes}
-                minimal={minimal}
-                visibleHand={visibleHand}
-                focusedColor={focusedColor}
-                showStaffLines={showStaffLines}
-                initialNotationWidth={initialNotationWidth}
-              />
+                animate={Boolean(outgoingBar)}
+                outgoing={outgoingBar ? renderScoreBarPanel(outgoingBar, slotIndex) : undefined}
+              >
+                {renderScoreBarPanel(bar, slotIndex)}
+              </FadeScoreBarSlot>
             ))}
           </Animated.View>
         ) : null}

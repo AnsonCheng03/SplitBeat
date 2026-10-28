@@ -548,8 +548,15 @@ export function SettingsPageStyle19({ selected, colors }: { selected: boolean; c
   return { color: selected ? colors.accent : colors.muted, fontSize: 12, fontWeight: selected ? '800' : '600' };
 }
 
-export function SettingsPageStyle20({ compact, mobileLayout }: { compact: boolean; mobileLayout: boolean }): import('react-native').ViewStyle {
-  return { paddingHorizontal: mobileLayout ? 16 : compact ? 16 : 28, paddingTop: mobileLayout ? 16 : compact ? 14 : 20, paddingBottom: compact ? 20 : 28, width: '100%', maxWidth: 1120, alignSelf: 'center' };
+export function SettingsPageStyle20({ compact, mobileLayout, hasFooter }: { compact: boolean; mobileLayout: boolean; hasFooter: boolean }): import('react-native').ViewStyle {
+  return {
+    paddingHorizontal: mobileLayout ? 16 : compact ? 16 : 28,
+    paddingTop: mobileLayout ? 16 : compact ? 14 : 20,
+    paddingBottom: hasFooter ? 180 : compact ? 20 : 28,
+    width: '100%',
+    maxWidth: 1120,
+    alignSelf: 'center',
+  };
 }
 
 export function SettingsPageStyle21({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {

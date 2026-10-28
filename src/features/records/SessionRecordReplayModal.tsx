@@ -44,7 +44,13 @@ export function SessionRecordReplayModal({
   } = useSessionRecordReplay(record);
 
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible
+      transparent
+      animationType="fade"
+      supportedOrientations={['landscape-left', 'landscape-right']}
+      onRequestClose={onClose}
+    >
       <View style={recordsStyle44()}>
         <View style={recordsStyle45({ colors })}>
           <View style={recordsStyle46()}>

@@ -25,7 +25,14 @@ export function AppTutorialOverlay({ onDismiss }: { onDismiss: () => void }) {
   const heading = t(phase === 'complete' ? 'Tutorial complete' : mode.title);
 
   return (
-    <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={() => {}}>
+    <Modal
+      visible
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      supportedOrientations={['landscape-left', 'landscape-right']}
+      onRequestClose={() => {}}
+    >
       <View testID="tutorial.overlay" style={tutorialStyleOverlay()}>
         <TutorialSkipControl onSkip={onDismiss} />
         <View style={tutorialStyleCard({ colors, compact })}>

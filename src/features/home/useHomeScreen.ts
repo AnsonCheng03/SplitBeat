@@ -6,7 +6,11 @@ import { useAppTutorial } from '@/store/AppTutorialProvider';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { HomeActivity, HomeActivityOption } from '@/features/home/homeActivity';
-import { keepModeLoadingVisible, waitForModeLoadingFrame } from '@/features/modeLoadingFeedback';
+import {
+  keepModeLoadingVisible,
+  MIN_ACTIVITY_LOADING_FEEDBACK_MS,
+  waitForModeLoadingFrame,
+} from '@/features/modeLoadingFeedback';
 
 export function useHomeScreen() {
   const { colors } = useTheme();
@@ -92,7 +96,7 @@ export function useHomeScreen() {
         return;
       }
       await prepareExercise();
-      await keepModeLoadingVisible(loadingStartedAt);
+      await keepModeLoadingVisible(loadingStartedAt, MIN_ACTIVITY_LOADING_FEEDBACK_MS);
       router.replace('/practice');
     } catch {
       Alert.alert(t('Audio could not start'), t('Check your device audio settings and try again.'));
@@ -129,7 +133,7 @@ export function useHomeScreen() {
     const loadingStartedAt = Date.now();
     try {
       await waitForModeLoadingFrame();
-      await keepModeLoadingVisible(loadingStartedAt);
+      await keepModeLoadingVisible(loadingStartedAt, MIN_ACTIVITY_LOADING_FEEDBACK_MS);
       navigateToActivity(currentActivity.id);
     } catch {
       openingActivityRef.current = false;

@@ -184,7 +184,7 @@ export function SettingsPage({
 
         <ScrollView
           style={SettingsPageStyle11()}
-          contentContainerStyle={SettingsPageStyle20({ compact, mobileLayout })}
+          contentContainerStyle={SettingsPageStyle20({ compact, mobileLayout, hasFooter: footer != null })}
           showsVerticalScrollIndicator={false}
         >
           <Text style={SettingsPageStyle12({ colors })}>

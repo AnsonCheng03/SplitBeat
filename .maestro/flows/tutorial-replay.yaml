@@ -1,0 +1,45 @@
+appId: com.splitbeat.twohandrhythm
+---
+- setOrientation: LANDSCAPE_LEFT
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: tutorial.overlay
+    timeout: 15000
+- longPressOn:
+    id: tutorial.holdToSkip
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
+- tapOn:
+    id: home.setup
+- extendedWaitUntil:
+    visible:
+      id: setup.screen
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: setup.tutorial.replay
+    direction: DOWN
+- swipe:
+    start: 55%, 70%
+    end: 55%, 20%
+- takeScreenshot: tutorial-replay-setting
+- tapOn:
+    id: setup.tutorial.replay
+- extendedWaitUntil:
+    visible:
+      id: tutorial.overlay
+    timeout: 10000
+- assertVisible:
+    id: tutorial.title
+    text: NOTE VIEW
+- takeScreenshot: tutorial-replay-open
+- longPressOn:
+    id: tutorial.holdToSkip
+- assertNotVisible:
+    id: tutorial.overlay
+- assertVisible:
+    id: setup.screen

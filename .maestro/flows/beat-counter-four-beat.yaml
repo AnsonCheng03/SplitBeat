@@ -5,15 +5,14 @@ appId: com.splitbeat.twohandrhythm
     clearState: true
 - extendedWaitUntil:
     visible:
+      id: tutorial.overlay
+    timeout: 15000
+- longPressOn:
+    id: tutorial.holdToSkip
+- extendedWaitUntil:
+    visible:
       id: home.screen
     timeout: 15000
-- runFlow:
-    when:
-      visible:
-        id: tutorial.overlay
-    commands:
-      - tapOn:
-          id: tutorial.skip
 - tapOn:
     id: home.setup
 - assertVisible:

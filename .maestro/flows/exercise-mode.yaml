@@ -6,25 +6,26 @@ appId: com.splitbeat.twohandrhythm
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
-      id: home.screen
-    timeout: 15000
-- extendedWaitUntil:
-    visible:
       id: tutorial.overlay
     timeout: 15000
-- tapOn:
-    id: tutorial.skip
+- longPressOn:
+    id: tutorial.holdToSkip
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
 - tapOn:
     id: home.activityPicker
 - tapOn:
     id: home.exercise
+- assertVisible:
+    id: home.start
+- waitForAnimationToEnd
 - tapOn:
     id: home.start
-- assertVisible:
-    id: home.activityLoading
 - extendedWaitUntil:
     visible:
-    id: exercise.screen
+      id: exercise.screen
     timeout: 15000
 - tapOn:
     id: exercise.tab.bar
@@ -33,18 +34,38 @@ appId: com.splitbeat.twohandrhythm
     id: exercise.composer.mode.rest
 - tapOn:
     id: exercise.composer.symbol.whole
+- scrollUntilVisible:
+    element:
+      id: exercise.composer.timeline
+    direction: DOWN
 - assertVisible:
     id: exercise.composer.timeline
+- scrollUntilVisible:
+    element:
+      id: exercise.composer.hand.right
+    direction: UP
 - tapOn:
     id: exercise.composer.hand.right
 - tapOn:
     id: exercise.composer.mode.note
 - tapOn:
     id: exercise.composer.symbol.whole
+- scrollUntilVisible:
+    element:
+      id: exercise.composer.preview.1.leftNotation
+    direction: DOWN
 - assertVisible:
     id: exercise.composer.preview.1.leftNotation
+- scrollUntilVisible:
+    element:
+      id: exercise.composer.symbol.whole
+    direction: UP
 - tapOn:
     id: exercise.composer.symbol.whole
+- scrollUntilVisible:
+    element:
+      text: 2 bars
+    direction: DOWN
 - assertVisible: 2 bars
 - scrollUntilVisible:
     element:
@@ -70,11 +91,9 @@ appId: com.splitbeat.twohandrhythm
     id: practice.tutorial
 - tapOn:
     id: practice.tutorial
-- assertVisible:
-    id: practice.preparing
 - extendedWaitUntil:
     visible:
-    id: practice.beatCounter
+      id: practice.beatCounter
     timeout: 5000
 - tapOn:
     id: practice.pause

@@ -17,45 +17,72 @@ appId: com.splitbeat.twohandrhythm
       - tapOn: Open
 - extendedWaitUntil:
     visible:
-      id: home.screen
-    timeout: 15000
-- extendedWaitUntil:
-    visible:
       id: tutorial.overlay
     timeout: 15000
 - assertVisible:
     id: tutorial.title
-- takeScreenshot: app-tutorial-mode
+    text: NOTE VIEW
+- assertVisible:
+    id: tutorial.beatCount
+    text: Beat 1 of 4
+- assertVisible:
+    id: tutorial.notation.note
 - tapOn:
-    id: tutorial.next
-- assertVisible: Choose your hands and notation
-- takeScreenshot: app-tutorial-hands
+    id: tutorial.tapRight
+- assertVisible:
+    id: tutorial.feedback
+    text: That was the other hand. Start this bar again from beat one.
+- assertVisible:
+    id: tutorial.beatCount
+    text: Beat 1 of 4
 - tapOn:
-    id: tutorial.next
-- assertVisible: Set your pace and start
+    id: tutorial.tapLeft
+- assertVisible:
+    id: tutorial.hint
+    text: 'Beat 2: tap the right side.'
 - tapOn:
-    id: tutorial.next
-- assertVisible: Play, pause, and review
+    id: tutorial.tapRight
+- tapOn:
+    id: tutorial.tapLeft
+- tapOn:
+    id: tutorial.tapRight
+- assertVisible:
+    id: tutorial.title
+    text: BAR VIEW
+- assertVisible:
+    id: tutorial.notation.bar
+- assertVisible:
+    id: tutorial.barBeat.1
+- assertVisible:
+    id: tutorial.barBeat.2
+- assertVisible:
+    id: tutorial.barBeat.3
+- assertVisible:
+    id: tutorial.barBeat.4
+- tapOn:
+    id: tutorial.startBarView
+- assertVisible:
+    id: tutorial.beatCount
+    text: Beat 1 of 4
+- tapOn:
+    id: tutorial.tapLeft
+- assertVisible:
+    id: tutorial.beatCount
+    text: Beat 2 of 4
+- tapOn:
+    id: tutorial.tapRight
+- tapOn:
+    id: tutorial.tapLeft
+- tapOn:
+    id: tutorial.tapRight
+- assertVisible:
+    id: tutorial.title
+    text: Tutorial complete
 - tapOn:
     id: tutorial.done
 - assertNotVisible:
     id: tutorial.overlay
-- tapOn:
-    id: home.setup
 - extendedWaitUntil:
     visible:
-      id: setup.screen
-    timeout: 10000
-- scrollUntilVisible:
-    element:
-      id: setup.tutorial.replay
-    direction: DOWN
-- tapOn:
-    id: setup.tutorial.replay
-- assertVisible:
-    id: tutorial.overlay
-- assertVisible: Choose your practice mode
-- tapOn:
-    id: tutorial.skip
-- assertNotVisible:
-    id: tutorial.overlay
+      id: home.screen
+    timeout: 15000
