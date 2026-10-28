@@ -1,19 +1,12 @@
 import { Pressable, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useTheme } from '@/theme/ThemeProvider';
-import type { LearnCourseProgressSnapshot } from '@/rhythm/learnProgressSync';
 import { useGameCenterCourseProgress } from '@/features/gameCenter/useGameCenterCourseProgress';
 import { GameCenterCourseProgressButtonStyle1, GameCenterCourseProgressButtonStyle2, GameCenterCourseProgressButtonStyle3, GameCenterCourseProgressButtonStyle4, GameCenterCourseProgressButtonStyle5 } from '@/styles/records';
 
-interface GameCenterCourseProgressButtonProps {
-  onProgressSynced: (snapshot: LearnCourseProgressSnapshot) => void;
-}
-
-export function GameCenterCourseProgressButton({
-  onProgressSynced,
-}: GameCenterCourseProgressButtonProps) {
+export function GameCenterCourseProgressButton() {
   const { colors } = useTheme();
-  const { t, status, syncing, message, hasError, handlePress } = useGameCenterCourseProgress(onProgressSynced);
+  const { t, status, syncing, message, hasError, handlePress } = useGameCenterCourseProgress();
 
   if (!status.available) return null;
 

@@ -177,6 +177,7 @@ export function ResultsOverview({
             testID="results.gameCenter"
             challengeMode
             longestCorrectStreak={results.longestCorrectStreak}
+            showAction={false}
           />
         ) : null}
     </View>

@@ -9,6 +9,7 @@ import { I18nProvider } from '@/i18n/I18nProvider';
 import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
 import { gestureHandlerRootStyle, rootNavigatorScreenOptions } from '@/styles/shared';
 import { AppTutorialOverlay } from '@/components/AppTutorialOverlay';
+import { AutomaticGameCenterCourseProgress } from '@/components/AutomaticGameCenterCourseProgress';
 
 export default function RootLayout() {
   return (
@@ -22,6 +23,7 @@ export default function RootLayout() {
                   <RootNavigator />
                   <NotationPreloader />
                   <AppTutorialHost />
+                  <AutomaticGameCenterCourseProgress />
                 </>
               </AppTutorialProvider>
             </SessionProvider>

@@ -4,6 +4,7 @@ import { readTutorialCompletion, saveTutorialCompletion } from '@/features/tutor
 
 interface AppTutorialContextValue {
   tutorialLoaded: boolean;
+  tutorialCompleted: boolean;
   tutorialVisible: boolean;
   showTutorialForFirstLaunch: () => void;
   replayTutorial: () => void;
@@ -53,11 +54,12 @@ export function AppTutorialProvider({ children }: PropsWithChildren) {
 
   const value = useMemo(() => ({
     tutorialLoaded,
+    tutorialCompleted,
     tutorialVisible,
     showTutorialForFirstLaunch,
     replayTutorial,
     completeTutorial,
-  }), [tutorialLoaded, tutorialVisible, showTutorialForFirstLaunch, replayTutorial, completeTutorial]);
+  }), [tutorialLoaded, tutorialCompleted, tutorialVisible, showTutorialForFirstLaunch, replayTutorial, completeTutorial]);
 
   return <AppTutorialContext.Provider value={value}>{children}</AppTutorialContext.Provider>;
 }

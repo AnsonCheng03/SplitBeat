@@ -32,12 +32,13 @@ import {
   SettingsPageStyle22,
 } from '@/styles/settings';
 
-export type SettingsSection = 'session' | 'rhythm' | 'challenges' | 'audio' | 'appearance' | 'timing' | 'language';
+export type SettingsSection = 'session' | 'rhythm' | 'challenges' | 'gameCenter' | 'audio' | 'appearance' | 'timing' | 'language';
 
-const sections: { id: SettingsSection; label: string; href: '/setup' | '/settings/rhythm' | '/settings/challenges' | '/settings/audio' | '/settings/appearance' | '/settings/timing' | '/settings/language'; testID?: string }[] = [
+const sections: { id: SettingsSection; label: string; href: '/setup' | '/settings/rhythm' | '/settings/challenges' | '/settings/game-center' | '/settings/audio' | '/settings/appearance' | '/settings/timing' | '/settings/language'; testID?: string }[] = [
   { id: 'session', label: 'Pace & length', href: '/setup' },
   { id: 'rhythm', label: 'Rhythm & meter', href: '/settings/rhythm', testID: 'setup.card.rhythm' },
   { id: 'challenges', label: 'Challenges', href: '/settings/challenges', testID: 'setup.card.challenges' },
+  { id: 'gameCenter', label: 'Game Center', href: '/settings/game-center', testID: 'setup.card.gameCenter' },
   { id: 'audio', label: 'Sounds', href: '/settings/audio', testID: 'setup.card.audio' },
   { id: 'appearance', label: 'Appearance', href: '/settings/appearance', testID: 'setup.card.appearance' },
   { id: 'timing', label: 'Timing', href: '/settings/timing', testID: 'setup.card.timing' },
@@ -71,7 +72,8 @@ export function SettingsPage({
   const mobileLayout = width < 640;
   const visibleSections = sections.filter((item) => {
     if (item.id === 'timing') return featureFlags.timingCalibration;
-    if (item.id === 'challenges') return featureFlags.challengeMode || featureFlags.gameCenter;
+    if (item.id === 'challenges') return featureFlags.challengeMode;
+    if (item.id === 'gameCenter') return featureFlags.gameCenter;
     return true;
   });
 

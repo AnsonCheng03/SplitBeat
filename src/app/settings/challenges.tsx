@@ -1,4 +1,3 @@
-import { GameCenterChallengeCard } from '@/components/GameCenterChallengeCard';
 import { RhythmChallengeSettings } from '@/components/RhythmChallengeSettings';
 import { SettingsPage } from '@/components/SettingsPage';
 import { useRhythmSession } from '@/store/sessionStore';
@@ -12,7 +11,7 @@ export default function ChallengeSettingsScreen() {
       backTestID="settings.challenges.back"
       section="challenges"
       title="Challenges"
-      description="Choose how mistakes affect practice and manage your Game Center challenge score."
+      description="Choose how mistakes affect practice."
     >
       {featureFlags.challengeMode ? (
         <RhythmChallengeSettings
@@ -20,9 +19,6 @@ export default function ChallengeSettingsScreen() {
           featureFlags={featureFlags}
           onSettingsChange={updateSettings}
         />
-      ) : null}
-      {featureFlags.gameCenter ? (
-        <GameCenterChallengeCard testID="settings.challenges.gameCenter" />
       ) : null}
     </SettingsPage>
   );
