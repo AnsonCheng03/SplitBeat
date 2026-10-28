@@ -1,113 +1,60 @@
-import { useState } from 'react';
-import { Modal, Pressable, View } from 'react-native';
+import { Modal, useWindowDimensions, View } from 'react-native';
+import { TutorialPracticeStage } from '@/components/TutorialPracticeStage';
+import { TutorialSkipControl } from '@/components/TutorialSkipControl';
+import { TutorialTransitionStage } from '@/components/TutorialTransitionStage';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
+import { useTutorialPractice } from '@/features/tutorial/useTutorialPractice';
 import { useTheme } from '@/theme/ThemeProvider';
-import { APP_TUTORIAL_STEPS, isLastTutorialStep, nextTutorialStepIndex, previousTutorialStepIndex } from '@/features/tutorial/tutorialFlow';
 import {
-  appTutorialStyle1,
-  appTutorialStyle2,
-  appTutorialStyle3,
-  appTutorialStyle4,
-  appTutorialStyle5,
-  appTutorialStyle6,
-  appTutorialStyle7,
-  appTutorialStyle8,
-  appTutorialStyle9,
-  appTutorialStyle10,
-  appTutorialStyle11,
-  appTutorialStyle12,
-  appTutorialStyle13,
-  appTutorialStyle14,
-  appTutorialStyle15,
+  tutorialStyleCard,
+  tutorialStyleHeader,
+  tutorialStyleIntroDescription,
+  tutorialStyleIntroTitle,
+  tutorialStyleOverlay,
+  tutorialStyleStepTitle,
 } from '@/styles/tutorial';
 
-export function AppTutorialOverlay({
-  onDismiss,
-}: {
-  onDismiss: () => void;
-}) {
+export function AppTutorialOverlay({ onDismiss }: { onDismiss: () => void }) {
   const { colors } = useTheme();
   const { t } = useI18n();
-  const [stepIndex, setStepIndex] = useState(0);
-  const step = APP_TUTORIAL_STEPS[stepIndex];
-  const lastStep = isLastTutorialStep(stepIndex);
-
-  const advance = () => {
-    if (lastStep) onDismiss();
-    else setStepIndex((current) => nextTutorialStepIndex(current));
-  };
+  const { height } = useWindowDimensions();
+  const compact = height < 500;
+  const { phase, mode, modeIndex, beatIndex, expectedHand, feedback, tapHand, startBarView } = useTutorialPractice();
+  const isPractice = phase === 'practice';
+  const heading = t(phase === 'complete' ? 'Tutorial complete' : mode.title);
 
   return (
-    <Modal
-      visible
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-      onRequestClose={onDismiss}
-    >
-      <View testID="tutorial.overlay" style={appTutorialStyle1()}>
-        <View style={appTutorialStyle2({ colors })}>
-          <View style={appTutorialStyle3()}>
-            <Text style={appTutorialStyle4({ colors })}>{t('QUICK TOUR')}</Text>
-            <Pressable
-              testID="tutorial.close"
-              accessibilityRole="button"
-              accessibilityLabel={t('Close tutorial')}
-              onPress={onDismiss}
-              style={({ pressed }) => appTutorialStyle5({ pressed, colors })}
-            >
-              <Text style={appTutorialStyle6({ colors })}>×</Text>
-            </Pressable>
-          </View>
-
-          <View style={appTutorialStyle7()}>
-            <Text style={appTutorialStyle8({ colors })}>
-              {t('STEP {step} OF {count}', { step: stepIndex + 1, count: APP_TUTORIAL_STEPS.length })}
+    <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={() => {}}>
+      <View testID="tutorial.overlay" style={tutorialStyleOverlay()}>
+        <TutorialSkipControl onSkip={onDismiss} />
+        <View style={tutorialStyleCard({ colors, compact })}>
+          <View style={tutorialStyleHeader({ compact })}>
+            <Text style={tutorialStyleStepTitle({ colors })}>
+              {t(phase === 'complete' ? 'TUTORIAL' : 'TUTORIAL · MODE {step} OF 2', { step: modeIndex + 1 })}
             </Text>
-            <Text testID="tutorial.title" style={appTutorialStyle9({ colors })}>{t(step.title)}</Text>
-            <Text style={appTutorialStyle10({ colors })}>{t(step.description)}</Text>
           </View>
-
-          <View accessibilityLabel={t('Tutorial progress')} style={appTutorialStyle11()}>
-            {APP_TUTORIAL_STEPS.map((tutorialStep, index) => (
-              <View
-                key={tutorialStep.title}
-                accessibilityState={{ selected: index === stepIndex }}
-                style={appTutorialStyle12({ colors, selected: index === stepIndex })}
+          <Text testID="tutorial.title" style={tutorialStyleIntroTitle({ colors, compact })}>{heading}</Text>
+          {isPractice ? (
+            <>
+              <Text style={tutorialStyleIntroDescription({ colors, compact })}>{t(mode.description)}</Text>
+              <TutorialPracticeStage
+                mode={mode}
+                beatIndex={beatIndex}
+                expectedHand={expectedHand}
+                feedback={feedback}
+                compact={compact}
+                onTapHand={tapHand}
               />
-            ))}
-          </View>
-
-          <View style={appTutorialStyle13()}>
-            <Pressable
-              testID="tutorial.skip"
-              accessibilityRole="button"
-              onPress={onDismiss}
-              style={({ pressed }) => appTutorialStyle5({ pressed, colors, secondary: true })}
-            >
-              <Text style={appTutorialStyle14({ colors, secondary: true })}>{t('Skip')}</Text>
-            </Pressable>
-            <View style={appTutorialStyle15()} />
-            {stepIndex > 0 ? (
-              <Pressable
-                testID="tutorial.back"
-                accessibilityRole="button"
-                onPress={() => setStepIndex((current) => previousTutorialStepIndex(current))}
-                style={({ pressed }) => appTutorialStyle5({ pressed, colors, secondary: true })}
-              >
-                <Text style={appTutorialStyle14({ colors, secondary: true })}>{t('Back')}</Text>
-              </Pressable>
-            ) : null}
-            <Pressable
-              testID={lastStep ? 'tutorial.done' : 'tutorial.next'}
-              accessibilityRole="button"
-              onPress={advance}
-              style={({ pressed }) => appTutorialStyle5({ pressed, colors })}
-            >
-              <Text style={appTutorialStyle14({ colors })}>{t(lastStep ? 'Done' : 'Next')}</Text>
-            </Pressable>
-          </View>
+            </>
+          ) : (
+            <TutorialTransitionStage
+              phase={phase}
+              compact={compact}
+              onContinue={startBarView}
+              onDone={onDismiss}
+            />
+          )}
         </View>
       </View>
     </Modal>
