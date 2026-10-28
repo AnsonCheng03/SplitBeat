@@ -182,5 +182,5 @@ function seededIndex(seed: number, salt: number, length: number): number {
   value ^= value >>> 15;
   value = Math.imul(value, 0x846ca68b);
   value ^= value >>> 16;
-  return value % length;
+  return (value >>> 0) % length;
 }
