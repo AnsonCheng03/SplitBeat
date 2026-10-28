@@ -33,6 +33,21 @@ if [[ -n "$auth_key_id$auth_issuer_id$auth_key_path" ]]; then
   fi
 fi
 
+if [[ "${SPLITBEAT_ARCHIVE_ONLY:-0}" != "1" ]]; then
+  if [[ -z "$auth_key_id" || -z "$auth_issuer_id" ]]; then
+    echo "TestFlight uploads require ASC_API_KEY_ID and ASC_API_ISSUER_ID so the build changelog can be attached." >&2
+    exit 1
+  fi
+  if [[ -z "$auth_key_path" ]]; then
+    auth_key_path="$HOME/.appstoreconnect/private_keys/AuthKey_${auth_key_id}.p8"
+  fi
+  if [[ ! -r "$auth_key_path" ]]; then
+    echo "App Store Connect API key is missing or unreadable: $auth_key_path" >&2
+    exit 1
+  fi
+  node scripts/validate-testflight-notes.mjs
+fi
+
 app_version="$(node -p "require('./app.json').expo.version")"
 build_number="${SPLITBEAT_BUILD_NUMBER:-$(node scripts/testflight-build-number.mjs)}"
 if [[ ! "$build_number" =~ ^[0-9]+([.][0-9]+){0,2}$ ]]; then
@@ -214,4 +229,10 @@ if ! xcodebuild -exportArchive "${export_args[@]}"; then
   exit 1
 fi
 
-echo "App Store Connect accepted the upload. Build $build_number will appear in TestFlight after Apple finishes processing it."
+echo "App Store Connect accepted the upload. Waiting for build $build_number to finish processing before attaching its changelog..."
+ASC_API_KEY_PATH="$auth_key_path" \
+  ASC_API_KEY_ID="$auth_key_id" \
+  ASC_API_ISSUER_ID="$auth_issuer_id" \
+  node scripts/upload-testflight-notes.mjs "$app_version" "$build_number"
+
+echo "Build $build_number is uploaded and has English and Traditional Chinese TestFlight changelogs."
