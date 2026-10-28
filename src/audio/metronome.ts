@@ -6,8 +6,10 @@ import {
   createPitchedNoteSamples,
   SOUND_OPTIONS,
 } from '@/audio/soundPresets';
+import { createBackgroundMusicArrangement, getBackgroundMusicNotesAtBeat } from '@/audio/backgroundMusic';
+import type { BackgroundMusicArrangement, BackgroundMusicNote } from '@/audio/backgroundMusic';
+import { createBackgroundMusicSamples } from '@/audio/backgroundMusicSynthesis';
 import {
-  getAccompanimentNotesAtBeat,
   getBeatAudioTime,
   getResumeCountInPlan,
   isPatternChangeBeat,
@@ -25,6 +27,8 @@ interface MetronomeStartOptions {
   durationSeconds: number | null;
   soundEnabled: boolean;
   backgroundMusicEnabled?: boolean;
+  backgroundMusicVolume?: number;
+  musicSubdivisionsPerBeat?: number;
   sessionCuesEnabled?: boolean;
   changeIntervalBeats?: number;
   patternChangesEnabled?: boolean;
@@ -42,17 +46,22 @@ export interface MetronomeSounds {
 const COUNT_IN_BEATS = 3;
 const LOOKAHEAD_SECONDS = 5;
 const SCHEDULER_DELAY_MS = 120;
+const MUSIC_MASTER_GAIN = 0.75;
+const MUSIC_FADE_SECONDS = 0.55;
 
 export class MetronomeAudio {
   private readonly context = new AudioContext();
   private readonly output = this.context.createGain();
+  private readonly musicOutput = this.context.createGain();
   private readonly clickBuffers = new Map<SoundPreset, AudioBuffer>();
   private readonly scheduledSources = new Set<ReturnType<AudioContext['createBufferSource']>>();
   private readonly pitchedNoteBuffers = new Map<number, AudioBuffer>();
-  private readonly musicNoteBuffers = new Map<number, AudioBuffer>();
+  private readonly cueNoteBuffers = new Map<number, AudioBuffer>();
+  private readonly backgroundMusicBuffers = new Map<string, AudioBuffer>();
   private timer: ReturnType<typeof setTimeout> | undefined;
   private replayStopTimer: ReturnType<typeof setTimeout> | undefined;
   private startOptions: MetronomeStartOptions | undefined;
+  private musicArrangement: BackgroundMusicArrangement | undefined;
   private sounds: MetronomeSounds = { metronome: 'wood', leftHand: 'soft', rightHand: 'beep' };
   private nextBeatIndex = -COUNT_IN_BEATS;
   private readonly scheduledReferenceEventIds = new Set<string>();
@@ -61,6 +70,8 @@ export class MetronomeAudio {
 
   constructor() {
     this.output.connect(this.context.destination);
+    this.musicOutput.gain.value = 0;
+    this.musicOutput.connect(this.context.destination);
   }
 
   get currentTime(): number {
@@ -72,6 +83,7 @@ export class MetronomeAudio {
     if (this.paused) {
       this.paused = false;
       this.output.gain.value = this.startOptions?.soundEnabled ? 0.75 : 0;
+      this.fadeMusicOutput();
       this.scheduleAhead();
     }
   }
@@ -99,6 +111,7 @@ export class MetronomeAudio {
     this.scheduledReferenceEventIds.clear();
     this.paused = false;
     this.output.gain.value = options.soundEnabled ? 0.75 : 0;
+    this.fadeMusicOutput();
     this.scheduleAhead();
     return { durationMs: plan.durationMs };
   }
@@ -126,9 +139,11 @@ export class MetronomeAudio {
 
   start(options: MetronomeStartOptions): void {
     this.startOptions = options;
+    this.musicArrangement = createBackgroundMusicArrangement(Math.floor(Math.random() * 0x7fffffff));
     this.setSounds(options.sounds);
     for (const sound of new Set(Object.values(options.sounds))) this.getClickBuffer(sound);
     this.setSoundEnabled(options.soundEnabled);
+    this.fadeMusicOutput(0.8);
     this.scheduleAhead();
   }
 
@@ -147,6 +162,13 @@ export class MetronomeAudio {
 
   setBackgroundMusicEnabled(enabled: boolean): void {
     if (this.startOptions) this.startOptions.backgroundMusicEnabled = enabled;
+    this.fadeMusicOutput();
+  }
+
+  setBackgroundMusicVolume(volume: number): void {
+    if (!this.startOptions) return;
+    this.startOptions.backgroundMusicVolume = clampMusicVolume(volume);
+    this.fadeMusicOutput(0.2);
   }
 
   setSessionCuesEnabled(enabled: boolean): void {
@@ -222,30 +244,37 @@ export class MetronomeAudio {
         const beatInBar = ((this.nextBeatIndex % options.beatsPerBar) + options.beatsPerBar) % options.beatsPerBar;
         this.scheduleClick(beatTime, this.sounds.metronome, beatInBar === 0 ? 1.15 : 0.78);
 
-        if (this.nextBeatIndex >= 0 && options.soundEnabled) {
-          if (options.backgroundMusicEnabled) {
-            for (const note of getAccompanimentNotesAtBeat(this.nextBeatIndex, options.beatsPerBar)) {
-              this.scheduleBuffer(beatTime, this.getMusicNoteBuffer(note.midiPitch), note.level);
+        if (this.nextBeatIndex >= 0) {
+          if (options.backgroundMusicEnabled && this.musicArrangement) {
+            const musicNotes = getBackgroundMusicNotesAtBeat(
+              this.nextBeatIndex,
+              options.beatsPerBar,
+              options.musicSubdivisionsPerBeat ?? 2,
+              this.musicArrangement,
+            );
+            for (const note of musicNotes) {
+              this.scheduleBackgroundMusicNote(beatTime, beatDurationSeconds, note);
             }
           }
 
-          if (options.sessionCuesEnabled && this.nextBeatIndex === 0) {
+          if (options.soundEnabled && options.sessionCuesEnabled && this.nextBeatIndex === 0) {
             for (const note of SESSION_START_CUE) {
               const cueTime = beatTime + note.offsetBeats * beatDurationSeconds;
               if (cueTime >= this.context.currentTime - 0.01 && cueTime <= horizon) {
-                this.scheduleBuffer(cueTime, this.getMusicNoteBuffer(note.midiPitch), note.level);
+                this.scheduleBuffer(cueTime, this.getCueNoteBuffer(note.midiPitch), note.level);
               }
             }
           }
 
           if (
-            options.sessionCuesEnabled
+            options.soundEnabled
+            && options.sessionCuesEnabled
             && options.patternChangesEnabled !== false
             && isPatternChangeBeat(this.nextBeatIndex, options.changeIntervalBeats ?? 4)
           ) {
             this.scheduleBuffer(
               beatTime,
-              this.getMusicNoteBuffer(PATTERN_CHANGE_CUE.midiPitch),
+              this.getCueNoteBuffer(PATTERN_CHANGE_CUE.midiPitch),
               PATTERN_CHANGE_CUE.level,
             );
           }
@@ -287,13 +316,33 @@ export class MetronomeAudio {
     this.scheduleBuffer(when, this.getClickBuffer(sound), level);
   }
 
-  private scheduleBuffer(when: number, buffer: AudioBuffer, level: number): void {
+  private scheduleBackgroundMusicNote(
+    beatTime: number,
+    beatDurationSeconds: number,
+    note: BackgroundMusicNote,
+  ): void {
+    const when = beatTime + note.offsetBeats * beatDurationSeconds;
+    const durationSeconds = note.durationBeats * beatDurationSeconds;
+    this.scheduleBuffer(
+      when,
+      this.getBackgroundMusicBuffer(note, durationSeconds),
+      note.level,
+      this.musicOutput,
+    );
+  }
+
+  private scheduleBuffer(
+    when: number,
+    buffer: AudioBuffer,
+    level: number,
+    destination: ReturnType<AudioContext['createGain']> = this.output,
+  ): void {
     const source = this.context.createBufferSource();
     const gain = this.context.createGain();
     source.buffer = buffer;
     gain.gain.value = level;
     source.connect(gain);
-    gain.connect(this.output);
+    gain.connect(destination);
     source.onEnded = () => {
       this.scheduledSources.delete(source);
       source.disconnect();
@@ -336,15 +385,48 @@ export class MetronomeAudio {
     return buffer;
   }
 
-  private getMusicNoteBuffer(midiPitch: number): AudioBuffer {
-    const cachedBuffer = this.musicNoteBuffers.get(midiPitch);
+  private getCueNoteBuffer(midiPitch: number): AudioBuffer {
+    const cachedBuffer = this.cueNoteBuffers.get(midiPitch);
     if (cachedBuffer) return cachedBuffer;
 
     const samples = createMusicNoteSamples(midiPitch, this.context.sampleRate);
     const buffer = this.context.createBuffer(1, samples.length, this.context.sampleRate);
     buffer.copyToChannel(samples, 0);
-    this.musicNoteBuffers.set(midiPitch, buffer);
+    this.cueNoteBuffers.set(midiPitch, buffer);
     return buffer;
+  }
+
+  private getBackgroundMusicBuffer(note: BackgroundMusicNote, durationSeconds: number): AudioBuffer {
+    const normalizedDuration = Math.max(0.08, Math.round(durationSeconds * 100) / 100);
+    const key = `${note.voice}:${note.midiPitch}:${normalizedDuration}`;
+    const cachedBuffer = this.backgroundMusicBuffers.get(key);
+    if (cachedBuffer) return cachedBuffer;
+
+    const samples = createBackgroundMusicSamples(
+      note.midiPitch,
+      this.context.sampleRate,
+      note.voice,
+      normalizedDuration,
+    );
+    const buffer = this.context.createBuffer(1, samples.length, this.context.sampleRate);
+    buffer.copyToChannel(samples, 0);
+    this.backgroundMusicBuffers.set(key, buffer);
+    return buffer;
+  }
+
+  private fadeMusicOutput(durationSeconds = MUSIC_FADE_SECONDS): void {
+    const now = this.context.currentTime;
+    const targetGain = this.getTargetMusicGain();
+    const gain = this.musicOutput.gain;
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(gain.value, now);
+    gain.linearRampToValueAtTime(targetGain, now + durationSeconds);
+  }
+
+  private getTargetMusicGain(): number {
+    const options = this.startOptions;
+    if (!options?.backgroundMusicEnabled || this.paused || this.closed) return 0;
+    return (clampMusicVolume(options.backgroundMusicVolume ?? 45) / 100) * MUSIC_MASTER_GAIN;
   }
 
   async stop(): Promise<void> {
@@ -356,4 +438,9 @@ export class MetronomeAudio {
     this.startOptions = undefined;
     await this.context.close();
   }
+}
+
+function clampMusicVolume(volume: number): number {
+  if (!Number.isFinite(volume)) return 45;
+  return Math.max(0, Math.min(100, Math.round(volume)));
 }

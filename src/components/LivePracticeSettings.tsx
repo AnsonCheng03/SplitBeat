@@ -122,7 +122,7 @@ export function LivePracticeSettings({
               {featureFlags.backgroundMusic ? (
                 <SettingsToggleRow
                   testID="practice.liveSettings.backgroundMusic"
-                  label="Beat-synced accompaniment"
+                  label="Background music"
                   value={settings.backgroundMusicEnabled}
                   onChange={(backgroundMusicEnabled) => onSettingsChange({ backgroundMusicEnabled })}
                 />

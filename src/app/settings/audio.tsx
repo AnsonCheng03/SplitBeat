@@ -1,5 +1,7 @@
+import Slider from '@react-native-community/slider';
 import { View } from 'react-native';
 import { useIsFocused } from 'expo-router';
+import { useI18n } from '@/i18n/I18nProvider';
 import { Text } from '@/i18n/LocalizedText';
 import { SOUND_OPTIONS } from '@/audio/soundPresets';
 import { AutoPlayRhythmSetting } from '@/components/AutoPlayRhythmSetting';
@@ -18,6 +20,9 @@ import {
   audioStyle7,
   audioStyle8,
   audioStyle9,
+  audioStyle10,
+  audioStyle11,
+  audioStyle12,
 } from '@/styles/settings';
 
 export default function AudioSettingsScreen() {
@@ -31,7 +36,7 @@ export default function AudioSettingsScreen() {
       backTestID="settings.audio.back"
       section="audio"
       title="Sounds & feedback"
-      description="Choose click sounds, accompaniment, and tap feedback."
+      description="Choose click sounds, background music, and tap feedback."
     >
       <View style={audioStyle1({ colors })}>
         {featureFlags.soundEffects ? <SettingsToggleRow
@@ -42,9 +47,14 @@ export default function AudioSettingsScreen() {
         /> : null}
         {featureFlags.backgroundMusic ? <SettingsToggleRow
           testID="setup.toggle.backgroundMusic"
-          label="Beat-synced accompaniment"
+          label="Background music"
+          description="A gentle melody with repeating chords follows your tempo and meter."
           value={settings.backgroundMusicEnabled}
           onChange={(backgroundMusicEnabled) => updateSettings({ backgroundMusicEnabled })}
+        /> : null}
+        {featureFlags.backgroundMusic ? <BackgroundMusicVolumeSetting
+          value={settings.backgroundMusicVolume ?? 45}
+          onChange={(backgroundMusicVolume) => updateSettings({ backgroundMusicVolume })}
         /> : null}
         {featureFlags.sessionCues ? <SettingsToggleRow
           testID="setup.toggle.sessionCues"
@@ -74,8 +84,11 @@ export default function AudioSettingsScreen() {
       {featureFlags.tapFeedback ? <Text style={audioStyle2({ colors })}>
         Correct taps flash teal; off-beat taps flash red. Turn this off for less visual feedback.
       </Text> : null}
-      {featureFlags.backgroundMusic || featureFlags.sessionCues ? <Text style={audioStyle4({ colors })}>
-        The accompaniment is synthesized on your device and follows your tempo and meter. A short pickup leads into beat one; change cues mark pattern boundaries. Sound effects must be on to hear either option.
+      {featureFlags.backgroundMusic ? <Text style={audioStyle4({ colors })}>
+        Background music uses a repeating melody over a four-bar chord progression. It follows your tempo and meter, and its volume is independent of Sound effects.
+      </Text> : null}
+      {featureFlags.sessionCues ? <Text style={audioStyle4({ colors })}>
+        Start and change cues are brief sounds that follow the Sound effects switch.
       </Text> : null}
 
       {featureFlags.soundEffects ? <SoundChoice
@@ -112,6 +125,37 @@ export default function AudioSettingsScreen() {
         Tap flashes follow your touch. Beat flashes follow the metronome. Sounds are generated on your device; turn off Sound effects to mute them.
       </Text> : null}
     </SettingsPage>
+  );
+}
+
+function BackgroundMusicVolumeSetting({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  return (
+    <View style={audioStyle10()}>
+      <View style={audioStyle11()}>
+        <Text style={audioStyle12({ colors })}>BACKGROUND MUSIC VOLUME</Text>
+        <Text style={audioStyle12({ colors })}>{Math.round(value)}%</Text>
+      </View>
+      <Slider
+        testID="setup.backgroundMusic.volume"
+        accessibilityLabel={t('Background music volume')}
+        minimumValue={0}
+        maximumValue={100}
+        step={1}
+        value={value}
+        onValueChange={onChange}
+        minimumTrackTintColor={colors.left}
+        maximumTrackTintColor={colors.line}
+        thumbTintColor={colors.text}
+      />
+    </View>
   );
 }
 

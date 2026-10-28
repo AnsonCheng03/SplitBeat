@@ -20,7 +20,7 @@ import {
   normalizeGoodWindowMs,
   normalizeTapOffsetMs,
 } from '@/rhythm/timingCalibration';
-import { timeSignatureMetrics } from '@/rhythm/subdivisions';
+import { pulseQuarterNotes, timeSignatureMetrics } from '@/rhythm/subdivisions';
 import { alignedPatternChangeIntervalBeats } from '@/rhythm/patternChange';
 import type { CombinationProgress, SavedPracticePair } from '@/rhythm/targetedPractice';
 import { useCombinationProgress, useSavedPracticePairs, useSessionHistory } from '@/store/useSessionPersistence';
@@ -51,6 +51,7 @@ const FORCE_SILENT_E2E = process.env.EXPO_PUBLIC_E2E_SILENT === '1';
 const LIVE_PRACTICE_SETTING_KEYS = [
   'soundEnabled',
   'backgroundMusicEnabled',
+  'backgroundMusicVolume',
   'sessionCuesEnabled',
   'metronomeSound',
   'leftHandSound',
@@ -107,6 +108,7 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   singleHand: 'left',
   soundEnabled: !FORCE_SILENT_E2E,
   backgroundMusicEnabled: false,
+  backgroundMusicVolume: 45,
   sessionCuesEnabled: true,
   metronomeSound: 'wood',
   leftHandSound: 'soft',
@@ -228,6 +230,9 @@ function restoreSettings(raw: string | null): ExerciseSettings {
           ? parsed.soundEnabled
           : true,
       backgroundMusicEnabled: parsed.backgroundMusicEnabled === true,
+      backgroundMusicVolume: typeof parsed.backgroundMusicVolume === 'number'
+        ? Math.max(0, Math.min(100, Math.round(parsed.backgroundMusicVolume)))
+        : DEFAULT_SETTINGS.backgroundMusicVolume,
       sessionCuesEnabled: typeof parsed.sessionCuesEnabled === 'boolean'
         ? parsed.sessionCuesEnabled
         : DEFAULT_SETTINGS.sessionCuesEnabled,
@@ -334,9 +339,11 @@ function createAudioStartOptions(
     sessionStartTime: timing.sessionStartTime,
     bpm: settings.bpm,
     beatsPerBar: timing.metrics.beatsPerBar,
+    musicSubdivisionsPerBeat: pulseQuarterNotes(settings.timeSignature) === 1.5 ? 3 : 2,
     durationSeconds: timing.durationSeconds,
     soundEnabled: settings.soundEnabled && !FORCE_SILENT_E2E,
-    backgroundMusicEnabled: settings.backgroundMusicEnabled,
+    backgroundMusicEnabled: settings.backgroundMusicEnabled && !FORCE_SILENT_E2E,
+    backgroundMusicVolume: settings.backgroundMusicVolume ?? DEFAULT_SETTINGS.backgroundMusicVolume,
     sessionCuesEnabled: settings.sessionCuesEnabled,
     changeIntervalBeats: timing.patternChangeIntervalBeats,
     patternChangesEnabled: !score,
@@ -493,8 +500,12 @@ export function useSessionController(): SessionContextValue {
   }, [settings.referenceRhythmEnabled]);
 
   useEffect(() => {
-    audioRef.current?.setBackgroundMusicEnabled(settings.backgroundMusicEnabled);
+    audioRef.current?.setBackgroundMusicEnabled(settings.backgroundMusicEnabled && !FORCE_SILENT_E2E);
   }, [settings.backgroundMusicEnabled]);
+
+  useEffect(() => {
+    audioRef.current?.setBackgroundMusicVolume(settings.backgroundMusicVolume ?? 45);
+  }, [settings.backgroundMusicVolume]);
 
   useEffect(() => {
     audioRef.current?.setSessionCuesEnabled(settings.sessionCuesEnabled);

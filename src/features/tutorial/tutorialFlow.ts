@@ -1,3 +1,5 @@
+import type { Hand, PracticeDisplayMode } from '@/types/rhythm';
+
 export const APP_TUTORIAL_STEPS = [
   {
     title: 'Choose your practice mode',
@@ -27,4 +29,79 @@ export function nextTutorialStepIndex(stepIndex: number): number {
 
 export function previousTutorialStepIndex(stepIndex: number): number {
   return Math.max(0, stepIndex - 1);
+}
+
+export const TUTORIAL_BAR_HANDS: readonly Hand[] = ['left', 'right', 'left', 'right'];
+
+export interface TutorialModeStep {
+  displayMode: PracticeDisplayMode;
+  title: string;
+  description: string;
+}
+
+export const TUTORIAL_MODE_STEPS: readonly TutorialModeStep[] = [
+  {
+    displayMode: 'rhythm',
+    title: 'NOTE VIEW',
+    description: 'Tap the hand shown by each note. The bar waits after each tap while you read the next hint.',
+  },
+  {
+    displayMode: 'score',
+    title: 'BAR VIEW',
+    description: 'Read the full bar from left to right, then tap the hand for each beat.',
+  },
+];
+
+export type TutorialPhase = 'practice' | 'mode-intro' | 'complete';
+
+export interface TutorialTapTransition {
+  correct: boolean;
+  nextBeatIndex: number;
+  nextPhase: TutorialPhase;
+  nextModeIndex: number;
+}
+
+export function resolveTutorialTap(
+  modeIndex: number,
+  beatIndex: number,
+  tappedHand: Hand,
+): TutorialTapTransition {
+  const expectedHand = TUTORIAL_BAR_HANDS[beatIndex];
+  if (!expectedHand || tappedHand !== expectedHand) {
+    return {
+      correct: false,
+      nextBeatIndex: 0,
+      nextPhase: 'practice',
+      nextModeIndex: modeIndex,
+    };
+  }
+
+  if (beatIndex < TUTORIAL_BAR_HANDS.length - 1) {
+    return {
+      correct: true,
+      nextBeatIndex: beatIndex + 1,
+      nextPhase: 'practice',
+      nextModeIndex: modeIndex,
+    };
+  }
+
+  if (modeIndex === 0) {
+    return {
+      correct: true,
+      nextBeatIndex: 0,
+      nextPhase: 'mode-intro',
+      nextModeIndex: 1,
+    };
+  }
+
+  return {
+    correct: true,
+    nextBeatIndex: 0,
+    nextPhase: 'complete',
+    nextModeIndex: modeIndex,
+  };
+}
+
+export function getExpectedTutorialHand(beatIndex: number): Hand {
+  return TUTORIAL_BAR_HANDS[beatIndex] ?? TUTORIAL_BAR_HANDS[0];
 }

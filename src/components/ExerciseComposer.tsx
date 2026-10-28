@@ -66,6 +66,7 @@ export function ExerciseComposer({
   onSave,
   onPracticeSaved,
   onRemoveSaved,
+  missionAction,
 }: {
   settings: ExerciseSettings;
   featureFlags: FeatureFlags;
@@ -89,6 +90,7 @@ export function ExerciseComposer({
   onSave: () => void;
   onPracticeSaved: (entry: ImportedScoreLibraryEntry) => void;
   onRemoveSaved: (entry: ImportedScoreLibraryEntry) => void;
+  missionAction?: { title: string; disabled: boolean; feedback?: string | null; onPress: () => void };
 }) {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -183,6 +185,7 @@ export function ExerciseComposer({
                     hideHeader
                     beamGroupQuarterNotes={pulseQuarterNotes(settings.timeSignature)}
                     initialNotationWidth={preview.notationWidth}
+                    visibleHand={missionAction ? settings.singleHand : undefined}
                     testIdPrefix={`exercise.composer.preview.${measure.index + 1}`}
                   />
                 </View>
@@ -201,13 +204,19 @@ export function ExerciseComposer({
       )}
 
       <View style={ExerciseComposerStyle20()}>
-        <PrimaryButton testID="exercise.practiceBar" flex={1} title={starting ? t('PREPARING…') : t('PRACTICE COMPOSITION')} onPress={onPractice} disabled={starting || !score} />
-        {featureFlags.savedScoreLibrary ? (
+        {missionAction ? (
+          <PrimaryButton testID="mission.composer.check" flex={1} title={missionAction.title} onPress={missionAction.onPress} disabled={missionAction.disabled || starting} />
+        ) : (
+          <PrimaryButton testID="exercise.practiceBar" flex={1} title={starting ? t('PREPARING…') : t('PRACTICE COMPOSITION')} onPress={onPractice} disabled={starting || !score} />
+        )}
+        {!missionAction && featureFlags.savedScoreLibrary ? (
           <PrimaryButton testID="exercise.saveComposition" flex={1} title={saving ? t('SAVING…') : compositionAlreadySaved ? t('SAVED ✓') : t('SAVE SCORE')} onPress={onSave} disabled={saving || compositionAlreadySaved || !score} />
         ) : null}
       </View>
 
-      {featureFlags.savedScoreLibrary ? (
+      {missionAction?.feedback ? <Text testID="mission.composer.feedback" style={ExerciseComposerStyle19({ colors })}>{t(missionAction.feedback)}</Text> : null}
+
+      {!missionAction && featureFlags.savedScoreLibrary ? (
         <View style={ExerciseComposerStyle21()}>
           <Text style={ExerciseComposerStyle22({ sectionTitle })}>{t('SAVED COMPOSITIONS')}</Text>
           {savedCompositions.length === 0 ? (

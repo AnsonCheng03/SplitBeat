@@ -1,7 +1,6 @@
 import { Pressable, ScrollView, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { FullBleedSafeArea } from '@/components/FullBleedSafeArea';
-import { GameCenterCourseProgressButton } from '@/components/GameCenterCourseProgressButton';
 import { LearnPatternPreview } from '@/components/LearnPatternPreview';
 import { LearnSongLessonCard } from '@/components/LearnSongLessonCard';
 import { LearnCoursePath } from '@/components/LearnCoursePath';
@@ -59,7 +58,6 @@ export default function LearnScreen() {
   const {
     colors,
     t,
-    featureFlags,
     audioStatus,
     purchase,
     completedLessonIds,
@@ -100,7 +98,6 @@ export default function LearnScreen() {
     startLesson,
     openSongLibrary,
     skipToSelectedLesson,
-    handleProgressSynced,
     returnHome,
     restorePurchase,
     buyCourse,
@@ -199,9 +196,6 @@ export default function LearnScreen() {
               </Text>
             </Pressable>
           )}
-          {featureFlags.gameCenter ? (
-            <GameCenterCourseProgressButton onProgressSynced={handleProgressSynced} />
-          ) : null}
         </View>
 
         <View style={learnStyle19({ compact })}>

@@ -7,11 +7,10 @@ import {
 } from '../../../modules/splitbeat-game-center/src';
 import type { GameCenterStatus } from '../../../modules/splitbeat-game-center/src';
 import { syncLearnProgressWithGameCenter } from '@/store/learnProgress';
-import type { LearnCourseProgressSnapshot } from '@/rhythm/learnProgressSync';
 
 const GAME_CENTER_AUTHENTICATION_TIMEOUT_MS = 15_000;
 
-export function useGameCenterCourseProgress(onProgressSynced: (snapshot: LearnCourseProgressSnapshot) => void) {
+export function useGameCenterCourseProgress() {
   const { t } = useI18n();
   const [status, setStatus] = useState<GameCenterStatus>(getGameCenterStatus);
   const [syncing, setSyncing] = useState(false);
@@ -31,8 +30,7 @@ export function useGameCenterCourseProgress(onProgressSynced: (snapshot: LearnCo
     setMessage('');
     setHasError(false);
     try {
-      const snapshot = await syncLearnProgressWithGameCenter();
-      onProgressSynced(snapshot);
+      await syncLearnProgressWithGameCenter();
       setMessage(t('Course progress synced with Game Center and iCloud.'));
     } catch (error) {
       setMessage(t(error instanceof Error ? error.message : 'Could not sync course progress.'));
@@ -40,7 +38,7 @@ export function useGameCenterCourseProgress(onProgressSynced: (snapshot: LearnCo
     } finally {
       setSyncing(false);
     }
-  }, [onProgressSynced, t]);
+  }, [t]);
 
   const updateStatus = useCallback((nextStatus: GameCenterStatus) => {
     setStatus(nextStatus);

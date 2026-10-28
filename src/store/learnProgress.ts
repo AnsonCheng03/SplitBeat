@@ -171,6 +171,26 @@ export async function isLearnProgressSyncEnabled(): Promise<boolean> {
   }
 }
 
+export async function resetLearnProgressGameCenterSync(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(LEARN_PROGRESS_SYNC_KEY);
+  } catch {
+    // Resetting the rest of the app settings should still complete if storage is unavailable.
+  }
+}
+
+export async function hasRestorableGameCenterLearnProgress(): Promise<boolean> {
+  const remotePayloads = await loadLearnCourseProgress(LEARN_COURSE_REVISION);
+  return remotePayloads.some((payload) => {
+    const snapshot = parseLearnCourseProgressSnapshot(payload);
+    return snapshot !== null && (
+      snapshot.completedLessonIds.length > 0
+      || snapshot.skippedLessonIds.length > 0
+      || snapshot.ratings.length > 0
+    );
+  });
+}
+
 async function getLearnProgressInstallId(): Promise<string> {
   const existing = await AsyncStorage.getItem(LEARN_PROGRESS_INSTALL_ID_KEY);
   if (existing && /^[a-z0-9-]{8,64}$/.test(existing)) return existing;

@@ -4,9 +4,11 @@ import { readTutorialCompletion, saveTutorialCompletion } from '@/features/tutor
 
 interface AppTutorialContextValue {
   tutorialLoaded: boolean;
+  tutorialCompleted: boolean;
   tutorialVisible: boolean;
   showTutorialForFirstLaunch: () => void;
   replayTutorial: () => void;
+  resetTutorial: () => void;
   completeTutorial: () => void;
 }
 
@@ -43,6 +45,14 @@ export function AppTutorialProvider({ children }: PropsWithChildren) {
     setTutorialVisible(true);
   }, []);
 
+  const resetTutorial = useCallback(() => {
+    firstLaunchAttemptedRef.current = true;
+    completionUpdatedRef.current = true;
+    setTutorialVisible(true);
+    setTutorialCompleted(false);
+    void saveTutorialCompletion(false);
+  }, []);
+
   const completeTutorial = useCallback(() => {
     firstLaunchAttemptedRef.current = true;
     completionUpdatedRef.current = true;
@@ -53,11 +63,13 @@ export function AppTutorialProvider({ children }: PropsWithChildren) {
 
   const value = useMemo(() => ({
     tutorialLoaded,
+    tutorialCompleted,
     tutorialVisible,
     showTutorialForFirstLaunch,
     replayTutorial,
+    resetTutorial,
     completeTutorial,
-  }), [tutorialLoaded, tutorialVisible, showTutorialForFirstLaunch, replayTutorial, completeTutorial]);
+  }), [tutorialLoaded, tutorialCompleted, tutorialVisible, showTutorialForFirstLaunch, replayTutorial, resetTutorial, completeTutorial]);
 
   return <AppTutorialContext.Provider value={value}>{children}</AppTutorialContext.Provider>;
 }

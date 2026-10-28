@@ -19,12 +19,14 @@ interface GameCenterChallengeCardProps {
   challengeMode?: boolean;
   longestCorrectStreak?: number;
   testID?: string;
+  showAction?: boolean;
 }
 
 export function GameCenterChallengeCard({
   challengeMode = false,
   longestCorrectStreak,
   testID = 'gameCenter.challenge',
+  showAction = true,
 }: GameCenterChallengeCardProps) {
   const { colors } = useTheme();
   const { t, status, message, submitting, authenticating, hasScore, actionLabel, description, handleAction } = useGameCenterChallenge({
@@ -54,10 +56,12 @@ export function GameCenterChallengeCard({
       </View>
 
       <Text style={GameCenterChallengeCardStyle7({ colors })}>
-        {t(description)}
+        {t(!showAction && !status.authenticated
+          ? 'Sign in from Settings to send this challenge score. Your local record is saved either way.'
+          : description)}
       </Text>
 
-      {status.available ? (
+      {status.available && showAction ? (
         <Pressable
           testID={`${testID}.action`}
           accessibilityRole="button"

@@ -51,7 +51,15 @@ export function useHomeScreen() {
         testID: 'home.learn',
       }]
       : []),
-  ], [featureFlags.focusPractice, featureFlags.learnCourse, featureFlags.scoreImport]);
+    ...(featureFlags.rhythmMissions
+      ? [{
+        id: 'missions' as const,
+        title: 'Rhythm missions',
+        description: 'Listen or feel a rhythm, then tap it back or write the notes.',
+        testID: 'home.rhythmMissions',
+      }]
+      : []),
+  ], [featureFlags.focusPractice, featureFlags.learnCourse, featureFlags.rhythmMissions, featureFlags.scoreImport]);
   const currentActivity = activityOptions.find((option) => option.id === selectedActivity) ?? activityOptions[0];
   const isFreePractice = currentActivity.id === 'practice';
   const loadingActivityTitle = activityOptions.find((option) => option.id === openingActivity)?.title ?? 'Focus practice';
@@ -107,6 +115,9 @@ export function useHomeScreen() {
       case 'learn':
         router.push('/learn');
         return;
+      case 'missions':
+        router.push('/missions');
+        return;
     }
   }, [router]);
 
@@ -147,7 +158,9 @@ export function useHomeScreen() {
           ? 'START FOCUS PRACTICE'
           : currentActivity.id === 'score'
             ? 'CHOOSE A SCORE'
-            : 'OPEN LEARN RHYTHM';
+          : currentActivity.id === 'learn'
+            ? 'OPEN LEARN RHYTHM'
+            : 'START RHYTHM MISSIONS';
   const startSubtitle = openingActivity
     ? loadingMessage
     : isFreePractice
@@ -169,7 +182,9 @@ export function useHomeScreen() {
         ? t('Open focus practice')
         : currentActivity.id === 'score'
           ? t('Choose a score')
-          : t('Open learn rhythm');
+        : currentActivity.id === 'learn'
+          ? t('Open learn rhythm')
+          : t('Open rhythm missions');
 
   return {
     colors,

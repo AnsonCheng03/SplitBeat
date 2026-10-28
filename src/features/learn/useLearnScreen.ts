@@ -18,7 +18,6 @@ import { evaluateLearnCourseSkipGate } from '@/rhythm/learnCourseSkip';
 import { requiresLearnCourseUnlock } from '@/rhythm/learnCourseAccess';
 import { useLearnCoursePurchase } from '@/hooks/useLearnCoursePurchase';
 import { readLearnProgress, readLearnRatings, readSkippedLearnLessons, skipLearnLessons, syncLearnProgressIfEnabled } from '@/store/learnProgress';
-import type { LearnCourseProgressSnapshot } from '@/rhythm/learnProgressSync';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
 import { keepModeLoadingVisible, waitForModeLoadingFrame } from '@/features/modeLoadingFeedback';
@@ -220,18 +219,6 @@ export function useLearnScreen() {
     }
   }, [progressLoaded, skipGate, skipping, t]);
 
-  const handleProgressSynced = useCallback((snapshot: LearnCourseProgressSnapshot) => {
-    setCompletedLessonIds(snapshot.completedLessonIds);
-    setLessonRatings(snapshot.ratings);
-    setSkippedLessonIds(snapshot.skippedLessonIds);
-    const requested = LEARN_COURSE.find((lesson) => lesson.id === routeLessonId);
-    const nextLesson = LEARN_COURSE.find((lesson) => !snapshot.completedLessonIds.includes(lesson.id));
-    const selectedLesson = requested && !snapshot.completedLessonIds.includes(requested.id)
-      ? requested
-      : nextLesson ?? LEARN_COURSE.at(-1)!;
-    setSelectedLessonId(selectedLesson.id);
-  }, [routeLessonId]);
-
   const returnHome = useCallback(() => router.replace('/'), [router]);
   const openSongLibrary = useCallback((songId?: string) => {
     router.push(songId ? { pathname: '/learn-songs', params: { songId } } : '/learn-songs');
@@ -291,7 +278,6 @@ export function useLearnScreen() {
     totalLessons: LEARN_COURSE.length,
     startLesson,
     openSongLibrary,
-    handleProgressSynced,
     returnHome,
     restorePurchase,
     buyCourse,

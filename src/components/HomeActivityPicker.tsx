@@ -1,4 +1,4 @@
-import { ActivityIndicator, Modal, Pressable, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, View } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -48,7 +48,7 @@ export function HomeActivityPicker({
         <View style={HomeActivityPickerStyle3({ colors })}>
           <Text style={HomeActivityPickerStyle4({ colors })}>Select a practice mode</Text>
           <Text style={HomeActivityPickerStyle5({ colors })}>Choose what to practice today.</Text>
-          <View style={HomeActivityPickerStyle6()}>
+          <ScrollView contentContainerStyle={HomeActivityPickerStyle6()} showsVerticalScrollIndicator={false}>
             {options.map((option) => {
               const isSelected = selected === option.id;
               return (
@@ -68,7 +68,7 @@ export function HomeActivityPicker({
                 </Pressable>
               );
             })}
-          </View>
+          </ScrollView>
         </View>
       </View>
     </Modal>
