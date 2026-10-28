@@ -57,6 +57,15 @@ appId: com.splitbeat.twohandrhythm
     visible:
       id: practice.scoreMeasure.viewport
     timeout: 10000
+- extendedWaitUntil:
+    visible:
+      id: practice.beatPosition
+      text: Beat 1 of 4
+    timeout: 10000
 - assertVisible:
     id: practice.scoreMeasure.slot.0.bar.0
+- assertVisible:
+    id: practice.scoreMeasure.slot.0.bar.0.leftNotation
+- assertVisible:
+    id: practice.scoreMeasure.slot.0.bar.0.rightNotation
 - takeScreenshot: practice-score-display
