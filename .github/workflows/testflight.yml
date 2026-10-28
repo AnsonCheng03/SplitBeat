@@ -47,6 +47,7 @@ jobs:
           ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
           SPLITBEAT_MIN_FREE_SPACE_GIB: 5
+          ENTERPRISE_REPOSITORY: https://repo.maven.apache.org/maven2
         run: |
           if [[ -z "$ASC_API_KEY_ID" || -z "$ASC_API_ISSUER_ID" || -z "$ASC_API_KEY_P8" ]]; then
             echo "Set ASC_API_KEY_ID, ASC_API_ISSUER_ID, and ASC_API_KEY_P8 in repository Actions secrets." >&2
@@ -56,7 +57,32 @@ jobs:
           key_path="$RUNNER_TEMP/AuthKey_${ASC_API_KEY_ID}.p8"
           printf '%s' "$ASC_API_KEY_P8" > "$key_path"
           chmod 600 "$key_path"
-          trap 'rm -f "$key_path"' EXIT
+
+          # Hermes is fetched by CocoaPods from Maven Central. Keep transfers on
+          # HTTP/1.1 and retry stalls instead of waiting for an hour.
+          curl_config="$HOME/.curlrc"
+          curl_config_backup="$RUNNER_TEMP/curlrc.backup"
+          if [[ -f "$curl_config" ]]; then
+            cp "$curl_config" "$curl_config_backup"
+          fi
+          cat >> "$curl_config" <<'CURLRC'
+          http1.1
+          retry = 5
+          retry-all-errors
+          retry-delay = 2
+          retry-max-time = 900
+          speed-limit = 8192
+          speed-time = 60
+          CURLRC
+          restore_release_credentials() {
+            rm -f "$key_path"
+            if [[ -f "$curl_config_backup" ]]; then
+              mv "$curl_config_backup" "$curl_config"
+            else
+              rm -f "$curl_config"
+            fi
+          }
+          trap restore_release_credentials EXIT
           unset ASC_API_KEY_P8
 
           echo "Using Xcode $(xcodebuild -version | tr '\n' ' ') for the timestamp-numbered build."
