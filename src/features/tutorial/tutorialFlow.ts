@@ -1,4 +1,5 @@
 import type { Hand, PracticeDisplayMode } from '@/types/rhythm';
+import type { ScoreRhythmMeasure } from '@/types/importedScore';
 
 export const APP_TUTORIAL_STEPS = [
   {
@@ -33,6 +34,24 @@ export function previousTutorialStepIndex(stepIndex: number): number {
 
 export const TUTORIAL_BAR_HANDS: readonly Hand[] = ['left', 'right', 'left', 'right'];
 
+export const TUTORIAL_BAR_MEASURE: ScoreRhythmMeasure = {
+  index: 0,
+  startQuarter: 0,
+  durationQuarter: 4,
+  leftEvents: [
+    { startQuarter: 0, durationQuarter: 1 },
+    { startQuarter: 1, durationQuarter: 1, isRest: true },
+    { startQuarter: 2, durationQuarter: 1 },
+    { startQuarter: 3, durationQuarter: 1, isRest: true },
+  ],
+  rightEvents: [
+    { startQuarter: 0, durationQuarter: 1, isRest: true },
+    { startQuarter: 1, durationQuarter: 1 },
+    { startQuarter: 2, durationQuarter: 1, isRest: true },
+    { startQuarter: 3, durationQuarter: 1 },
+  ],
+};
+
 export interface TutorialModeStep {
   displayMode: PracticeDisplayMode;
   title: string;
@@ -43,7 +62,7 @@ export const TUTORIAL_MODE_STEPS: readonly TutorialModeStep[] = [
   {
     displayMode: 'rhythm',
     title: 'NOTE VIEW',
-    description: 'Tap the hand shown by each note. The bar waits after each tap while you read the next hint.',
+    description: 'Tap the hand shown by each note. Use UP NEXT to preview what to play after the current pattern changes.',
   },
   {
     displayMode: 'score',

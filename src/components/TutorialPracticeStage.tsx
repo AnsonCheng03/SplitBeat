@@ -6,12 +6,12 @@ import { useTheme } from '@/theme/ThemeProvider';
 import type { TutorialModeStep } from '@/features/tutorial/tutorialFlow';
 import type { Hand } from '@/types/rhythm';
 import {
-  tutorialStyleBeatCount,
   tutorialStyleFeedback,
   tutorialStyleHint,
-  tutorialStylePracticeActions,
-  tutorialStylePracticeButton,
-  tutorialStylePracticeButtonLabel,
+  tutorialStylePracticeDisplayLayer,
+  tutorialStylePrompt,
+  tutorialStylePracticeStage,
+  tutorialStyleTapTarget,
 } from '@/styles/tutorial';
 
 export function TutorialPracticeStage({
@@ -20,6 +20,7 @@ export function TutorialPracticeStage({
   expectedHand,
   feedback,
   compact,
+  bottomInset,
   onTapHand,
 }: {
   mode: TutorialModeStep;
@@ -27,6 +28,7 @@ export function TutorialPracticeStage({
   expectedHand: Hand;
   feedback: 'correct' | 'retry' | null;
   compact: boolean;
+  bottomInset: number;
   onTapHand: (hand: Hand) => void;
 }) {
   const { colors } = useTheme();
@@ -36,30 +38,32 @@ export function TutorialPracticeStage({
     : feedback === 'correct'
       ? t('Correct. Continue to beat {beat}.', { beat: beatIndex + 1 })
       : '';
+  const hint = t(expectedHand === 'left' ? 'Beat {beat}: tap the left side.' : 'Beat {beat}: tap the right side.', { beat: beatIndex + 1 });
 
   return (
-    <>
-      <Text testID="tutorial.beatCount" style={tutorialStyleBeatCount({ colors })}>
-        {t('Beat {beat} of {count}', { beat: beatIndex + 1, count: 4 })}
-      </Text>
-      <TutorialNotationPreview displayMode={mode.displayMode} beatIndex={beatIndex} compact={compact} />
-      <Text testID="tutorial.hint" accessibilityLiveRegion="polite" style={tutorialStyleHint({ colors, hand: expectedHand, compact })}>
-        {t(expectedHand === 'left' ? 'Beat {beat}: tap the left side.' : 'Beat {beat}: tap the right side.', { beat: beatIndex + 1 })}
-      </Text>
-      {feedbackText ? (
-        <Text testID="tutorial.feedback" accessibilityLiveRegion="polite" style={tutorialStyleFeedback({ colors, retry: feedback === 'retry', compact })}>
-          {feedbackText}
-        </Text>
-      ) : null}
-      <View style={tutorialStylePracticeActions({ compact })}>
-        <PracticeHandButton hand="left" compact={compact} onPress={onTapHand} />
-        <PracticeHandButton hand="right" compact={compact} onPress={onTapHand} />
+    <View testID="tutorial.practiceStage" style={tutorialStylePracticeStage()}>
+      <PracticeTapTarget hand="left" onTap={onTapHand} />
+      <PracticeTapTarget hand="right" onTap={onTapHand} />
+
+      <View pointerEvents="none" style={tutorialStylePracticeDisplayLayer()}>
+        <TutorialNotationPreview displayMode={mode.displayMode} beatIndex={beatIndex} compact={compact} />
       </View>
-    </>
+
+      <View pointerEvents="none" style={tutorialStylePrompt({ bottom: bottomInset + (compact ? 14 : 22), compact })}>
+        <Text testID="tutorial.hint" accessibilityLiveRegion="polite" style={tutorialStyleHint({ colors, hand: expectedHand, compact })}>
+          {hint}
+        </Text>
+        {feedbackText ? (
+          <Text testID="tutorial.feedback" accessibilityLiveRegion="polite" style={tutorialStyleFeedback({ colors, retry: feedback === 'retry', compact })}>
+            {feedbackText}
+          </Text>
+        ) : null}
+      </View>
+    </View>
   );
 }
 
-function PracticeHandButton({ hand, compact, onPress }: { hand: Hand; compact: boolean; onPress: (hand: Hand) => void }) {
+function PracticeTapTarget({ hand, onTap }: { hand: Hand; onTap: (hand: Hand) => void }) {
   const { colors } = useTheme();
   const { t } = useI18n();
 
@@ -68,10 +72,8 @@ function PracticeHandButton({ hand, compact, onPress }: { hand: Hand; compact: b
       testID={`tutorial.tap${hand === 'left' ? 'Left' : 'Right'}`}
       accessibilityRole="button"
       accessibilityLabel={t(hand === 'left' ? 'Tap the left side' : 'Tap the right side')}
-      onPress={() => onPress(hand)}
-      style={({ pressed }) => tutorialStylePracticeButton({ colors, hand, pressed, compact })}
-    >
-      <Text style={tutorialStylePracticeButtonLabel({ colors, hand })}>{t(hand.toUpperCase())}</Text>
-    </Pressable>
+      style={({ pressed }) => tutorialStyleTapTarget({ hand, colors, pressed })}
+      onPress={() => onTap(hand)}
+    />
   );
 }

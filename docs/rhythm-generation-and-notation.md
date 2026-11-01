@@ -47,6 +47,8 @@ The denominator is not a request for that many notes per beat. It specifies the 
 
 Beam grouping is currently a pulse-boundary policy, not a complete configurable music-theory rules engine. The caller supplies `beamGroupQuarterNotes` (the live practice screen uses the meter's metronome-pulse length); `groupIndexAt()` assigns notes to those groups, and beam runs stop at group boundaries, gaps, or beam-level changes. The renderer splits drawn beams at rests. This handles ordinary pulse grouping and compound dotted-quarter pulses. It does not model custom additive groupings such as `3+2` in `5/8` or `3+2+2` in `7/8` (those signatures are not currently supported either), nor arbitrary hand-authored beam brackets.
 
+Adjacent rest events are consolidated in the notation plan when they are contiguous, fit inside one supplied beat group, and add up to a standard written rest value. For example, two eighth rests within one quarter-note beat become one quarter rest; three eighth rests within one dotted-quarter pulse become one dotted-quarter rest. A note, a beat boundary, a nonstandard combined value, or a tied event stops consolidation. This changes engraving only; timing, expected taps, scoring, and saved session events keep their original subdivisions. Rest glyphs are positioned at the center of the duration they occupy.
+
 For the intended “two beats, three notes on each beat” exercise, select `2/4`, enable **Triplet**, and use a two-beat change interval. That gives each hand six attacks over the same two-quarter-note bar; the notation groups the triplets within each quarter-note pulse. If the interval is one beat, a new pattern may be selected at the next beat instead.
 
 ## Useful entry points
@@ -59,6 +61,7 @@ For the intended “two beats, three notes on each beat” exercise, select `2/4
 | Mixture generation | `src/rhythm/mixtures.ts`: `generateMixturePattern()` |
 | Score editor placement and ties | `src/rhythm/scoreComposer.ts`: `noteValuesForSymbol()`, `composeRhythmScore()` |
 | Beam, note, and tuplet layout | `src/rhythm/noteNotation.ts`: `createBarNoteNotationPlan()` |
+| Adjacent rest spelling | `src/rhythm/restGrouping.ts`: `groupAdjacentRestsWithinBeat()` |
 | Shared engraving | `src/components/VexFlowNotationDOM.tsx` |
 
 ## Screen component boundaries

@@ -4,6 +4,7 @@ import {
   SUBDIVISION_COUNTS,
   tupletCount,
 } from '@/rhythm/subdivisions';
+import { groupAdjacentRestsWithinBeat } from '@/rhythm/restGrouping';
 import type { Subdivision, TimeSignature } from '@/types/rhythm';
 
 export type NoteNotationSize = 'full' | 'compact' | 'mini';
@@ -115,6 +116,8 @@ export interface BarNoteNotationOptions {
   size?: NoteNotationSize;
   /** Beam groups stop at this many quarter notes (normally one beat). */
   beamGroupQuarterNotes?: number;
+  /** Rest values consolidate within this beat span; defaults to the beam group. */
+  restGroupQuarterNotes?: number;
   /** Shared horizontal padding keeps both hands' beat positions aligned. */
   anchorInsets?: NoteNotationAnchorInsets;
   /** Optional fixed notehead width for symbols that should keep the same engraving scale. */
@@ -196,7 +199,7 @@ function calculateBarNoteAnchorInsets(
   const sizeMaximum = size === 'mini' ? 6.4 : size === 'compact' ? 10.5 : 16;
   const headWidth = noteHeadWidth ?? noteHeadWidthForSlot(noteSpacing, sizeMaximum);
   const left = Math.min(width / 2, headWidth / 2 + 4);
-  const hasFlags = events.some((event) => (event.beamCount ?? inferredBeamCount(event.durationQuarter)) > 0);
+  const hasFlags = events.some((event) => !event.isRest && (event.beamCount ?? inferredBeamCount(event.durationQuarter)) > 0);
   const dotSize = Math.max(2, headWidth * 0.66 * 0.24);
   const flagWidth = Math.max(size === 'mini' ? 5 : 7, headWidth * 0.9);
   const flagOverhang = hasFlags ? headWidth / 2 + Math.max(12, flagWidth * 1.5) + 4 : 0;
@@ -593,6 +596,10 @@ function validateBarNotationInputs(
   if (!Number.isFinite(beamGroupQuarterNotes) || beamGroupQuarterNotes <= 0) {
     throw new RangeError('Beam groups must have a positive duration.');
   }
+  if (options.restGroupQuarterNotes !== undefined &&
+    (!Number.isFinite(options.restGroupQuarterNotes) || options.restGroupQuarterNotes <= 0)) {
+    throw new RangeError('Rest groups must have a positive duration.');
+  }
   if (options.noteHeadWidth !== undefined && (!Number.isFinite(options.noteHeadWidth) || options.noteHeadWidth <= 0)) {
     throw new RangeError('A fixed notehead width must be positive.');
   }
@@ -643,7 +650,9 @@ function calculateNoteAnchors(
   const events = orderedEntries.map(({ event }) => event);
   const noteAnchors = orderedEntries.map(
     ({ event, originalIndex }) => options.noteAnchors?.[originalIndex]
-      ?? leftInset + (event.startQuarter / options.durationQuarter) * usableWidth,
+      ?? leftInset + ((event.isRest
+        ? event.startQuarter + event.durationQuarter / 2
+        : event.startQuarter) / options.durationQuarter) * usableWidth,
   );
 
   return { events, noteAnchors, usableWidth };
@@ -662,14 +671,25 @@ export function createBarNoteNotationPlan(
   validateBarNotationInputs(events, options);
   const size = options.size ?? 'full';
   const beamGroupQuarterNotes = options.beamGroupQuarterNotes ?? 1;
+  const restGroupQuarterNotes = options.restGroupQuarterNotes ?? beamGroupQuarterNotes;
+  const orderedEntries = orderNotationEvents(events);
+  const groupedEvents = groupAdjacentRestsWithinBeat(
+    orderedEntries.map(({ event }) => event),
+    restGroupQuarterNotes,
+  );
+  const hasGroupedRests = groupedEvents.length < orderedEntries.length;
+  const notationEntries = hasGroupedRests ? orderNotationEvents(groupedEvents) : orderedEntries;
+  const notationOptions = hasGroupedRests && options.noteAnchors
+    ? { ...options, noteAnchors: undefined }
+    : options;
 
-  const shortestNote = events.length > 0
-    ? Math.min(...events.map((event) => event.durationQuarter))
+  const shortestNote = groupedEvents.length > 0
+    ? Math.min(...groupedEvents.map((event) => event.durationQuarter))
     : options.durationQuarter;
   const sizeMaximum = size === 'mini' ? 6.4 : size === 'compact' ? 10.5 : 16;
   const initialNoteSpacing = options.width * shortestNote / options.durationQuarter;
   const initialHeadWidth = options.noteHeadWidth ?? noteHeadWidthForSlot(initialNoteSpacing, sizeMaximum);
-  const containsTuplets = events.some((event) => event.tupletNumber !== undefined);
+  const containsTuplets = groupedEvents.some((event) => event.tupletNumber !== undefined);
   const tupletPadding = containsTuplets && options.notationHeight === undefined
     ? (size === 'mini' ? 10 : size === 'compact' ? 12 : 14)
     : 0;
@@ -677,16 +697,15 @@ export function createBarNoteNotationPlan(
   const beamHeight = size === 'mini' ? 1.2 : size === 'compact' ? 1.5 : 2.2;
   const beamGap = beamHeight + (size === 'mini' ? 1 : size === 'compact' ? 1.2 : 1.8);
   const beamTop = options.beamTop ?? (size === 'mini' ? 3 : size === 'compact' ? 4 : 5);
-  const ownInsets = calculateBarNoteAnchorInsets(events, {
-    ...options,
+  const ownInsets = calculateBarNoteAnchorInsets(groupedEvents, {
+    ...notationOptions,
     noteHeadWidth: initialHeadWidth,
   });
-  const leftInset = options.noteAnchors ? 0 : Math.max(ownInsets.left, options.anchorInsets?.left ?? 0);
-  const rightInset = options.noteAnchors ? 0 : Math.max(ownInsets.right, options.anchorInsets?.right ?? 0);
-  const orderedEntries = orderNotationEvents(events);
+  const leftInset = notationOptions.noteAnchors ? 0 : Math.max(ownInsets.left, options.anchorInsets?.left ?? 0);
+  const rightInset = notationOptions.noteAnchors ? 0 : Math.max(ownInsets.right, options.anchorInsets?.right ?? 0);
   const { events: orderedEvents, noteAnchors, usableWidth } = calculateNoteAnchors(
-    orderedEntries,
-    options,
+    notationEntries,
+    notationOptions,
     leftInset,
     rightInset,
   );
@@ -745,6 +764,7 @@ export function createNoteNotationPlan(
   size: NoteNotationSize = 'full',
   timeSignature: TimeSignature = '4/4',
   groupWidth?: number,
+  rest = false,
 ): NoteNotationPlan {
   const isTuplet = isTupletSubdivision(subdivision);
   const count = isTuplet ? tupletCount(subdivision) : SUBDIVISION_COUNTS[subdivision];
@@ -760,6 +780,7 @@ export function createNoteNotationPlan(
     startQuarter: index * noteDurationQuarter,
     durationQuarter: noteDurationQuarter,
     beamCount,
+    ...(rest ? { isRest: true } : {}),
     ...(isTuplet ? { tupletNumber: count } : {}),
   }));
 

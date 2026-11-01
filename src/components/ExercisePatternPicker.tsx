@@ -71,6 +71,7 @@ function PatternSelectionSymbol({ selection, color, timeSignature, accessibility
         <MixtureSymbol
           mixtureId={selection.mixture}
           color={color}
+          timeSignature={timeSignature}
           compact={!selected}
           groupWidth={symbolWidth}
           maxWidth={symbolWidth}

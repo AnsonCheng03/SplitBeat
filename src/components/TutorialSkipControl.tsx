@@ -1,14 +1,15 @@
 import { Pressable, View } from 'react-native';
-import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useTutorialSkipHold } from '@/features/tutorial/useTutorialSkipHold';
 import {
+  tutorialStyleHoldEndBar,
   tutorialStyleHoldFill,
-  tutorialStyleHoldLabel,
+  tutorialStyleHoldIcon,
   tutorialStyleHoldTarget,
   tutorialStyleHoldTrack,
+  tutorialStyleHoldTriangle,
 } from '@/styles/tutorial';
 
 export function TutorialSkipControl({ onSkip }: { onSkip: () => void }) {
@@ -25,9 +26,17 @@ export function TutorialSkipControl({ onSkip }: { onSkip: () => void }) {
       accessibilityHint={t('Keep holding the top-left corner until the bar fills.')}
       onPressIn={startHold}
       onPressOut={endHold}
-      style={tutorialStyleHoldTarget({ top: insets.top + 10, left: insets.left + 10, colors })}
+      style={({ pressed }) => tutorialStyleHoldTarget({
+        top: insets.top + 10,
+        left: insets.left + 10,
+        pressed,
+      })}
     >
-      <Text style={tutorialStyleHoldLabel({ colors })}>{t('Hold to skip')}</Text>
+      <View accessibilityElementsHidden style={tutorialStyleHoldIcon()}>
+        <View style={tutorialStyleHoldTriangle({ colors })} />
+        <View style={tutorialStyleHoldTriangle({ colors })} />
+        <View style={tutorialStyleHoldEndBar({ colors })} />
+      </View>
       <View style={tutorialStyleHoldTrack({ colors })}>
         <View style={tutorialStyleHoldFill({ colors, progress })} />
       </View>

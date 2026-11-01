@@ -16,6 +16,7 @@ export function createRhythmSymbolNotationModel({
   maxWidth,
   maxHeight,
   groupWidth,
+  rest,
 }: {
   subdivision: Subdivision;
   compact: boolean;
@@ -25,9 +26,10 @@ export function createRhythmSymbolNotationModel({
   maxWidth?: number;
   maxHeight?: number;
   groupWidth?: number;
+  rest?: boolean;
 }): { plan: NoteNotationPlan; fittedScale: number } {
   const size = rhythmNotationSize(compact, mini);
-  const plan = createNoteNotationPlan(subdivision, size, timeSignature, groupWidth);
+  const plan = createNoteNotationPlan(subdivision, size, timeSignature, groupWidth, rest);
   const fittedScale = fitNotationScale(plan.width, plan.height, scale, maxWidth, maxHeight);
   return { plan, fittedScale };
 }

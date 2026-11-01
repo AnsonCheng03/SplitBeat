@@ -75,6 +75,7 @@ export function RhythmTrack({
               showStaffLines={showStaffLines}
               staffLineColor={colors.dim}
               testID={`${testIdPrefix}.${label.toLowerCase()}Notation`}
+              readyTestID={`${testIdPrefix}.${label.toLowerCase()}Notation.ready`}
               accessibilityLabel={t('{hand} bar with {notes} notes and {restDescription}', {
                 hand: t(label.toLowerCase()),
                 notes: noteCount,

@@ -98,6 +98,7 @@ function HandRhythmNote({
       <MixtureSymbol
         mixtureId={mixtureId}
         color={color}
+        timeSignature={settings.timeSignature}
         scale={1.2}
         groupWidth={groupWidth}
         maxWidth={maxWidth}
