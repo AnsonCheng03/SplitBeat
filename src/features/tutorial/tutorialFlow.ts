@@ -1,4 +1,5 @@
 import type { Hand, PracticeDisplayMode } from '@/types/rhythm';
+import type { ScoreRhythmMeasure } from '@/types/importedScore';
 
 export const APP_TUTORIAL_STEPS = [
   {
@@ -32,6 +33,24 @@ export function previousTutorialStepIndex(stepIndex: number): number {
 }
 
 export const TUTORIAL_BAR_HANDS: readonly Hand[] = ['left', 'right', 'left', 'right'];
+
+export const TUTORIAL_BAR_MEASURE: ScoreRhythmMeasure = {
+  index: 0,
+  startQuarter: 0,
+  durationQuarter: 4,
+  leftEvents: [
+    { startQuarter: 0, durationQuarter: 1 },
+    { startQuarter: 1, durationQuarter: 1, isRest: true },
+    { startQuarter: 2, durationQuarter: 1 },
+    { startQuarter: 3, durationQuarter: 1, isRest: true },
+  ],
+  rightEvents: [
+    { startQuarter: 0, durationQuarter: 1, isRest: true },
+    { startQuarter: 1, durationQuarter: 1 },
+    { startQuarter: 2, durationQuarter: 1, isRest: true },
+    { startQuarter: 3, durationQuarter: 1 },
+  ],
+};
 
 export interface TutorialModeStep {
   displayMode: PracticeDisplayMode;

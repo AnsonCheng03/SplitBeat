@@ -1,18 +1,17 @@
-import { Text, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import { RhythmSymbol } from '@/components/RhythmSymbol';
-import { TUTORIAL_BAR_HANDS } from '@/features/tutorial/tutorialFlow';
+import { ScrollingScoreRhythm } from '@/components/ScrollingScoreRhythm';
+import { TUTORIAL_BAR_HANDS, TUTORIAL_BAR_MEASURE } from '@/features/tutorial/tutorialFlow';
+import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useTheme } from '@/theme/ThemeProvider';
-import type { PracticeDisplayMode } from '@/types/rhythm';
+import type { Hand, PracticeDisplayMode } from '@/types/rhythm';
 import {
-  tutorialStylePreview,
-  tutorialStylePreviewBeat,
-  tutorialStylePreviewBeatLabel,
   tutorialStylePreviewCurrentNote,
   tutorialStylePreviewCurrentTitle,
-  tutorialStylePreviewMeasure,
-  tutorialStylePreviewMeasureBarline,
-  tutorialStylePreviewNoteCell,
+  tutorialStylePreviewHand,
+  tutorialStylePreviewHands,
+  tutorialStyleScorePreview,
 } from '@/styles/tutorial';
 
 export function TutorialNotationPreview({
@@ -24,57 +23,58 @@ export function TutorialNotationPreview({
   beatIndex: number;
   compact: boolean;
 }) {
-  const { colors } = useTheme();
   const { t } = useI18n();
+  const { width } = useWindowDimensions();
 
   if (displayMode === 'rhythm') {
-    const hand = TUTORIAL_BAR_HANDS[beatIndex];
-    const handColor = hand === 'left' ? colors.left : colors.right;
     return (
-      <View testID="tutorial.notation.note" style={tutorialStylePreview({ compact })}>
-        <Text style={tutorialStylePreviewCurrentTitle({ color: handColor, compact })}>{t(hand.toUpperCase())}</Text>
-        <View style={tutorialStylePreviewCurrentNote({ compact })}>
-          <RhythmSymbol
-            subdivision="quarter"
-            color={handColor}
-            scale={compact ? 1.3 : 1.6}
-            maxWidth={100}
-            maxHeight={90}
-            readyTestID="tutorial.notation.note.ready"
-          />
-        </View>
+      <View testID="tutorial.notation.note" style={tutorialStylePreviewHands()}>
+        <HandNote hand="left" activeHand={TUTORIAL_BAR_HANDS[beatIndex]} compact={compact} label={t('LEFT')} />
+        <HandNote hand="right" activeHand={TUTORIAL_BAR_HANDS[beatIndex]} compact={compact} label={t('RIGHT')} />
       </View>
     );
   }
 
   return (
-    <View testID="tutorial.notation.bar" style={tutorialStylePreview({ compact })}>
-      <View style={tutorialStylePreviewMeasure()}>
-        <View style={tutorialStylePreviewMeasureBarline({ colors, compact })} />
-        {TUTORIAL_BAR_HANDS.map((hand, index) => {
-          const handColor = hand === 'left' ? colors.left : colors.right;
-          const current = beatIndex === index;
-          return (
-            <View
-              key={`${hand}.${index}`}
-              testID={`tutorial.barBeat.${index + 1}`}
-              style={tutorialStylePreviewBeat({ compact })}
-            >
-              <Text style={tutorialStylePreviewBeatLabel({ current, colors, compact })}>{index + 1}</Text>
-              <View style={tutorialStylePreviewNoteCell({ compact })}>
-                <RhythmSymbol
-                  subdivision="quarter"
-                  color={handColor}
-                  scale={compact ? 0.7 : 0.82}
-                  maxWidth={compact ? 44 : 52}
-                  maxHeight={compact ? 52 : 65}
-                  readyTestID={`tutorial.barBeat.${index + 1}.ready`}
-                />
-              </View>
-            </View>
-          );
-        })}
-        <View style={tutorialStylePreviewMeasureBarline({ colors, compact })} />
+    <View testID="tutorial.notation.bar" style={tutorialStyleScorePreview({ compact })}>
+      <ScrollingScoreRhythm
+        measure={TUTORIAL_BAR_MEASURE}
+        nextMeasure={TUTORIAL_BAR_MEASURE}
+        upcomingMeasures={[TUTORIAL_BAR_MEASURE]}
+        sequence={0}
+        count={1}
+        movementMode="slide"
+        quarterInMeasure={0}
+        counterBeatInBar={beatIndex}
+        counterBeatsPerBar={4}
+        compact={compact}
+        beamGroupQuarterNotes={1}
+        minimal
+        showHandLabels
+        initialViewportWidth={Math.min(width * 0.88, 1060)}
+      />
+    </View>
+  );
+}
+
+function HandNote({ hand, activeHand, compact, label }: { hand: Hand; activeHand: Hand; compact: boolean; label: string }) {
+  const { colors } = useTheme();
+  const color = hand === 'left' ? colors.left : colors.right;
+  const isRest = activeHand !== hand;
+
+  return (
+    <View style={tutorialStylePreviewHand()}>
+      <Text style={tutorialStylePreviewCurrentTitle({ color, compact })}>{label}</Text>
+      <View style={tutorialStylePreviewCurrentNote({ compact })}>
+        <RhythmSymbol
+          subdivision="quarter"
+          color={color}
+          rest={isRest}
+          scale={compact ? 1.7 : 2.15}
+          maxWidth={compact ? 110 : 154}
+          maxHeight={compact ? 100 : 142}
+          readyTestID={`tutorial.notation.note.${hand}.ready`}
+        />
       </View>
     </View>
   );

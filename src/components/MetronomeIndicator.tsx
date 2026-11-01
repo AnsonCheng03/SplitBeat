@@ -11,6 +11,7 @@ interface MetronomeIndicatorProps {
   isRest?: boolean;
   isPaused?: boolean;
   compact?: boolean;
+  beatPositionTestID?: string;
 }
 
 export function MetronomeIndicator({
@@ -20,6 +21,7 @@ export function MetronomeIndicator({
   isRest = false,
   isPaused = false,
   compact = false,
+  beatPositionTestID = 'practice.beatPosition',
 }: MetronomeIndicatorProps) {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -47,7 +49,7 @@ export function MetronomeIndicator({
       </View>
       <Text
         raw
-        testID={isRest ? 'practice.restBeat' : 'practice.beatPosition'}
+        testID={isRest ? 'practice.restBeat' : beatPositionTestID}
         accessibilityLabel={isRunning ? positionLabel : undefined}
         numberOfLines={1}
         adjustsFontSizeToFit

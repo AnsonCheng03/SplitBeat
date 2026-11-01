@@ -52,13 +52,9 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: tutorial.notation.bar
 - assertVisible:
-    id: tutorial.barBeat.1
+    id: practice.scoreMeasure
 - assertVisible:
-    id: tutorial.barBeat.2
-- assertVisible:
-    id: tutorial.barBeat.3
-- assertVisible:
-    id: tutorial.barBeat.4
+    id: practice.scoreMeasure.viewport
 - tapOn:
     id: tutorial.startBarView
 - assertVisible:
