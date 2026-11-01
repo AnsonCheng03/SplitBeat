@@ -36,6 +36,10 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: tutorial.title
     text: NOTE VIEW
+- extendedWaitUntil:
+    visible:
+      id: tutorial.notation.note.ready
+    timeout: 10000
 - takeScreenshot: tutorial-replay-open
 - longPressOn:
     id: tutorial.holdToSkip

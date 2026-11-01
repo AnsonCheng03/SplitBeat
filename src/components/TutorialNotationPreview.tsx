@@ -31,7 +31,7 @@ export function TutorialNotationPreview({
     const hand = TUTORIAL_BAR_HANDS[beatIndex];
     const handColor = hand === 'left' ? colors.left : colors.right;
     return (
-      <View testID="tutorial.notation.note" style={tutorialStylePreview({ colors, compact })}>
+      <View testID="tutorial.notation.note" style={tutorialStylePreview({ compact })}>
         <Text style={tutorialStylePreviewCurrentTitle({ color: handColor, compact })}>{t(hand.toUpperCase())}</Text>
         <View style={tutorialStylePreviewCurrentNote({ compact })}>
           <RhythmSymbol
@@ -40,6 +40,7 @@ export function TutorialNotationPreview({
             scale={compact ? 1.3 : 1.6}
             maxWidth={100}
             maxHeight={90}
+            readyTestID="tutorial.notation.note.ready"
           />
         </View>
       </View>
@@ -47,7 +48,7 @@ export function TutorialNotationPreview({
   }
 
   return (
-    <View testID="tutorial.notation.bar" style={tutorialStylePreview({ colors, compact })}>
+    <View testID="tutorial.notation.bar" style={tutorialStylePreview({ compact })}>
       <View style={tutorialStylePreviewMeasure()}>
         <View style={tutorialStylePreviewMeasureBarline({ colors, compact })} />
         {TUTORIAL_BAR_HANDS.map((hand, index) => {
@@ -57,7 +58,7 @@ export function TutorialNotationPreview({
             <View
               key={`${hand}.${index}`}
               testID={`tutorial.barBeat.${index + 1}`}
-              style={tutorialStylePreviewBeat({ current, colors, handColor, compact })}
+              style={tutorialStylePreviewBeat({ compact })}
             >
               <Text style={tutorialStylePreviewBeatLabel({ current, colors, compact })}>{index + 1}</Text>
               <View style={tutorialStylePreviewNoteCell({ compact })}>
@@ -67,6 +68,7 @@ export function TutorialNotationPreview({
                   scale={compact ? 0.7 : 0.82}
                   maxWidth={compact ? 44 : 52}
                   maxHeight={compact ? 52 : 65}
+                  readyTestID={`tutorial.barBeat.${index + 1}.ready`}
                 />
               </View>
             </View>

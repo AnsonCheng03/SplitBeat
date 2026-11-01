@@ -29,7 +29,6 @@ export function TutorialSkipControl({ onSkip }: { onSkip: () => void }) {
       style={({ pressed }) => tutorialStyleHoldTarget({
         top: insets.top + 10,
         left: insets.left + 10,
-        colors,
         pressed,
       })}
     >

@@ -1,13 +1,13 @@
-export function tutorialStyleOverlay(): import('react-native').ViewStyle {
-  return { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, zIndex: 1000, elevation: 1000, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, paddingVertical: 16, backgroundColor: 'rgba(5, 8, 14, 0.76)' };
+export function tutorialStyleOverlay({ colors, insets }: { colors: import('@/theme').ThemeColors; insets: import('react-native-safe-area-context').EdgeInsets }): import('react-native').ViewStyle {
+  return { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, zIndex: 1000, elevation: 1000, alignItems: 'center', justifyContent: 'center', paddingTop: insets.top + 14, paddingRight: Math.max(20, insets.right + 20), paddingBottom: insets.bottom + 14, paddingLeft: Math.max(20, insets.left + 20), backgroundColor: colors.background };
 }
 
-export function tutorialStyleCard({ colors, compact }: { colors: import('@/theme').ThemeColors; compact: boolean }): import('react-native').ViewStyle {
-  return { width: '100%', maxWidth: 680, paddingHorizontal: compact ? 18 : 24, paddingVertical: compact ? 14 : 20, borderRadius: 24, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line };
+export function tutorialStyleContent({ compact }: { compact: boolean }): import('react-native').ViewStyle {
+  return { flex: 1, width: '100%', maxWidth: 920, justifyContent: 'center', paddingHorizontal: compact ? 8 : 20 };
 }
 
-export function tutorialStyleHoldTarget({ top, left, colors, pressed }: { top: number; left: number; colors: import('@/theme').ThemeColors; pressed: boolean }): import('react-native').ViewStyle {
-  return { position: 'absolute', zIndex: 2, top, left, width: 52, height: 52, alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: 16, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1 };
+export function tutorialStyleHoldTarget({ top, left, pressed }: { top: number; left: number; pressed: boolean }): import('react-native').ViewStyle {
+  return { position: 'absolute', zIndex: 2, top, left, width: 52, height: 52, alignItems: 'center', justifyContent: 'center', padding: 8, backgroundColor: 'transparent', opacity: pressed ? 0.72 : 1 };
 }
 
 export function tutorialStyleHoldIcon(): import('react-native').ViewStyle {
@@ -31,11 +31,11 @@ export function tutorialStyleHoldFill({ colors, progress }: { colors: import('@/
 }
 
 export function tutorialStyleHeader({ compact }: { compact: boolean }): import('react-native').ViewStyle {
-  return { minHeight: compact ? 22 : 28, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 };
+  return { minHeight: compact ? 22 : 28, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 };
 }
 
 export function tutorialStyleStepTitle({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
-  return { color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 1.2 };
+  return { color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 1.2, textAlign: 'center' };
 }
 
 export function tutorialStyleBeatCount({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -43,15 +43,15 @@ export function tutorialStyleBeatCount({ colors }: { colors: import('@/theme').T
 }
 
 export function tutorialStyleIntroTitle({ colors, compact }: { colors: import('@/theme').ThemeColors; compact: boolean }): import('react-native').TextStyle {
-  return { color: colors.text, fontSize: compact ? 20 : 23, lineHeight: compact ? 24 : 28, fontWeight: '900', letterSpacing: -0.3, marginTop: compact ? 3 : 7 };
+  return { color: colors.text, fontSize: compact ? 20 : 23, lineHeight: compact ? 24 : 28, fontWeight: '900', letterSpacing: -0.3, marginTop: compact ? 3 : 7, textAlign: 'center' };
 }
 
 export function tutorialStyleIntroDescription({ colors, compact }: { colors: import('@/theme').ThemeColors; compact: boolean }): import('react-native').TextStyle {
-  return { color: colors.muted, fontSize: compact ? 12 : 14, lineHeight: compact ? 17 : 20, marginTop: compact ? 3 : 5 };
+  return { color: colors.muted, fontSize: compact ? 12 : 14, lineHeight: compact ? 17 : 20, marginTop: compact ? 3 : 5, textAlign: 'center' };
 }
 
-export function tutorialStylePreview({ colors, compact }: { colors: import('@/theme').ThemeColors; compact: boolean }): import('react-native').ViewStyle {
-  return { minHeight: compact ? 88 : 112, marginTop: compact ? 8 : 15, paddingHorizontal: compact ? 10 : 16, paddingVertical: compact ? 5 : 10, alignItems: 'center', justifyContent: 'center', borderRadius: 18, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.line };
+export function tutorialStylePreview({ compact }: { compact: boolean }): import('react-native').ViewStyle {
+  return { minHeight: compact ? 88 : 112, marginTop: compact ? 8 : 15, paddingHorizontal: compact ? 10 : 16, paddingVertical: compact ? 5 : 10, alignItems: 'center', justifyContent: 'center' };
 }
 
 export function tutorialStylePreviewCurrentTitle({ color, compact }: { color: string; compact: boolean }): import('react-native').TextStyle {
@@ -70,12 +70,12 @@ export function tutorialStylePreviewMeasureBarline({ colors, compact }: { colors
   return { width: 2, height: compact ? 50 : 66, backgroundColor: colors.muted, opacity: 0.65 };
 }
 
-export function tutorialStylePreviewBeat({ current, colors, handColor, compact }: { current: boolean; colors: import('@/theme').ThemeColors; handColor: string; compact: boolean }): import('react-native').ViewStyle {
-  return { flex: 1, minWidth: compact ? 44 : 54, minHeight: compact ? 60 : 74, alignItems: 'center', justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: current ? handColor : 'transparent', backgroundColor: current ? colors.surfaceRaised : 'transparent' };
+export function tutorialStylePreviewBeat({ compact }: { compact: boolean }): import('react-native').ViewStyle {
+  return { flex: 1, minWidth: compact ? 44 : 54, minHeight: compact ? 60 : 74, alignItems: 'center', justifyContent: 'center' };
 }
 
 export function tutorialStylePreviewBeatLabel({ current, colors, compact }: { current: boolean; colors: import('@/theme').ThemeColors; compact: boolean }): import('react-native').TextStyle {
-  return { color: current ? colors.text : colors.muted, fontSize: compact ? 8 : 9, fontWeight: '800', marginBottom: -2 };
+  return { color: current ? colors.accent : colors.muted, fontSize: compact ? 8 : 9, fontWeight: '800', marginBottom: -2 };
 }
 
 export function tutorialStylePreviewNoteCell({ compact }: { compact: boolean }): import('react-native').ViewStyle {
