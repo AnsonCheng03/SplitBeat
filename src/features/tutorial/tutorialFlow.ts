@@ -62,7 +62,7 @@ export const TUTORIAL_MODE_STEPS: readonly TutorialModeStep[] = [
   {
     displayMode: 'rhythm',
     title: 'NOTE VIEW',
-    description: 'Tap the hand shown by each note. The bar waits after each tap while you read the next hint.',
+    description: 'Tap the hand shown by each note. Use UP NEXT to preview what to play after the current pattern changes.',
   },
   {
     displayMode: 'score',

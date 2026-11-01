@@ -8,8 +8,7 @@ import type { Hand } from '@/types/rhythm';
 import {
   tutorialStyleFeedback,
   tutorialStyleHint,
-  tutorialStyleNotationLayer,
-  tutorialStylePreview,
+  tutorialStylePracticeDisplayLayer,
   tutorialStylePrompt,
   tutorialStylePracticeStage,
   tutorialStyleTapTarget,
@@ -21,7 +20,6 @@ export function TutorialPracticeStage({
   expectedHand,
   feedback,
   compact,
-  topInset,
   bottomInset,
   onTapHand,
 }: {
@@ -30,7 +28,6 @@ export function TutorialPracticeStage({
   expectedHand: Hand;
   feedback: 'correct' | 'retry' | null;
   compact: boolean;
-  topInset: number;
   bottomInset: number;
   onTapHand: (hand: Hand) => void;
 }) {
@@ -48,10 +45,8 @@ export function TutorialPracticeStage({
       <PracticeTapTarget hand="left" onTap={onTapHand} />
       <PracticeTapTarget hand="right" onTap={onTapHand} />
 
-      <View pointerEvents="none" style={tutorialStyleNotationLayer({ topInset, bottomInset, compact })}>
-        <View style={tutorialStylePreview({ compact })}>
-          <TutorialNotationPreview displayMode={mode.displayMode} beatIndex={beatIndex} compact={compact} />
-        </View>
+      <View pointerEvents="none" style={tutorialStylePracticeDisplayLayer()}>
+        <TutorialNotationPreview displayMode={mode.displayMode} beatIndex={beatIndex} compact={compact} />
       </View>
 
       <View pointerEvents="none" style={tutorialStylePrompt({ bottom: bottomInset + (compact ? 14 : 22), compact })}>

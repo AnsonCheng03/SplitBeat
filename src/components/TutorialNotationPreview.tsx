@@ -1,18 +1,14 @@
+import { useMemo } from 'react';
 import { useWindowDimensions, View } from 'react-native';
-import { RhythmSymbol } from '@/components/RhythmSymbol';
-import { ScrollingScoreRhythm } from '@/components/ScrollingScoreRhythm';
-import { TUTORIAL_BAR_HANDS, TUTORIAL_BAR_MEASURE } from '@/features/tutorial/tutorialFlow';
-import { Text } from '@/i18n/LocalizedText';
-import { useI18n } from '@/i18n/I18nProvider';
-import { useTheme } from '@/theme/ThemeProvider';
-import type { Hand, PracticeDisplayMode } from '@/types/rhythm';
-import {
-  tutorialStylePreviewCurrentNote,
-  tutorialStylePreviewCurrentTitle,
-  tutorialStylePreviewHand,
-  tutorialStylePreviewHands,
-  tutorialStyleScorePreview,
-} from '@/styles/tutorial';
+import { PracticeRhythmDisplay } from '@/components/PracticeRhythmDisplay';
+import { practiceLayoutForScreen } from '@/features/deviceLayout/practiceLayout';
+import { useDeviceReservedRegions } from '@/features/deviceLayout/useDeviceReservedRegions';
+import { createTutorialPracticeSnapshot } from '@/features/tutorial/tutorialPracticeDisplay';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DEFAULT_SCORE_DISPLAY_MODE } from '@/rhythm/scoreStaff';
+import { useRhythmSession } from '@/store/sessionStore';
+import type { PracticeDisplayMode, TimeSignature } from '@/types/rhythm';
+import { tutorialStylePracticeDisplayFrame } from '@/styles/tutorial';
 
 export function TutorialNotationPreview({
   displayMode,
@@ -23,59 +19,40 @@ export function TutorialNotationPreview({
   beatIndex: number;
   compact: boolean;
 }) {
-  const { t } = useI18n();
-  const { width } = useWindowDimensions();
-
-  if (displayMode === 'rhythm') {
-    return (
-      <View testID="tutorial.notation.note" style={tutorialStylePreviewHands()}>
-        <HandNote hand="left" activeHand={TUTORIAL_BAR_HANDS[beatIndex]} compact={compact} label={t('LEFT')} />
-        <HandNote hand="right" activeHand={TUTORIAL_BAR_HANDS[beatIndex]} compact={compact} label={t('RIGHT')} />
-      </View>
-    );
-  }
-
-  return (
-    <View testID="tutorial.notation.bar" style={tutorialStyleScorePreview({ compact })}>
-      <ScrollingScoreRhythm
-        measure={TUTORIAL_BAR_MEASURE}
-        nextMeasure={TUTORIAL_BAR_MEASURE}
-        upcomingMeasures={[TUTORIAL_BAR_MEASURE]}
-        sequence={0}
-        count={1}
-        movementMode="slide"
-        quarterInMeasure={0}
-        counterBeatInBar={beatIndex}
-        counterBeatsPerBar={4}
-        compact={compact}
-        beamGroupQuarterNotes={1}
-        minimal
-        showHandLabels
-        initialViewportWidth={Math.min(width * 0.88, 1060)}
-      />
-    </View>
+  const { settings } = useRhythmSession();
+  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const reservedRegions = useDeviceReservedRegions(width, height);
+  const practiceLayout = useMemo(
+    () => practiceLayoutForScreen(width, height, reservedRegions),
+    [height, reservedRegions, width],
   );
-}
-
-function HandNote({ hand, activeHand, compact, label }: { hand: Hand; activeHand: Hand; compact: boolean; label: string }) {
-  const { colors } = useTheme();
-  const color = hand === 'left' ? colors.left : colors.right;
-  const isRest = activeHand !== hand;
-
+  const snapshot = useMemo(() => createTutorialPracticeSnapshot(beatIndex), [beatIndex]);
+  const displaySettings = useMemo(() => ({
+    ...settings,
+    timeSignature: '4/4' as TimeSignature,
+    trainingMode: 'two-hand' as const,
+    practiceDisplayMode: displayMode,
+  }), [displayMode, settings]);
   return (
-    <View style={tutorialStylePreviewHand()}>
-      <Text style={tutorialStylePreviewCurrentTitle({ color, compact })}>{label}</Text>
-      <View style={tutorialStylePreviewCurrentNote({ compact })}>
-        <RhythmSymbol
-          subdivision="quarter"
-          color={color}
-          rest={isRest}
-          scale={compact ? 1.7 : 2.15}
-          maxWidth={compact ? 110 : 154}
-          maxHeight={compact ? 100 : 142}
-          readyTestID={`tutorial.notation.note.${hand}.ready`}
-        />
-      </View>
+    <View
+      testID={displayMode === 'rhythm' ? 'tutorial.notation.note' : 'tutorial.notation.bar'}
+      style={tutorialStylePracticeDisplayFrame()}
+    >
+      <PracticeRhythmDisplay
+        snapshot={snapshot}
+        settings={displaySettings}
+        tutorialVisible={false}
+        scoreDisplayMode={displaySettings.scoreMotionMode ?? DEFAULT_SCORE_DISPLAY_MODE}
+        compact={compact}
+        width={width}
+        height={height}
+        topInset={insets.top}
+        bottomInset={insets.bottom}
+        leftInset={insets.left}
+        rightInset={insets.right}
+        layout={practiceLayout}
+      />
     </View>
   );
 }

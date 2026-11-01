@@ -27,6 +27,13 @@ appId: com.splitbeat.twohandrhythm
     text: Beat 1 of 4
 - assertVisible:
     id: tutorial.notation.note
+- assertVisible:
+    id: tutorial.modeHint
+- assertVisible:
+    id: practice.nextPattern
+- assertVisible:
+    id: practice.rhythmNote.left.ready
+- takeScreenshot: tutorial-note-view
 - tapOn:
     id: tutorial.tapRight
 - assertVisible:
@@ -49,17 +56,29 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible:
     id: tutorial.title
     text: BAR VIEW
+- tapOn:
+    id: tutorial.startBarView
+- assertVisible:
+    id: tutorial.beatCount
+    text: Beat 1 of 4
+- assertVisible:
+    id: tutorial.title
+    text: BAR VIEW
 - assertVisible:
     id: tutorial.notation.bar
 - assertVisible:
     id: practice.scoreMeasure
 - assertVisible:
     id: practice.scoreMeasure.viewport
-- tapOn:
-    id: tutorial.startBarView
 - assertVisible:
-    id: tutorial.beatCount
-    text: Beat 1 of 4
+    id: practice.scoreMeasure.slot.0.bar.0.leftNotation
+- assertVisible:
+    id: practice.scoreMeasure.slot.0.bar.0.rightNotation
+- assertVisible:
+    id: practice.scoreMeasure.slot.0.bar.0.leftNotation.ready
+- assertVisible:
+    id: practice.scoreMeasure.slot.0.bar.0.rightNotation.ready
+- takeScreenshot: tutorial-bar-view
 - tapOn:
     id: tutorial.tapLeft
 - assertVisible:

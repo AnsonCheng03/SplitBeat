@@ -133,45 +133,23 @@ export function tutorialStyleModeTitle({ colors, compact }: { colors: ThemeColor
   return { color: colors.text, fontSize: compact ? 12 : 14, fontWeight: '900', letterSpacing: 1.2 };
 }
 
-export function tutorialStyleNotationLayer({ topInset, bottomInset, compact }: { topInset: number; bottomInset: number; compact: boolean }): ViewStyle {
+export function tutorialStyleModeDescription({ colors, compact }: { colors: ThemeColors; compact: boolean }): TextStyle {
   return {
-    position: 'absolute',
-    top: topInset + (compact ? 48 : 58),
-    right: 0,
-    bottom: bottomInset + (compact ? 64 : 78),
-    left: 0,
-    alignItems: 'stretch',
-    justifyContent: 'center',
+    maxWidth: compact ? 240 : 340,
+    color: colors.muted,
+    fontSize: compact ? 9 : 11,
+    lineHeight: compact ? 12 : 15,
+    fontWeight: '600',
+    textAlign: 'right',
   };
 }
 
-export function tutorialStylePreview({ compact }: { compact: boolean }): ViewStyle {
-  return { width: '100%', flex: 1, minHeight: compact ? 110 : 150, alignItems: 'center', justifyContent: 'center' };
+export function tutorialStylePracticeDisplayLayer(): ViewStyle {
+  return { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 };
 }
 
-export function tutorialStylePreviewHands(): ViewStyle {
-  return { width: '100%', height: '100%', flexDirection: 'row', alignItems: 'center' };
-}
-
-export function tutorialStylePreviewHand(): ViewStyle {
-  return { flex: 1, height: '100%', alignItems: 'center', justifyContent: 'center', gap: 14 };
-}
-
-export function tutorialStylePreviewCurrentTitle({ color, compact }: { color: string; compact: boolean }): TextStyle {
-  return { color, fontSize: compact ? 11 : 14, fontWeight: '900', letterSpacing: 2 };
-}
-
-export function tutorialStylePreviewCurrentNote({ compact }: { compact: boolean }): ViewStyle {
-  return {
-    width: compact ? 120 : 170,
-    height: compact ? 112 : 156,
-    alignItems: 'center',
-    justifyContent: 'center',
-  };
-}
-
-export function tutorialStyleScorePreview({ compact }: { compact: boolean }): ViewStyle {
-  return { width: '88%', maxWidth: 1060, height: compact ? 100 : 124, alignSelf: 'center' };
+export function tutorialStylePracticeDisplayFrame(): ViewStyle {
+  return { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 };
 }
 
 export function tutorialStylePrompt({ bottom, compact }: { bottom: number; compact: boolean }): ViewStyle {

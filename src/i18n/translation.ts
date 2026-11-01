@@ -15,7 +15,7 @@ const TRADITIONAL_CHINESE: Record<string, string> = {
   'TUTORIAL · MODE {step} OF 2': '教學 · 第 {step} / 2 種顯示方式',
   'NOTE VIEW': '音符模式',
   'BAR VIEW': '小節模式',
-  'Tap the hand shown by each note. The bar waits after each tap while you read the next hint.': '按照每個音符提示點按相應的一側。每次點按後，小節會暫停，讓你閱讀下一個提示。',
+  'Tap the hand shown by each note. Use UP NEXT to preview what to play after the current pattern changes.': '按音符提示點按相應一側。「接下來」會預覽目前節奏切換後要演奏的內容。',
   'Read the full bar from left to right, then tap the hand for each beat.': '由左至右閱讀整個小節，再按每一拍提示點按相應的一側。',
   'Now read the whole bar from left to right, then tap the hand for each beat.': '現在由左至右閱讀整個小節，再按每一拍提示點按相應的一側。',
   'Beat {beat}: tap the left side.': '第 {beat} 拍：點按左側。',

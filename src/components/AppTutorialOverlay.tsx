@@ -13,6 +13,7 @@ import {
   tutorialStyleContent,
   tutorialStyleDivider,
   tutorialStyleHandSurface,
+  tutorialStyleModeDescription,
   tutorialStyleModeTitle,
   tutorialStyleOverlay,
   tutorialStyleStepTitle,
@@ -40,6 +41,29 @@ export function AppTutorialOverlay({ onDismiss }: { onDismiss: () => void }) {
       <View pointerEvents="none" style={tutorialStyleHandSurface({ hand: 'right', colors })} />
       <View pointerEvents="none" style={tutorialStyleDivider({ colors })} />
 
+      <View style={tutorialStyleContent()}>
+        {isPractice ? (
+          <TutorialPracticeStage
+            mode={mode}
+            beatIndex={beatIndex}
+            expectedHand={expectedHand}
+            feedback={feedback}
+            compact={compact}
+            bottomInset={insets.bottom}
+            onTapHand={tapHand}
+          />
+        ) : (
+          <TutorialTransitionStage
+            phase={phase}
+            compact={compact}
+            topInset={insets.top}
+            bottomInset={insets.bottom}
+            onContinue={startBarView}
+            onDone={onDismiss}
+          />
+        )}
+      </View>
+
       {isPractice ? (
         <>
           <View pointerEvents="none" style={tutorialStyleTopCounter({ top: insets.top + (compact ? 4 : 8) })}>
@@ -56,34 +80,14 @@ export function AppTutorialOverlay({ onDismiss }: { onDismiss: () => void }) {
               {t('TUTORIAL · MODE {step} OF 2', { step: modeIndex + 1 })}
             </Text>
             <Text testID="tutorial.title" style={tutorialStyleModeTitle({ colors, compact })}>{t(mode.title)}</Text>
+            <Text testID="tutorial.modeHint" style={tutorialStyleModeDescription({ colors, compact })}>
+              {t(mode.description)}
+            </Text>
           </View>
         </>
       ) : null}
 
       <TutorialSkipControl onSkip={onDismiss} />
-      <View style={tutorialStyleContent()}>
-        {isPractice ? (
-          <TutorialPracticeStage
-            mode={mode}
-            beatIndex={beatIndex}
-            expectedHand={expectedHand}
-            feedback={feedback}
-            compact={compact}
-            topInset={insets.top}
-            bottomInset={insets.bottom}
-            onTapHand={tapHand}
-          />
-        ) : (
-          <TutorialTransitionStage
-            phase={phase}
-            compact={compact}
-            topInset={insets.top}
-            bottomInset={insets.bottom}
-            onContinue={startBarView}
-            onDone={onDismiss}
-          />
-        )}
-      </View>
     </View>
   );
 }
