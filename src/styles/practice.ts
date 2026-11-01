@@ -428,15 +428,17 @@ export function PracticeStatusBarStyle3({ snapshot, width, compact, layout }: { 
     availableWidth,
     snapshot?.resumeCountIn ? Math.min(520, Math.max(200, availableWidth * 0.5)) : 90,
   );
+  const counterLeft = keepCounterInsideLeftPane
+    ? layout.leftHand.left + (layout.leftHand.width - counterWidth) / 2
+    : (width - counterWidth) / 2;
   return {
-    position: keepCounterInsideLeftPane ? 'absolute' : undefined,
-    left: keepCounterInsideLeftPane ? layout.leftHand.left : undefined,
-    width: keepCounterInsideLeftPane ? layout.leftHand.width : undefined,
+    position: 'absolute',
+    left: counterLeft,
+    width: counterWidth,
     top: keepCounterInsideLeftPane ? 0 : undefined,
     bottom: keepCounterInsideLeftPane ? 0 : undefined,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: counterWidth,
     minHeight: snapshot?.resumeCountIn ? (compact ? 48 : 58) : 38,
   };
 }
