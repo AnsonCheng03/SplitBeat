@@ -39,6 +39,45 @@ function canJoinRestRun(event: NoteNotationEvent): boolean {
   return event.isRest === true && !event.tieToNext && !event.tieFromPrevious;
 }
 
+function splitRestAtBeatBoundaries(
+  event: NoteNotationEvent,
+  beatDurationQuarter: number,
+  fullMeasureDurationQuarter?: number,
+): NoteNotationEvent[] {
+  if (!canJoinRestRun(event)) return [event];
+  if (event.isMeasureRest) return [event];
+  if (
+    fullMeasureDurationQuarter !== undefined &&
+    Math.abs(event.startQuarter) < EPSILON &&
+    Math.abs(event.durationQuarter - fullMeasureDurationQuarter) < EPSILON
+  ) return [event];
+
+  const segments: NoteNotationEvent[] = [];
+  let startQuarter = event.startQuarter;
+  let remainingQuarter = event.durationQuarter;
+
+  while (remainingQuarter > EPSILON) {
+    const beatIndex = Math.floor(startQuarter / beatDurationQuarter);
+    const beatEndQuarter = (beatIndex + 1) * beatDurationQuarter;
+    const availableQuarter = beatEndQuarter - startQuarter;
+    const durationQuarter = Math.min(remainingQuarter, availableQuarter);
+    if (durationQuarter <= EPSILON) {
+      startQuarter = beatEndQuarter;
+      continue;
+    }
+
+    segments.push({
+      ...event,
+      startQuarter,
+      durationQuarter,
+    });
+    startQuarter += durationQuarter;
+    remainingQuarter -= durationQuarter;
+  }
+
+  return segments;
+}
+
 function restRunDuration(events: readonly NoteNotationEvent[]): number {
   const first = events[0];
   const last = events.at(-1);
@@ -58,16 +97,20 @@ function isRestRunContiguous(events: readonly NoteNotationEvent[]): boolean {
 export function groupAdjacentRestsWithinBeat(
   orderedEvents: readonly NoteNotationEvent[],
   beatDurationQuarter: number,
+  fullMeasureDurationQuarter?: number,
 ): NoteNotationEvent[] {
   if (!Number.isFinite(beatDurationQuarter) || beatDurationQuarter <= 0) {
     throw new RangeError('Rest groups must have a positive beat duration.');
   }
 
+  const beatAlignedEvents = orderedEvents.flatMap((event) =>
+    splitRestAtBeatBoundaries(event, beatDurationQuarter, fullMeasureDurationQuarter),
+  );
   const groupedEvents: NoteNotationEvent[] = [];
   let eventIndex = 0;
 
-  while (eventIndex < orderedEvents.length) {
-    const first = orderedEvents[eventIndex];
+  while (eventIndex < beatAlignedEvents.length) {
+    const first = beatAlignedEvents[eventIndex];
     if (!first || !canJoinRestRun(first) || !endsWithinBeat(first, beatDurationQuarter)) {
       if (first) groupedEvents.push(first);
       eventIndex += 1;
@@ -76,9 +119,9 @@ export function groupAdjacentRestsWithinBeat(
 
     const restRun = [first];
     let nextIndex = eventIndex + 1;
-    while (nextIndex < orderedEvents.length) {
+    while (nextIndex < beatAlignedEvents.length) {
       const previous = restRun.at(-1);
-      const next = orderedEvents[nextIndex];
+      const next = beatAlignedEvents[nextIndex];
       if (!previous || !next || !canJoinRestRun(next)) break;
       if (!belongsToSameBeat(next.startQuarter, first.startQuarter, beatDurationQuarter)) break;
       if (!endsWithinBeat(next, beatDurationQuarter)) break;

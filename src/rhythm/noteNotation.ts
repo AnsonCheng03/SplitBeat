@@ -20,6 +20,8 @@ export interface NoteNotationEvent {
   tupletNumber?: number;
   /** Draw a VexFlow rest glyph instead of a pitched notehead. */
   isRest?: boolean;
+  /** Keep a rest used to represent an otherwise empty measure as one glyph. */
+  isMeasureRest?: boolean;
   /** Draw a tie from this note to the next written segment. */
   tieToNext?: boolean;
   /** Draw a tie into this note from the preceding written segment. */
@@ -676,10 +678,13 @@ export function createBarNoteNotationPlan(
   const groupedEvents = groupAdjacentRestsWithinBeat(
     orderedEntries.map(({ event }) => event),
     restGroupQuarterNotes,
+    options.durationQuarter,
   );
-  const hasGroupedRests = groupedEvents.length < orderedEntries.length;
-  const notationEntries = hasGroupedRests ? orderNotationEvents(groupedEvents) : orderedEntries;
-  const notationOptions = hasGroupedRests && options.noteAnchors
+  const restsWereTransformed = groupedEvents.length !== orderedEntries.length || groupedEvents.some(
+    (event, index) => event !== orderedEntries[index]?.event,
+  );
+  const notationEntries = restsWereTransformed ? orderNotationEvents(groupedEvents) : orderedEntries;
+  const notationOptions = restsWereTransformed && options.noteAnchors
     ? { ...options, noteAnchors: undefined }
     : options;
 

@@ -154,13 +154,13 @@ test('staff notation preserves explicit rests for library engraving', () => {
 
 test('score spans with no events render a centered rest glyph using a supported duration', () => {
   assert.deepEqual(scoreNotationEventsForSpan([], 1.5), [
-    { startQuarter: 0.75, durationQuarter: 1.5, isRest: true },
+    { startQuarter: 0, durationQuarter: 1.5, isRest: true, isMeasureRest: true },
   ]);
   assert.deepEqual(scoreNotationEventsForSpan([], 3), [
-    { startQuarter: 1.5, durationQuarter: 3, isRest: true },
+    { startQuarter: 0, durationQuarter: 3, isRest: true, isMeasureRest: true },
   ]);
   assert.deepEqual(scoreNotationEventsForSpan([], 5), [
-    { startQuarter: 2.5, durationQuarter: 4, isRest: true },
+    { startQuarter: 0.5, durationQuarter: 4, isRest: true, isMeasureRest: true },
   ]);
   assert.deepEqual(scoreNotationEventsForSpan([{ startQuarter: 0, durationQuarter: 1 }], 4), [
     { startQuarter: 0, durationQuarter: 1 },

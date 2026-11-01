@@ -80,9 +80,10 @@ export function scoreNotationEventsForSpan(
 
   const restDurationQuarter = SCORE_REST_DURATIONS.find((duration) => duration <= spanQuarter + 0.000001) ?? spanQuarter;
   return [{
-    startQuarter: spanQuarter / 2,
+    startQuarter: (spanQuarter - restDurationQuarter) / 2,
     durationQuarter: restDurationQuarter,
     isRest: true,
+    isMeasureRest: true,
   }];
 }
 

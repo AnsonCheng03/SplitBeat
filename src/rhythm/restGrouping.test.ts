@@ -36,6 +36,77 @@ test('rests on opposite sides of a beat boundary remain separate', () => {
   ]);
 });
 
+test('a rest crossing a simple-meter beat is written as beat-aligned rests', () => {
+  const plan = createBarNoteNotationPlan([
+    { startQuarter: 0, durationQuarter: 1.5, isRest: true },
+    { startQuarter: 1.5, durationQuarter: 0.5 },
+  ], {
+    durationQuarter: 4,
+    width: 400,
+    beamGroupQuarterNotes: 1,
+  });
+
+  assert.deepEqual(plan.events.map(({ startQuarter, durationQuarter, isRest }) => [
+    startQuarter,
+    durationQuarter,
+    isRest,
+  ]), [
+    [0, 1, true],
+    [1, 0.5, true],
+    [1.5, 0.5, undefined],
+  ]);
+});
+
+test('a complete-bar rest remains a single centered rest', () => {
+  const plan = createBarNoteNotationPlan([
+    { startQuarter: 0, durationQuarter: 4, isRest: true },
+  ], {
+    durationQuarter: 4,
+    width: 400,
+    beamGroupQuarterNotes: 1,
+  });
+
+  assert.deepEqual(plan.events.map(({ startQuarter, durationQuarter, isRest }) => [
+    startQuarter,
+    durationQuarter,
+    isRest,
+  ]), [[0, 4, true]]);
+  assert.ok(Math.abs(plan.notes[0]!.left + plan.notes[0]!.headWidth / 2 - plan.width / 2) < 1);
+});
+
+test('the fallback glyph for an empty measure stays centered in an odd-length bar', () => {
+  const plan = createBarNoteNotationPlan([
+    { startQuarter: 0.5, durationQuarter: 4, isRest: true, isMeasureRest: true },
+  ], {
+    durationQuarter: 5,
+    width: 500,
+    beamGroupQuarterNotes: 1,
+  });
+
+  assert.deepEqual(plan.events.map(({ startQuarter, durationQuarter, isRest }) => [
+    startQuarter,
+    durationQuarter,
+    isRest,
+  ]), [[0.5, 4, true]]);
+  assert.ok(Math.abs(plan.notes[0]!.left + plan.notes[0]!.headWidth / 2 - plan.width / 2) < 1);
+});
+
+test('compound-meter dotted-quarter rests stay grouped inside their beat', () => {
+  const plan = createBarNoteNotationPlan([
+    { startQuarter: 0, durationQuarter: 1.5, isRest: true },
+  ], {
+    durationQuarter: 3,
+    width: 300,
+    beamGroupQuarterNotes: 1.5,
+  });
+
+  assert.deepEqual(plan.events.map(({ startQuarter, durationQuarter, isRest }) => [
+    startQuarter,
+    durationQuarter,
+    isRest,
+  ]), [[0, 1.5, true]]);
+});
+
 test('rest grouping follows the meter beat even when beams span a longer pattern', () => {
   const plan = createBarNoteNotationPlan([
     { startQuarter: 0, durationQuarter: 0.5, isRest: true },
@@ -83,7 +154,7 @@ test('three eighth rests inside a dotted-quarter compound beat become one dotted
   assert.deepEqual(grouped, [{ startQuarter: 0, durationQuarter: 1.5, isRest: true }]);
 });
 
-test('rest groups retain nonstandard durations and never extend through a beat boundary', () => {
+test('rest groups retain nonstandard values and split crossing rests at beat boundaries', () => {
   const grouped = groupAdjacentRestsWithinBeat([
     { startQuarter: 0, durationQuarter: 0.375, isRest: true },
     { startQuarter: 0.375, durationQuarter: 0.125, isRest: true },
@@ -93,7 +164,7 @@ test('rest groups retain nonstandard durations and never extend through a beat b
 
   assert.deepEqual(grouped.map(({ startQuarter, durationQuarter }) => [startQuarter, durationQuarter]), [
     [0, 0.5],
-    [0.875, 0.25],
-    [1.125, 0.125],
+    [0.875, 0.125],
+    [1, 0.25],
   ]);
 });
