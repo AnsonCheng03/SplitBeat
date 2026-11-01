@@ -60,6 +60,37 @@ appId: com.splitbeat.twohandrhythm
 - takeScreenshot: imported-score-preview
 - scrollUntilVisible:
     element:
+      id: scoreImport.library
+    direction: DOWN
+- tapOn:
+    id: scoreImport.library
+- scrollUntilVisible:
+    element:
+      id: scoreImport.category.imported
+    direction: DOWN
+- tapOn:
+    id: scoreImport.category.imported
+- assertVisible:
+    id: scoreImport.imported.entry.*
+- assertVisible:
+    id: scoreImport.imported.systemTag.*.imported
+- tapOn:
+    id: scoreImport.imported.tagInput.*
+- inputText: Practice
+- tapOn:
+    id: scoreImport.imported.addTag.*
+- assertVisible:
+    id: scoreImport.imported.userTag.*
+- tapOn:
+    id: scoreImport.imported.userTag.*
+- assertNotVisible:
+    id: scoreImport.imported.userTag.*
+- tapOn:
+    id: scoreImport.imported.open.*
+- assertVisible:
+    id: scoreImport.summary
+- scrollUntilVisible:
+    element:
       id: scoreImport.start
     direction: DOWN
 - tapOn:

@@ -2,8 +2,11 @@ import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { ScoreTemplateFilterChip } from '@/components/ScoreTemplateFilterChip';
-import { filterScoreTemplates, SCORE_TEMPLATES, SCORE_TEMPLATE_CATEGORIES, SCORE_TEMPLATE_TAGS } from '@/rhythm/scoreTemplates';
-import type { ScoreTemplateCategory, ScoreTemplateTag } from '@/rhythm/scoreTemplates';
+import { ImportedScoreCategoryList } from '@/components/ImportedScoreCategoryList';
+import { filterScoreTemplates, SCORE_TEMPLATES, SCORE_BROWSER_CATEGORIES, SCORE_TEMPLATE_CATEGORIES, SCORE_TEMPLATE_TAGS } from '@/rhythm/scoreTemplates';
+import type { ScoreBrowserCategory, ScoreTemplateTag } from '@/rhythm/scoreTemplates';
+import { filterImportedScores } from '@/rhythm/importedScoreLibrary';
+import type { AddImportedScoreUserTagResult, ImportedScoreLibraryEntry } from '@/rhythm/importedScoreLibrary';
 import { useTheme } from '@/theme/ThemeProvider';
 import { ExampleScoreBrowserStyle1,
   ExampleScoreBrowserStyle2,
@@ -30,32 +33,62 @@ import { ExampleScoreBrowserStyle1,
 export function ExampleScoreBrowser({
   category,
   tags,
+  importedScores,
+  importedScoresLoaded,
+  importedScoresEnabled,
   onCategoryChange,
   onTagToggle,
+  onOpenImportedScore,
+  onAddImportedTag,
+  onRemoveImportedTag,
   onClearFilters,
   onSelectTemplate,
 }: {
-  category: ScoreTemplateCategory | 'All';
-  tags: ScoreTemplateTag[];
-  onCategoryChange: (category: ScoreTemplateCategory | 'All') => void;
-  onTagToggle: (tag: ScoreTemplateTag) => void;
+  category: ScoreBrowserCategory | 'All';
+  tags: string[];
+  importedScores: readonly ImportedScoreLibraryEntry[];
+  importedScoresLoaded: boolean;
+  importedScoresEnabled: boolean;
+  onCategoryChange: (category: ScoreBrowserCategory | 'All') => void;
+  onTagToggle: (tag: string) => void;
+  onOpenImportedScore: (entry: ImportedScoreLibraryEntry) => void;
+  onAddImportedTag: (entryId: string, tag: string) => AddImportedScoreUserTagResult;
+  onRemoveImportedTag: (entryId: string, tag: string) => void;
   onClearFilters: () => void;
   onSelectTemplate: (templateId: string) => void;
 }) {
   const { colors } = useTheme();
   const { t } = useI18n();
   const { width } = useWindowDimensions();
-  const visibleTemplates = filterScoreTemplates(SCORE_TEMPLATES, { category, tags });
+  const importedCategorySelected = category === 'Imported';
+  const selectedTemplateTags = tags.filter((tag): tag is ScoreTemplateTag => SCORE_TEMPLATE_TAGS.includes(tag as ScoreTemplateTag));
+  const visibleTemplates = importedCategorySelected
+    ? []
+    : filterScoreTemplates(SCORE_TEMPLATES, { category, tags: selectedTemplateTags });
+  const importedTags = [...new Set(importedScores.flatMap((entry) => entry.userTags ?? []))].sort((first, second) => first.localeCompare(second));
+  const availableTags = importedCategorySelected ? importedTags : SCORE_TEMPLATE_TAGS;
+  const availableCategories = importedScoresEnabled
+    ? ['All', ...SCORE_BROWSER_CATEGORIES] as const
+    : ['All', ...SCORE_TEMPLATE_CATEGORIES] as const;
+  const visibleImportedScores = filterImportedScores(importedScores, tags);
   const templateCardBasis = width >= 650 ? '48%' : '100%';
   const hasFilters = category !== 'All' || tags.length > 0;
 
   return (
     <View style={ExampleScoreBrowserStyle1()}>
       <View style={ExampleScoreBrowserStyle2()}>
-        <Text style={ExampleScoreBrowserStyle3({ colors })}>EXAMPLE SCORES</Text>
-        <Text testID="scoreImport.exampleCount" style={ExampleScoreBrowserStyle4({ colors })}>{t('{count} example scores', { count: visibleTemplates.length })}</Text>
+        <Text style={ExampleScoreBrowserStyle3({ colors })}>{t(importedCategorySelected ? 'IMPORTED SCORES' : 'EXAMPLE SCORES')}</Text>
+        <Text testID="scoreImport.exampleCount" style={ExampleScoreBrowserStyle4({ colors })}>
+          {t(importedCategorySelected ? '{count} imported scores' : '{count} example scores', {
+            count: importedCategorySelected ? visibleImportedScores.length : visibleTemplates.length,
+          })}
+        </Text>
       </View>
-      <Text style={ExampleScoreBrowserStyle5({ colors })}>Choose a style, level, or hand setup.</Text>
+      <Text style={ExampleScoreBrowserStyle5({ colors })}>
+        {t(importedCategorySelected
+          ? 'Your imported MIDI and MusicXML scores. Add custom tags to organize them.'
+          : 'Choose a style, level, or hand setup.')}
+      </Text>
       <View style={ExampleScoreBrowserStyle6()}>
         <Text style={ExampleScoreBrowserStyle7({ colors })}>CATEGORY</Text>
         {hasFilters ? (
@@ -65,7 +98,7 @@ export function ExampleScoreBrowser({
         ) : null}
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={ExampleScoreBrowserStyle22()}>
-        {(['All', ...SCORE_TEMPLATE_CATEGORIES] as const).map((item) => (
+        {availableCategories.map((item) => (
           <ScoreTemplateFilterChip
             key={item}
             testID={`scoreImport.category.${scoreFilterTestId(item)}`}
@@ -78,10 +111,10 @@ export function ExampleScoreBrowser({
       </ScrollView>
       <Text style={ExampleScoreBrowserStyle10({ colors })}>TAGS · COMBINE ANY</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={ExampleScoreBrowserStyle23()}>
-        {SCORE_TEMPLATE_TAGS.map((tag) => (
+        {availableTags.map((tag, index) => (
           <ScoreTemplateFilterChip
             key={tag}
-            testID={`scoreImport.tag.${scoreFilterTestId(tag)}`}
+            testID={importedCategorySelected ? `scoreImport.imported.tagFilter.${index}` : `scoreImport.tag.${scoreFilterTestId(tag)}`}
             label={t(tag)}
             accessibilityLabel={t('Filter scores by {value}', { value: t(tag) })}
             selected={tags.includes(tag)}
@@ -89,7 +122,15 @@ export function ExampleScoreBrowser({
           />
         ))}
       </ScrollView>
-      {visibleTemplates.length === 0 ? (
+      {importedCategorySelected ? (
+        <ImportedScoreCategoryList
+          entries={visibleImportedScores}
+          loaded={importedScoresLoaded}
+          onOpen={onOpenImportedScore}
+          onAddTag={onAddImportedTag}
+          onRemoveTag={onRemoveImportedTag}
+        />
+      ) : visibleTemplates.length === 0 ? (
         <View style={ExampleScoreBrowserStyle11({ colors })}>
           <Text style={ExampleScoreBrowserStyle12({ colors })}>No example scores match these filters.</Text>
         </View>

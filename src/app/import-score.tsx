@@ -46,6 +46,8 @@ export default function ImportScoreScreen() {
     saveCurrentScore,
     startPractice,
     toggleTemplateTag,
+    addImportedTag,
+    removeImportedTag,
     clearTemplateFilters,
     selectTemplate,
     showLibrary,
@@ -123,12 +125,20 @@ export default function ImportScoreScreen() {
                 <ExampleScoreBrowser
                   category={templateCategory}
                   tags={templateTags}
+                  importedScores={library}
+                  importedScoresLoaded={libraryLoaded}
+                  importedScoresEnabled={featureFlags.savedScoreLibrary}
                   onCategoryChange={onTemplateCategoryChange}
                   onTagToggle={toggleTemplateTag}
+                  onOpenImportedScore={loadLibraryEntry}
+                  onAddImportedTag={addImportedTag}
+                  onRemoveImportedTag={removeImportedTag}
                   onClearFilters={clearTemplateFilters}
                   onSelectTemplate={selectTemplate}
                 />
-                <ScoreLibraryList loaded={libraryLoaded} entries={library} onOpen={loadLibraryEntry} />
+                {templateCategory !== 'Imported' ? (
+                  <ScoreLibraryList loaded={libraryLoaded} entries={library} onOpen={loadLibraryEntry} />
+                ) : null}
               </>
             ) : null}
           </>

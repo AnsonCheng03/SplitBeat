@@ -9,12 +9,14 @@ import {
   createImportedScoreEntry,
   placeSingleTrackOnHand,
   rememberImportedScore,
+  addImportedScoreUserTag,
+  removeImportedScoreUserTag,
   setImportedScoreSaved,
 } from '@/rhythm/importedScoreLibrary';
-import type { ImportedScoreSource } from '@/rhythm/importedScoreLibrary';
+import type { AddImportedScoreUserTagResult, ImportedScoreSource } from '@/rhythm/importedScoreLibrary';
 import { decodeBase64Bytes, parseMidiRhythm } from '@/rhythm/midiParser';
 import { SCORE_TEMPLATES } from '@/rhythm/scoreTemplates';
-import type { ScoreTemplateCategory, ScoreTemplateTag } from '@/rhythm/scoreTemplates';
+import type { ScoreBrowserCategory } from '@/rhythm/scoreTemplates';
 import { E2E_SAMPLE_MUSICXML } from '@/rhythm/e2eSampleScore';
 import { parseMusicXmlRhythm } from '@/rhythm/musicXmlParser';
 import { useRhythmSession } from '@/store/sessionStore';
@@ -47,8 +49,8 @@ export function useScoreImportScreen() {
   const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
   const [libraryLoaded, setLibraryLoaded] = useState(false);
   const scoreDisplayMode: ScoreDisplayMode = settings.scoreDisplayMode ?? DEFAULT_SCORE_DISPLAY_MODE;
-  const [templateCategory, setTemplateCategory] = useState<ScoreTemplateCategory | 'All'>('All');
-  const [templateTags, setTemplateTags] = useState<ScoreTemplateTag[]>([]);
+  const [templateCategory, setTemplateCategory] = useState<ScoreBrowserCategory | 'All'>('All');
+  const [templateTags, setTemplateTags] = useState<string[]>([]);
 
   useEffect(() => {
     if (!featureFlags.scoreImport) router.replace('/');
@@ -203,15 +205,41 @@ export function useScoreImportScreen() {
     }
   };
 
-  const toggleTemplateTag = (tag: ScoreTemplateTag) => {
+  const toggleTemplateTag = (tag: string) => {
     setTemplateTags((selected) => selected.includes(tag)
       ? selected.filter((item) => item !== tag)
       : [...selected, tag]);
   };
 
+  const changeTemplateCategory = (category: ScoreBrowserCategory | 'All') => {
+    setTemplateCategory(category);
+    setTemplateTags([]);
+  };
+
   const clearTemplateFilters = () => {
     setTemplateCategory('All');
     setTemplateTags([]);
+  };
+
+  const addImportedTag = (entryId: string, tag: string): AddImportedScoreUserTagResult => {
+    const update = addImportedScoreUserTag(libraryRef.current, entryId, tag);
+    if (update.result === 'added') {
+      libraryRef.current = update.entries;
+      setLibrary(update.entries);
+      void saveImportedScoreLibrary(update.entries).catch(() => {
+        Alert.alert(t('Could not save score tags'), t('Your tag is visible for now, but this device could not store it.'));
+      });
+    }
+    return update.result;
+  };
+
+  const removeImportedTag = (entryId: string, tag: string) => {
+    const nextLibrary = removeImportedScoreUserTag(libraryRef.current, entryId, tag);
+    libraryRef.current = nextLibrary;
+    setLibrary(nextLibrary);
+    void saveImportedScoreLibrary(nextLibrary).catch(() => {
+      Alert.alert(t('Could not save score tags'), t('Your tag was removed for now, but this device could not store the change.'));
+    });
   };
 
   const selectTemplate = (templateId: string) => {
@@ -245,11 +273,13 @@ export function useScoreImportScreen() {
     saveCurrentScore,
     startPractice,
     toggleTemplateTag,
+    addImportedTag,
+    removeImportedTag,
     clearTemplateFilters,
     selectTemplate,
     showLibrary,
     returnHome,
     onPreviewMeasureChange: setPreviewMeasureIndex,
-    onTemplateCategoryChange: setTemplateCategory,
+    onTemplateCategoryChange: changeTemplateCategory,
   };
 }

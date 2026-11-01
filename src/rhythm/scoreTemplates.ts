@@ -19,6 +19,8 @@ export interface ScoreTemplate {
 
 export const SCORE_TEMPLATE_CATEGORIES = ['Pop', 'Classical', 'Traditional'] as const;
 export type ScoreTemplateCategory = (typeof SCORE_TEMPLATE_CATEGORIES)[number];
+export const SCORE_BROWSER_CATEGORIES = [...SCORE_TEMPLATE_CATEGORIES, 'Imported'] as const;
+export type ScoreBrowserCategory = (typeof SCORE_BROWSER_CATEGORIES)[number];
 
 export const SCORE_TEMPLATE_TAGS = [
   'Easy',

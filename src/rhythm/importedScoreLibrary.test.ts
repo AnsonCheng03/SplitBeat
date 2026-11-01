@@ -5,6 +5,10 @@ import {
   parseImportedScoreLibrary,
   placeSingleTrackOnHand,
   rememberImportedScore,
+  addImportedScoreUserTag,
+  filterImportedScores,
+  getImportedScoreSystemTags,
+  removeImportedScoreUserTag,
   setImportedScoreSaved,
 } from '@/rhythm/importedScoreLibrary';
 import { SCORE_TEMPLATES } from '@/rhythm/scoreTemplates';
@@ -27,6 +31,59 @@ test('saved scores stay saved when the file is imported again', () => {
   const updated = rememberImportedScore(saved, reopened);
   assert.equal(updated[0]!.saved, true);
   assert.equal(updated[0]!.lastUsedAt, 2);
+});
+
+test('custom imported-score tags survive re-imports and storage restoration', () => {
+  const first = createImportedScoreEntry('midi', 'etude.mid', templateScore, 1);
+  const tagged = addImportedScoreUserTag([first], first.id, ' Warm-up ');
+  assert.equal(tagged.result, 'added');
+  const repeated = createImportedScoreEntry('midi', 'etude.mid', templateScore, 2);
+  const updated = rememberImportedScore(tagged.entries, repeated);
+  const restored = parseImportedScoreLibrary(JSON.stringify({ version: 1, entries: updated }));
+  assert.deepEqual(restored[0]!.userTags, ['Warm-up']);
+});
+
+test('custom imported-score tags can be added, filtered, and removed without changing system tags', () => {
+  const imported = createImportedScoreEntry('musicxml', 'study.musicxml', templateScore, 5);
+  const template = createImportedScoreEntry('template', 'Example', templateScore, 6);
+  const initialEntries = [imported, template];
+
+  assert.deepEqual(getImportedScoreSystemTags(imported), ['Imported', 'Both hands']);
+  assert.equal(addImportedScoreUserTag(initialEntries, imported.id, 'Easy').result, 'protected');
+  assert.equal(addImportedScoreUserTag(initialEntries, imported.id, ' imported ').result, 'protected');
+  assert.equal(addImportedScoreUserTag(initialEntries, imported.id, '雙手').result, 'protected');
+  assert.equal(addImportedScoreUserTag(initialEntries, template.id, 'Practice').result, 'missing-score');
+  assert.equal(addImportedScoreUserTag(initialEntries, imported.id, '   ').result, 'empty');
+  assert.equal(addImportedScoreUserTag(initialEntries, imported.id, 'x'.repeat(25)).result, 'too-long');
+
+  const tagLimitEntry = { ...imported, userTags: Array.from({ length: 12 }, (_, index) => `Tag ${index + 1}`) };
+  assert.equal(addImportedScoreUserTag([tagLimitEntry], imported.id, 'Extra').result, 'limit');
+
+  const added = addImportedScoreUserTag(initialEntries, imported.id, 'Practice');
+  assert.equal(added.result, 'added');
+  assert.equal(addImportedScoreUserTag(added.entries, imported.id, 'practice').result, 'duplicate');
+  assert.deepEqual(filterImportedScores(added.entries, ['Practice']).map(({ id }) => id), [imported.id]);
+
+  const systemTagRemoval = removeImportedScoreUserTag(added.entries, imported.id, 'Both hands');
+  assert.deepEqual(systemTagRemoval.find(({ id }) => id === imported.id)!.userTags, ['Practice']);
+  const removed = removeImportedScoreUserTag(systemTagRemoval, imported.id, 'Practice');
+  assert.deepEqual(removed.find(({ id }) => id === imported.id)!.userTags, []);
+  assert.deepEqual(filterImportedScores(removed).map(({ id }) => id), [imported.id]);
+});
+
+test('restores older score records and drops invalid, duplicate, or built-in user tags', () => {
+  const entry = createImportedScoreEntry('midi', 'old.mid', templateScore, 7);
+  const legacyEntry = { ...entry };
+  delete legacyEntry.userTags;
+  const restoredLegacy = parseImportedScoreLibrary(JSON.stringify({ entries: [legacyEntry] }));
+  assert.deepEqual(restoredLegacy[0]!.userTags, []);
+
+  const malformedTags = {
+    ...entry,
+    userTags: [' Mood ', 'Mood', 'Easy', 'x'.repeat(30), null],
+  };
+  const restoredMalformed = parseImportedScoreLibrary(JSON.stringify({ entries: [malformedTags] }));
+  assert.deepEqual(restoredMalformed[0]!.userTags, ['Mood']);
 });
 
 test('stores a composed multi-bar score in the same saved score library', () => {

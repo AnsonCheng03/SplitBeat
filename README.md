@@ -258,7 +258,7 @@ The template and saved-score library flow has its own Maestro test:
 EXPO_PUBLIC_E2E_SILENT=1 E2E_MAESTRO_FLOW=score-library.yaml npm run e2e:maestro -- --device DEVICE_ID
 ~~~
 
-Example scores can be filtered by category and by any combination of difficulty and hand tags. The examples include one- and two-hand parts, easy and difficult arrangements, and scores in both 4/4 and 3/8.
+Example scores can be filtered by category and by any combination of difficulty and hand tags. The examples include one- and two-hand parts, easy and difficult arrangements, and scores in both 4/4 and 3/8. The browser also has an **Imported** category for local MIDI and MusicXML files. Each imported score has fixed system tags for its source and hand count, plus up to 12 user tags of 24 characters each; custom tags can be added, removed, and used as filters. User tags persist with the score, while built-in tags cannot be changed. The score-import Maestro flow covers adding and removing a custom tag.
 
 ## Timing and scoring
 

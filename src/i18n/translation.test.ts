@@ -38,6 +38,14 @@ test('translations interpolate named values in the translated phrase', () => {
   assert.equal(translate('en', 'Lesson {number}', { number: 12 }), 'Lesson 12');
 });
 
+test('imported-score categories and tag controls are localized', () => {
+  assert.equal(translate('zh-Hant', 'Imported'), '已匯入');
+  assert.equal(translate('zh-Hant', 'SYSTEM TAGS'), '系統標籤');
+  assert.equal(translate('zh-Hant', 'YOUR TAGS'), '自訂標籤');
+  assert.equal(translate('zh-Hant', 'Add a tag'), '輸入標籤');
+  assert.equal(translate('zh-Hant', 'Remove tag {tag}', { tag: 'Warm-up' }), '移除標籤「Warm-up」');
+});
+
 test('beat position labels cover every beat count used by supported meters', () => {
   for (const beatsPerBar of [2, 3, 4, 5, 7]) {
     for (let beat = 1; beat <= beatsPerBar; beat += 1) {

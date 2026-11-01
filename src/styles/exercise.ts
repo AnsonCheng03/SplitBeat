@@ -747,6 +747,66 @@ export function ExampleScoreBrowserStyle23(): import('react-native').ViewStyle {
   return { gap: 7, paddingBottom: 9 };
 }
 
+export function ImportedScoreCategoryStyle1({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { minHeight: 72, justifyContent: 'center', padding: 12, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line };
+}
+
+export function ImportedScoreCategoryStyle2({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.dim, fontSize: 11, textAlign: 'center' };
+}
+
+export function ImportedScoreCategoryStyle3(): import('react-native').ViewStyle {
+  return { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 };
+}
+
+export function ImportedScoreCategoryStyle4({ cardBasis, colors }: { cardBasis: '48%' | '100%'; colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { flexGrow: 1, flexBasis: cardBasis, maxWidth: cardBasis, minWidth: 0, padding: 11, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line };
+}
+
+export function ImportedScoreCategoryStyle5(): import('react-native').ViewStyle {
+  return { minHeight: 37, justifyContent: 'center' };
+}
+
+export function ImportedScoreCategoryStyle6(): import('react-native').ViewStyle {
+  return { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 };
+}
+
+export function ImportedScoreCategoryStyle7({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { flex: 1, color: colors.text, fontSize: 12, fontWeight: '900' };
+}
+
+export function ImportedScoreCategoryStyle8({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.accent, fontSize: 9, fontWeight: '900' };
+}
+
+export function ImportedScoreCategoryStyle9({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.dim, fontSize: 9, marginTop: 3 };
+}
+
+export function ImportedScoreCategoryStyle10(): import('react-native').ViewStyle {
+  return { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 7 };
+}
+
+export function ImportedScoreCategoryStyle11({ colors, system }: { colors: import('@/theme').ThemeColors; system: boolean }): import('react-native').ViewStyle {
+  return { minHeight: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 7, borderRadius: 9, backgroundColor: system ? colors.background : colors.surfaceRaised };
+}
+
+export function ImportedScoreCategoryStyle12({ colors, system }: { colors: import('@/theme').ThemeColors; system: boolean }): import('react-native').TextStyle {
+  return { color: system ? colors.muted : colors.accent, fontSize: 8, fontWeight: '800' };
+}
+
+export function ImportedScoreCategoryStyle13(): import('react-native').ViewStyle {
+  return { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 7 };
+}
+
+export function ImportedScoreCategoryStyle14({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { flex: 1, minHeight: 32, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 8, color: colors.text, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.line, fontSize: 10 };
+}
+
+export function ImportedScoreCategoryStyle15({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { minHeight: 32, minWidth: 48, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 9, borderRadius: 8, backgroundColor: colors.surfaceRaised };
+}
+
 export function ExerciseComposerStyle30(): import('react-native').ViewStyle {
   return { gap: 7, paddingVertical: 7 };
 }
