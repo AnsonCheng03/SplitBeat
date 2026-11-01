@@ -1,4 +1,5 @@
 import { ActivityIndicator, Modal, Pressable, ScrollView, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -16,7 +17,11 @@ import {
   HomeActivityPickerStyle10,
   HomeActivityPickerStyle11,
   HomeActivityPickerStyle12,
-  HomeActivityPickerStyle13
+  HomeActivityPickerStyle13,
+  HomeActivityPickerStyle14,
+  HomeActivityPickerStyle15,
+  HomeActivityPickerStyle16,
+  HomeActivityPickerStyle17,
 } from '@/styles/home';
 
 export function HomeActivityPicker({
@@ -38,17 +43,28 @@ export function HomeActivityPicker({
   return (
     <Modal
       visible={visible}
-      transparent
-      animationType="fade"
+      animationType="slide"
       supportedOrientations={['landscape-left', 'landscape-right']}
       onRequestClose={onClose}
     >
-      <View style={HomeActivityPickerStyle1()}>
-        <Pressable accessibilityRole="button" accessibilityLabel={t('Close mode selection')} onPress={onClose} style={HomeActivityPickerStyle2()} />
-        <View style={HomeActivityPickerStyle3({ colors })}>
-          <Text style={HomeActivityPickerStyle4({ colors })}>Select a practice mode</Text>
-          <Text style={HomeActivityPickerStyle5({ colors })}>Choose what to practice today.</Text>
-          <ScrollView contentContainerStyle={HomeActivityPickerStyle6()} showsVerticalScrollIndicator={false}>
+      <SafeAreaView testID="home.activityPicker.screen" style={HomeActivityPickerStyle1({ colors })}>
+        <View style={HomeActivityPickerStyle2()}>
+          <View style={HomeActivityPickerStyle3()}>
+            <Pressable
+              testID="home.activityPicker.close"
+              accessibilityRole="button"
+              accessibilityLabel={t('Close mode selection')}
+              onPress={onClose}
+              style={HomeActivityPickerStyle14()}
+            >
+              <Text style={HomeActivityPickerStyle15({ colors })}>‹  {t('HOME')}</Text>
+            </Pressable>
+            <View style={HomeActivityPickerStyle16()}>
+              <Text style={HomeActivityPickerStyle4({ colors })}>Select a practice mode</Text>
+              <Text style={HomeActivityPickerStyle5({ colors })}>Choose what to practice today.</Text>
+            </View>
+          </View>
+          <ScrollView style={HomeActivityPickerStyle17()} contentContainerStyle={HomeActivityPickerStyle6()} showsVerticalScrollIndicator={false}>
             {options.map((option) => {
               const isSelected = selected === option.id;
               return (
@@ -70,7 +86,7 @@ export function HomeActivityPicker({
             })}
           </ScrollView>
         </View>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }

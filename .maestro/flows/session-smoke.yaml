@@ -238,7 +238,15 @@ appId: com.splitbeat.twohandrhythm
 - tapOn:
     id: results.replayBar.1
 - assertVisible:
+    id: records.replay.screen
+- assertVisible:
+    id: records.replay.close
+- assertVisible:
     id: results.replayTimeline.1
+- tapOn:
+    id: records.replay.close
+- assertNotVisible:
+    id: records.replay.screen
 - assertVisible:
     id: results.screen
 - scrollUntilVisible:

@@ -85,16 +85,16 @@ export function indexStyle19(): import('react-native').ViewStyle {
   return { flex: 1 };
 }
 
-export function HomeActivityPickerStyle1(): import('react-native').ViewStyle {
-  return { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.68)' };
+export function HomeActivityPickerStyle1({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { flex: 1, backgroundColor: colors.background };
 }
 
 export function HomeActivityPickerStyle2(): import('react-native').ViewStyle {
-  return { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 };
+  return { flex: 1, width: '100%', maxWidth: 1000, alignSelf: 'center', paddingHorizontal: 28, paddingVertical: 8 };
 }
 
-export function HomeActivityPickerStyle3({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { width: '100%', maxWidth: 560, maxHeight: '92%', padding: 22, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line };
+export function HomeActivityPickerStyle3(): import('react-native').ViewStyle {
+  return { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 24, marginBottom: 16 };
 }
 
 export function HomeActivityPickerStyle4({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
@@ -102,15 +102,15 @@ export function HomeActivityPickerStyle4({ colors }: { colors: import('@/theme')
 }
 
 export function HomeActivityPickerStyle5({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
-  return { color: colors.muted, fontSize: 13, marginTop: 5, marginBottom: 16 };
+  return { color: colors.muted, fontSize: 13, marginTop: 5 };
 }
 
 export function HomeActivityPickerStyle6(): import('react-native').ViewStyle {
-  return { gap: 8 };
+  return { paddingBottom: 24 };
 }
 
 export function HomeActivityPickerStyle7({ isSelected, colors, pressed }: { isSelected: boolean; colors: import('@/theme').ThemeColors; pressed: boolean }): import('react-native').ViewStyle {
-  return { minHeight: 58, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 13, backgroundColor: isSelected ? colors.surfaceRaised : colors.background, borderWidth: 1, borderColor: isSelected ? colors.accent : colors.line, opacity: pressed ? 0.82 : 1 };
+  return { minHeight: 68, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderColor: colors.line, backgroundColor: isSelected ? colors.surfaceRaised : 'transparent', opacity: pressed ? 0.82 : 1 };
 }
 
 export function HomeActivityPickerStyle8(): import('react-native').ViewStyle {
@@ -135,6 +135,22 @@ export function HomeActivityPickerStyle12({ colors }: { colors: import('@/theme'
 
 export function HomeActivityPickerStyle13({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
   return { color: colors.text, fontSize: 17, fontWeight: '800' };
+}
+
+export function HomeActivityPickerStyle14(): import('react-native').ViewStyle {
+  return { minWidth: 96, minHeight: 44, justifyContent: 'center' };
+}
+
+export function HomeActivityPickerStyle15({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.muted, fontSize: 12, fontWeight: '900', letterSpacing: 1 };
+}
+
+export function HomeActivityPickerStyle16(): import('react-native').ViewStyle {
+  return { flex: 1 };
+}
+
+export function HomeActivityPickerStyle17(): import('react-native').ViewStyle {
+  return { flex: 1 };
 }
 
 export function HomeSelectionStyle1({ pressed, colors }: { pressed: boolean; colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {

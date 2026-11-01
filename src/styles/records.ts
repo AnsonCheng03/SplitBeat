@@ -234,12 +234,12 @@ export function recordsStyle42({ colors, tone, active }: { colors: import('@/the
   return { color, fontSize: 25, fontWeight: '900' };
 }
 
-export function recordsStyle44(): import('react-native').ViewStyle {
-  return { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 18, backgroundColor: 'rgba(0, 0, 0, 0.62)' };
+export function recordsStyle44({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { flex: 1, backgroundColor: colors.background };
 }
 
-export function recordsStyle45({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { width: '100%', maxWidth: 760, maxHeight: '92%', padding: 20, borderRadius: 20, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.background };
+export function recordsStyle45(): import('react-native').ViewStyle {
+  return { flex: 1, width: '100%', maxWidth: 1000, alignSelf: 'center', paddingHorizontal: 24, paddingVertical: 12 };
 }
 
 export function recordsStyle46(): import('react-native').ViewStyle {
@@ -258,8 +258,8 @@ export function recordsStyle49({ colors }: { colors: import('@/theme').ThemeColo
   return { color: colors.muted, fontSize: 11, marginTop: 5 };
 }
 
-export function recordsStyle50({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: colors.surfaceRaised };
+export function recordsStyle50(): import('react-native').ViewStyle {
+  return { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' };
 }
 
 export function recordsStyle51({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {

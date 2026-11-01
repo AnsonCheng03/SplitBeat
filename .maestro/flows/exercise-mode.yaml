@@ -16,6 +16,17 @@ appId: com.splitbeat.twohandrhythm
     timeout: 15000
 - tapOn:
     id: home.activityPicker
+- assertVisible:
+    id: home.activityPicker.screen
+- assertVisible:
+    id: home.activityPicker.close
+- takeScreenshot: practice-mode-picker-full-screen
+- tapOn:
+    id: home.activityPicker.close
+- assertNotVisible:
+    id: home.activityPicker.screen
+- tapOn:
+    id: home.activityPicker
 - tapOn:
     id: home.exercise
 - assertVisible:

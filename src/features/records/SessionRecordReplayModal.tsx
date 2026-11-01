@@ -1,4 +1,5 @@
 import { Modal, Pressable, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ReplayTimeline } from '@/components/ReplayTimeline';
 import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -46,13 +47,12 @@ export function SessionRecordReplayModal({
   return (
     <Modal
       visible
-      transparent
-      animationType="fade"
+      animationType="slide"
       supportedOrientations={['landscape-left', 'landscape-right']}
       onRequestClose={onClose}
     >
-      <View style={recordsStyle44()}>
-        <View style={recordsStyle45({ colors })}>
+      <SafeAreaView testID="records.replay.screen" style={recordsStyle44({ colors })}>
+        <View style={recordsStyle45()}>
           <View style={recordsStyle46()}>
             <View style={recordsStyle47()}>
               <Text raw={record.source === 'score'} numberOfLines={1} style={recordsStyle48({ colors })}>
@@ -63,10 +63,11 @@ export function SessionRecordReplayModal({
               </Text>
             </View>
             <Pressable
+              testID="records.replay.close"
               accessibilityRole="button"
               accessibilityLabel={t('Close replay')}
               onPress={onClose}
-              style={recordsStyle50({ colors })}
+              style={recordsStyle50()}
             >
               <Text style={recordsStyle51({ colors })}>×</Text>
             </Pressable>
@@ -113,7 +114,7 @@ export function SessionRecordReplayModal({
             <Text style={recordsStyle49({ colors })}>{t('Replay is not available for this session.')}</Text>
           )}
         </View>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }
