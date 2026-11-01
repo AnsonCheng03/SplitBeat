@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { centerScoreBeatEvents, DEFAULT_SCORE_DISPLAY_MODE, findNextScoreEvent, normalizeSavedScoreDisplayMode, scoreBeatEvents, scoreDisplayModeFromParam, scoreHandPresence, scoreNotationEvents, scoreNotationEventsForSpan, scoreTrainingMode } from '@/rhythm/scoreStaff';
+import { centerScoreBeatEvents, DEFAULT_SCORE_DISPLAY_MODE, findNextScoreEvent, scoreBeatEvents, scoreDisplayModeFromParam, scoreHandPresence, scoreNotationEvents, scoreNotationEventsForSpan, scoreTrainingMode } from '@/rhythm/scoreStaff';
 import type { ImportedRhythmScore, ScoreRhythmMeasure } from '@/types/importedScore';
 
 const firstBar: ScoreRhythmMeasure = {
@@ -34,15 +34,6 @@ test('score display mode defaults to fade and keeps the old staff link compatibl
   assert.equal(scoreDisplayModeFromParam('slide'), 'slide');
   assert.equal(scoreDisplayModeFromParam('staff'), 'slide');
   assert.equal(scoreDisplayModeFromParam('slide-per-note'), 'slide-per-note');
-});
-
-test('saved score display preference accepts all modes and migrates older motion settings', () => {
-  assert.equal(normalizeSavedScoreDisplayMode('focus'), 'focus');
-  assert.equal(normalizeSavedScoreDisplayMode('slide'), 'slide');
-  assert.equal(normalizeSavedScoreDisplayMode('fade'), 'fade');
-  assert.equal(normalizeSavedScoreDisplayMode('slide-per-note'), 'slide-per-note');
-  assert.equal(normalizeSavedScoreDisplayMode(undefined, 'slide-per-note'), 'slide-per-note');
-  assert.equal(normalizeSavedScoreDisplayMode('invalid', 'invalid'), 'fade');
 });
 
 test('focus view finds each hand event and rolls forward across bars', () => {

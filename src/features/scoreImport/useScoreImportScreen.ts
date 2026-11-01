@@ -25,6 +25,7 @@ import { useTheme } from '@/theme/ThemeProvider';
 import type { ImportedRhythmScore } from '@/types/importedScore';
 import type { ScoreDisplayMode } from '@/types/rhythm';
 import { keepModeLoadingVisible, waitForModeLoadingFrame } from '@/features/modeLoadingFeedback';
+import { importedScoreAutoPlayEnabled } from '@/features/scoreImport/scoreAutoPlay';
 
 export const isSilentScoreImportBuild = process.env.EXPO_PUBLIC_E2E_SILENT === '1';
 
@@ -43,12 +44,13 @@ export function useScoreImportScreen() {
   const [starting, setStarting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [scoreSource, setScoreSource] = useState<ImportedScoreSource>('musicxml');
+  const [scoreDisplayMode, setScoreDisplayMode] = useState<ScoreDisplayMode>(DEFAULT_SCORE_DISPLAY_MODE);
+  const [midiAutoPlay, setMidiAutoPlay] = useState(false);
   const [library, setLibrary] = useState<Awaited<ReturnType<typeof loadImportedScoreLibrary>>>([]);
   const libraryRef = useRef(library);
   const libraryLoadPromiseRef = useRef<Promise<Awaited<ReturnType<typeof loadImportedScoreLibrary>>> | null>(null);
   const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
   const [libraryLoaded, setLibraryLoaded] = useState(false);
-  const scoreDisplayMode: ScoreDisplayMode = settings.scoreDisplayMode ?? DEFAULT_SCORE_DISPLAY_MODE;
   const [templateCategory, setTemplateCategory] = useState<ScoreBrowserCategory | 'All'>('All');
   const [templateTags, setTemplateTags] = useState<string[]>([]);
 
@@ -88,6 +90,8 @@ export function useScoreImportScreen() {
     setScore(loadedScore);
     setScoreFileName(fileName);
     setScoreSource(source);
+    setScoreDisplayMode(DEFAULT_SCORE_DISPLAY_MODE);
+    setMidiAutoPlay(false);
     setPreviewMeasureIndex(0);
     void rememberScore(loadedScore, fileName, source);
   };
@@ -154,6 +158,8 @@ export function useScoreImportScreen() {
     setScore(entry.score);
     setScoreFileName(entry.fileName);
     setScoreSource(entry.source);
+    setScoreDisplayMode(DEFAULT_SCORE_DISPLAY_MODE);
+    setMidiAutoPlay(false);
     setPreviewMeasureIndex(0);
     setCurrentEntryId(entry.id);
     const updated = rememberImportedScore(libraryRef.current, { ...entry, lastUsedAt: currentTimestamp() });
@@ -193,7 +199,15 @@ export function useScoreImportScreen() {
     setStarting(true);
     try {
       await waitForModeLoadingFrame();
-      await prepareExercise(practiceScore, { settings: trainingMode });
+      const referenceRhythmEnabled = importedScoreAutoPlayEnabled({
+        source: scoreSource,
+        midiAutoPlay,
+        savedAutoPlay: settings.referenceRhythmEnabled,
+        featureEnabled: featureFlags.shownRhythmPlayback,
+      });
+      await prepareExercise(practiceScore, {
+        settings: { ...trainingMode, referenceRhythmEnabled },
+      });
       await keepModeLoadingVisible(loadingStartedAt);
       router.replace({
         pathname: '/practice',
@@ -255,6 +269,10 @@ export function useScoreImportScreen() {
     t,
     settings,
     featureFlags,
+    scoreDisplayMode,
+    onScoreDisplayModeChange: setScoreDisplayMode,
+    midiAutoPlay,
+    onMidiAutoPlayChange: setMidiAutoPlay,
     score,
     scoreFileName,
     previewMeasureIndex,

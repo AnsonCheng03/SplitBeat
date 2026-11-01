@@ -60,7 +60,7 @@ export function usePracticeScreen() {
   const activeSettings = sessionSettings ?? settings;
   const scoreDisplayMode = scoreDisplayModeParam
     ? scoreDisplayModeFromParam(scoreDisplayModeParam)
-    : activeSettings.scoreDisplayMode ?? DEFAULT_SCORE_DISPLAY_MODE;
+    : DEFAULT_SCORE_DISPLAY_MODE;
   const tapFeedbackEnabled = featureFlags.tapFeedback;
   const blurTargetRef = useRef<View>(null);
   const hasStartedExitRef = useRef(false);

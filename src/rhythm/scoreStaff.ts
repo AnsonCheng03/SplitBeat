@@ -1,20 +1,13 @@
-import { SCORE_DISPLAY_MODES, SCORE_MOTION_MODES } from '@/types/rhythm';
-import type { Hand, ScoreDisplayMode, ScoreMotionMode } from '@/types/rhythm';
+import { SCORE_DISPLAY_MODES } from '@/types/rhythm';
+import type { Hand, ScoreDisplayMode } from '@/types/rhythm';
 import type { ImportedRhythmScore, ScoreRhythmEvent, ScoreRhythmMeasure } from '@/types/importedScore';
 import type { NoteNotationEvent } from '@/rhythm/noteNotation';
 
 export const DEFAULT_SCORE_DISPLAY_MODE: ScoreDisplayMode = 'fade';
 
-export function normalizeSavedScoreDisplayMode(value: unknown, legacyMotionMode?: unknown): ScoreDisplayMode {
-  if (SCORE_DISPLAY_MODES.includes(value as ScoreDisplayMode)) return value as ScoreDisplayMode;
-  if (SCORE_MOTION_MODES.includes(legacyMotionMode as ScoreMotionMode)) return legacyMotionMode as ScoreMotionMode;
-  return DEFAULT_SCORE_DISPLAY_MODE;
-}
-
 /** Keep old saved practice links working while making the no-motion score the default. */
 export function scoreDisplayModeFromParam(value: string | undefined): ScoreDisplayMode {
-  if (value === 'focus') return value;
-  if (SCORE_MOTION_MODES.includes(value as ScoreMotionMode)) return value as ScoreMotionMode;
+  if (SCORE_DISPLAY_MODES.includes(value as ScoreDisplayMode)) return value as ScoreDisplayMode;
   if (value === 'staff') return 'slide';
   return DEFAULT_SCORE_DISPLAY_MODE;
 }

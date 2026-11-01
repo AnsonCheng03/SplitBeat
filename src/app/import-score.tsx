@@ -28,6 +28,10 @@ export default function ImportScoreScreen() {
     t,
     settings,
     featureFlags,
+    scoreDisplayMode,
+    onScoreDisplayModeChange,
+    midiAutoPlay,
+    onMidiAutoPlayChange,
     score,
     scoreFileName,
     previewMeasureIndex,
@@ -147,6 +151,12 @@ export default function ImportScoreScreen() {
             score={score}
             fileName={scoreFileName}
             source={scoreSource}
+            scoreDisplayMode={scoreDisplayMode}
+            onScoreDisplayModeChange={onScoreDisplayModeChange}
+            midiAutoPlay={midiAutoPlay}
+            onMidiAutoPlayChange={onMidiAutoPlayChange}
+            midiAutoPlayEnabled={featureFlags.shownRhythmPlayback}
+            scoreNotationEnabled={featureFlags.scoreNotation}
             singleHand={settings.singleHand}
             savedLibraryEnabled={featureFlags.savedScoreLibrary}
             currentEntry={currentEntry}

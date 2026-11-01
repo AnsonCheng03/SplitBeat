@@ -48,6 +48,43 @@ export function PracticeDisplayPickerStyle5({ selected, colors }: { selected: bo
   return { color: selected ? colors.accent : colors.muted, fontSize: 12, fontWeight: '800' };
 }
 
+export function scoreDisplayPickerContainerStyle(): import('react-native').ViewStyle {
+  return { marginTop: 14, gap: 8 };
+}
+
+export function scoreDisplayLabelStyle({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 };
+}
+
+export function scoreDisplayModeOptionsStyle(): import('react-native').ViewStyle {
+  return { flexDirection: 'row', flexWrap: 'wrap', gap: 8 };
+}
+
+export function scoreDisplayModeButtonStyle({ selected, pressed, colors }: { selected: boolean; pressed: boolean; colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return {
+    flexGrow: 1,
+    flexBasis: '22%',
+    minWidth: 110,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    backgroundColor: selected || pressed ? colors.surfaceRaised : colors.surface,
+    borderWidth: 1,
+    borderColor: selected ? colors.accent : colors.line,
+    opacity: pressed ? 0.82 : 1,
+  };
+}
+
+export function scoreDisplayModeButtonTextStyle({ selected, colors }: { selected: boolean; colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: selected ? colors.accent : colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 0.35 };
+}
+
+export function scoreDisplayDescriptionStyle({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
+  return { color: colors.dim, fontSize: 11, lineHeight: 15 };
+}
+
 export function PracticeIntroOverlayStyle1({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
   return { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: colors.background };
 }

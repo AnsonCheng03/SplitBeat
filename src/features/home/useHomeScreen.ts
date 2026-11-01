@@ -2,9 +2,11 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import { useI18n } from '@/i18n/I18nProvider';
+import { DEFAULT_SCORE_DISPLAY_MODE } from '@/rhythm/scoreStaff';
 import { useAppTutorial } from '@/store/AppTutorialProvider';
 import { useRhythmSession } from '@/store/sessionStore';
 import { useTheme } from '@/theme/ThemeProvider';
+import type { ScoreDisplayMode } from '@/types/rhythm';
 import type { HomeActivity, HomeActivityOption } from '@/features/home/homeActivity';
 import {
   keepModeLoadingVisible,
@@ -23,6 +25,7 @@ export function useHomeScreen() {
   const openingActivityRef = useRef(false);
   const [activityPickerVisible, setActivityPickerVisible] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<HomeActivity>('practice');
+  const [scoreDisplayMode, setScoreDisplayMode] = useState<ScoreDisplayMode>(DEFAULT_SCORE_DISPLAY_MODE);
 
   const activityOptions = useMemo<HomeActivityOption[]>(() => [
     {
@@ -97,13 +100,16 @@ export function useHomeScreen() {
       }
       await prepareExercise();
       await keepModeLoadingVisible(loadingStartedAt, MIN_ACTIVITY_LOADING_FEEDBACK_MS);
-      router.replace('/practice');
+      router.replace({
+        pathname: '/practice',
+        params: { scoreDisplayMode: featureFlags.scoreNotation ? scoreDisplayMode : 'focus' },
+      });
     } catch {
       Alert.alert(t('Audio could not start'), t('Check your device audio settings and try again.'));
     } finally {
       setStarting(false);
     }
-  }, [audioStatus, prepareAudio, prepareExercise, router, starting, t]);
+  }, [audioStatus, featureFlags.scoreNotation, prepareAudio, prepareExercise, router, scoreDisplayMode, starting, t]);
 
   const navigateToActivity = useCallback((activity: HomeActivity) => {
     switch (activity) {
@@ -193,6 +199,8 @@ export function useHomeScreen() {
   return {
     colors,
     settings,
+    scoreDisplayMode,
+    onScoreDisplayModeChange: setScoreDisplayMode,
     featureFlags,
     updateSettings,
     t,

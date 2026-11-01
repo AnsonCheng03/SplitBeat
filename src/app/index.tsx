@@ -5,6 +5,7 @@ import { AudioStartButton } from '@/components/AudioStartButton';
 import { HomeHeaderAction, HomeModeChoice } from '@/components/HomeSelection';
 import { HomeActivityPicker, HomeActivityLoading } from '@/components/HomeActivityPicker';
 import { PracticeDisplayPicker } from '@/components/PracticeDisplayPicker';
+import { ScoreDisplayModePicker } from '@/components/ScoreDisplayModePicker';
 import { useHomeScreen } from '@/features/home/useHomeScreen';
 import {
   indexStyle1,
@@ -32,6 +33,8 @@ export default function HomeScreen() {
   const {
     colors,
     settings,
+    scoreDisplayMode,
+    onScoreDisplayModeChange,
     featureFlags,
     updateSettings,
     t,
@@ -115,6 +118,13 @@ export default function HomeScreen() {
               onChange={(practiceDisplayMode) => updateSettings({ practiceDisplayMode })}
               testIDPrefix="home.display"
               label="DISPLAY"
+            />
+          ) : null}
+          {featureFlags.scoreNotation && settings.practiceDisplayMode === 'score' ? (
+            <ScoreDisplayModePicker
+              value={scoreDisplayMode}
+              onChange={onScoreDisplayModeChange}
+              testIDPrefix="home.scoreDisplay"
             />
           ) : null}
         </View>

@@ -3,13 +3,15 @@ import { Text } from '@/i18n/LocalizedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
+import { ScoreDisplayModePicker } from '@/components/ScoreDisplayModePicker';
+import { SettingsToggleRow } from '@/components/SettingsToggleRow';
 import { placeSingleTrackOnHand } from '@/rhythm/importedScoreLibrary';
 import type { ImportedScoreSource, ImportedScoreLibraryEntry } from '@/rhythm/importedScoreLibrary';
 import { scoreTrainingMode } from '@/rhythm/scoreStaff';
 import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ImportedRhythmScore } from '@/types/importedScore';
-import type { Hand } from '@/types/rhythm';
+import type { Hand, ScoreDisplayMode } from '@/types/rhythm';
 import {
   ImportedScorePreviewStyle1,
   ImportedScorePreviewStyle2,
@@ -41,6 +43,12 @@ export function ImportedScorePreview({
   score,
   fileName,
   source,
+  scoreDisplayMode,
+  onScoreDisplayModeChange,
+  midiAutoPlay,
+  onMidiAutoPlayChange,
+  midiAutoPlayEnabled,
+  scoreNotationEnabled,
   singleHand,
   savedLibraryEnabled,
   currentEntry,
@@ -56,6 +64,12 @@ export function ImportedScorePreview({
   score: ImportedRhythmScore;
   fileName: string;
   source: ImportedScoreSource;
+  scoreDisplayMode: ScoreDisplayMode;
+  onScoreDisplayModeChange: (mode: ScoreDisplayMode) => void;
+  midiAutoPlay: boolean;
+  onMidiAutoPlayChange: (enabled: boolean) => void;
+  midiAutoPlayEnabled: boolean;
+  scoreNotationEnabled: boolean;
   singleHand: Hand;
   savedLibraryEnabled: boolean;
   currentEntry?: ImportedScoreLibraryEntry;
@@ -145,6 +159,23 @@ export function ImportedScorePreview({
         </Pressable>
       </View>
       <Text style={ImportedScorePreviewStyle17({ colors })}>Check the extracted rhythms against your score before you start.</Text>
+      {scoreNotationEnabled ? (
+        <ScoreDisplayModePicker
+          value={scoreDisplayMode}
+          onChange={onScoreDisplayModeChange}
+          testIDPrefix="scoreImport.display"
+          allowOneNote
+        />
+      ) : null}
+      {source === 'midi' && midiAutoPlayEnabled ? (
+        <SettingsToggleRow
+          testID="scoreImport.midiAutoPlay"
+          label="MIDI auto-play"
+          description="Play the score’s written pitches automatically. You can still tap along."
+          value={midiAutoPlay}
+          onChange={onMidiAutoPlayChange}
+        />
+      ) : null}
       <View style={ImportedScorePreviewStyle23()}>
         {savedLibraryEnabled ? (
           <Pressable testID="scoreImport.library" onPress={onOpenLibrary} style={ImportedScorePreviewStyle24({ colors })}>

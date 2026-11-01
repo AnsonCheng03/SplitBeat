@@ -27,30 +27,6 @@ appId: com.splitbeat.twohandrhythm
     id: settings.appearance.screen
 - scrollUntilVisible:
     element:
-      id: settings.appearance.scoreDisplay.focus
-    direction: DOWN
-- tapOn:
-    id: settings.appearance.scoreDisplay.focus
-- assertVisible:
-    id: settings.appearance.scoreDisplay.focus
-    selected: true
-- tapOn:
-    id: settings.appearance.scoreDisplay.slide
-- assertVisible:
-    id: settings.appearance.scoreDisplay.slide
-    selected: true
-- tapOn:
-    id: settings.appearance.scoreDisplay.slide-per-note
-- assertVisible:
-    id: settings.appearance.scoreDisplay.slide-per-note
-    selected: true
-- tapOn:
-    id: settings.appearance.scoreDisplay.fade
-- assertVisible:
-    id: settings.appearance.scoreDisplay.fade
-    selected: true
-- scrollUntilVisible:
-    element:
       id: settings.appearance.lightMode
     direction: UP
 - tapOn:
@@ -71,6 +47,14 @@ appId: com.splitbeat.twohandrhythm
     id: home.display.score
 - assertVisible:
     id: home.display.score
+    selected: true
+- assertVisible:
+    id: home.scoreDisplay.fade
+    selected: true
+- tapOn:
+    id: home.scoreDisplay.slide-per-note
+- assertVisible:
+    id: home.scoreDisplay.slide-per-note
     selected: true
 - tapOn:
     id: home.start

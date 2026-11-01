@@ -6,18 +6,6 @@ export function appearanceStyle2({ colors }: { colors: import('@/theme').ThemeCo
   return { color: colors.dim, fontSize: 12, lineHeight: 18, marginTop: 12 };
 }
 
-export function appearanceStyle3(): import('react-native').ViewStyle {
-  return { marginTop: 24 };
-}
-
-export function appearanceStyle4({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
-  return { color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.7, marginBottom: 5 };
-}
-
-export function appearanceStyle5({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
-  return { color: colors.muted, fontSize: 12, lineHeight: 17 };
-}
-
 export function audioStyle1({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
   return { marginTop: 18, borderTopWidth: 1, borderTopColor: colors.line };
 }

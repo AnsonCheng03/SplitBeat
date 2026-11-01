@@ -43,7 +43,7 @@ export function TutorialNotationPreview({
         snapshot={snapshot}
         settings={displaySettings}
         tutorialVisible={false}
-        scoreDisplayMode={displaySettings.scoreDisplayMode ?? DEFAULT_SCORE_DISPLAY_MODE}
+        scoreDisplayMode={DEFAULT_SCORE_DISPLAY_MODE}
         compact={compact}
         width={width}
         height={height}

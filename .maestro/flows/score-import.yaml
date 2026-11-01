@@ -47,14 +47,21 @@ appId: com.splitbeat.twohandrhythm
 - assertVisible: 2 tracks · two hands · 4 bars · 4/4 · 60 BPM
 - assertVisible: E2E Mixed Rhythm
 - assertVisible: 33 left-hand notes · 46 right-hand notes
-- assertNotVisible:
+- scrollUntilVisible:
+    element:
+      id: scoreImport.display.fade
+    direction: DOWN
+- assertVisible:
     id: scoreImport.display.slide
-- assertNotVisible:
+- assertVisible:
     id: scoreImport.display.fade
-- assertNotVisible:
+- assertVisible:
     id: scoreImport.display.slide-per-note
-- assertNotVisible:
+- assertVisible:
     id: scoreImport.display.focus
+- assertVisible:
+    id: scoreImport.display.fade
+    selected: true
 - takeScreenshot: imported-score-preview-default
 - assertVisible: left bar with 10 notes and 1 rest
 - takeScreenshot: imported-score-preview
@@ -89,6 +96,20 @@ appId: com.splitbeat.twohandrhythm
     id: scoreImport.imported.open.*
 - assertVisible:
     id: scoreImport.summary
+- scrollUntilVisible:
+    element:
+      id: scoreImport.display.slide
+    direction: DOWN
+- tapOn:
+    id: scoreImport.display.slide
+- assertVisible:
+    id: scoreImport.display.slide
+    selected: true
+- tapOn:
+    id: scoreImport.display.fade
+- assertVisible:
+    id: scoreImport.display.fade
+    selected: true
 - scrollUntilVisible:
     element:
       id: scoreImport.start

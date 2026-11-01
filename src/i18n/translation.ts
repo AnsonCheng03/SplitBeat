@@ -281,6 +281,8 @@ const TRADITIONAL_CHINESE: Record<string, string> = {
   'Show correct / missed tap colors': '顯示正確／失誤顏色',
   'Show correct and missed taps': '顯示正確與失誤點按',
   'Auto-play the shown rhythm': '自動播放畫面上的節奏',
+  'MIDI auto-play': 'MIDI 自動播放',
+  'Play the score’s written pitches automatically. You can still tap along.': '自動播放樂譜中的原有音高；你仍可同步點按。',
   'Hear the displayed left and right patterns using each hand’s selected sound.': '使用左右手各自選擇的音色播放畫面上的節奏。',
   'Shake your device to reveal Auto-play.': '搖動裝置以顯示自動播放設定。',
   'On tap': '點按時',
