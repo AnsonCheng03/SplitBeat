@@ -6,16 +6,24 @@ export function tutorialStyleCard({ colors, compact }: { colors: import('@/theme
   return { width: '100%', maxWidth: 680, paddingHorizontal: compact ? 18 : 24, paddingVertical: compact ? 14 : 20, borderRadius: 24, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line };
 }
 
-export function tutorialStyleHoldTarget({ top, left, colors }: { top: number; left: number; colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { position: 'absolute', zIndex: 2, top, left, width: 120, minHeight: 48, justifyContent: 'center', paddingHorizontal: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface };
+export function tutorialStyleHoldTarget({ top, left, colors, pressed }: { top: number; left: number; colors: import('@/theme').ThemeColors; pressed: boolean }): import('react-native').ViewStyle {
+  return { position: 'absolute', zIndex: 2, top, left, width: 52, height: 52, alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: 16, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1 };
 }
 
-export function tutorialStyleHoldLabel({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
-  return { color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 0.5, textAlign: 'center' };
+export function tutorialStyleHoldIcon(): import('react-native').ViewStyle {
+  return { width: 26, height: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2 };
+}
+
+export function tutorialStyleHoldTriangle({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { width: 0, height: 0, borderTopWidth: 6, borderBottomWidth: 6, borderLeftWidth: 8, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: colors.muted };
+}
+
+export function tutorialStyleHoldEndBar({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
+  return { width: 2, height: 12, borderRadius: 1, backgroundColor: colors.muted };
 }
 
 export function tutorialStyleHoldTrack({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { height: 3, marginTop: 5, borderRadius: 2, overflow: 'hidden', backgroundColor: colors.line };
+  return { width: 28, height: 3, marginTop: 5, borderRadius: 2, overflow: 'hidden', backgroundColor: colors.line };
 }
 
 export function tutorialStyleHoldFill({ colors, progress }: { colors: import('@/theme').ThemeColors; progress: number }): import('react-native').ViewStyle {
