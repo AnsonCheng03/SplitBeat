@@ -37,7 +37,6 @@ export default function ImportScoreScreen() {
     library,
     currentEntry,
     libraryLoaded,
-    scoreDisplayMode,
     templateCategory,
     templateTags,
     isSilentScoreImportBuild,
@@ -52,7 +51,6 @@ export default function ImportScoreScreen() {
     showLibrary,
     returnHome,
     onPreviewMeasureChange,
-    onScoreDisplayModeChange,
     onTemplateCategoryChange,
   } = useScoreImportScreen();
 
@@ -141,14 +139,11 @@ export default function ImportScoreScreen() {
             source={scoreSource}
             singleHand={settings.singleHand}
             savedLibraryEnabled={featureFlags.savedScoreLibrary}
-            scoreNotationEnabled={featureFlags.scoreNotation}
             currentEntry={currentEntry}
             previewMeasureIndex={previewMeasureIndex}
-            scoreDisplayMode={scoreDisplayMode}
             importing={importing}
             starting={starting}
             onMeasureChange={onPreviewMeasureChange}
-            onDisplayModeChange={onScoreDisplayModeChange}
             onSave={saveCurrentScore}
             onOpenLibrary={showLibrary}
             onImport={() => void importScoreFile()}

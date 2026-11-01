@@ -627,26 +627,6 @@ export function ImportedScorePreviewStyle17({ colors }: { colors: import('@/them
   return { color: colors.dim, fontSize: 10, lineHeight: 14, marginTop: 7 };
 }
 
-export function ImportedScorePreviewStyle18({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
-  return { color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1, marginTop: 12, marginBottom: 6 };
-}
-
-export function ImportedScorePreviewStyle19(): import('react-native').ViewStyle {
-  return { flexDirection: 'row', flexWrap: 'wrap', gap: 8 };
-}
-
-export function ImportedScorePreviewStyle20({ selected, colors }: { selected: boolean; colors: import('@/theme').ThemeColors }): import('react-native').ViewStyle {
-  return { width: '48%', minHeight: 54, justifyContent: 'center', paddingHorizontal: 11, borderRadius: 12, borderWidth: 1, borderColor: selected ? colors.accent : colors.line, backgroundColor: selected ? `${colors.accent}18` : colors.surface };
-}
-
-export function ImportedScorePreviewStyle21({ selected, colors }: { selected: boolean; colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
-  return { color: selected ? colors.accent : colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 };
-}
-
-export function ImportedScorePreviewStyle22({ colors }: { colors: import('@/theme').ThemeColors }): import('react-native').TextStyle {
-  return { color: colors.muted, fontSize: 9, marginTop: 3 };
-}
-
 export function ImportedScorePreviewStyle23(): import('react-native').ViewStyle {
   return { flexDirection: 'row', gap: 9, marginTop: 11 };
 }

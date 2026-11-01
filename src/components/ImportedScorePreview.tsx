@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScoreRhythmMeasure } from '@/components/ScoreRhythmMeasure';
 import { placeSingleTrackOnHand } from '@/rhythm/importedScoreLibrary';
 import type { ImportedScoreSource, ImportedScoreLibraryEntry } from '@/rhythm/importedScoreLibrary';
-import { scoreTrainingMode, type ScoreDisplayMode } from '@/rhythm/scoreStaff';
+import { scoreTrainingMode } from '@/rhythm/scoreStaff';
 import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ImportedRhythmScore } from '@/types/importedScore';
@@ -28,11 +28,6 @@ import {
   ImportedScorePreviewStyle15,
   ImportedScorePreviewStyle16,
   ImportedScorePreviewStyle17,
-  ImportedScorePreviewStyle18,
-  ImportedScorePreviewStyle19,
-  ImportedScorePreviewStyle20,
-  ImportedScorePreviewStyle21,
-  ImportedScorePreviewStyle22,
   ImportedScorePreviewStyle23,
   ImportedScorePreviewStyle24,
   ImportedScorePreviewStyle25,
@@ -48,14 +43,11 @@ export function ImportedScorePreview({
   source,
   singleHand,
   savedLibraryEnabled,
-  scoreNotationEnabled,
   currentEntry,
   previewMeasureIndex,
-  scoreDisplayMode,
   importing,
   starting,
   onMeasureChange,
-  onDisplayModeChange,
   onSave,
   onOpenLibrary,
   onImport,
@@ -66,14 +58,11 @@ export function ImportedScorePreview({
   source: ImportedScoreSource;
   singleHand: Hand;
   savedLibraryEnabled: boolean;
-  scoreNotationEnabled: boolean;
   currentEntry?: ImportedScoreLibraryEntry;
   previewMeasureIndex: number;
-  scoreDisplayMode: ScoreDisplayMode;
   importing: boolean;
   starting: boolean;
   onMeasureChange: (index: number) => void;
-  onDisplayModeChange: (mode: ScoreDisplayMode) => void;
   onSave: (saved: boolean) => void;
   onOpenLibrary: () => void;
   onImport: () => void;
@@ -156,32 +145,6 @@ export function ImportedScorePreview({
         </Pressable>
       </View>
       <Text style={ImportedScorePreviewStyle17({ colors })}>Check the extracted rhythms against your score before you start.</Text>
-      {scoreNotationEnabled ? <Text style={ImportedScorePreviewStyle18({ colors })}>PRACTICE DISPLAY</Text> : null}
-      {scoreNotationEnabled ? (
-        <View style={ImportedScorePreviewStyle19()}>
-          {([
-            { value: 'focus', label: 'ONE NOTE', detail: 'Current beat · large hand panels' },
-            { value: 'slide', label: 'SLIDE', detail: 'Move one bar at a time' },
-            { value: 'fade', label: 'FADE', detail: 'Keep bars still · fade forward' },
-            { value: 'slide-per-note', label: 'SLIDE PER NOTE', detail: 'Move as each note arrives' },
-          ] as const).map((option) => {
-            const selected = scoreDisplayMode === option.value;
-            return (
-              <Pressable
-                key={option.value}
-                testID={`scoreImport.display.${option.value}`}
-                accessibilityRole="radio"
-                accessibilityState={{ selected }}
-                onPress={() => onDisplayModeChange(option.value)}
-                style={ImportedScorePreviewStyle20({ selected, colors })}
-              >
-                <Text style={ImportedScorePreviewStyle21({ selected, colors })}>{option.label}</Text>
-                <Text style={ImportedScorePreviewStyle22({ colors })}>{option.detail}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
       <View style={ImportedScorePreviewStyle23()}>
         {savedLibraryEnabled ? (
           <Pressable testID="scoreImport.library" onPress={onOpenLibrary} style={ImportedScorePreviewStyle24({ colors })}>

@@ -53,7 +53,7 @@ export function useLearnSongsScreen() {
         pathname: '/practice',
         params: {
           scoreDisplayMode: featureFlags.scoreNotation
-            ? settings.scoreMotionMode ?? DEFAULT_SCORE_DISPLAY_MODE
+            ? settings.scoreDisplayMode ?? DEFAULT_SCORE_DISPLAY_MODE
             : 'focus',
         },
       });

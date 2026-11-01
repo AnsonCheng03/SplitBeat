@@ -25,8 +25,40 @@ appId: com.splitbeat.twohandrhythm
     id: setup.card.appearance
 - assertVisible:
     id: settings.appearance.screen
+- scrollUntilVisible:
+    element:
+      id: settings.appearance.scoreDisplay.focus
+    direction: DOWN
+- tapOn:
+    id: settings.appearance.scoreDisplay.focus
+- assertVisible:
+    id: settings.appearance.scoreDisplay.focus
+    selected: true
+- tapOn:
+    id: settings.appearance.scoreDisplay.slide
+- assertVisible:
+    id: settings.appearance.scoreDisplay.slide
+    selected: true
+- tapOn:
+    id: settings.appearance.scoreDisplay.slide-per-note
+- assertVisible:
+    id: settings.appearance.scoreDisplay.slide-per-note
+    selected: true
+- tapOn:
+    id: settings.appearance.scoreDisplay.fade
+- assertVisible:
+    id: settings.appearance.scoreDisplay.fade
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: settings.appearance.lightMode
+    direction: UP
 - tapOn:
     id: settings.appearance.lightMode
+- scrollUntilVisible:
+    element:
+      id: settings.appearance.back
+    direction: UP
 - tapOn:
     id: settings.appearance.back
 - assertVisible:

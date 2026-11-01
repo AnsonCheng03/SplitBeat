@@ -4,8 +4,7 @@ import { ScrollingScoreRhythm } from '@/components/ScrollingScoreRhythm';
 import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import { useTheme } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme';
-import type { ExerciseSettings, Hand, SessionSnapshot } from '@/types/rhythm';
-import type { ScoreDisplayMode } from '@/rhythm/scoreStaff';
+import type { ExerciseSettings, Hand, ScoreDisplayMode, SessionSnapshot } from '@/types/rhythm';
 import { PracticeRhythmDisplayStyle4, PracticeRhythmDisplayStyle5 } from '@/styles/practice';
 
 type ScoreMeasure = NonNullable<SessionSnapshot['scoreMeasure']>;

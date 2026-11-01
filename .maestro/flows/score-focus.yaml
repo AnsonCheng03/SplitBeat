@@ -27,6 +27,39 @@ appId: com.splitbeat.twohandrhythm
       id: home.screen
     timeout: 15000
 - tapOn:
+    id: home.setup
+- assertVisible:
+    id: setup.screen
+- scrollUntilVisible:
+    element:
+      id: setup.card.appearance
+    direction: DOWN
+- tapOn:
+    id: setup.card.appearance
+- assertVisible:
+    id: settings.appearance.screen
+- scrollUntilVisible:
+    element:
+      id: settings.appearance.scoreDisplay.focus
+    direction: DOWN
+- tapOn:
+    id: settings.appearance.scoreDisplay.focus
+- assertVisible:
+    id: settings.appearance.scoreDisplay.focus
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: settings.appearance.back
+    direction: UP
+- tapOn:
+    id: settings.appearance.back
+- assertVisible:
+    id: setup.screen
+- tapOn:
+    id: setup.home
+- assertVisible:
+    id: home.screen
+- tapOn:
     id: home.activityPicker
 - waitForAnimationToEnd
 - tapOn:
@@ -41,11 +74,6 @@ appId: com.splitbeat.twohandrhythm
     id: scoreImport.loadSample
 - assertVisible:
     id: scoreImport.summary
-- scrollUntilVisible:
-    element: { id: scoreImport.display.focus }
-    direction: DOWN
-- tapOn:
-    id: scoreImport.display.focus
 - scrollUntilVisible:
     element: { id: scoreImport.start }
     direction: DOWN

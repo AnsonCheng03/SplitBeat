@@ -2,11 +2,10 @@ import { View, type ViewStyle } from 'react-native';
 import { NextPatternPreview } from '@/components/NextPatternPreview';
 import { PracticeHandRhythmDisplay } from '@/components/PracticeHandRhythmDisplay';
 import { PracticeScoreDisplay } from '@/components/PracticeScoreDisplay';
-import type { ScoreDisplayMode } from '@/rhythm/scoreStaff';
 import { maxRhythmSymbolWidth } from '@/rhythm/noteNotation';
 import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import { useTheme } from '@/theme/ThemeProvider';
-import type { ExerciseSettings, ExerciseStep, SessionSnapshot } from '@/types/rhythm';
+import type { ExerciseSettings, ExerciseStep, ScoreDisplayMode, SessionSnapshot } from '@/types/rhythm';
 import type { PracticeLayout } from '@/features/deviceLayout/practiceLayout';
 import {
   PracticeRhythmDisplayStyle1,

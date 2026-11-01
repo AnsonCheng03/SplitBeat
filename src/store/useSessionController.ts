@@ -11,7 +11,7 @@ import {
   challengeMessage,
   createChallengeStreaks,
 } from '@/rhythm/challenge';
-import { scoreFromMeasure } from '@/rhythm/scoreStaff';
+import { normalizeSavedScoreDisplayMode, scoreFromMeasure } from '@/rhythm/scoreStaff';
 import { getSessionDurationSeconds, RhythmTimingEngine } from '@/rhythm/timingEngine';
 import { waitForNotationReady } from '@/rhythm/notationReadiness';
 import { legacyMixturesIncludeRests, mixtureNoteValuesFromLegacyIds } from '@/rhythm/mixtures';
@@ -104,7 +104,7 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
   graceNotesEnabled: false,
   trainingMode: 'two-hand',
   practiceDisplayMode: 'rhythm',
-  scoreMotionMode: 'fade',
+  scoreDisplayMode: 'fade',
   singleHand: 'left',
   soundEnabled: !FORCE_SILENT_E2E,
   backgroundMusicEnabled: false,
@@ -220,9 +220,7 @@ function restoreSettings(raw: string | null): ExerciseSettings {
           : DEFAULT_SETTINGS.graceNotesEnabled,
       trainingMode: parsed.trainingMode === 'single-hand' ? 'single-hand' : 'two-hand',
       practiceDisplayMode: parsed.practiceDisplayMode === 'score' ? 'score' : 'rhythm',
-      scoreMotionMode: parsed.scoreMotionMode === 'slide' || parsed.scoreMotionMode === 'slide-per-note' || parsed.scoreMotionMode === 'fade'
-        ? parsed.scoreMotionMode
-        : DEFAULT_SETTINGS.scoreMotionMode,
+      scoreDisplayMode: normalizeSavedScoreDisplayMode(parsed.scoreDisplayMode, parsed.scoreMotionMode),
       singleHand: parsed.singleHand === 'right' ? 'right' : 'left',
       soundEnabled: FORCE_SILENT_E2E
         ? false

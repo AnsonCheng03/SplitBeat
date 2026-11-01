@@ -1,4 +1,4 @@
-import type { ScoreDisplayMode } from '@/rhythm/scoreStaff';
+import type { ScoreDisplayMode } from '@/types/rhythm';
 import type { ScoreRhythmMeasure } from '@/types/importedScore';
 
 const POSITION_EPSILON = 0.000001;

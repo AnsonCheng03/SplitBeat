@@ -66,6 +66,8 @@ export type TrainingMode = 'two-hand' | 'single-hand';
 export type PracticeDisplayMode = 'rhythm' | 'score';
 export const SCORE_MOTION_MODES = ['slide', 'fade', 'slide-per-note'] as const;
 export type ScoreMotionMode = (typeof SCORE_MOTION_MODES)[number];
+export const SCORE_DISPLAY_MODES = ['focus', ...SCORE_MOTION_MODES] as const;
+export type ScoreDisplayMode = (typeof SCORE_DISPLAY_MODES)[number];
 export type TapFeedback = 'hit' | 'miss' | 'ignored';
 export type TapInputSource = 'touch' | 'keyboard';
 export type SoundPreset = 'wood' | 'beep' | 'bell' | 'soft';
@@ -128,7 +130,9 @@ export interface ExerciseSettings {
   graceNotesEnabled: boolean;
   trainingMode: TrainingMode;
   practiceDisplayMode: PracticeDisplayMode;
-  /** How score bars advance during score practice. */
+  /** How score notation is presented during score practice. */
+  scoreDisplayMode?: ScoreDisplayMode;
+  /** @deprecated Read only to migrate settings saved before scoreDisplayMode. */
   scoreMotionMode?: ScoreMotionMode;
   singleHand: Hand;
   soundEnabled: boolean;

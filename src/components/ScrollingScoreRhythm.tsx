@@ -13,9 +13,8 @@ import {
   scoreNoteScrollProgress,
   scoreStripOffset,
 } from '@/rhythm/scoreMotion';
-import type { ScoreDisplayMode } from '@/rhythm/scoreStaff';
 import type { ScoreRhythmMeasure as ScoreMeasure } from '@/types/importedScore';
-import type { Hand } from '@/types/rhythm';
+import type { Hand, ScoreDisplayMode } from '@/types/rhythm';
 import { useTheme } from '@/theme/ThemeProvider';
 import {
   ScrollingScoreRhythmStyle1,
