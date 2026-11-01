@@ -1,8 +1,9 @@
 import { createRhythmSymbolNotationPlan, fitNotationScale, noteHeadWidthForSlot } from '@/rhythm/noteNotation';
+import { pulseQuarterNotes } from '@/rhythm/subdivisions';
 import type { NoteNotationEvent, NoteNotationPlan, NoteNotationSize } from '@/rhythm/noteNotation';
 import type { MixturePattern } from '@/rhythm/mixtures';
 import { getMixturePattern } from '@/rhythm/mixtures';
-import type { MixturePatternId } from '@/types/rhythm';
+import type { MixturePatternId, TimeSignature } from '@/types/rhythm';
 
 /** Converts a mixture's ordered note and rest atoms into events for shared notation engraving. */
 export function mixtureNotationEvents(pattern: MixturePattern): NoteNotationEvent[] {
@@ -20,6 +21,7 @@ export function mixtureNotationEvents(pattern: MixturePattern): NoteNotationEven
 
 export function createMixtureSymbolNotationModel({
   mixtureId,
+  timeSignature,
   compact,
   mini,
   scale,
@@ -28,6 +30,7 @@ export function createMixtureSymbolNotationModel({
   groupWidth,
 }: {
   mixtureId: MixturePatternId;
+  timeSignature: TimeSignature;
   compact: boolean;
   mini: boolean;
   scale: number;
@@ -57,6 +60,7 @@ export function createMixtureSymbolNotationModel({
     size,
     noteHeadWidth,
     beamGroupQuarterNotes: pattern.durationQuarter,
+    restGroupQuarterNotes: pulseQuarterNotes(timeSignature),
   });
   const fittedScale = fitNotationScale(plan.width, plan.height, scale, maxWidth, maxHeight);
   return { pattern, plan, fittedScale };

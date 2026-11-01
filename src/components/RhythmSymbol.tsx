@@ -33,7 +33,8 @@ export function RhythmSymbol({ subdivision, color, compact = false, mini = false
     maxWidth,
     maxHeight,
     groupWidth,
-  }), [compact, groupWidth, maxHeight, maxWidth, mini, scale, subdivision, timeSignature]);
+    rest,
+  }), [compact, groupWidth, maxHeight, maxWidth, mini, rest, scale, subdivision, timeSignature]);
   const notation = <NoteNotation
     plan={plan}
     color={color}

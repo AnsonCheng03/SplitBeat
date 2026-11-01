@@ -3,12 +3,13 @@ import { View } from 'react-native';
 import { useI18n } from '@/i18n/I18nProvider';
 import { NoteNotation } from '@/components/NoteNotation';
 import { createMixtureSymbolNotationModel } from '@/rhythm/mixtureNotation';
-import type { MixturePatternId } from '@/types/rhythm';
+import type { MixturePatternId, TimeSignature } from '@/types/rhythm';
 import { MixtureSymbolStyle1, MixtureSymbolStyle2 } from '@/styles/notation';
 
 export function MixtureSymbol({
   mixtureId,
   color,
+  timeSignature = '4/4',
   compact = false,
   mini = false,
   scale = 1,
@@ -20,6 +21,7 @@ export function MixtureSymbol({
 }: {
   mixtureId: MixturePatternId;
   color: string;
+  timeSignature?: TimeSignature;
   compact?: boolean;
   mini?: boolean;
   scale?: number;
@@ -33,13 +35,14 @@ export function MixtureSymbol({
   const { t } = useI18n();
   const { pattern, plan, fittedScale } = useMemo(() => createMixtureSymbolNotationModel({
     mixtureId,
+    timeSignature,
     compact,
     mini,
     scale,
     maxWidth,
     maxHeight,
     groupWidth,
-  }), [compact, groupWidth, maxHeight, maxWidth, mini, mixtureId, scale]);
+  }), [compact, groupWidth, maxHeight, maxWidth, mini, mixtureId, scale, timeSignature]);
 
   return (
     <View style={MixtureSymbolStyle1({ plan, fittedScale })}>

@@ -131,6 +131,7 @@ function HandPreview({
         <MixtureSymbol
           mixtureId={mixtureId}
           color={color}
+          timeSignature={timeSignature}
           scale={1}
           groupWidth={groupWidth}
           maxWidth={groupWidth}
